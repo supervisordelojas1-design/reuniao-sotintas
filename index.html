@@ -746,6 +746,8 @@ function dadosAgendamento(){
     appUrl: appUrl()
   };
 }
+/* Convite curto de propósito: quem recebe no WhatsApp lê em 5 segundos.
+   Roteiro e link do app ficam no evento da Agenda, não aqui. */
 function textoConvite(nome){
   var d=dadosAgendamento(), L=[];
   L.push('*Convite de reunião — Só Tintas*');
@@ -753,20 +755,12 @@ function textoConvite(nome){
   if(nome) { L.push('Oi, '+nome+'!'); L.push(''); }
   L.push('📌 *'+(d.titulo||'Reunião')+'*');
   L.push('📅 '+dataBr(d.data)+' às '+d.hora+' ('+d.duracao+' min)');
-  if(d.local) L.push('📍 '+d.local);
-  if(d.participantes) L.push('👥 '+d.participantes);
-  L.push('');
+  if(d.condutor) L.push('👤 '+d.condutor);
   L.push('🎯 *Objetivo:* '+d.objetivo);
-  L.push('');
-  L.push('*Roteiro:*');
-  L.push(d.roteiro);
-  L.push('');
-  L.push('A ata será feita aqui, ao vivo:');
-  L.push(d.appUrl);
-  L.push('');
-  L.push('Por favor, confirme presença.');
-  L.push('');
-  L.push('_Só Tintas Meet · Colorindo vidas e realizando sonhos_');
+  if(d.local){
+    var online = /^https?:\/\//i.test(d.local) || /meet\.|zoom\.|teams\./i.test(d.local);
+    L.push((online?'🔗 ':'📍 ')+d.local);
+  }
   return L.join('\n');
 }
 function agendar(){
