@@ -214,8 +214,14 @@ tr.incompleto input{background:transparent}
   <div class="card">
     <div class="tabs">
       <button class="tab sel" id="tabAgora">▶ Reunião agora</button>
-      <button class="tab" id="tabAgendar">📅 Agendar reunião</button>
+      <button class="tab" id="tabAgendar">📅 Agendar</button>
+      <button class="tab" id="tabAgenda">🗓 Agenda</button>
       <button class="tab" id="tabHistorico">📚 Histórico</button>
+    </div>
+    <div id="viewAgenda" class="hidden">
+      <h1>Agenda de reuniões</h1>
+      <p class="sub">Tudo que está marcado daqui para a frente. Toque para usar a reunião ou para desmarcar.</p>
+      <div id="agendaLista"></div>
     </div>
     <div id="viewHistorico" class="hidden">
       <h1>Histórico de reuniões</h1>
@@ -441,6 +447,25 @@ tr.incompleto input{background:transparent}
       <button class="btn btn-navy" id="zapOpen">Abrir WhatsApp</button>
       <button class="btn btn-ghost" id="zapClose">Fechar</button>
     </div>
+  </div>
+</div>
+
+<!-- modal desmarcar reunião -->
+<div class="modal" id="modalCancel">
+  <div class="mbox">
+    <h2>Desmarcar reunião</h2>
+    <p class="sub" id="cancelInfo"></p>
+    <label>Motivo <span style="text-transform:none;font-weight:normal">(opcional, entra no aviso)</span></label>
+    <input type="text" id="cancelMotivo" placeholder="Ex.: conflito com a visita do fornecedor">
+    <label>Aviso que será enviado</label>
+    <textarea id="cancelTexto" rows="10"></textarea>
+    <div id="cancelZaps" class="btnrow" style="margin-top:12px"></div>
+    <div class="btnrow">
+      <button class="btn btn-primary" id="cancelConfirmar">✓ Desmarcar e avisar por e-mail</button>
+      <button class="btn btn-navy" id="cancelCopiar">📋 Copiar aviso</button>
+      <button class="btn btn-ghost" id="cancelFechar">Voltar</button>
+    </div>
+    <div id="cancelStatus" class="hidden" style="margin-top:12px;padding:11px 14px;border-radius:10px;font-size:14px"></div>
   </div>
 </div>
 
@@ -702,11 +727,15 @@ function setModo(m){
   modo=m;
   $('tabAgora').className='tab'+(m==='agora'?' sel':'');
   $('tabAgendar').className='tab'+(m==='agendar'?' sel':'');
+  $('tabAgenda').className='tab'+(m==='agenda'?' sel':'');
   $('tabHistorico').className='tab'+(m==='historico'?' sel':'');
   $('viewHistorico').classList.toggle('hidden', m!=='historico');
-  $('blocoSetup').classList.toggle('hidden', m==='historico');
-  $('proximas').classList.toggle('hidden', m==='historico' || !PROX.length);
+  $('viewAgenda').classList.toggle('hidden', m!=='agenda');
+  $('blocoSetup').classList.toggle('hidden', m==='historico' || m==='agenda');
+  /* na tela de "reunião agora" mostramos só o que é de hoje; a agenda completa tem aba própria */
+  $('proximas').classList.toggle('hidden', m!=='agora' || !temHoje());
   if(m==='historico'){ carregarHistorico(); return; }
+  if(m==='agenda'){ renderAgendaCompleta(); return; }
   $('wrapDuracao').classList.toggle('hidden', m!=='agendar');
   $('btnStart').classList.toggle('hidden', m!=='agora');
   $('btnAgendar').classList.toggle('hidden', m==='agora');
@@ -795,25 +824,154 @@ function carregarProximas(){
   fetch(ENVIO_URL+'?acao=proximas')
     .then(function(r){ return r.json(); })
     .then(function(res){
-      if(!res || !res.ok || !res.itens || !res.itens.length){ $('proximas').classList.add('hidden'); return; }
+      if(!res || !res.ok || !res.itens || !res.itens.length){ PROX=[]; $('proximas').classList.add('hidden'); return; }
       PROX=res.itens;
-      var hoje=new Date().toISOString().slice(0,10);
-      var h='<h3 style="margin:16px 0 8px">Reuniões agendadas</h3>';
-      PROX.forEach(function(a,i){
-        var eHoje=a.data===hoje;
-        var p=(a.data||'').split('-');
-        h+='<div class="ag'+(eHoje?' hoje':'')+'">'+
-           '<div class="agd"><b>'+(p[2]||'--')+'</b><span>'+mesCurto(p[1])+'</span></div>'+
-           '<div class="agi"><div class="agt">'+esc(a.titulo||'')+'</div>'+
-           '<div class="ags">'+(eHoje?'<b style="color:var(--red)">HOJE</b> · ':'')+(a.hora||'')+' · '+esc(a.modelo||'')+(a.local?' · '+esc(a.local):'')+'</div></div>'+
-           '<button class="btn btn-primary btn-sm" data-ag="'+i+'">Usar esta reunião</button></div>';
-      });
-      $('proximas').innerHTML=h; $('proximas').classList.remove('hidden');
-      Array.prototype.forEach.call(document.querySelectorAll('[data-ag]'),function(b){
-        b.onclick=function(){ usarAgendada(PROX[+b.dataset.ag]); };
-      });
+      renderHoje();
+      if(modo==='agenda') renderAgendaCompleta();
     })
     .catch(function(){ /* sem internet ou script antigo: simplesmente não mostra */ });
+}
+function hojeISO(){ return new Date().toISOString().slice(0,10); }
+function temHoje(){ return PROX.some(function(a){ return a.data===hojeISO(); }); }
+
+/* Bloco compacto na tela inicial: só as reuniões de hoje. */
+function renderHoje(){
+  var hoje=hojeISO();
+  var doDia=PROX.filter(function(a){ return a.data===hoje; });
+  if(modo!=='agora' || !doDia.length){ $('proximas').classList.add('hidden'); return; }
+  var h='<h3 style="margin:16px 0 8px">Reunião de hoje</h3>';
+  doDia.forEach(function(a){
+    var p=(a.data||'').split('-');
+    h+='<div class="ag hoje">'+
+       '<div class="agd"><b>'+(p[2]||'--')+'</b><span>'+mesCurto(p[1])+'</span></div>'+
+       '<div class="agi"><div class="agt">'+esc(a.titulo||'')+'</div>'+
+       '<div class="ags"><b style="color:var(--red)">HOJE</b> · '+(a.hora||'')+' · '+esc(a.modelo||'')+(a.local?' · '+esc(a.local):'')+'</div></div>'+
+       '<button class="btn btn-primary btn-sm" data-usar="'+a.linha+'">Usar esta reunião</button></div>';
+  });
+  $('proximas').innerHTML=h; $('proximas').classList.remove('hidden');
+  ligarBotoesAgenda();
+}
+
+/* Aba Agenda: tudo o que está marcado, agrupado por dia. */
+function renderAgendaCompleta(){
+  var box=$('agendaLista');
+  if(!ENVIO_URL){ box.innerHTML='<p class="sub">Agenda indisponível: o envio para o Google não está configurado.</p>'; return; }
+  if(!PROX.length){
+    box.innerHTML='<p class="sub">Nenhuma reunião marcada. Use a aba <b>📅 Agendar</b> para criar a primeira.</p>';
+    return;
+  }
+  var hoje=hojeISO();
+  var amanha=new Date(Date.now()+86400000).toISOString().slice(0,10);
+  var DIAS=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+  var h='', diaAtual='';
+  PROX.forEach(function(a){
+    if(a.data!==diaAtual){
+      diaAtual=a.data;
+      var p=a.data.split('-');
+      var dt=new Date(+p[0], +p[1]-1, +p[2]);
+      var rotulo = a.data===hoje ? 'Hoje' : (a.data===amanha ? 'Amanhã' : DIAS[dt.getDay()]);
+      h+='<div style="margin:20px 0 8px;font-size:13px;font-weight:bold;color:'+(a.data===hoje?'var(--red)':'var(--navy)')+
+         ';text-transform:uppercase;letter-spacing:.5px">'+rotulo+' · '+dataBr(a.data)+'</div>';
+    }
+    var pp=(a.data||'').split('-');
+    h+='<div class="ag'+(a.data===hoje?' hoje':'')+'">'+
+       '<div class="agd"><b>'+(a.hora||'--').slice(0,2)+'</b><span>'+(a.hora||'--:--').slice(3)+'</span></div>'+
+       '<div class="agi"><div class="agt">'+esc(a.titulo||'')+'</div>'+
+       '<div class="ags">'+esc(a.modelo||'')+(a.duracao?' · '+a.duracao+' min':'')+(a.local?' · '+esc(a.local):'')+
+       (a.participantes?'<br>👥 '+esc(a.participantes):'')+'</div></div>'+
+       '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+       '<button class="btn btn-primary btn-sm" data-usar="'+a.linha+'">Usar</button>'+
+       '<button class="btn btn-ghost btn-sm" data-desmarcar="'+a.linha+'" style="color:var(--red);border-color:#f3c6c8">Desmarcar</button>'+
+       '</div></div>';
+    h+='<div style="height:2px"></div>';
+    void pp;
+  });
+  box.innerHTML=h;
+  ligarBotoesAgenda();
+}
+function acharPorLinha(l){
+  for(var i=0;i<PROX.length;i++){ if(String(PROX[i].linha)===String(l)) return PROX[i]; }
+  return null;
+}
+function ligarBotoesAgenda(){
+  Array.prototype.forEach.call(document.querySelectorAll('[data-usar]'),function(b){
+    b.onclick=function(){ var a=acharPorLinha(b.dataset.usar); if(a) usarAgendada(a); };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-desmarcar]'),function(b){
+    b.onclick=function(){ var a=acharPorLinha(b.dataset.desmarcar); if(a) abrirCancelamento(a); };
+  });
+}
+
+/* ============ DESMARCAR ============ */
+var CANCEL_ALVO=null;
+function textoCancelamento(a, motivo, nome){
+  var L=[];
+  L.push('*Reunião DESMARCADA — Só Tintas*');
+  L.push('');
+  if(nome){ L.push('Oi, '+nome+'!'); L.push(''); }
+  L.push('❌ *'+(a.titulo||'Reunião')+'*');
+  L.push('📅 Estava marcada para '+dataBr(a.data)+' às '+(a.hora||''));
+  if(a.local) L.push('📍 '+a.local);
+  L.push('');
+  if(motivo && motivo.trim()) L.push('Motivo: '+motivo.trim());
+  L.push('Assim que tiver nova data, eu aviso.');
+  return L.join('\n');
+}
+function abrirCancelamento(a){
+  CANCEL_ALVO=a;
+  $('cancelInfo').textContent='"'+(a.titulo||'')+'" — '+dataBr(a.data)+' às '+(a.hora||'');
+  $('cancelMotivo').value='';
+  $('cancelStatus').classList.add('hidden');
+  $('cancelConfirmar').disabled=false;
+  atualizaTextoCancel();
+  $('modalCancel').classList.add('show');
+}
+function atualizaTextoCancel(){
+  if(!CANCEL_ALVO) return;
+  var motivo=$('cancelMotivo').value;
+  $('cancelTexto').value=textoCancelamento(CANCEL_ALVO, motivo);
+  /* um botão por participante com WhatsApp cadastrado no agendamento */
+  var lista=[];
+  try{ lista=JSON.parse(CANCEL_ALVO.participantesJson||'[]')||[]; }catch(e){ lista=[]; }
+  var com=lista.filter(function(p){ return foneWa(p.f) && (p.n||'').trim(); });
+  var h='';
+  com.forEach(function(p,i){ h+='<button class="btn btn-navy btn-sm" data-cwa="'+i+'">💬 '+esc(p.n)+'</button>'; });
+  $('cancelZaps').innerHTML=h;
+  Array.prototype.forEach.call(document.querySelectorAll('[data-cwa]'),function(b){
+    b.onclick=function(){
+      var p=com[+b.dataset.cwa];
+      window.open('https://wa.me/'+foneWa(p.f)+'?text='+encodeURIComponent(textoCancelamento(CANCEL_ALVO,$('cancelMotivo').value,p.n)),'_blank','noopener,noreferrer');
+    };
+  });
+}
+function confirmarCancelamento(){
+  if(!CANCEL_ALVO || !ENVIO_URL) return;
+  var b=$('cancelStatus');
+  $('cancelConfirmar').disabled=true;
+  b.style.background='#eef3ff'; b.style.color='var(--navy)'; b.style.border='1.5px solid var(--navy)';
+  b.textContent='⏳ Removendo da Agenda e avisando por e-mail…'; b.classList.remove('hidden');
+  fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({tipo:'cancelamento', linha:CANCEL_ALVO.linha, data:CANCEL_ALVO.data,
+      titulo:CANCEL_ALVO.titulo, motivo:$('cancelMotivo').value, aviso:$('cancelTexto').value})})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if(res && res.ok){
+        b.style.background='#e9f7ef'; b.style.color='var(--ok)'; b.style.border='1.5px solid var(--ok)';
+        b.innerHTML='✅ Desmarcada.'+(res.eventoRemovido?' Removida da Agenda.':'')+
+          (res.emails?' Aviso enviado para '+res.emails+' e-mail(s).':'')+
+          ' Se quiser, mande também pelo WhatsApp nos botões acima.';
+        carregarProximas();
+      } else {
+        b.style.background='#fdeaea'; b.style.color='var(--red)'; b.style.border='1.5px solid var(--red)';
+        b.textContent='⚠ Erro: '+((res&&res.erro)||'desconhecido');
+        $('cancelConfirmar').disabled=false;
+      }
+    })
+    .catch(function(){
+      b.style.background='#fdeaea'; b.style.color='var(--red)'; b.style.border='1.5px solid var(--red)';
+      b.textContent='⚠ Não consegui falar com o Google. Você ainda pode avisar pelo WhatsApp com os botões acima.';
+      $('cancelConfirmar').disabled=false;
+    });
 }
 /* ============ HISTÓRICO ============ */
 function carregarHistorico(){
@@ -1350,7 +1508,16 @@ Array.prototype.forEach.call(document.querySelectorAll('[data-mk]'),function(b){
 });
 $('tabAgora').onclick=function(){ setModo('agora'); };
 $('tabAgendar').onclick=function(){ setModo('agendar'); };
+$('tabAgenda').onclick=function(){ setModo('agenda'); };
 $('tabHistorico').onclick=function(){ setModo('historico'); };
+$('cancelMotivo').oninput=atualizaTextoCancel;
+$('cancelFechar').onclick=function(){ $('modalCancel').classList.remove('show'); };
+$('cancelConfirmar').onclick=confirmarCancelamento;
+$('cancelCopiar').onclick=function(){
+  var ta=$('cancelTexto'); ta.select();
+  if(navigator.clipboard) navigator.clipboard.writeText(ta.value).then(function(){toast('Aviso copiado!');},function(){});
+  else { try{document.execCommand('copy');toast('Copiado!');}catch(e){} }
+};
 $('btnAgendar').onclick=agendar;
 $('btnConviteZap').onclick=function(){
   var t=textoConvite(); $('zapText').value=t; $('modalZap').classList.add('show');
