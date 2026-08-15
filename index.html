@@ -215,14 +215,35 @@ tr.incompleto input{background:transparent}
     <div class="tabs">
       <button class="tab sel" id="tabAgora">▶ Reunião agora</button>
       <button class="tab" id="tabAgendar">📅 Agendar reunião</button>
+      <button class="tab" id="tabHistorico">📚 Histórico</button>
     </div>
+    <div id="viewHistorico" class="hidden">
+      <h1>Histórico de reuniões</h1>
+      <p class="sub">As últimas reuniões registradas. Clique para abrir a ata em PDF.</p>
+      <div id="histLista"></div>
+    </div>
+    <div id="blocoSetup">
     <h1 id="setupTitulo">Preparar a reunião</h1>
     <p class="sub" id="setupSub">Leva 40 segundos. Sem objetivo escrito, o botão de iniciar não libera — é de propósito.</p>
 
     <h3 style="margin-top:0">1. Que tipo de reunião é essa?</h3>
     <div class="models" id="models"></div>
 
-    <h3>2. Dados da reunião</h3>
+    <h3>2. Como você quer conduzir?</h3>
+    <div class="models" id="modosCond">
+      <button class="model sel" data-mc="blocos">
+        <div class="mi">🧭</div>
+        <div class="mn">Guiado por blocos</div>
+        <div class="md">O app conduz etapa por etapa, com cronômetro e checklist em cada bloco. Melhor para dar ritmo e não deixar assunto escapar.</div>
+      </button>
+      <button class="model" data-mc="corrido">
+        <div class="mi">🔴</div>
+        <div class="mn">Corrido — gravação contínua</div>
+        <div class="md">Uma tela só. Liga o microfone e a reunião corre solta; você marca decisões e pontos importantes com um toque. Melhor quando a conversa não cabe num roteiro.</div>
+      </button>
+    </div>
+
+    <h3>3. Dados da reunião</h3>
     <div class="grid2">
       <div><label>Título</label><input type="text" id="fTitulo" placeholder="Ex.: Alinhamento semanal – Loja Centro"></div>
       <div><label>Condutor</label><input type="text" id="fCondutor" placeholder="Bruno – Supervisor Comercial"></div>
@@ -245,13 +266,14 @@ tr.incompleto input{background:transparent}
     </div>
     <label>Participantes</label>
     <table class="acts" id="tabParts">
-      <thead><tr><th style="width:32%">Nome</th><th style="width:34%">E-mail</th><th style="width:26%">WhatsApp</th><th style="width:8%"></th></tr></thead>
+      <thead><tr><th style="width:9%">Presente</th><th style="width:28%">Nome</th><th style="width:30%">E-mail</th><th style="width:25%">WhatsApp</th><th style="width:8%"></th></tr></thead>
       <tbody id="partsBody"></tbody>
     </table>
+    <datalist id="listaParts"></datalist>
     <div class="hint" id="labEmails">O e-mail recebe a ata. O WhatsApp gera o botão de convite individual — pode deixar em branco quem você não for avisar por lá.</div>
     <button class="btn btn-ghost btn-sm" id="btnAddPart" style="margin-top:10px">+ Adicionar participante</button>
 
-    <h3>3. Objetivo da reunião <span style="color:var(--red)">*</span></h3>
+    <h3>4. Objetivo da reunião <span style="color:var(--red)">*</span></h3>
     <div class="objbox">
       <div class="oh">Escreva em UMA frase o que precisa estar resolvido ao final</div>
       <textarea id="fObjetivo" rows="2" placeholder="Ex.: Definir o plano de ação para recuperar a meta de tinta imobiliária da Loja Centro até o dia 30."></textarea>
@@ -274,6 +296,7 @@ tr.incompleto input{background:transparent}
       <p class="sub" style="margin-bottom:10px">Cada botão abre a conversa da pessoa com o convite já escrito. Você só toca em enviar.</p>
       <div class="btnrow" id="convitesBtns" style="margin-top:0"></div>
     </div>
+    </div>
   </div>
 </section>
 
@@ -285,6 +308,7 @@ tr.incompleto input{background:transparent}
         <div style="font-weight:bold;font-size:16px;color:var(--navy)" id="runTitulo"></div>
         <div style="font-size:12px;color:var(--muted)" id="runMeta"></div>
       </div>
+      <span class="hint" id="salvoEm" style="align-self:center;margin:0"></span>
       <button class="btn btn-ghost btn-sm" id="btnSave">💾 Salvar backup</button>
       <button class="btn btn-navy btn-sm" id="btnFinish">✓ Encerrar e gerar ata</button>
     </div>
@@ -316,7 +340,22 @@ tr.incompleto input{background:transparent}
     <div class="livebox hidden" id="liveBox"></div>
     <div id="recInfo" class="hint hidden"></div>
 
-    <label>Anotações deste bloco</label>
+    <div id="marcadores" class="hidden">
+      <label>Marcar um momento</label>
+      <div class="capbar">
+        <button class="cap" data-mk="📌 DECISÃO">📌 Decisão</button>
+        <button class="cap" data-mk="⭐ IMPORTANTE">⭐ Importante</button>
+        <button class="cap" data-mk="❓ PENDÊNCIA">❓ Pendência</button>
+        <button class="cap" data-mk="🚩 FORA DE PAUTA">🚩 Fora de pauta</button>
+      </div>
+      <div class="hint">Cada marcação entra na transcrição com o minuto exato e vira um destaque na ata. Marque na hora — depois ninguém lembra em que momento a decisão saiu.</div>
+      <details id="roteiroLembrete" style="margin:14px 0">
+        <summary style="cursor:pointer;font-size:13px;font-weight:bold;color:var(--navy)">Ver o roteiro sugerido (só como lembrete)</summary>
+        <div class="guia" id="roteiroLembreteBox" style="margin-top:10px"></div>
+      </details>
+    </div>
+
+    <label id="labNotas">Anotações deste bloco</label>
     <textarea id="bNotas" rows="7" placeholder="Digite os pontos principais. O que for transcrito pelo microfone entra aqui automaticamente."></textarea>
     <div class="hint" id="micHint"></div>
 
@@ -460,16 +499,24 @@ var TPL = {
 
 /* ============ ESTADO ============ */
 var S = null;
-function novoEstado(k){
+function novoEstado(k, cond){
   var t = TPL[k];
+  var total = t.blocos.reduce(function(a,b){return a+b.min;},0);
+  /* No modo corrido a reunião vira um bloco único: a mesma tela guarda transcrição,
+     ações e fechamento, sem obrigar o condutor a avançar etapa por etapa. */
+  var blocos = cond==='corrido'
+    ? [{t:'Registro da reunião', min:total, q:'', tipo:'notas', guia:[], notas:'', seg:0}]
+    : t.blocos.map(function(b){return {t:b.t,min:b.min,q:b.q||'',tipo:b.tipo||'notas',guia:b.guia.map(function(g){return {txt:g,ok:false}}),notas:'',seg:0};});
   return {
-    tpl:k, titulo:'', condutor:'', data:'', hora:'', local:'', part:'', emails:'', objetivo:'',
-    blocos: t.blocos.map(function(b){return {t:b.t,min:b.min,q:b.q||'',tipo:b.tipo||'notas',guia:b.guia.map(function(g){return {txt:g,ok:false}}),notas:'',seg:0};}),
+    tpl:k, modoCond:cond||'blocos',
+    titulo:'', condutor:'', data:'', hora:'', local:'', part:'', emails:'', objetivo:'',
+    blocos: blocos,
     acoes:[{a:'',r:'',p:''}], status:'Sim', pend:'', followData:'', followHora:'08:00',
     gravacoes:[], cur:0, ini:null, fim:null, totalSeg:0, enviado:false
   };
 }
 var sel = 'padrao';
+var cond = 'blocos';   /* 'blocos' = guiado etapa por etapa · 'corrido' = gravação contínua */
 var tickTotal=null, tickBloco=null, blocoIni=null, dirty=false;
 
 /* ============ HELPERS ============ */
@@ -478,6 +525,8 @@ function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replac
 function fmt(sec){var m=Math.floor(sec/60),s=sec%60;return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;}
 function toast(msg){var t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2600);}
 function dataBr(d){if(!d)return '';var p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+/* o prazo passou a ser um seletor de data (yyyy-mm-dd), mas atas antigas podem ter texto livre */
+function prazoBr(p){ return /^\d{4}-\d{2}-\d{2}$/.test(p||'') ? dataBr(p) : (p||''); }
 
 /* ============ SALVAMENTO AUTOMÁTICO ============
    O celular descarta abas em segundo plano. Sem isso, uma ligação no meio da
@@ -485,10 +534,52 @@ function dataBr(d){if(!d)return '';var p=d.split('-');return p[2]+'/'+p[1]+'/'+p
    navegador bloquear o armazenamento, o app segue funcionando normalmente. */
 var LS_KEY='sotintas_meet_reuniao_v1';
 var tSave=null;
-function salvarLocal(){ try{ if(S) localStorage.setItem(LS_KEY, JSON.stringify(S)); }catch(e){} }
+function salvarLocal(){
+  try{
+    if(!S) return;
+    localStorage.setItem(LS_KEY, JSON.stringify(S));
+    var d=new Date();
+    var el=$('salvoEm');
+    if(el) el.textContent='✓ salvo às '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+  }catch(e){
+    var el2=$('salvoEm');
+    if(el2) el2.innerHTML='<span style="color:var(--red)">⚠ salvamento automático indisponível — use o backup</span>';
+  }
+}
 function agendarSalvar(){ clearTimeout(tSave); tSave=setTimeout(salvarLocal,700); }
 function lerLocal(){ try{ var r=localStorage.getItem(LS_KEY); return r?JSON.parse(r):null; }catch(e){ return null; } }
 function limparLocal(){ try{ localStorage.removeItem(LS_KEY); }catch(e){} }
+
+/* ============ RELÓGIO E ALERTA DE TEMPO ============ */
+function tick(){
+  if(!S) return;
+  S.totalSeg++; $('totalTime').textContent=fmt(S.totalSeg);
+  if(S.totalSeg%10===0) salvarLocal();
+  var b=S.blocos[S.cur], el=$('bTime');
+  var seg=b.seg+Math.floor((Date.now()-blocoIni)/1000);
+  el.textContent=fmt(seg);
+  var estourou = seg > b.min*60;
+  $('bTimeBox').className='btime'+(estourou?' over':'');
+  /* avisa UMA vez por bloco: quem conduz está olhando para as pessoas, não para a tela */
+  if(estourou && !b.avisou){
+    b.avisou=true;
+    bipe(); if(navigator.vibrate){ try{ navigator.vibrate([120,80,120]); }catch(e){} }
+    toast('⏱ Tempo do bloco "'+b.t+'" estourou.');
+  }
+}
+/* bip curto gerado no próprio navegador — sem arquivo de som para carregar */
+function bipe(){
+  try{
+    var Ctx=window.AudioContext||window.webkitAudioContext; if(!Ctx) return;
+    var ctx=new Ctx(), o=ctx.createOscillator(), g=ctx.createGain();
+    o.type='sine'; o.frequency.value=880; o.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0.0001,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.25,ctx.currentTime+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.45);
+    o.start(); o.stop(ctx.currentTime+0.5);
+    setTimeout(function(){ try{ctx.close();}catch(e){} },800);
+  }catch(e){}
+}
 
 function checarInterrompida(){
   var sv=lerLocal();
@@ -504,14 +595,7 @@ function retomarEstado(obj, aviso){
   $('runTitulo').textContent=S.titulo; $('runObjetivo').textContent=S.objetivo;
   $('runMeta').textContent=[TPL[S.tpl].nome,dataBr(S.data),S.hora,S.local].filter(Boolean).join(' · ');
   dirty=true; blocoIni=Date.now(); clearInterval(tickTotal);
-  tickTotal=setInterval(function(){
-    S.totalSeg++; $('totalTime').textContent=fmt(S.totalSeg);
-    if(S.totalSeg%10===0) salvarLocal();
-    var b=S.blocos[S.cur], el=$('bTime');
-    var seg=b.seg+Math.floor((Date.now()-blocoIni)/1000);
-    el.textContent=fmt(seg);
-    $('bTimeBox').className='btime'+(seg>b.min*60?' over':'');
-  },1000);
+  tickTotal=setInterval(tick,1000);
   renderBloco();
   if(S.fase==='ata') gerarAta();
   if(aviso) toast(aviso);
@@ -550,25 +634,43 @@ function checkStart(){
 }
 
 /* ============ PARTICIPANTES ============ */
-var PARTS=[{n:'',e:'',f:''}];
+var PARTS=[{n:'',e:'',f:'',p:true}];
 function renderParts(){
   var h='';
   PARTS.forEach(function(p,i){
-    h+='<tr>'+
+    if(p.p===undefined) p.p=true;
+    h+='<tr'+(p.p?'':' style="opacity:.5"')+'>'+
+      '<td data-l="Presente" style="text-align:center"><input type="checkbox" data-pi="'+i+'" data-pf="p"'+(p.p?' checked':'')+' style="width:18px;height:18px;accent-color:var(--ok)"></td>'+
       '<td data-l="Nome"><input data-pi="'+i+'" data-pf="n" value="'+esc(p.n)+'" placeholder="Ana"></td>'+
       '<td data-l="E-mail"><input data-pi="'+i+'" data-pf="e" value="'+esc(p.e)+'" placeholder="ana@sotintas.com.br"></td>'+
       '<td data-l="WhatsApp"><input data-pi="'+i+'" data-pf="f" value="'+esc(p.f)+'" placeholder="(11) 99999-8888"></td>'+
       '<td style="text-align:center"><button class="delrow" data-pd="'+i+'">×</button></td></tr>';
   });
   $('partsBody').innerHTML=h;
+  atualizaListaParts();
   Array.prototype.forEach.call(document.querySelectorAll('#partsBody input'),function(inp){
-    inp.oninput=function(){ PARTS[+inp.dataset.pi][inp.dataset.pf]=inp.value; renderConvites(); };
+    if(inp.type==='checkbox'){
+      inp.onchange=function(){
+        PARTS[+inp.dataset.pi].p=inp.checked;
+        inp.closest('tr').style.opacity = inp.checked?'':'.5';
+      };
+      return;
+    }
+    inp.oninput=function(){ PARTS[+inp.dataset.pi][inp.dataset.pf]=inp.value; renderConvites(); atualizaListaParts(); };
   });
   Array.prototype.forEach.call(document.querySelectorAll('#partsBody [data-pd]'),function(b){
-    b.onclick=function(){ PARTS.splice(+b.dataset.pd,1); if(!PARTS.length)PARTS=[{n:'',e:'',f:''}]; renderParts(); renderConvites(); };
+    b.onclick=function(){ PARTS.splice(+b.dataset.pd,1); if(!PARTS.length)PARTS=[{n:'',e:'',f:'',p:true}]; renderParts(); renderConvites(); };
   });
 }
+/* alimenta a lista de sugestões do campo "Responsável" na tabela de ações */
+function atualizaListaParts(){
+  var h='';
+  PARTS.forEach(function(p){ if(p.n.trim()) h+='<option value="'+esc(p.n.trim())+'">'; });
+  var dl=$('listaParts'); if(dl) dl.innerHTML=h;
+}
 function partsNomes(){ return PARTS.map(function(p){return p.n.trim();}).filter(Boolean).join(', '); }
+function partsPresentes(){ return PARTS.filter(function(p){return p.n.trim() && p.p!==false;}).map(function(p){return p.n.trim();}).join(', '); }
+function partsAusentes(){ return PARTS.filter(function(p){return p.n.trim() && p.p===false;}).map(function(p){return p.n.trim();}).join(', '); }
 function partsEmails(){ return PARTS.map(function(p){return p.e.trim();}).filter(function(x){return x.indexOf('@')>0;}).join(', '); }
 function partsFones(){ return PARTS.map(function(p){return p.f.trim();}).filter(Boolean).join(', '); }
 /* 11 99999-8888 → 5511999998888 (o wa.me exige DDI e só dígitos) */
@@ -600,6 +702,11 @@ function setModo(m){
   modo=m;
   $('tabAgora').className='tab'+(m==='agora'?' sel':'');
   $('tabAgendar').className='tab'+(m==='agendar'?' sel':'');
+  $('tabHistorico').className='tab'+(m==='historico'?' sel':'');
+  $('viewHistorico').classList.toggle('hidden', m!=='historico');
+  $('blocoSetup').classList.toggle('hidden', m==='historico');
+  $('proximas').classList.toggle('hidden', m==='historico' || !PROX.length);
+  if(m==='historico'){ carregarHistorico(); return; }
   $('wrapDuracao').classList.toggle('hidden', m!=='agendar');
   $('btnStart').classList.toggle('hidden', m!=='agora');
   $('btnAgendar').classList.toggle('hidden', m==='agora');
@@ -714,6 +821,35 @@ function carregarProximas(){
     })
     .catch(function(){ /* sem internet ou script antigo: simplesmente não mostra */ });
 }
+/* ============ HISTÓRICO ============ */
+function carregarHistorico(){
+  var box=$('histLista');
+  if(!ENVIO_URL){ box.innerHTML='<p class="sub">Histórico indisponível: o envio para o Google não está configurado.</p>'; return; }
+  box.innerHTML='<p class="sub">Carregando…</p>';
+  fetch(ENVIO_URL+'?acao=historico')
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if(!res || !res.ok || !res.itens || !res.itens.length){
+        box.innerHTML='<p class="sub">Nenhuma reunião registrada ainda. Assim que você enviar a primeira ata para o Google, ela aparece aqui.</p>';
+        return;
+      }
+      var h='';
+      res.itens.forEach(function(a){
+        var p=(a.data||'').split('-');
+        var cor = a.status==='Sim' ? 'var(--ok)' : (a.status==='Não' ? 'var(--red)' : '#B7791F');
+        h+='<div class="ag" style="border-left-color:'+cor+'">'+
+           '<div class="agd" style="background:'+cor+'"><b>'+(p[2]||'--')+'</b><span>'+mesCurto(p[1])+'</span></div>'+
+           '<div class="agi"><div class="agt">'+esc(a.titulo||'')+'</div>'+
+           '<div class="ags">'+esc(a.local||'')+(a.local?' · ':'')+'objetivo '+esc(String(a.status||'').toLowerCase())+
+           ' · '+(a.acoes||0)+' ação(ões)'+(a.pendentes?' · <b style="color:var(--red)">'+a.pendentes+' sem dono/prazo</b>':'')+'</div></div>'+
+           (a.pdf&&a.pdf.indexOf('http')===0?'<a class="btn btn-ghost btn-sm" href="'+a.pdf+'" target="_blank" rel="noopener noreferrer">Abrir ata</a>':'')+
+           '</div>';
+      });
+      box.innerHTML=h;
+    })
+    .catch(function(){ box.innerHTML='<p class="sub">Não consegui carregar o histórico. Verifique se o Apps Script está na versão nova.</p>'; });
+}
+
 function mesCurto(m){
   var M={'01':'jan','02':'fev','03':'mar','04':'abr','05':'mai','06':'jun','07':'jul','08':'ago','09':'set','10':'out','11':'nov','12':'dez'};
   return M[m]||'';
@@ -742,10 +878,11 @@ function usarAgendada(a){
 
 /* ============ INICIAR ============ */
 function iniciar(){
-  S=novoEstado(sel);
+  S=novoEstado(sel, cond);
   S.titulo=$('fTitulo').value.trim(); S.condutor=$('fCondutor').value.trim();
   S.data=$('fData').value; S.hora=$('fHora').value; S.local=$('fLocal').value.trim();
   S.part=partsNomes(); S.emails=partsEmails(); S.objetivo=$('fObjetivo').value.trim();
+  S.presentes=partsPresentes(); S.ausentes=partsAusentes();
   S.ini=new Date().toISOString();
   dirty=true;
   $('viewSetup').classList.add('hidden'); $('viewRun').classList.remove('hidden');
@@ -755,14 +892,7 @@ function iniciar(){
   $('runObjetivo').textContent=S.objetivo;
   S.cur=0; blocoIni=Date.now();
   clearInterval(tickTotal);
-  tickTotal=setInterval(function(){
-    S.totalSeg++; $('totalTime').textContent=fmt(S.totalSeg);
-    if(S.totalSeg%10===0) salvarLocal();
-    var b=S.blocos[S.cur], el=$('bTime');
-    var seg=b.seg+Math.floor((Date.now()-blocoIni)/1000);
-    el.textContent=fmt(seg);
-    $('bTimeBox').className='btime'+(seg>b.min*60?' over':'');
-  },1000);
+  tickTotal=setInterval(tick,1000);
   renderBloco();
   salvarLocal();
   window.scrollTo(0,0);
@@ -774,7 +904,7 @@ function salvarBloco(){
   var b=S.blocos[S.cur];
   b.notas=$('bNotas').value;
   Array.prototype.forEach.call(document.querySelectorAll('#guia input'),function(c,i){ if(b.guia[i]) b.guia[i].ok=c.checked; });
-  if(b.tipo==='fecho'){
+  if(b.tipo==='fecho' || S.modoCond==='corrido'){
     S.status=$('fStatus').value; S.pend=$('fPendencia').value;
     S.followData=$('fFollowData').value; S.followHora=$('fFollowHora').value;
   }
@@ -795,7 +925,12 @@ function renderSteps(){
 }
 function renderBloco(){
   var b=S.blocos[S.cur];
+  if(S.modoCond==='corrido') return renderCorrido(b);
   renderSteps();
+  $('steps').classList.remove('hidden'); $('pbarFill').parentNode.classList.remove('hidden');
+  $('guia').classList.remove('hidden'); $('marcadores').classList.add('hidden');
+  $('labNotas').textContent='Anotações deste bloco';
+  $('btnPrev').classList.remove('hidden'); $('btnNext').classList.remove('hidden');
   $('bNum').textContent=S.cur+1;
   $('bTitulo').textContent=b.t;
   $('bPergunta').textContent=b.q;
@@ -821,14 +956,49 @@ function renderBloco(){
   $('btnNext').textContent = S.cur===S.blocos.length-1 ? 'Ir para a ata →' : 'Próximo bloco →';
   window.scrollTo({top:0,behavior:'smooth'});
 }
+/* ============ MODO CORRIDO ============ */
+function renderCorrido(b){
+  $('steps').classList.add('hidden'); $('pbarFill').parentNode.classList.add('hidden');
+  $('guia').classList.add('hidden'); $('marcadores').classList.remove('hidden');
+  $('btnPrev').classList.add('hidden'); $('btnNext').classList.add('hidden');
+  $('bNum').textContent='🔴';
+  $('bTitulo').textContent='Reunião em andamento';
+  $('bPergunta').textContent='Ligue o microfone, deixe a conversa correr e marque os momentos importantes.';
+  $('bTime').textContent=fmt(b.seg);
+  $('bTimeL').textContent='de '+b.min+' min previstos';
+  $('labNotas').textContent='Transcrição e anotações';
+  $('bNotas').value=b.notas;
+  /* o roteiro fica disponível como lembrete, sem obrigar a seguir */
+  var g='<div class="gl">Roteiro sugerido para este tipo de reunião</div>';
+  TPL[S.tpl].blocos.forEach(function(x,i){
+    g+='<div class="gitem"><span style="color:var(--red);font-weight:bold">'+(i+1)+'.</span><span><b>'+esc(x.t)+'</b> · '+x.min+' min'+(x.q?'<br><span style="color:var(--muted);font-size:13px">'+esc(x.q)+'</span>':'')+'</span></div>';
+  });
+  $('roteiroLembreteBox').innerHTML=g;
+  $('actsWrap').classList.remove('hidden'); renderActs();
+  $('fechoWrap').classList.remove('hidden');
+  $('fStatus').value=S.status; $('fPendencia').value=S.pend;
+  $('fFollowData').value=S.followData||''; $('fFollowHora').value=S.followHora||'08:00';
+}
+function marcar(tag){
+  var b=S.blocos[S.cur];
+  var seg=b.seg+Math.floor((Date.now()-blocoIni)/1000);
+  var ta=$('bNotas');
+  ta.value += (ta.value && !/\n$/.test(ta.value) ? '\n' : '') + '['+fmt(seg)+'] '+tag+': ';
+  b.notas=ta.value;
+  ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
+  ta.scrollTop=ta.scrollHeight;
+  salvarLocal();
+  if(navigator.vibrate) { try{ navigator.vibrate(30); }catch(e){} }
+}
+
 function renderActs(){
   var h='';
   S.acoes.forEach(function(a,i){
     var bad = a.a.trim() && (!a.r.trim()||!a.p.trim());
     h+='<tr'+(bad?' class="incompleto"':'')+'>'+
        '<td data-l="Ação combinada"><input data-i="'+i+'" data-f="a" value="'+esc(a.a)+'" placeholder="O que será feito"></td>'+
-       '<td data-l="Responsável"><input data-i="'+i+'" data-f="r" value="'+esc(a.r)+'" placeholder="Quem"></td>'+
-       '<td data-l="Prazo"><input data-i="'+i+'" data-f="p" value="'+esc(a.p)+'" placeholder="Até quando"></td>'+
+       '<td data-l="Responsável"><input list="listaParts" data-i="'+i+'" data-f="r" value="'+esc(a.r)+'" placeholder="Quem"></td>'+
+       '<td data-l="Prazo"><input type="date" data-i="'+i+'" data-f="p" value="'+esc(a.p)+'"></td>'+
        '<td style="text-align:center"><button class="delrow" data-del="'+i+'">×</button></td></tr>';
   });
   $('actsBody').innerHTML=h;
@@ -872,7 +1042,13 @@ function initMic(){
     }
     if(fin){
       var ta=$('bNotas');
-      ta.value += (ta.value && !/\n$/.test(ta.value) ? '\n' : '') + '• ' + fin.trim();
+      /* no modo corrido cada trecho leva o minuto, para dar para navegar na transcrição depois */
+      var marca='• ';
+      if(S && S.modoCond==='corrido'){
+        var bb=S.blocos[S.cur];
+        marca='['+fmt(bb.seg+Math.floor((Date.now()-blocoIni)/1000))+'] ';
+      }
+      ta.value += (ta.value && !/\n$/.test(ta.value) ? '\n' : '') + marca + fin.trim();
       ta.scrollTop=ta.scrollHeight;
       S.blocos[S.cur].notas=ta.value;
     }
@@ -937,29 +1113,43 @@ function gerarAta(){
   var stTag = S.status==='Sim'?'<span class="tag ok">ATINGIDO</span>':'<span class="tag pend">'+S.status.toUpperCase()+'</span>';
 
   var h='<div class="ahead"><img src="'+LOGO+'" alt="Só Tintas"><div class="t" contenteditable>ATA DE REUNIÃO — '+esc(S.titulo)+'</div>'+
-        '<div class="s">'+esc(TPL[S.tpl].nome)+' · '+dataBr(S.data)+(S.hora?' às '+S.hora:'')+(S.local?' · '+esc(S.local):'')+'</div></div>';
+        '<div class="s">'+esc(TPL[S.tpl].nome)+(S.modoCond==='corrido'?' · gravação contínua':'')+' · '+dataBr(S.data)+(S.hora?' às '+S.hora:'')+(S.local?' · '+esc(S.local):'')+'</div></div>';
 
   h+='<div class="meta"><div><b>Condutor:</b> <span contenteditable>'+esc(S.condutor||'—')+'</span></div>'+
      '<div><b>Duração real:</b> '+real+' min <span style="color:var(--muted)">(previsto '+prev+' min)</span></div>'+
-     '<div style="grid-column:1/-1"><b>Participantes:</b> <span contenteditable>'+esc(S.part||'—')+'</span></div></div>';
+     '<div style="grid-column:1/-1"><b>Presentes:</b> <span contenteditable>'+esc(S.presentes||S.part||'—')+'</span></div>'+
+     (S.ausentes ? '<div style="grid-column:1/-1;color:var(--red)"><b style="color:var(--red)">Ausentes:</b> '+esc(S.ausentes)+'</div>' : '')+
+     '</div>';
 
   h+='<h4>Objetivo da reunião</h4><div class="objfinal" id="ataObj" contenteditable>'+esc(S.objetivo)+'</div>';
 
-  h+='<h4>Registro por bloco</h4>';
+  /* no modo corrido: primeiro os momentos marcados, depois a transcrição inteira */
+  if(S.modoCond==='corrido'){
+    var linhas=(S.blocos[0].notas||'').split('\n');
+    var marcados=linhas.filter(function(l){ return /^\[\d{2}:\d{2}\]\s*(📌|⭐|❓|🚩)/.test(l); });
+    if(marcados.length){
+      h+='<h4>Momentos marcados</h4>';
+      marcados.forEach(function(l){ h+='<p contenteditable>'+esc(l)+'</p>'; });
+    }
+  }
+
+  h+='<h4>'+(S.modoCond==='corrido'?'Transcrição e anotações':'Registro por bloco')+'</h4>';
   S.blocos.forEach(function(b,i){
     if(b.tipo==='fecho') return;
     if(b.tipo==='acoes' && !b.notas.trim()) return;
     var txt=b.notas.trim();
-    h+='<p style="margin-top:12px"><b style="color:var(--navy)">'+(i+1)+'. '+esc(b.t)+'</b> '+
-       '<span style="color:var(--muted);font-size:12px">('+fmt(b.seg)+' de '+b.min+' min)</span></p>'+
-       '<p contenteditable>'+(txt?esc(txt):'<span style="color:#b6bdcd">— sem registro neste bloco —</span>')+'</p>';
+    if(S.modoCond!=='corrido'){
+      h+='<p style="margin-top:12px"><b style="color:var(--navy)">'+(i+1)+'. '+esc(b.t)+'</b> '+
+         '<span style="color:var(--muted);font-size:12px">('+fmt(b.seg)+' de '+b.min+' min)</span></p>';
+    }
+    h+='<p contenteditable>'+(txt?esc(txt):'<span style="color:#b6bdcd">— sem registro —</span>')+'</p>';
   });
 
   h+='<h4>Decisões e próximos passos</h4>';
   if(acoes.length){
     h+='<table id="ataActs"><tr><th>Ação</th><th>Responsável</th><th>Prazo</th></tr>';
     acoes.forEach(function(a){
-      h+='<tr><td contenteditable>'+esc(a.a)+'</td><td contenteditable>'+(a.r.trim()?esc(a.r):'<span style="color:var(--red)">definir</span>')+'</td><td contenteditable>'+(a.p.trim()?esc(a.p):'<span style="color:var(--red)">definir</span>')+'</td></tr>';
+      h+='<tr><td contenteditable>'+esc(a.a)+'</td><td contenteditable>'+(a.r.trim()?esc(a.r):'<span style="color:var(--red)">definir</span>')+'</td><td contenteditable>'+(a.p.trim()?esc(prazoBr(a.p)):'<span style="color:var(--red)">definir</span>')+'</td></tr>';
     });
     h+='</table>';
     if(pend.length) h+='<p style="font-size:13px;color:var(--red);margin-top:8px"><b>Atenção:</b> '+pend.length+' ação(ões) sem responsável ou sem prazo definido.</p>';
@@ -1025,7 +1215,8 @@ function payloadGoogle(){
     '.meta{font-size:13px}.foot{margin-top:24px;border-top:1px solid #dde3ef;padding-top:10px;text-align:center;font-size:11px;color:#6b7690}';
   return {
     titulo:S.titulo, modelo:TPL[S.tpl].nome, data:S.data, hora:S.hora, local:S.local,
-    condutor:S.condutor, participantes:S.part, emails:S.emails,
+    condutor:S.condutor, participantes:S.part, presentes:S.presentes||S.part, ausentes:S.ausentes||'',
+    emails:S.emails, modoCond:S.modoCond||'blocos',
     objetivo: elObj?elObj.innerText.trim():S.objetivo,
     status:S.status, pendencia:($('ataPend')?$('ataPend').innerText.trim():S.pend),
     followData:S.followData, followHora:S.followHora||'08:00',
@@ -1050,7 +1241,9 @@ function enviarGoogle(){
         var l='✅ <b>Enviado.</b> '+res.linhasAcoes+' ação(ões) na planilha.';
         if(res.pdfUrl) l+=' <a href="'+res.pdfUrl+'" target="_blank" rel="noopener noreferrer">Abrir a ata no Drive</a>.';
         if(res.eventoCriado) l+=' Follow-up criado na Agenda.';
+        if(res.agendamentoBaixado) l+=' Agendamento marcado como realizado.';
         boxStatus('ok',l);
+        if(res.resumo) mostrarResumo(res.resumo);
         $('btnGoogle').textContent='☁ Enviado ao Google';
       } else {
         boxStatus('erro','⚠ O Google respondeu com erro: '+esc((res&&res.erro)||'desconhecido')+'. A ata não se perdeu — use "Baixar backup (.json)" e tente de novo.');
@@ -1065,6 +1258,19 @@ function enviarGoogle(){
 
 /* O resumo é montado a partir da ATA NA TELA (e não do estado bruto), para que as
    correções que o condutor faz na ata editável apareçam também no WhatsApp e no e-mail. */
+/* O resumo vem pronto do Google (Gemini) e entra no topo da ata, antes de tudo. */
+function mostrarResumo(txt){
+  S.resumoIA=txt;
+  if($('ataResumo')){ $('ataResumo').innerText=txt; return; }
+  var bloco=document.createElement('div');
+  bloco.innerHTML='<h4>Resumo da reunião</h4>'+
+    '<div id="ataResumo" contenteditable style="background:#f8faff;border-left:4px solid var(--navy);'+
+    'padding:12px 14px;border-radius:0 8px 8px 0;font-size:14.5px;white-space:pre-wrap">'+esc(txt)+'</div>';
+  var alvo=$('ataBox').querySelector('h4');
+  if(alvo) $('ataBox').insertBefore(bloco, alvo); else $('ataBox').appendChild(bloco);
+  toast('Resumo gerado e inserido na ata.');
+}
+
 function textoResumo(){
   var objTxt=S.objetivo, pendTxt=S.pend;
   var acoes=S.acoes.filter(function(a){return a.a.trim();}).map(function(a){return {a:a.a,r:a.r,p:a.p};});
@@ -1085,13 +1291,16 @@ function textoResumo(){
   L.push(dataBr(S.data)+(S.hora?' às '+S.hora:'')+(S.local?' · '+S.local:''));
   L.push('');
   L.push('*Objetivo:* '+objTxt);
-  if(S.part) L.push('*Participantes:* '+S.part);
+  if(S.presentes||S.part) L.push('*Presentes:* '+(S.presentes||S.part));
+  if(S.ausentes) L.push('*Ausentes:* '+S.ausentes);
   L.push('');
+  var resIA = $('ataResumo') ? $('ataResumo').innerText.trim() : (S.resumoIA||'');
+  if(resIA){ L.push('*Resumo:*'); L.push(resIA); L.push(''); }
   L.push('*Decisões e próximos passos:*');
   if(acoes.length){
     acoes.forEach(function(a,i){
       var r=(a.r&&a.r!=='definir')?a.r:'SEM RESPONSÁVEL';
-      var p=(a.p&&a.p!=='definir')?a.p:'SEM PRAZO';
+      var p=(a.p&&a.p!=='definir')?prazoBr(a.p):'SEM PRAZO';
       L.push((i+1)+') '+a.a+' — '+r+' · até '+p);
     });
   } else L.push('— nenhuma ação registrada —');
@@ -1121,7 +1330,7 @@ function carregarJson(f){
       $('runTitulo').textContent=S.titulo; $('runObjetivo').textContent=S.objetivo;
       $('runMeta').textContent=[TPL[S.tpl].nome,dataBr(S.data),S.hora,S.local].filter(Boolean).join(' · ');
       blocoIni=Date.now(); clearInterval(tickTotal);
-      tickTotal=setInterval(function(){ S.totalSeg++; $('totalTime').textContent=fmt(S.totalSeg); },1000);
+      tickTotal=setInterval(tick,1000);
       renderBloco(); toast('Reunião retomada.');
     }catch(e){ toast('Arquivo inválido.'); }
   };
@@ -1134,8 +1343,20 @@ renderModels(); renderAgenda(); renderParts(); initMic(); checarInterrompida(); 
 $('fObjetivo').oninput=checkStart; $('fTitulo').oninput=checkStart;
 $('fData').onchange=checkStart; $('fHora').onchange=checkStart;
 $('btnAddPart').onclick=function(){ PARTS.push({n:'',e:'',f:''}); renderParts(); };
+Array.prototype.forEach.call(document.querySelectorAll('[data-mc]'),function(b){
+  b.onclick=function(){
+    cond=b.dataset.mc;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-mc]'),function(x){
+      x.className='model'+(x.dataset.mc===cond?' sel':'');
+    });
+  };
+});
+Array.prototype.forEach.call(document.querySelectorAll('[data-mk]'),function(b){
+  b.onclick=function(){ marcar(b.dataset.mk); };
+});
 $('tabAgora').onclick=function(){ setModo('agora'); };
 $('tabAgendar').onclick=function(){ setModo('agendar'); };
+$('tabHistorico').onclick=function(){ setModo('historico'); };
 $('btnAgendar').onclick=agendar;
 $('btnConviteZap').onclick=function(){
   var t=textoConvite(); $('zapText').value=t; $('modalZap').classList.add('show');
@@ -1191,7 +1412,7 @@ $('btnMail').onclick=function(){
 $('btnJson').onclick=baixarJson;
 $('btnBack').onclick=function(){
   $('viewAta').classList.add('hidden'); $('viewRun').classList.remove('hidden'); blocoIni=Date.now();
-  clearInterval(tickTotal); tickTotal=setInterval(function(){ S.totalSeg++; $('totalTime').textContent=fmt(S.totalSeg); },1000);
+  clearInterval(tickTotal); tickTotal=setInterval(tick,1000);
   renderBloco();
 };
 $('btnNew').onclick=function(){
