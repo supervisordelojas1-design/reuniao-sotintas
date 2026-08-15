@@ -63,6 +63,22 @@ textarea{resize:vertical;line-height:1.5}
 .model .md{font-size:12px;color:var(--muted);line-height:1.45}
 .model .mt{font-size:11px;color:var(--red);font-weight:bold;margin-top:8px}
 
+/* ---------- abas agora / agendar ---------- */
+.tabs{display:flex;gap:8px;margin:0 0 16px;border-bottom:2px solid var(--line);padding-bottom:0}
+.tab{background:none;border:none;border-bottom:3px solid transparent;padding:9px 14px;font-size:15px;font-weight:bold;color:var(--muted);margin-bottom:-2px}
+.tab.sel{color:var(--navy);border-bottom-color:var(--red)}
+.tab:hover{color:var(--navy)}
+/* ---------- cartões de reunião agendada ---------- */
+.ag{background:#fff;border:1px solid var(--line);border-left:5px solid var(--navy);border-radius:12px;padding:13px 16px;margin-bottom:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.ag.hoje{border-left-color:var(--red);background:#fff9f9}
+.ag .agd{background:var(--navy);color:#fff;border-radius:9px;padding:6px 10px;text-align:center;flex:0 0 auto;line-height:1.15}
+.ag.hoje .agd{background:var(--red)}
+.ag .agd b{display:block;font-size:17px}
+.ag .agd span{font-size:10px;text-transform:uppercase;letter-spacing:.5px}
+.ag .agi{flex:1;min-width:170px}
+.ag .agt{font-weight:bold;color:var(--navy);font-size:15px}
+.ag .ags{font-size:12px;color:var(--muted);margin-top:2px}
+
 /* ---------- alerta objetivo ---------- */
 .objbox{background:var(--warn-bg);border:1.5px solid #f0d48a;border-left:5px solid var(--yellow);border-radius:10px;padding:14px 16px}
 .objbox .oh{font-weight:bold;color:#8a6100;font-size:13px;margin-bottom:6px}
@@ -183,9 +199,25 @@ tr.incompleto input{background:transparent}
 
 <!-- ================= TELA 1: PREPARAÇÃO ================= -->
 <section id="viewSetup">
+
+  <!-- faixa de reunião interrompida -->
+  <div id="banRetomar" class="hidden" style="background:#FFF3CD;border:1.5px solid #f0d48a;border-left:5px solid var(--yellow);border-radius:12px;padding:14px 16px;margin:16px 0">
+    <div style="font-weight:bold;color:#8a6100;font-size:14px">⏸ Você tem uma reunião interrompida</div>
+    <div id="banRetomarInfo" style="font-size:13px;color:#8a6100;margin:4px 0 10px"></div>
+    <button class="btn btn-primary btn-sm" id="btnRetomar">Retomar de onde parei</button>
+    <button class="btn btn-ghost btn-sm" id="btnDescartar">Descartar</button>
+  </div>
+
+  <!-- reuniões já agendadas -->
+  <div id="proximas" class="hidden"></div>
+
   <div class="card">
-    <h1>Preparar a reunião</h1>
-    <p class="sub">Leva 40 segundos. Sem objetivo escrito, o botão de iniciar não libera — é de propósito.</p>
+    <div class="tabs">
+      <button class="tab sel" id="tabAgora">▶ Reunião agora</button>
+      <button class="tab" id="tabAgendar">📅 Agendar reunião</button>
+    </div>
+    <h1 id="setupTitulo">Preparar a reunião</h1>
+    <p class="sub" id="setupSub">Leva 40 segundos. Sem objetivo escrito, o botão de iniciar não libera — é de propósito.</p>
 
     <h3 style="margin-top:0">1. Que tipo de reunião é essa?</h3>
     <div class="models" id="models"></div>
@@ -200,10 +232,24 @@ tr.incompleto input{background:transparent}
       <div><label>Hora de início</label><input type="time" id="fHora"></div>
       <div><label>Local / plataforma</label><input type="text" id="fLocal" placeholder="Loja Centro / Google Meet"></div>
     </div>
-    <label>Participantes <span style="text-transform:none;font-weight:normal">(separe por vírgula)</span></label>
-    <input type="text" id="fPart" placeholder="Ana, Carlos, Juliana, Marcos">
-    <label>E-mails para envio da ata <span style="text-transform:none;font-weight:normal">(opcional, separados por vírgula)</span></label>
-    <input type="text" id="fEmails" placeholder="ana@sotintas.com.br, carlos@sotintas.com.br">
+    <div class="grid2 hidden" id="wrapDuracao">
+      <div><label>Duração prevista (minutos)</label><input type="text" id="fDuracao" placeholder="55"></div>
+      <div><label>Lembrete antes</label>
+        <select id="fLembrete">
+          <option value="15">15 minutos antes</option>
+          <option value="30" selected>30 minutos antes</option>
+          <option value="60">1 hora antes</option>
+          <option value="1440">1 dia antes</option>
+        </select>
+      </div>
+    </div>
+    <label>Participantes</label>
+    <table class="acts" id="tabParts">
+      <thead><tr><th style="width:32%">Nome</th><th style="width:34%">E-mail</th><th style="width:26%">WhatsApp</th><th style="width:8%"></th></tr></thead>
+      <tbody id="partsBody"></tbody>
+    </table>
+    <div class="hint" id="labEmails">O e-mail recebe a ata. O WhatsApp gera o botão de convite individual — pode deixar em branco quem você não for avisar por lá.</div>
+    <button class="btn btn-ghost btn-sm" id="btnAddPart" style="margin-top:10px">+ Adicionar participante</button>
 
     <h3>3. Objetivo da reunião <span style="color:var(--red)">*</span></h3>
     <div class="objbox">
@@ -216,9 +262,17 @@ tr.incompleto input{background:transparent}
 
     <div class="btnrow">
       <button class="btn btn-primary" id="btnStart" disabled>▶ Iniciar reunião</button>
+      <button class="btn btn-primary hidden" id="btnAgendar" disabled>📅 Agendar e convidar</button>
+      <button class="btn btn-navy hidden" id="btnConviteZap">💬 Convite para WhatsApp</button>
       <span class="hint" id="startHint" style="align-self:center"></span>
       <button class="btn btn-ghost btn-sm" id="btnLoad">📂 Retomar reunião salva (.json)</button>
       <input type="file" id="fileLoad" accept=".json" class="hidden">
+    </div>
+    <div id="agStatus" class="hidden" style="margin-top:14px;padding:12px 16px;border-radius:10px;font-size:14px;line-height:1.5"></div>
+    <div id="convitesInd" class="hidden" style="margin-top:16px">
+      <h3 style="margin-bottom:6px">Convidar um por um no WhatsApp</h3>
+      <p class="sub" style="margin-bottom:10px">Cada botão abre a conversa da pessoa com o convite já escrito. Você só toca em enviar.</p>
+      <div class="btnrow" id="convitesBtns" style="margin-top:0"></div>
     </div>
   </div>
 </section>
@@ -425,6 +479,44 @@ function fmt(sec){var m=Math.floor(sec/60),s=sec%60;return (m<10?'0':'')+m+':'+(
 function toast(msg){var t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2600);}
 function dataBr(d){if(!d)return '';var p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
 
+/* ============ SALVAMENTO AUTOMÁTICO ============
+   O celular descarta abas em segundo plano. Sem isso, uma ligação no meio da
+   reunião apaga 40 minutos de trabalho. Tudo protegido por try/catch: se o
+   navegador bloquear o armazenamento, o app segue funcionando normalmente. */
+var LS_KEY='sotintas_meet_reuniao_v1';
+var tSave=null;
+function salvarLocal(){ try{ if(S) localStorage.setItem(LS_KEY, JSON.stringify(S)); }catch(e){} }
+function agendarSalvar(){ clearTimeout(tSave); tSave=setTimeout(salvarLocal,700); }
+function lerLocal(){ try{ var r=localStorage.getItem(LS_KEY); return r?JSON.parse(r):null; }catch(e){ return null; } }
+function limparLocal(){ try{ localStorage.removeItem(LS_KEY); }catch(e){} }
+
+function checarInterrompida(){
+  var sv=lerLocal();
+  if(!sv || !sv.titulo) return;
+  var quando = sv.fase==='ata' ? 'Ata gerada, ainda não enviada' : 'Reunião em andamento';
+  $('banRetomarInfo').textContent = quando+': "'+sv.titulo+'" · '+(dataBr(sv.data)||'')+' · '+fmt(sv.totalSeg||0)+' já decorridos';
+  $('banRetomar').classList.remove('hidden');
+}
+function retomarEstado(obj, aviso){
+  S=obj;
+  $('viewSetup').classList.add('hidden'); $('viewAta').classList.add('hidden'); $('viewRun').classList.remove('hidden');
+  $('chipTimer').classList.remove('hidden'); $('totalTime').textContent=fmt(S.totalSeg||0);
+  $('runTitulo').textContent=S.titulo; $('runObjetivo').textContent=S.objetivo;
+  $('runMeta').textContent=[TPL[S.tpl].nome,dataBr(S.data),S.hora,S.local].filter(Boolean).join(' · ');
+  dirty=true; blocoIni=Date.now(); clearInterval(tickTotal);
+  tickTotal=setInterval(function(){
+    S.totalSeg++; $('totalTime').textContent=fmt(S.totalSeg);
+    if(S.totalSeg%10===0) salvarLocal();
+    var b=S.blocos[S.cur], el=$('bTime');
+    var seg=b.seg+Math.floor((Date.now()-blocoIni)/1000);
+    el.textContent=fmt(seg);
+    $('bTimeBox').className='btime'+(seg>b.min*60?' over':'');
+  },1000);
+  renderBloco();
+  if(S.fase==='ata') gerarAta();
+  if(aviso) toast(aviso);
+}
+
 /* ============ TELA 1 ============ */
 function renderModels(){
   var h='';
@@ -449,9 +541,203 @@ function renderAgenda(){
 }
 function checkStart(){
   var temTit=$('fTitulo').value.trim().length>0, temObj=$('fObjetivo').value.trim().length>=12;
-  $('btnStart').disabled=!(temTit&&temObj);
+  var temData=$('fData').value && $('fHora').value;
   var falta=[]; if(!temTit) falta.push('o título'); if(!temObj) falta.push('o objetivo (uma frase completa)');
-  $('startHint').textContent = falta.length ? 'Falta preencher '+falta.join(' e ')+'.' : '';
+  if(modo==='agendar' && !temData) falta.push('a data e a hora');
+  $('btnStart').disabled=!(temTit&&temObj);
+  $('btnAgendar').disabled=!(temTit&&temObj&&temData);
+  $('startHint').textContent = falta.length ? 'Falta preencher '+falta.join(', ')+'.' : '';
+}
+
+/* ============ PARTICIPANTES ============ */
+var PARTS=[{n:'',e:'',f:''}];
+function renderParts(){
+  var h='';
+  PARTS.forEach(function(p,i){
+    h+='<tr>'+
+      '<td data-l="Nome"><input data-pi="'+i+'" data-pf="n" value="'+esc(p.n)+'" placeholder="Ana"></td>'+
+      '<td data-l="E-mail"><input data-pi="'+i+'" data-pf="e" value="'+esc(p.e)+'" placeholder="ana@sotintas.com.br"></td>'+
+      '<td data-l="WhatsApp"><input data-pi="'+i+'" data-pf="f" value="'+esc(p.f)+'" placeholder="(11) 99999-8888"></td>'+
+      '<td style="text-align:center"><button class="delrow" data-pd="'+i+'">×</button></td></tr>';
+  });
+  $('partsBody').innerHTML=h;
+  Array.prototype.forEach.call(document.querySelectorAll('#partsBody input'),function(inp){
+    inp.oninput=function(){ PARTS[+inp.dataset.pi][inp.dataset.pf]=inp.value; renderConvites(); };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#partsBody [data-pd]'),function(b){
+    b.onclick=function(){ PARTS.splice(+b.dataset.pd,1); if(!PARTS.length)PARTS=[{n:'',e:'',f:''}]; renderParts(); renderConvites(); };
+  });
+}
+function partsNomes(){ return PARTS.map(function(p){return p.n.trim();}).filter(Boolean).join(', '); }
+function partsEmails(){ return PARTS.map(function(p){return p.e.trim();}).filter(function(x){return x.indexOf('@')>0;}).join(', '); }
+function partsFones(){ return PARTS.map(function(p){return p.f.trim();}).filter(Boolean).join(', '); }
+/* 11 99999-8888 → 5511999998888 (o wa.me exige DDI e só dígitos) */
+function foneWa(f){
+  var d=String(f||'').replace(/\D/g,'');
+  if(!d) return '';
+  if(d.length===10||d.length===11) d='55'+d;
+  if(d.length<12) return '';
+  return d;
+}
+function renderConvites(){
+  var com=PARTS.filter(function(p){ return foneWa(p.f) && p.n.trim(); });
+  if(modo!=='agendar' || !com.length){ $('convitesInd').classList.add('hidden'); return; }
+  var h='';
+  com.forEach(function(p,i){ h+='<button class="btn btn-navy btn-sm" data-wa="'+i+'">💬 '+esc(p.n)+'</button>'; });
+  $('convitesBtns').innerHTML=h;
+  $('convitesInd').classList.remove('hidden');
+  Array.prototype.forEach.call(document.querySelectorAll('[data-wa]'),function(b){
+    b.onclick=function(){
+      var p=com[+b.dataset.wa];
+      window.open('https://wa.me/'+foneWa(p.f)+'?text='+encodeURIComponent(textoConvite(p.n)),'_blank','noopener,noreferrer');
+    };
+  });
+}
+
+/* ============ MODO: AGORA x AGENDAR ============ */
+var modo='agora';
+function setModo(m){
+  modo=m;
+  $('tabAgora').className='tab'+(m==='agora'?' sel':'');
+  $('tabAgendar').className='tab'+(m==='agendar'?' sel':'');
+  $('wrapDuracao').classList.toggle('hidden', m!=='agendar');
+  $('btnStart').classList.toggle('hidden', m!=='agora');
+  $('btnAgendar').classList.toggle('hidden', m==='agora');
+  $('btnConviteZap').classList.toggle('hidden', m==='agora');
+  $('setupTitulo').textContent = m==='agora' ? 'Preparar a reunião' : 'Agendar reunião';
+  $('setupSub').textContent = m==='agora'
+    ? 'Leva 40 segundos. Sem objetivo escrito, o botão de iniciar não libera — é de propósito.'
+    : 'O app cria o evento na Agenda Google convidando os participantes por e-mail, e gera o convite pronto para o WhatsApp.';
+  $('labEmails').innerHTML = m==='agendar'
+    ? 'E-mails dos convidados <span style="text-transform:none;font-weight:normal">(recebem o convite da Agenda e depois a ata)</span>'
+    : 'E-mails para envio da ata <span style="text-transform:none;font-weight:normal">(opcional, separados por vírgula)</span>';
+  if(m==='agendar' && !$('fDuracao').value) $('fDuracao').value = TPL[sel].blocos.reduce(function(a,b){return a+b.min;},0);
+  $('agStatus').classList.add('hidden');
+  renderConvites();
+  checkStart();
+}
+function agBox(cor,html){
+  var b=$('agStatus');
+  var e={info:['#eef3ff','#1C3F8F'],ok:['#e9f7ef','#1a8f5a'],erro:['#fdeaea','#D32027']}[cor];
+  b.style.background=e[0]; b.style.color=e[1]; b.style.border='1.5px solid '+e[1];
+  b.innerHTML=html; b.classList.remove('hidden');
+}
+function appUrl(){ return location.href.split('?')[0].split('#')[0]; }
+function dadosAgendamento(){
+  var t=TPL[sel];
+  return {
+    tipo:'agendamento',
+    titulo:$('fTitulo').value.trim(), modelo:t.nome, tplKey:sel,
+    data:$('fData').value, hora:$('fHora').value,
+    duracao: parseInt($('fDuracao').value,10) || t.blocos.reduce(function(a,b){return a+b.min;},0),
+    lembrete: parseInt($('fLembrete').value,10) || 30,
+    local:$('fLocal').value.trim(), condutor:$('fCondutor').value.trim(),
+    participantes:partsNomes(), emails:partsEmails(), fones:partsFones(),
+    participantesJson: JSON.stringify(PARTS.filter(function(p){return p.n.trim()||p.e.trim()||p.f.trim();})),
+    objetivo:$('fObjetivo').value.trim(),
+    roteiro: t.blocos.map(function(b,i){return (i+1)+'. '+b.t+' ('+b.min+' min)';}).join('\n'),
+    appUrl: appUrl()
+  };
+}
+function textoConvite(nome){
+  var d=dadosAgendamento(), L=[];
+  L.push('*Convite de reunião — Só Tintas*');
+  L.push('');
+  if(nome) { L.push('Oi, '+nome+'!'); L.push(''); }
+  L.push('📌 *'+(d.titulo||'Reunião')+'*');
+  L.push('📅 '+dataBr(d.data)+' às '+d.hora+' ('+d.duracao+' min)');
+  if(d.local) L.push('📍 '+d.local);
+  if(d.participantes) L.push('👥 '+d.participantes);
+  L.push('');
+  L.push('🎯 *Objetivo:* '+d.objetivo);
+  L.push('');
+  L.push('*Roteiro:*');
+  L.push(d.roteiro);
+  L.push('');
+  L.push('A ata será feita aqui, ao vivo:');
+  L.push(d.appUrl);
+  L.push('');
+  L.push('Por favor, confirme presença.');
+  L.push('');
+  L.push('_Só Tintas Meet · Colorindo vidas e realizando sonhos_');
+  return L.join('\n');
+}
+function agendar(){
+  if(!ENVIO_URL){ agBox('erro','⚠ Envio para o Google não configurado neste arquivo.'); return; }
+  $('btnAgendar').disabled=true;
+  agBox('info','⏳ Criando o evento na Agenda e convidando os participantes…');
+  fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(dadosAgendamento())})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if(res && res.ok){
+        var l='✅ <b>Agendado.</b>';
+        if(res.convidados) l+=' '+res.convidados+' convidado(s) por e-mail.';
+        if(res.eventoUrl) l+=' <a href="'+res.eventoUrl+'" target="_blank" rel="noopener noreferrer">Ver na Agenda</a>.';
+        l+='<br>Agora mande o convite no grupo pelo botão do WhatsApp.';
+        agBox('ok',l);
+        carregarProximas();
+      } else {
+        agBox('erro','⚠ O Google respondeu com erro: '+esc((res&&res.erro)||'desconhecido'));
+      }
+      $('btnAgendar').disabled=false;
+    })
+    .catch(function(){
+      agBox('erro','⚠ Não consegui falar com o Google. Você ainda pode mandar o convite pelo WhatsApp — o botão ao lado funciona sem internet do Google.');
+      $('btnAgendar').disabled=false;
+    });
+}
+
+/* ============ PRÓXIMAS REUNIÕES ============ */
+var PROX=[];
+function carregarProximas(){
+  if(!ENVIO_URL) return;
+  fetch(ENVIO_URL+'?acao=proximas')
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if(!res || !res.ok || !res.itens || !res.itens.length){ $('proximas').classList.add('hidden'); return; }
+      PROX=res.itens;
+      var hoje=new Date().toISOString().slice(0,10);
+      var h='<h3 style="margin:16px 0 8px">Reuniões agendadas</h3>';
+      PROX.forEach(function(a,i){
+        var eHoje=a.data===hoje;
+        var p=(a.data||'').split('-');
+        h+='<div class="ag'+(eHoje?' hoje':'')+'">'+
+           '<div class="agd"><b>'+(p[2]||'--')+'</b><span>'+mesCurto(p[1])+'</span></div>'+
+           '<div class="agi"><div class="agt">'+esc(a.titulo||'')+'</div>'+
+           '<div class="ags">'+(eHoje?'<b style="color:var(--red)">HOJE</b> · ':'')+(a.hora||'')+' · '+esc(a.modelo||'')+(a.local?' · '+esc(a.local):'')+'</div></div>'+
+           '<button class="btn btn-primary btn-sm" data-ag="'+i+'">Usar esta reunião</button></div>';
+      });
+      $('proximas').innerHTML=h; $('proximas').classList.remove('hidden');
+      Array.prototype.forEach.call(document.querySelectorAll('[data-ag]'),function(b){
+        b.onclick=function(){ usarAgendada(PROX[+b.dataset.ag]); };
+      });
+    })
+    .catch(function(){ /* sem internet ou script antigo: simplesmente não mostra */ });
+}
+function mesCurto(m){
+  var M={'01':'jan','02':'fev','03':'mar','04':'abr','05':'mai','06':'jun','07':'jul','08':'ago','09':'set','10':'out','11':'nov','12':'dez'};
+  return M[m]||'';
+}
+function usarAgendada(a){
+  if(a.tplKey && TPL[a.tplKey]){ sel=a.tplKey; renderModels(); renderAgenda(); }
+  $('fTitulo').value=a.titulo||''; $('fLocal').value=a.local||'';
+  $('fCondutor').value=a.condutor||''; $('fObjetivo').value=a.objetivo||'';
+  /* recompõe a lista de participantes: usa o JSON quando existir, senão casa nome com e-mail pela ordem */
+  var lista=null;
+  try{ if(a.participantesJson) lista=JSON.parse(a.participantesJson); }catch(e){ lista=null; }
+  if(!lista || !lista.length){
+    var n=(a.participantes||'').split(',').map(function(x){return x.trim();}).filter(Boolean);
+    var em=(a.emails||'').split(',').map(function(x){return x.trim();}).filter(Boolean);
+    var fo=(a.fones||'').split(',').map(function(x){return x.trim();}).filter(Boolean);
+    lista=n.map(function(x,i){ return {n:x, e:em[i]||'', f:fo[i]||''}; });
+  }
+  PARTS = lista.length ? lista : [{n:'',e:'',f:''}];
+  renderParts();
+  if(a.hora) $('fHora').value=a.hora;
+  $('fData').value=new Date().toISOString().slice(0,10);
+  setModo('agora'); checkStart();
+  toast('Dados carregados. Confira e inicie.');
+  $('btnStart').scrollIntoView({behavior:'smooth',block:'center'});
 }
 
 /* ============ INICIAR ============ */
@@ -459,7 +745,7 @@ function iniciar(){
   S=novoEstado(sel);
   S.titulo=$('fTitulo').value.trim(); S.condutor=$('fCondutor').value.trim();
   S.data=$('fData').value; S.hora=$('fHora').value; S.local=$('fLocal').value.trim();
-  S.part=$('fPart').value.trim(); S.emails=$('fEmails').value.trim(); S.objetivo=$('fObjetivo').value.trim();
+  S.part=partsNomes(); S.emails=partsEmails(); S.objetivo=$('fObjetivo').value.trim();
   S.ini=new Date().toISOString();
   dirty=true;
   $('viewSetup').classList.add('hidden'); $('viewRun').classList.remove('hidden');
@@ -471,12 +757,14 @@ function iniciar(){
   clearInterval(tickTotal);
   tickTotal=setInterval(function(){
     S.totalSeg++; $('totalTime').textContent=fmt(S.totalSeg);
+    if(S.totalSeg%10===0) salvarLocal();
     var b=S.blocos[S.cur], el=$('bTime');
     var seg=b.seg+Math.floor((Date.now()-blocoIni)/1000);
     el.textContent=fmt(seg);
     $('bTimeBox').className='btime'+(seg>b.min*60?' over':'');
   },1000);
   renderBloco();
+  salvarLocal();
   window.scrollTo(0,0);
 }
 
@@ -491,6 +779,7 @@ function salvarBloco(){
     S.followData=$('fFollowData').value; S.followHora=$('fFollowHora').value;
   }
   b.seg += Math.floor((Date.now()-blocoIni)/1000); blocoIni=Date.now();
+  salvarLocal();
 }
 function renderSteps(){
   var h='';
@@ -551,7 +840,7 @@ function renderActs(){
          texto que está sendo digitado se perdem (e no celular o teclado fecha) */
       var tr=inp.closest('tr'), bad=a.a.trim() && (!a.r.trim()||!a.p.trim());
       if(tr) tr.className = bad?'incompleto':'';
-      atualizaFlag();
+      atualizaFlag(); agendarSalvar();
     };
   });
   Array.prototype.forEach.call(document.querySelectorAll('#actsBody [data-del]'),function(btn){
@@ -694,6 +983,7 @@ function gerarAta(){
   $('ataBox').innerHTML=h;
   $('viewRun').classList.add('hidden'); $('viewAta').classList.remove('hidden');
   configGoogle();
+  S.fase='ata'; salvarLocal();
   window.scrollTo(0,0);
 }
 
@@ -756,7 +1046,7 @@ function enviarGoogle(){
     .then(function(r){ return r.json(); })
     .then(function(res){
       if(res && res.ok){
-        S.enviado=true; dirty=false;
+        S.enviado=true; dirty=false; limparLocal();
         var l='✅ <b>Enviado.</b> '+res.linhasAcoes+' ação(ões) na planilha.';
         if(res.pdfUrl) l+=' <a href="'+res.pdfUrl+'" target="_blank" rel="noopener noreferrer">Abrir a ata no Drive</a>.';
         if(res.eventoCriado) l+=' Follow-up criado na Agenda.';
@@ -839,13 +1129,29 @@ function carregarJson(f){
 }
 
 /* ============ EVENTOS ============ */
-renderModels(); renderAgenda(); initMic();
+renderModels(); renderAgenda(); renderParts(); initMic(); checarInterrompida(); carregarProximas();
 (function(){ var d=new Date(); $('fData').value=d.toISOString().slice(0,10); $('fHora').value=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); })();
 $('fObjetivo').oninput=checkStart; $('fTitulo').oninput=checkStart;
+$('fData').onchange=checkStart; $('fHora').onchange=checkStart;
+$('btnAddPart').onclick=function(){ PARTS.push({n:'',e:'',f:''}); renderParts(); };
+$('tabAgora').onclick=function(){ setModo('agora'); };
+$('tabAgendar').onclick=function(){ setModo('agendar'); };
+$('btnAgendar').onclick=agendar;
+$('btnConviteZap').onclick=function(){
+  var t=textoConvite(); $('zapText').value=t; $('modalZap').classList.add('show');
+  if(navigator.clipboard) navigator.clipboard.writeText(t).then(function(){toast('Convite copiado!');},function(){});
+};
+$('btnRetomar').onclick=function(){ var sv=lerLocal(); if(sv) retomarEstado(sv,'Reunião retomada.'); };
+$('btnDescartar').onclick=function(){
+  if(confirm('Descartar a reunião interrompida? Ela não poderá ser recuperada.')){ limparLocal(); $('banRetomar').classList.add('hidden'); }
+};
+/* o celular avisa antes de descartar a aba — é a última chance de salvar */
+document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') salvarLocal(); });
+window.addEventListener('pagehide', salvarLocal);
 $('btnStart').onclick=iniciar;
 $('btnLoad').onclick=function(){ $('fileLoad').click(); };
 $('fileLoad').onchange=function(e){ if(e.target.files[0]) carregarJson(e.target.files[0]); };
-$('bNotas').oninput=function(){ S.blocos[S.cur].notas=$('bNotas').value; };
+$('bNotas').oninput=function(){ S.blocos[S.cur].notas=$('bNotas').value; agendarSalvar(); };
 $('btnPrev').onclick=function(){ salvarBloco(); if(S.cur>0){S.cur--;renderBloco();} };
 $('btnNext').onclick=function(){ salvarBloco(); if(S.cur<S.blocos.length-1){S.cur++;renderBloco();} else gerarAta(); };
 $('btnAddAct').onclick=function(){ S.acoes.push({a:'',r:'',p:''}); renderActs(); };
@@ -888,7 +1194,9 @@ $('btnBack').onclick=function(){
   clearInterval(tickTotal); tickTotal=setInterval(function(){ S.totalSeg++; $('totalTime').textContent=fmt(S.totalSeg); },1000);
   renderBloco();
 };
-$('btnNew').onclick=function(){ if(confirm('Começar uma nova reunião? Salve o backup antes se ainda precisar destes dados.')) location.reload(); };
+$('btnNew').onclick=function(){
+  if(confirm('Começar uma nova reunião? Salve o backup antes se ainda precisar destes dados.')){ limparLocal(); dirty=false; location.reload(); }
+};
 window.onbeforeunload=function(){ if(dirty) return 'A reunião em andamento será perdida.'; };
 checkStart();
 </script>
