@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Condutor de Reuniões · Só Tintas</title>
+<style>
+:root{
+  --navy:#1C3F8F; --navy-d:#152F69; --red:#D32027; --yellow:#FFD100;
+  --ink:#16233d; --muted:#6b7690; --line:#e3e8f2; --bg:#f4f6fb;
+  --ok:#1a8f5a; --warn:#B7791F; --warn-bg:#FFF3CD;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink);-webkit-text-size-adjust:100%}
+button{font-family:inherit;cursor:pointer}
+input,textarea,select{font-family:inherit;font-size:15px;color:var(--ink)}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px 80px}
+
+/* ---------- topo ---------- */
+.topbar{background:var(--navy);color:#fff;position:sticky;top:0;z-index:50;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.topbar-in{max-width:1040px;margin:0 auto;padding:8px 16px;display:flex;align-items:center;gap:12px}
+.topbar img{height:34px;background:#fff;border-radius:6px;padding:2px 6px}
+.topbar .tt{font-weight:bold;font-size:15px;line-height:1.1}
+.topbar .ts{font-size:11px;opacity:.8}
+.topbar .spacer{flex:1}
+.chip-timer{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);padding:5px 10px;border-radius:20px;font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.chip-timer b{font-size:16px}
+
+/* ---------- cartões ---------- */
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;margin:16px 0;box-shadow:0 1px 3px rgba(20,35,70,.06)}
+h1{font-size:22px;margin:0 0 4px}
+h2{font-size:18px;margin:0 0 10px;color:var(--navy)}
+h3{font-size:15px;margin:18px 0 8px;color:var(--navy)}
+.sub{color:var(--muted);font-size:13px;margin:0 0 16px}
+label{display:block;font-size:12px;font-weight:bold;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:14px 0 5px}
+input[type=text],input[type=date],input[type=time],textarea,select{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:9px;background:#fff;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(28,63,143,.12)}
+textarea{resize:vertical;line-height:1.5}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:700px){.grid2,.grid3{grid-template-columns:1fr}}
+
+/* ---------- botões ---------- */
+.btn{border:none;border-radius:10px;padding:12px 18px;font-size:15px;font-weight:bold;display:inline-flex;align-items:center;gap:8px;justify-content:center}
+.btn-primary{background:var(--red);color:#fff}
+.btn-primary:hover{background:#b31a20}
+.btn-navy{background:var(--navy);color:#fff}
+.btn-navy:hover{background:#16336f}
+.btn-ghost{background:#fff;color:var(--navy);border:1.5px solid var(--line)}
+.btn-ghost:hover{border-color:var(--navy)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-sm{padding:7px 12px;font-size:13px;border-radius:8px}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+
+/* ---------- modelos ---------- */
+.models{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:12px}
+.model{border:2px solid var(--line);border-radius:12px;padding:14px;background:#fff;text-align:left;transition:.15s}
+.model:hover{border-color:var(--navy);transform:translateY(-2px)}
+.model.sel{border-color:var(--red);background:#fff7f7}
+.model .mi{font-size:22px}
+.model .mn{font-weight:bold;font-size:15px;margin:6px 0 4px;color:var(--navy)}
+.model .md{font-size:12px;color:var(--muted);line-height:1.45}
+.model .mt{font-size:11px;color:var(--red);font-weight:bold;margin-top:8px}
+
+/* ---------- alerta objetivo ---------- */
+.objbox{background:var(--warn-bg);border:1.5px solid #f0d48a;border-left:5px solid var(--yellow);border-radius:10px;padding:14px 16px}
+.objbox .oh{font-weight:bold;color:#8a6100;font-size:13px;margin-bottom:6px}
+.objbox .ot{font-size:12px;color:#8a6100;line-height:1.5;margin-top:8px}
+
+/* ---------- passos ---------- */
+.steps{display:flex;gap:6px;overflow-x:auto;padding:12px 0 4px;-webkit-overflow-scrolling:touch}
+.step{flex:0 0 auto;border:1.5px solid var(--line);background:#fff;border-radius:20px;padding:7px 13px;font-size:13px;color:var(--muted);white-space:nowrap}
+.step.done{border-color:var(--ok);color:var(--ok)}
+.step.cur{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:bold}
+.pbar{height:6px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:6px}
+.pbar>div{height:100%;background:var(--red);transition:width .3s}
+
+/* ---------- bloco ---------- */
+.bhead{display:flex;align-items:flex-start;gap:12px;border-bottom:2px solid var(--line);padding-bottom:12px;margin-bottom:14px}
+.bnum{background:var(--red);color:#fff;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:bold;flex:0 0 auto}
+.bt{font-size:19px;font-weight:bold;color:var(--navy);line-height:1.2}
+.bq{font-size:13px;color:var(--muted);margin-top:3px}
+.btime{margin-left:auto;text-align:right;font-variant-numeric:tabular-nums;flex:0 0 auto}
+.btime .v{font-size:20px;font-weight:bold;color:var(--navy)}
+.btime .l{font-size:11px;color:var(--muted)}
+.btime.over .v{color:var(--red)}
+.guia{background:#f8faff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:14px}
+.guia .gl{font-size:11px;font-weight:bold;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
+/* .gitem também é <label> — precisa anular o estilo de label de formulário */
+.gitem{display:flex;gap:9px;align-items:flex-start;padding:5px 0;font-size:14px;line-height:1.45;
+  text-transform:none;font-weight:normal;letter-spacing:0;color:var(--ink);margin:0;cursor:pointer}
+.gitem input{margin-top:3px;width:17px;height:17px;accent-color:var(--red);flex:0 0 auto}
+.gitem.chk span{text-decoration:line-through;color:var(--muted)}
+
+/* ---------- captura ---------- */
+.capbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.cap{border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:9px 13px;font-size:13px;font-weight:bold;color:var(--navy);display:inline-flex;align-items:center;gap:7px}
+.cap:hover{border-color:var(--navy)}
+.cap.on{background:var(--red);border-color:var(--red);color:#fff}
+.dot{width:9px;height:9px;border-radius:50%;background:#c9d1e4}
+.cap.on .dot{background:#fff;animation:pulse 1.1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.livebox{border:1.5px dashed var(--red);background:#fff7f7;border-radius:10px;padding:10px 12px;font-size:14px;color:#8a2b2f;margin-bottom:10px;min-height:44px;line-height:1.5}
+.livebox .int{color:#b98a8c;font-style:italic}
+.hint{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5}
+
+/* ---------- tabela ações ---------- */
+table.acts{width:100%;border-collapse:collapse;margin-top:6px}
+table.acts th{background:var(--navy);color:#fff;font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:9px;text-align:left}
+table.acts td{border:1px solid var(--line);padding:0;vertical-align:middle}
+table.acts input{border:none;border-radius:0;padding:10px;width:100%;box-shadow:none!important}
+table.acts input:focus{background:#f8faff}
+tr.incompleto td{background:#fff5f5}
+tr.incompleto input{background:transparent}
+.delrow{background:none;border:none;color:var(--muted);font-size:17px;padding:6px 10px;line-height:1}
+.delrow:hover{color:var(--red)}
+.flagbad{font-size:12px;color:var(--red);font-weight:bold;margin-top:8px;display:none}
+/* celular: a tabela de ações vira cartão empilhado, senão fica ilegível na mão */
+@media(max-width:640px){
+  table.acts thead{display:none}
+  table.acts,table.acts tbody,table.acts tr,table.acts td{display:block;width:100%}
+  table.acts tr{border:1.5px solid var(--line);border-radius:10px;margin-bottom:10px;padding:4px;position:relative}
+  table.acts td{border:none;border-bottom:1px solid var(--line)}
+  table.acts tr td:nth-child(3){border-bottom:none}
+  table.acts td:before{content:attr(data-l);display:block;font-size:10px;font-weight:bold;color:var(--muted);text-transform:uppercase;padding:6px 10px 0}
+  table.acts tr td:nth-child(4){position:absolute;top:2px;right:2px;width:auto;border:none}
+  table.acts tr td:nth-child(4):before{content:''}
+}
+
+/* ---------- ata ---------- */
+.ata{background:#fff;border:1px solid var(--line);border-radius:14px;padding:34px;line-height:1.6}
+.ata .ahead{text-align:center;border-bottom:3px solid var(--navy);padding-bottom:14px;margin-bottom:20px}
+.ata .ahead img{height:64px}
+.ata .ahead .t{font-size:21px;font-weight:bold;color:var(--navy);margin-top:8px}
+.ata .ahead .s{font-size:13px;color:var(--muted)}
+.ata h4{color:var(--navy);font-size:15px;margin:22px 0 8px;border-left:4px solid var(--red);padding-left:9px;text-transform:uppercase;letter-spacing:.5px}
+.ata p{margin:6px 0;font-size:14.5px;white-space:pre-wrap}
+.ata .meta{display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;font-size:14px}
+.ata .meta b{color:var(--navy)}
+.ata .objfinal{background:var(--warn-bg);border-left:4px solid var(--yellow);padding:12px 14px;border-radius:0 8px 8px 0;font-size:15px}
+.ata table{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
+.ata table th{background:var(--navy);color:#fff;padding:8px;text-align:left;font-size:12px;text-transform:uppercase}
+.ata table td{border:1px solid var(--line);padding:8px}
+.ata .foot{margin-top:28px;border-top:2px solid var(--line);padding-top:12px;text-align:center;font-size:12px;color:var(--muted)}
+.ata [contenteditable]:focus{outline:2px solid rgba(28,63,143,.25);border-radius:4px}
+.tag{display:inline-block;font-size:11px;font-weight:bold;padding:2px 8px;border-radius:20px;margin-left:6px}
+.tag.ok{background:#e3f6ec;color:var(--ok)}
+.tag.pend{background:#fdeaea;color:var(--red)}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:var(--navy);color:#fff;padding:12px 20px;border-radius:24px;font-size:14px;z-index:200;box-shadow:0 6px 20px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:.25s}
+.toast.show{opacity:1;bottom:34px}
+.modal{position:fixed;inset:0;background:rgba(18,28,50,.55);display:none;align-items:center;justify-content:center;z-index:150;padding:16px}
+.modal.show{display:flex}
+.modal .mbox{background:#fff;border-radius:14px;padding:22px;max-width:620px;width:100%;max-height:88vh;overflow:auto}
+.hidden{display:none!important}
+
+@media print{
+  body{background:#fff}
+  .topbar,.noprint,.btnrow{display:none!important}
+  .wrap{padding:0;max-width:none}
+  .ata{border:none;border-radius:0;padding:0;box-shadow:none}
+  .ata [contenteditable]{outline:none!important}
+  @page{margin:14mm}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-in">
+    <img src="data:image/jpeg;base64,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" alt="Só Tintas">
+    <div>
+      <div class="tt">Condutor de Reuniões</div>
+      <div class="ts">Só Tintas · toda reunião começa e termina com objetivo claro</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="chip-timer hidden" id="chipTimer">⏱ <b id="totalTime">00:00</b></div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ================= TELA 1: PREPARAÇÃO ================= -->
+<section id="viewSetup">
+  <div class="card">
+    <h1>Preparar a reunião</h1>
+    <p class="sub">Leva 40 segundos. Sem objetivo escrito, o botão de iniciar não libera — é de propósito.</p>
+
+    <h3 style="margin-top:0">1. Que tipo de reunião é essa?</h3>
+    <div class="models" id="models"></div>
+
+    <h3>2. Dados da reunião</h3>
+    <div class="grid2">
+      <div><label>Título</label><input type="text" id="fTitulo" placeholder="Ex.: Alinhamento semanal – Loja Centro"></div>
+      <div><label>Condutor</label><input type="text" id="fCondutor" placeholder="Bruno – Supervisor Comercial"></div>
+    </div>
+    <div class="grid3">
+      <div><label>Data</label><input type="date" id="fData"></div>
+      <div><label>Hora de início</label><input type="time" id="fHora"></div>
+      <div><label>Local / plataforma</label><input type="text" id="fLocal" placeholder="Loja Centro / Google Meet"></div>
+    </div>
+    <label>Participantes <span style="text-transform:none;font-weight:normal">(separe por vírgula)</span></label>
+    <input type="text" id="fPart" placeholder="Ana, Carlos, Juliana, Marcos">
+    <label>E-mails para envio da ata <span style="text-transform:none;font-weight:normal">(opcional, separados por vírgula)</span></label>
+    <input type="text" id="fEmails" placeholder="ana@sotintas.com.br, carlos@sotintas.com.br">
+
+    <h3>3. Objetivo da reunião <span style="color:var(--red)">*</span></h3>
+    <div class="objbox">
+      <div class="oh">Escreva em UMA frase o que precisa estar resolvido ao final</div>
+      <textarea id="fObjetivo" rows="2" placeholder="Ex.: Definir o plano de ação para recuperar a meta de tinta imobiliária da Loja Centro até o dia 30."></textarea>
+      <div class="ot"><b>Teste rápido:</b> se a frase não tem um verbo de entrega (definir, decidir, alinhar, treinar, aprovar) e um prazo, ela ainda é um assunto — não um objetivo. "Falar sobre vendas" é assunto. "Decidir quem assume a carteira do Marcos até sexta" é objetivo.</div>
+    </div>
+
+    <div id="agendaPrev"></div>
+
+    <div class="btnrow">
+      <button class="btn btn-primary" id="btnStart" disabled>▶ Iniciar reunião</button>
+      <span class="hint" id="startHint" style="align-self:center"></span>
+      <button class="btn btn-ghost btn-sm" id="btnLoad">📂 Retomar reunião salva (.json)</button>
+      <input type="file" id="fileLoad" accept=".json" class="hidden">
+    </div>
+  </div>
+</section>
+
+<!-- ================= TELA 2: CONDUÇÃO ================= -->
+<section id="viewRun" class="hidden">
+  <div class="card" style="padding:14px 20px">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div style="flex:1;min-width:200px">
+        <div style="font-weight:bold;font-size:16px;color:var(--navy)" id="runTitulo"></div>
+        <div style="font-size:12px;color:var(--muted)" id="runMeta"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="btnSave">💾 Salvar backup</button>
+      <button class="btn btn-navy btn-sm" id="btnFinish">✓ Encerrar e gerar ata</button>
+    </div>
+    <div class="objbox" style="margin-top:12px;padding:10px 14px">
+      <div class="oh" style="margin:0">🎯 Objetivo: <span style="font-weight:normal" id="runObjetivo"></span></div>
+    </div>
+    <div class="steps" id="steps"></div>
+    <div class="pbar"><div id="pbarFill" style="width:0%"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="bhead">
+      <div class="bnum" id="bNum">1</div>
+      <div style="flex:1">
+        <div class="bt" id="bTitulo"></div>
+        <div class="bq" id="bPergunta"></div>
+      </div>
+      <div class="btime" id="bTimeBox"><div class="v" id="bTime">00:00</div><div class="l" id="bTimeL">de 5 min</div></div>
+    </div>
+
+    <div class="guia" id="guia"></div>
+
+    <div class="capbar">
+      <button class="cap" id="capMic"><span class="dot"></span>🎤 Transcrever ao vivo</button>
+      <button class="cap" id="capAudio"><span class="dot"></span>⏺ Gravar áudio</button>
+      <button class="cap" id="capVideo"><span class="dot"></span>🎥 Gravar vídeo</button>
+      <button class="cap" id="capPaste">📋 Colar transcrição</button>
+    </div>
+    <div class="livebox hidden" id="liveBox"></div>
+    <div id="recInfo" class="hint hidden"></div>
+
+    <label>Anotações deste bloco</label>
+    <textarea id="bNotas" rows="7" placeholder="Digite os pontos principais. O que for transcrito pelo microfone entra aqui automaticamente."></textarea>
+    <div class="hint" id="micHint"></div>
+
+    <div id="actsWrap" class="hidden">
+      <h3>Decisões e próximos passos</h3>
+      <table class="acts">
+        <thead><tr><th style="width:44%">Ação combinada</th><th style="width:24%">Responsável</th><th style="width:22%">Prazo</th><th style="width:10%"></th></tr></thead>
+        <tbody id="actsBody"></tbody>
+      </table>
+      <div class="flagbad" id="actsFlag">⚠ Linhas em vermelho estão sem responsável ou sem prazo. Ação sem dono e sem data não é decisão, é intenção.</div>
+      <button class="btn btn-ghost btn-sm" id="btnAddAct" style="margin-top:10px">+ Adicionar ação</button>
+    </div>
+
+    <div id="fechoWrap" class="hidden">
+      <h3>Fechamento</h3>
+      <label>O objetivo da reunião foi atingido?</label>
+      <select id="fStatus">
+        <option value="Sim">Sim — objetivo atingido</option>
+        <option value="Parcialmente">Parcialmente — falta parte</option>
+        <option value="Não">Não — precisa de nova reunião</option>
+      </select>
+      <label>Se parcial ou não: o que ficou pendente?</label>
+      <textarea id="fPendencia" rows="2" placeholder="Ex.: Falta validar o estoque com o Marcos."></textarea>
+      <div class="grid2">
+        <div><label>Data do follow-up</label><input type="date" id="fFollowData"></div>
+        <div><label>Hora</label><input type="time" id="fFollowHora" value="08:00"></div>
+      </div>
+      <div class="hint">Preenchendo a data, o app cria o compromisso na sua Agenda Google ao enviar. Follow-up que não vira compromisso não acontece.</div>
+    </div>
+
+    <div class="btnrow">
+      <button class="btn btn-ghost" id="btnPrev">← Bloco anterior</button>
+      <button class="btn btn-primary" id="btnNext">Próximo bloco →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ================= TELA 3: ATA ================= -->
+<section id="viewAta" class="hidden">
+  <div class="card noprint" style="padding:16px 20px">
+    <h2 style="margin:0 0 4px">Ata gerada</h2>
+    <p class="sub" style="margin:0">Tudo abaixo é editável — clique e ajuste antes de enviar. Depois escolha a saída.</p>
+    <div class="btnrow" style="margin-top:14px">
+      <button class="btn btn-primary" id="btnPdf">📄 Salvar em PDF</button>
+      <button class="btn btn-navy" id="btnGoogle">☁ Enviar para o Google</button>
+      <button class="btn btn-navy" id="btnZap">💬 Copiar para WhatsApp</button>
+      <button class="btn btn-navy" id="btnMail">✉ Enviar por e-mail</button>
+      <button class="btn btn-ghost" id="btnJson">💾 Baixar backup (.json)</button>
+      <button class="btn btn-ghost" id="btnBack">← Voltar e ajustar</button>
+      <button class="btn btn-ghost" id="btnNew">＋ Nova reunião</button>
+    </div>
+  </div>
+  <div id="googleStatus" class="noprint hidden" style="margin:0 0 16px;padding:12px 16px;border-radius:10px;font-size:14px;line-height:1.5"></div>
+  <div class="ata" id="ataBox"></div>
+</section>
+
+</div>
+
+<!-- modal colar transcrição -->
+<div class="modal" id="modalPaste">
+  <div class="mbox">
+    <h2>Colar transcrição pronta</h2>
+    <p class="sub">Cole aqui o texto gerado pelo Google Meet, Teams, Zoom ou por um app de transcrição. Escolha em qual bloco ele entra.</p>
+    <label>Bloco de destino</label>
+    <select id="pasteTarget"></select>
+    <label>Texto da transcrição</label>
+    <textarea id="pasteText" rows="10" placeholder="Cole aqui..."></textarea>
+    <div class="btnrow">
+      <button class="btn btn-primary" id="pasteOk">Inserir no bloco</button>
+      <button class="btn btn-ghost" id="pasteCancel">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- modal whatsapp -->
+<div class="modal" id="modalZap">
+  <div class="mbox">
+    <h2>Resumo para WhatsApp</h2>
+    <p class="sub">Já está copiado. Se o botão de copiar não funcionar no seu navegador, selecione o texto abaixo e copie na mão.</p>
+    <textarea id="zapText" rows="16"></textarea>
+    <div class="btnrow">
+      <button class="btn btn-primary" id="zapCopy">Copiar de novo</button>
+      <button class="btn btn-navy" id="zapOpen">Abrir WhatsApp</button>
+      <button class="btn btn-ghost" id="zapClose">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+"use strict";
+
+/* ==========================================================================
+   CONFIGURAÇÃO — cole aqui a URL do seu Apps Script (termina em /exec).
+   Enquanto estiver vazia, o botão "Enviar para o Google" fica desligado e o
+   app funciona normalmente em PDF / WhatsApp / e-mail.
+   ========================================================================== */
+var ENVIO_URL = 'https://script.google.com/macros/s/AKfycbxC916U8rNw_-HFTW7vtFZz4AC_B1bHcTLE3bvMDWji6E5lAqkXgC0EIgQFtjHYTp8I/exec';
+
+var LOGO = document.querySelector('.topbar img').src;
+
+/* ============ MODELOS DE REUNIÃO ============ */
+var TPL = {
+ padrao:{icone:'📋',nome:'Reunião Padrão',desc:'Estrutura Só Tintas de 6 blocos. Serve para qualquer pauta.',blocos:[
+  {t:'Abertura',min:5,q:'Todos entraram sabendo por que estão aqui?',guia:['Confirmar presença e quem falta','Ler o objetivo em voz alta para o grupo','Combinar duração e ordem dos assuntos','Pedir que celulares fiquem de lado']},
+  {t:'Contexto e Dados',min:15,q:'Aqui só fatos. Opinião fica para o próximo bloco.',guia:['Apresentar os números / fatos que motivaram a reunião','Mostrar o histórico: o que já foi tentado antes','Checar se todos entenderam os dados antes de seguir']},
+  {t:'Discussão e Análise',min:20,q:'Quem ainda não falou nada?',guia:['Perguntar nominalmente para quem está calado','Separar causa de sintoma: "por que isso aconteceu?"','Registrar as divergências, não só os acordos','Cortar assunto fora de pauta para o estacionamento']},
+  {t:'Decisões e Próximos Passos',min:10,q:'Toda ação precisa de dono e data.',tipo:'acoes',guia:['Repetir em voz alta cada decisão antes de anotar','Confirmar com o responsável: "combinado assim?"','Definir prazo com data, não com "essa semana"']},
+  {t:'Conclusão',min:5,q:'A reunião fecha do mesmo jeito que abriu: pelo objetivo.',tipo:'fecho',guia:['Reler as ações e responsáveis para o grupo','Declarar se o objetivo foi atingido ou não','Marcar o follow-up antes de todos saírem']}
+ ]},
+ vendas:{icone:'📈',nome:'Resultados e Vendas',desc:'Reunião de números com loja ou equipe comercial.',blocos:[
+  {t:'Abertura e clima',min:5,q:'Como o time chega hoje?',guia:['Reconhecer publicamente um resultado bom da semana','Ler o objetivo da reunião','Avisar que o foco é ação, não cobrança']},
+  {t:'Números da semana',min:10,q:'O número por si só não explica nada.',guia:['Faturamento x meta (valor e %)','Ticket médio e peças por atendimento','Indicadores de bônus atingidos e não atingidos','Ranking individual sem exposição negativa']},
+  {t:'O que explica o número',min:15,q:'Causa, não desculpa.',guia:['Perguntar ao vendedor: "o que você fez diferente?"','Separar o que é externo do que está sob controle do time','Identificar o indicador que mais derruba o bônus']},
+  {t:'Foco e ações da semana',min:15,q:'Poucas ações, bem definidas.',tipo:'acoes',guia:['Escolher no máximo 3 focos para a semana','Traduzir foco em comportamento diário observável','Definir quem acompanha e como será medido']},
+  {t:'Compromisso e fechamento',min:5,q:'Cada um sai sabendo o próprio número.',tipo:'fecho',guia:['Cada vendedor diz em voz alta a própria meta da semana','Confirmar data da próxima checagem']}
+ ]},
+ individual:{icone:'🤝',nome:'Feedback 1:1',desc:'Conversa individual de desenvolvimento com um liderado.',blocos:[
+  {t:'Abertura e acordo',min:5,q:'Conversa de desenvolvimento, não julgamento.',guia:['Explicar o propósito da conversa em uma frase','Combinar que os dois vão falar','Garantir sigilo e ambiente reservado']},
+  {t:'Como a pessoa se vê',min:10,q:'Ela fala primeiro. Sempre.',guia:['"Como você avalia seu último mês?"','"O que funcionou e o que te travou?"','Ouvir sem interromper e sem corrigir ainda']},
+  {t:'Fatos observados',min:15,q:'Comportamento observado, não característica de personalidade.',guia:['Descrever situação, comportamento e impacto (SBI)','Usar exemplo concreto com data e cliente','Evitar "você sempre" / "você nunca"','Reconhecer o que está bem feito com o mesmo detalhe']},
+  {t:'Expectativa e plano',min:10,q:'O que muda a partir de segunda?',tipo:'acoes',guia:['Deixar claro o padrão esperado, em comportamento','Perguntar do que a pessoa precisa de você','Combinar 1 ou 2 mudanças, não uma lista']},
+  {t:'Fechamento',min:5,q:'Ela sai sabendo onde está e para onde vai.',tipo:'fecho',guia:['Pedir que ela resuma o combinado com as palavras dela','Marcar a data da próxima conversa']}
+ ]},
+ treinamento:{icone:'🎓',nome:'Treinamento',desc:'Capacitação de produto, sistema ou técnica de venda.',blocos:[
+  {t:'Abertura e objetivo de aprendizagem',min:5,q:'O que a pessoa vai saber FAZER ao final?',guia:['Declarar a habilidade que será treinada','Conectar com um problema real da loja','Levantar o nível atual do grupo']},
+  {t:'Conteúdo',min:20,q:'Ensinar menos, fixar mais.',guia:['Explicar o conceito com exemplo da rotina da loja','Mostrar o certo e o errado lado a lado','Checar entendimento a cada bloco']},
+  {t:'Prática',min:20,q:'Ninguém aprende assistindo.',guia:['Simulação de atendimento em dupla','Corrigir na hora, com elogio antes do ajuste','Rodar pelo menos duas rodadas']},
+  {t:'Dúvidas e objeções',min:10,q:'O que ainda parece difícil?',guia:['Abrir para dúvidas nominalmente','Registrar o que precisa de reforço futuro']},
+  {t:'Compromisso de aplicação',min:10,q:'Treinamento sem aplicação vira palestra.',tipo:'acoes',guia:['Cada participante escolhe onde aplica ainda esta semana','Definir como o gestor vai observar a aplicação']},
+  {t:'Fechamento',min:5,q:'',tipo:'fecho',guia:['Resumir os 3 pontos-chave','Marcar a checagem de aplicação']}
+ ]},
+ supervisores:{icone:'🏬',nome:'Reunião de Supervisores',desc:'Alinhamento entre lojas, indicadores e planos regionais.',blocos:[
+  {t:'Abertura',min:5,q:'',guia:['Ler o objetivo','Revisar as ações da reunião anterior: feito / não feito']},
+  {t:'Painel de indicadores por loja',min:15,q:'Comparar lojas, não julgar pessoas.',guia:['Ranking das lojas nos indicadores do mês','Destacar quem evoluiu, não só quem lidera','Isolar os 2 indicadores mais críticos da regional']},
+  {t:'Ofensores e causas',min:20,q:'É problema de processo, de pessoa ou de estoque?',guia:['Cada supervisor traz a causa raiz da própria loja','Buscar padrão comum entre as lojas','Separar o que depende da matriz do que é local']},
+  {t:'Decisões por loja',min:20,q:'',tipo:'acoes',guia:['Uma ação principal por loja','Nomear o responsável direto (não "a loja")','Prazo dentro do mês corrente']},
+  {t:'Fechamento',min:5,q:'',tipo:'fecho',guia:['Resumir decisões','Confirmar data do próximo encontro']}
+ ]}
+};
+
+/* ============ ESTADO ============ */
+var S = null;
+function novoEstado(k){
+  var t = TPL[k];
+  return {
+    tpl:k, titulo:'', condutor:'', data:'', hora:'', local:'', part:'', emails:'', objetivo:'',
+    blocos: t.blocos.map(function(b){return {t:b.t,min:b.min,q:b.q||'',tipo:b.tipo||'notas',guia:b.guia.map(function(g){return {txt:g,ok:false}}),notas:'',seg:0};}),
+    acoes:[{a:'',r:'',p:''}], status:'Sim', pend:'', followData:'', followHora:'08:00',
+    gravacoes:[], cur:0, ini:null, fim:null, totalSeg:0, enviado:false
+  };
+}
+var sel = 'padrao';
+var tickTotal=null, tickBloco=null, blocoIni=null, dirty=false;
+
+/* ============ HELPERS ============ */
+function $(id){return document.getElementById(id);}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function fmt(sec){var m=Math.floor(sec/60),s=sec%60;return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;}
+function toast(msg){var t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2600);}
+function dataBr(d){if(!d)return '';var p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+
+/* ============ TELA 1 ============ */
+function renderModels(){
+  var h='';
+  Object.keys(TPL).forEach(function(k){
+    var t=TPL[k], tot=t.blocos.reduce(function(a,b){return a+b.min;},0);
+    h+='<button class="model'+(k===sel?' sel':'')+'" data-k="'+k+'"><div class="mi">'+t.icone+'</div>'+
+       '<div class="mn">'+t.nome+'</div><div class="md">'+t.desc+'</div>'+
+       '<div class="mt">'+t.blocos.length+' blocos · '+tot+' min</div></button>';
+  });
+  $('models').innerHTML=h;
+  Array.prototype.forEach.call(document.querySelectorAll('.model'),function(b){
+    b.onclick=function(){sel=b.dataset.k;renderModels();renderAgenda();};
+  });
+}
+function renderAgenda(){
+  var t=TPL[sel], tot=t.blocos.reduce(function(a,b){return a+b.min;},0);
+  var h='<h3>Roteiro que o app vai conduzir <span style="font-weight:normal;color:var(--muted);text-transform:none">('+tot+' min previstos)</span></h3><div class="guia">';
+  t.blocos.forEach(function(b,i){
+    h+='<div class="gitem"><span style="color:var(--red);font-weight:bold">'+(i+1)+'.</span><span><b>'+esc(b.t)+'</b> · '+b.min+' min'+(b.q?'<br><span style="color:var(--muted);font-size:13px">'+esc(b.q)+'</span>':'')+'</span></div>';
+  });
+  $('agendaPrev').innerHTML=h+'</div>';
+}
+function checkStart(){
+  var temTit=$('fTitulo').value.trim().length>0, temObj=$('fObjetivo').value.trim().length>=12;
+  $('btnStart').disabled=!(temTit&&temObj);
+  var falta=[]; if(!temTit) falta.push('o título'); if(!temObj) falta.push('o objetivo (uma frase completa)');
+  $('startHint').textContent = falta.length ? 'Falta preencher '+falta.join(' e ')+'.' : '';
+}
+
+/* ============ INICIAR ============ */
+function iniciar(){
+  S=novoEstado(sel);
+  S.titulo=$('fTitulo').value.trim(); S.condutor=$('fCondutor').value.trim();
+  S.data=$('fData').value; S.hora=$('fHora').value; S.local=$('fLocal').value.trim();
+  S.part=$('fPart').value.trim(); S.emails=$('fEmails').value.trim(); S.objetivo=$('fObjetivo').value.trim();
+  S.ini=new Date().toISOString();
+  dirty=true;
+  $('viewSetup').classList.add('hidden'); $('viewRun').classList.remove('hidden');
+  $('chipTimer').classList.remove('hidden');
+  $('runTitulo').textContent=S.titulo;
+  $('runMeta').textContent=[TPL[S.tpl].nome, dataBr(S.data), S.hora, S.local].filter(Boolean).join(' · ');
+  $('runObjetivo').textContent=S.objetivo;
+  S.cur=0; blocoIni=Date.now();
+  clearInterval(tickTotal);
+  tickTotal=setInterval(function(){
+    S.totalSeg++; $('totalTime').textContent=fmt(S.totalSeg);
+    var b=S.blocos[S.cur], el=$('bTime');
+    var seg=b.seg+Math.floor((Date.now()-blocoIni)/1000);
+    el.textContent=fmt(seg);
+    $('bTimeBox').className='btime'+(seg>b.min*60?' over':'');
+  },1000);
+  renderBloco();
+  window.scrollTo(0,0);
+}
+
+/* ============ CONDUÇÃO ============ */
+function salvarBloco(){
+  if(!S) return;
+  var b=S.blocos[S.cur];
+  b.notas=$('bNotas').value;
+  Array.prototype.forEach.call(document.querySelectorAll('#guia input'),function(c,i){ if(b.guia[i]) b.guia[i].ok=c.checked; });
+  if(b.tipo==='fecho'){
+    S.status=$('fStatus').value; S.pend=$('fPendencia').value;
+    S.followData=$('fFollowData').value; S.followHora=$('fFollowHora').value;
+  }
+  b.seg += Math.floor((Date.now()-blocoIni)/1000); blocoIni=Date.now();
+}
+function renderSteps(){
+  var h='';
+  S.blocos.forEach(function(b,i){
+    var c = i===S.cur?'cur':(i<S.cur?'done':'');
+    h+='<button class="step '+c+'" data-i="'+i+'">'+(i<S.cur?'✓ ':'')+(i+1)+'. '+esc(b.t)+'</button>';
+  });
+  $('steps').innerHTML=h;
+  Array.prototype.forEach.call(document.querySelectorAll('.step'),function(s){
+    s.onclick=function(){salvarBloco();S.cur=+s.dataset.i;renderBloco();};
+  });
+  $('pbarFill').style.width=Math.round((S.cur)/(S.blocos.length-1)*100)+'%';
+}
+function renderBloco(){
+  var b=S.blocos[S.cur];
+  renderSteps();
+  $('bNum').textContent=S.cur+1;
+  $('bTitulo').textContent=b.t;
+  $('bPergunta').textContent=b.q;
+  $('bTime').textContent=fmt(b.seg);
+  $('bTimeL').textContent='de '+b.min+' min';
+  var g='<div class="gl">Como conduzir este bloco</div>';
+  b.guia.forEach(function(x,i){
+    g+='<label class="gitem'+(x.ok?' chk':'')+'"><input type="checkbox" data-i="'+i+'"'+(x.ok?' checked':'')+'><span>'+esc(x.txt)+'</span></label>';
+  });
+  $('guia').innerHTML=g;
+  Array.prototype.forEach.call(document.querySelectorAll('#guia input'),function(c){
+    c.onchange=function(){c.parentNode.classList.toggle('chk',c.checked);};
+  });
+  $('bNotas').value=b.notas;
+  $('actsWrap').classList.toggle('hidden', b.tipo!=='acoes');
+  $('fechoWrap').classList.toggle('hidden', b.tipo!=='fecho');
+  if(b.tipo==='acoes') renderActs();
+  if(b.tipo==='fecho'){
+    $('fStatus').value=S.status; $('fPendencia').value=S.pend;
+    $('fFollowData').value=S.followData||''; $('fFollowHora').value=S.followHora||'08:00';
+  }
+  $('btnPrev').disabled = S.cur===0;
+  $('btnNext').textContent = S.cur===S.blocos.length-1 ? 'Ir para a ata →' : 'Próximo bloco →';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function renderActs(){
+  var h='';
+  S.acoes.forEach(function(a,i){
+    var bad = a.a.trim() && (!a.r.trim()||!a.p.trim());
+    h+='<tr'+(bad?' class="incompleto"':'')+'>'+
+       '<td data-l="Ação combinada"><input data-i="'+i+'" data-f="a" value="'+esc(a.a)+'" placeholder="O que será feito"></td>'+
+       '<td data-l="Responsável"><input data-i="'+i+'" data-f="r" value="'+esc(a.r)+'" placeholder="Quem"></td>'+
+       '<td data-l="Prazo"><input data-i="'+i+'" data-f="p" value="'+esc(a.p)+'" placeholder="Até quando"></td>'+
+       '<td style="text-align:center"><button class="delrow" data-del="'+i+'">×</button></td></tr>';
+  });
+  $('actsBody').innerHTML=h;
+  Array.prototype.forEach.call(document.querySelectorAll('#actsBody input'),function(inp){
+    inp.oninput=function(){
+      var a=S.acoes[+inp.dataset.i];
+      a[inp.dataset.f]=inp.value;
+      /* atualiza só a classe da linha — não re-renderiza a tabela, senão o foco e o
+         texto que está sendo digitado se perdem (e no celular o teclado fecha) */
+      var tr=inp.closest('tr'), bad=a.a.trim() && (!a.r.trim()||!a.p.trim());
+      if(tr) tr.className = bad?'incompleto':'';
+      atualizaFlag();
+    };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#actsBody [data-del]'),function(btn){
+    btn.onclick=function(){ S.acoes.splice(+btn.dataset.del,1); if(!S.acoes.length)S.acoes=[{a:'',r:'',p:''}]; renderActs(); };
+  });
+  atualizaFlag();
+}
+function atualizaFlag(){
+  var bad=S.acoes.some(function(a){return a.a.trim() && (!a.r.trim()||!a.p.trim());});
+  $('actsFlag').style.display=bad?'block':'none';
+}
+
+/* ============ CAPTURA: TRANSCRIÇÃO AO VIVO ============ */
+var rec=null, recOn=false;
+var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+function initMic(){
+  var local = location.protocol==='file:';
+  if(!SR){ $('micHint').innerHTML='ℹ A transcrição ao vivo não está disponível neste navegador. Use o <b>Google Chrome</b> (PC ou Android), ou grave o áudio e envie o arquivo depois.'; $('capMic').disabled=true; return; }
+  if(local){
+    $('micHint').innerHTML='⚠ <b>Você abriu o arquivo direto do computador (file://).</b> Nesse modo o Chrome costuma bloquear a transcrição ao vivo. Para transcrever falando, use o <b>link online</b> do app. Para digitar ou gravar áudio, este arquivo funciona normalmente.';
+  } else {
+    $('micHint').textContent='Dica: com o celular no centro da mesa a transcrição fica boa em sala pequena. Em sala grande ou com várias vozes ao mesmo tempo, prefira gravar o áudio e transcrever depois.';
+  }
+  rec=new SR(); rec.lang='pt-BR'; rec.continuous=true; rec.interimResults=true;
+  rec.onresult=function(e){
+    var fin='', int='';
+    for(var i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal) fin+=e.results[i][0].transcript+' '; else int+=e.results[i][0].transcript;
+    }
+    if(fin){
+      var ta=$('bNotas');
+      ta.value += (ta.value && !/\n$/.test(ta.value) ? '\n' : '') + '• ' + fin.trim();
+      ta.scrollTop=ta.scrollHeight;
+      S.blocos[S.cur].notas=ta.value;
+    }
+    $('liveBox').innerHTML = fin ? '<b>ouvindo…</b> <span class="int">'+esc(int)+'</span>' : '<b>ouvindo…</b> <span class="int">'+esc(int)+'</span>';
+  };
+  rec.onerror=function(e){
+    if(e.error==='not-allowed'||e.error==='service-not-allowed'){ toast('Permita o microfone no navegador para transcrever.'); pararMic(); }
+    else if(e.error==='network'){ toast('Transcrição indisponível offline. Use o link online do app.'); pararMic(); }
+  };
+  rec.onend=function(){ if(recOn){ try{rec.start();}catch(err){} } };
+}
+function ligarMic(){ try{ rec.start(); }catch(e){} recOn=true; $('capMic').classList.add('on'); $('liveBox').classList.remove('hidden'); $('liveBox').innerHTML='<b>ouvindo…</b>'; }
+function pararMic(){ recOn=false; try{rec.stop();}catch(e){} $('capMic').classList.remove('on'); $('liveBox').classList.add('hidden'); }
+
+/* ============ CAPTURA: GRAVAÇÃO ============ */
+var mr=null, chunks=[], mediaStream=null, recTipo='', recT0=0, recTick=null;
+function gravar(tipo){
+  if(mr && mr.state==='recording'){ pararGravacao(); return; }
+  var cons = tipo==='video' ? {audio:true,video:{width:{ideal:1280}}} : {audio:true};
+  navigator.mediaDevices.getUserMedia(cons).then(function(st){
+    mediaStream=st; chunks=[]; recTipo=tipo;
+    var mime = tipo==='video' ? 'video/webm' : 'audio/webm';
+    try{ mr=new MediaRecorder(st,{mimeType:mime}); }catch(e){ mr=new MediaRecorder(st); }
+    mr.ondataavailable=function(e){ if(e.data.size) chunks.push(e.data); };
+    mr.onstop=function(){
+      var tipoReal = mr.mimeType||mime;
+      var blob=new Blob(chunks,{type:tipoReal});
+      /* Safari/iPhone grava em mp4, Chrome em webm — a extensão precisa seguir o formato real */
+      var ext = tipoReal.indexOf('mp4')>=0 ? 'mp4' : (tipoReal.indexOf('ogg')>=0 ? 'ogg' : 'webm');
+      var nome = 'gravacao_'+(S.titulo||'reuniao').replace(/[^\w]+/g,'_').slice(0,30)+'_'+(S.cur+1)+'_'+Date.now()+'.'+ext;
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement('a'); a.href=url; a.download=nome; a.click();
+      S.gravacoes.push({bloco:S.blocos[S.cur].t, tipo:recTipo, arquivo:nome, dur:Math.floor((Date.now()-recT0)/1000)});
+      mediaStream.getTracks().forEach(function(t){t.stop();});
+      $('recInfo').innerHTML='✅ Gravação salva como <b>'+esc(nome)+'</b> (pasta de downloads). Envie esse arquivo no chat do Claude para gerar a transcrição completa da ata.';
+      $('recInfo').classList.remove('hidden');
+      clearInterval(recTick);
+      $('capAudio').classList.remove('on'); $('capVideo').classList.remove('on');
+      $('capAudio').innerHTML='<span class="dot"></span>⏺ Gravar áudio'; $('capVideo').innerHTML='<span class="dot"></span>🎥 Gravar vídeo';
+    };
+    mr.start(); recT0=Date.now();
+    var btn = tipo==='video' ? $('capVideo') : $('capAudio');
+    btn.classList.add('on');
+    recTick=setInterval(function(){
+      var s=Math.floor((Date.now()-recT0)/1000);
+      btn.innerHTML='<span class="dot"></span>■ Parar ('+fmt(s)+')';
+    },1000);
+    $('recInfo').classList.remove('hidden');
+    $('recInfo').innerHTML='🔴 Gravando… o arquivo é baixado sozinho quando você parar.'+
+      (tipo==='video'?' <b>Para reunião longa prefira só o áudio</b> — vídeo de mais de ~20 min pesa muito no navegador.':'');
+  }).catch(function(){ toast('Não consegui acessar o microfone/câmera. Verifique a permissão do navegador.'); });
+}
+function pararGravacao(){ if(mr && mr.state==='recording') mr.stop(); }
+
+/* ============ ATA ============ */
+function gerarAta(){
+  salvarBloco(); clearInterval(tickTotal); S.fim=new Date().toISOString();
+  var prev=S.blocos.reduce(function(a,b){return a+b.min;},0);
+  var real=Math.round(S.totalSeg/60);
+  var acoes=S.acoes.filter(function(a){return a.a.trim();});
+  var pend=acoes.filter(function(a){return !a.r.trim()||!a.p.trim();});
+  var stTag = S.status==='Sim'?'<span class="tag ok">ATINGIDO</span>':'<span class="tag pend">'+S.status.toUpperCase()+'</span>';
+
+  var h='<div class="ahead"><img src="'+LOGO+'" alt="Só Tintas"><div class="t" contenteditable>ATA DE REUNIÃO — '+esc(S.titulo)+'</div>'+
+        '<div class="s">'+esc(TPL[S.tpl].nome)+' · '+dataBr(S.data)+(S.hora?' às '+S.hora:'')+(S.local?' · '+esc(S.local):'')+'</div></div>';
+
+  h+='<div class="meta"><div><b>Condutor:</b> <span contenteditable>'+esc(S.condutor||'—')+'</span></div>'+
+     '<div><b>Duração real:</b> '+real+' min <span style="color:var(--muted)">(previsto '+prev+' min)</span></div>'+
+     '<div style="grid-column:1/-1"><b>Participantes:</b> <span contenteditable>'+esc(S.part||'—')+'</span></div></div>';
+
+  h+='<h4>Objetivo da reunião</h4><div class="objfinal" id="ataObj" contenteditable>'+esc(S.objetivo)+'</div>';
+
+  h+='<h4>Registro por bloco</h4>';
+  S.blocos.forEach(function(b,i){
+    if(b.tipo==='fecho') return;
+    if(b.tipo==='acoes' && !b.notas.trim()) return;
+    var txt=b.notas.trim();
+    h+='<p style="margin-top:12px"><b style="color:var(--navy)">'+(i+1)+'. '+esc(b.t)+'</b> '+
+       '<span style="color:var(--muted);font-size:12px">('+fmt(b.seg)+' de '+b.min+' min)</span></p>'+
+       '<p contenteditable>'+(txt?esc(txt):'<span style="color:#b6bdcd">— sem registro neste bloco —</span>')+'</p>';
+  });
+
+  h+='<h4>Decisões e próximos passos</h4>';
+  if(acoes.length){
+    h+='<table id="ataActs"><tr><th>Ação</th><th>Responsável</th><th>Prazo</th></tr>';
+    acoes.forEach(function(a){
+      h+='<tr><td contenteditable>'+esc(a.a)+'</td><td contenteditable>'+(a.r.trim()?esc(a.r):'<span style="color:var(--red)">definir</span>')+'</td><td contenteditable>'+(a.p.trim()?esc(a.p):'<span style="color:var(--red)">definir</span>')+'</td></tr>';
+    });
+    h+='</table>';
+    if(pend.length) h+='<p style="font-size:13px;color:var(--red);margin-top:8px"><b>Atenção:</b> '+pend.length+' ação(ões) sem responsável ou sem prazo definido.</p>';
+  } else {
+    h+='<p style="color:var(--red)">Nenhuma ação foi registrada. Reunião sem ação combinada tende a se repetir na semana seguinte.</p>';
+  }
+
+  var blFecho=S.blocos.filter(function(b){return b.tipo==='fecho';})[0];
+  h+='<h4>Conclusão</h4><p><b>Objetivo atingido?</b> '+esc(S.status)+' '+stTag+'</p>';
+  if(S.pend.trim()) h+='<p><b>Pendências:</b> <span id="ataPend" contenteditable>'+esc(S.pend)+'</span></p>';
+  if(S.followData) h+='<p><b>Follow-up marcado para:</b> '+dataBr(S.followData)+' às '+(S.followHora||'08:00')+'</p>';
+  if(blFecho && blFecho.notas.trim()) h+='<p contenteditable>'+esc(blFecho.notas.trim())+'</p>';
+
+  if(S.gravacoes.length){
+    h+='<h4>Registros de mídia</h4>';
+    S.gravacoes.forEach(function(g){ h+='<p style="font-size:13px">🎧 '+esc(g.arquivo)+' — bloco "'+esc(g.bloco)+'" ('+fmt(g.dur)+')</p>'; });
+  }
+
+  h+='<div class="foot">Só Tintas – Documento interno · Ata gerada em '+new Date().toLocaleString('pt-BR')+'<br><b>Só Tintas – Colorindo vidas e realizando sonhos</b></div>';
+
+  $('ataBox').innerHTML=h;
+  $('viewRun').classList.add('hidden'); $('viewAta').classList.remove('hidden');
+  configGoogle();
+  window.scrollTo(0,0);
+}
+
+/* ============ ENVIO PARA O GOOGLE ============ */
+function boxStatus(cor,html){
+  var b=$('googleStatus');
+  var estilo={info:['#eef3ff','#1C3F8F'],ok:['#e9f7ef','#1a8f5a'],erro:['#fdeaea','#D32027']}[cor];
+  b.style.background=estilo[0]; b.style.color=estilo[1]; b.style.border='1.5px solid '+estilo[1];
+  b.innerHTML=html; b.classList.remove('hidden');
+}
+function configGoogle(){
+  if(!ENVIO_URL){
+    $('btnGoogle').disabled=true;
+    boxStatus('info','ℹ <b>Envio para o Google ainda não configurado.</b> Cole a URL do Apps Script na linha <code>var ENVIO_URL</code> no topo do arquivo para que a ata vá sozinha para a planilha, o Drive e a Agenda.');
+  } else {
+    $('btnGoogle').disabled=false;
+    $('googleStatus').classList.add('hidden');
+  }
+}
+function payloadGoogle(){
+  var acoes=[];
+  var tb=$('ataActs');
+  if(tb){
+    var lin=tb.querySelectorAll('tr');
+    for(var i=1;i<lin.length;i++){
+      var td=lin[i].querySelectorAll('td'), t=td[0].innerText.trim();
+      if(t) acoes.push({acao:t, responsavel:td[1].innerText.trim().replace(/^definir$/,''), prazo:td[2].innerText.trim().replace(/^definir$/,'')});
+    }
+  } else {
+    acoes=S.acoes.filter(function(a){return a.a.trim();}).map(function(a){return {acao:a.a,responsavel:a.r,prazo:a.p};});
+  }
+  var elObj=$('ataObj');
+  /* a ata vai inteira em HTML para o Apps Script transformar em PDF no Drive */
+  var css='body{font-family:Arial,sans-serif;color:#16233d;line-height:1.6}'+
+    'h4{color:#1C3F8F;font-size:14px;border-left:4px solid #D32027;padding-left:8px;text-transform:uppercase}'+
+    'table{width:100%;border-collapse:collapse;font-size:13px}th{background:#1C3F8F;color:#fff;padding:7px;text-align:left}'+
+    'td{border:1px solid #dde3ef;padding:7px}.objfinal{background:#FFF3CD;border-left:4px solid #FFD100;padding:10px}'+
+    '.ahead{text-align:center;border-bottom:3px solid #1C3F8F;padding-bottom:10px}.ahead .t{font-size:18px;font-weight:bold;color:#1C3F8F}'+
+    '.meta{font-size:13px}.foot{margin-top:24px;border-top:1px solid #dde3ef;padding-top:10px;text-align:center;font-size:11px;color:#6b7690}';
+  return {
+    titulo:S.titulo, modelo:TPL[S.tpl].nome, data:S.data, hora:S.hora, local:S.local,
+    condutor:S.condutor, participantes:S.part, emails:S.emails,
+    objetivo: elObj?elObj.innerText.trim():S.objetivo,
+    status:S.status, pendencia:($('ataPend')?$('ataPend').innerText.trim():S.pend),
+    followData:S.followData, followHora:S.followHora||'08:00',
+    duracaoReal:Math.round(S.totalSeg/60),
+    duracaoPrevista:S.blocos.reduce(function(a,b){return a+b.min;},0),
+    acoes:acoes,
+    blocos:S.blocos.map(function(b){return {titulo:b.t, notas:b.notas, minutosReais:Math.round(b.seg/60), minutosPrevistos:b.min};}),
+    gravacoes:S.gravacoes,
+    ataHtml:'<html><head><meta charset="utf-8"><style>'+css+'</style></head><body>'+$('ataBox').innerHTML+'</body></html>'
+  };
+}
+function enviarGoogle(){
+  if(!ENVIO_URL){ configGoogle(); return; }
+  $('btnGoogle').disabled=true;
+  boxStatus('info','⏳ Enviando para a planilha, o Drive e a Agenda…');
+  /* text/plain evita o preflight de CORS que o Apps Script não responde */
+  fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payloadGoogle())})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if(res && res.ok){
+        S.enviado=true; dirty=false;
+        var l='✅ <b>Enviado.</b> '+res.linhasAcoes+' ação(ões) na planilha.';
+        if(res.pdfUrl) l+=' <a href="'+res.pdfUrl+'" target="_blank" rel="noopener noreferrer">Abrir a ata no Drive</a>.';
+        if(res.eventoCriado) l+=' Follow-up criado na Agenda.';
+        boxStatus('ok',l);
+        $('btnGoogle').textContent='☁ Enviado ao Google';
+      } else {
+        boxStatus('erro','⚠ O Google respondeu com erro: '+esc((res&&res.erro)||'desconhecido')+'. A ata não se perdeu — use "Baixar backup (.json)" e tente de novo.');
+        $('btnGoogle').disabled=false;
+      }
+    })
+    .catch(function(){
+      boxStatus('erro','⚠ <b>Não consegui falar com o Google.</b> Confira a URL do Apps Script e se a implantação está como "Qualquer pessoa". Enquanto isso, salve o PDF e o backup (.json) para não perder a ata.');
+      $('btnGoogle').disabled=false;
+    });
+}
+
+/* O resumo é montado a partir da ATA NA TELA (e não do estado bruto), para que as
+   correções que o condutor faz na ata editável apareçam também no WhatsApp e no e-mail. */
+function textoResumo(){
+  var objTxt=S.objetivo, pendTxt=S.pend;
+  var acoes=S.acoes.filter(function(a){return a.a.trim();}).map(function(a){return {a:a.a,r:a.r,p:a.p};});
+  var elObj=$('ataObj'); if(elObj) objTxt=elObj.innerText.trim();
+  var elPend=$('ataPend'); if(elPend) pendTxt=elPend.innerText.trim();
+  var tb=$('ataActs');
+  if(tb){
+    var lin=tb.querySelectorAll('tr'); var arr=[];
+    for(var i=1;i<lin.length;i++){
+      var td=lin[i].querySelectorAll('td');
+      var t=td[0].innerText.trim();
+      if(t) arr.push({a:t, r:td[1].innerText.trim(), p:td[2].innerText.trim()});
+    }
+    acoes=arr;
+  }
+  var L=[];
+  L.push('*ATA — '+(S.titulo||'Reunião')+'*');
+  L.push(dataBr(S.data)+(S.hora?' às '+S.hora:'')+(S.local?' · '+S.local:''));
+  L.push('');
+  L.push('*Objetivo:* '+objTxt);
+  if(S.part) L.push('*Participantes:* '+S.part);
+  L.push('');
+  L.push('*Decisões e próximos passos:*');
+  if(acoes.length){
+    acoes.forEach(function(a,i){
+      var r=(a.r&&a.r!=='definir')?a.r:'SEM RESPONSÁVEL';
+      var p=(a.p&&a.p!=='definir')?a.p:'SEM PRAZO';
+      L.push((i+1)+') '+a.a+' — '+r+' · até '+p);
+    });
+  } else L.push('— nenhuma ação registrada —');
+  L.push('');
+  L.push('*Objetivo atingido:* '+S.status);
+  if(pendTxt) L.push('*Pendência:* '+pendTxt);
+  L.push('');
+  L.push('_Só Tintas – Colorindo vidas e realizando sonhos_');
+  return L.join('\n');
+}
+
+/* ============ SALVAR / CARREGAR ============ */
+function baixarJson(){
+  salvarBloco();
+  var nome='ata_'+(S.titulo||'reuniao').replace(/[^\w]+/g,'_').slice(0,30)+'_'+(S.data||'')+'.json';
+  var blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nome; a.click();
+  toast('Backup salvo: '+nome);
+}
+function carregarJson(f){
+  var r=new FileReader();
+  r.onload=function(){
+    try{
+      S=JSON.parse(r.result);
+      $('viewSetup').classList.add('hidden'); $('viewAta').classList.add('hidden'); $('viewRun').classList.remove('hidden');
+      $('chipTimer').classList.remove('hidden'); $('totalTime').textContent=fmt(S.totalSeg||0);
+      $('runTitulo').textContent=S.titulo; $('runObjetivo').textContent=S.objetivo;
+      $('runMeta').textContent=[TPL[S.tpl].nome,dataBr(S.data),S.hora,S.local].filter(Boolean).join(' · ');
+      blocoIni=Date.now(); clearInterval(tickTotal);
+      tickTotal=setInterval(function(){ S.totalSeg++; $('totalTime').textContent=fmt(S.totalSeg); },1000);
+      renderBloco(); toast('Reunião retomada.');
+    }catch(e){ toast('Arquivo inválido.'); }
+  };
+  r.readAsText(f);
+}
+
+/* ============ EVENTOS ============ */
+renderModels(); renderAgenda(); initMic();
+(function(){ var d=new Date(); $('fData').value=d.toISOString().slice(0,10); $('fHora').value=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); })();
+$('fObjetivo').oninput=checkStart; $('fTitulo').oninput=checkStart;
+$('btnStart').onclick=iniciar;
+$('btnLoad').onclick=function(){ $('fileLoad').click(); };
+$('fileLoad').onchange=function(e){ if(e.target.files[0]) carregarJson(e.target.files[0]); };
+$('bNotas').oninput=function(){ S.blocos[S.cur].notas=$('bNotas').value; };
+$('btnPrev').onclick=function(){ salvarBloco(); if(S.cur>0){S.cur--;renderBloco();} };
+$('btnNext').onclick=function(){ salvarBloco(); if(S.cur<S.blocos.length-1){S.cur++;renderBloco();} else gerarAta(); };
+$('btnAddAct').onclick=function(){ S.acoes.push({a:'',r:'',p:''}); renderActs(); };
+$('btnFinish').onclick=function(){ if(recOn) pararMic(); pararGravacao(); gerarAta(); };
+$('btnSave').onclick=baixarJson;
+$('capMic').onclick=function(){ recOn?pararMic():ligarMic(); };
+$('capAudio').onclick=function(){ gravar('audio'); };
+$('capVideo').onclick=function(){ gravar('video'); };
+$('capPaste').onclick=function(){
+  var o='';
+  S.blocos.forEach(function(b,i){ o+='<option value="'+i+'"'+(i===S.cur?' selected':'')+'>'+(i+1)+'. '+esc(b.t)+'</option>'; });
+  $('pasteTarget').innerHTML=o; $('pasteText').value=''; $('modalPaste').classList.add('show');
+};
+$('pasteCancel').onclick=function(){ $('modalPaste').classList.remove('show'); };
+$('pasteOk').onclick=function(){
+  var i=+$('pasteTarget').value, txt=$('pasteText').value.trim();
+  if(txt){ S.blocos[i].notas += (S.blocos[i].notas?'\n':'') + txt; if(i===S.cur) $('bNotas').value=S.blocos[i].notas; toast('Transcrição inserida no bloco '+(i+1)+'.'); }
+  $('modalPaste').classList.remove('show');
+};
+$('btnPdf').onclick=function(){ window.print(); };
+$('btnGoogle').onclick=enviarGoogle;
+$('btnZap').onclick=function(){
+  var t=textoResumo(); $('zapText').value=t; $('modalZap').classList.add('show');
+  if(navigator.clipboard) navigator.clipboard.writeText(t).then(function(){toast('Resumo copiado!');},function(){});
+};
+$('zapCopy').onclick=function(){ var ta=$('zapText'); ta.select(); try{document.execCommand('copy');toast('Copiado!');}catch(e){} };
+$('zapOpen').onclick=function(){ window.open('https://wa.me/?text='+encodeURIComponent($('zapText').value),'_blank'); };
+$('zapClose').onclick=function(){ $('modalZap').classList.remove('show'); };
+$('btnMail').onclick=function(){
+  var assunto='Ata de reunião — '+(S.titulo||'')+' ('+dataBr(S.data)+')';
+  var corpo=textoResumo().replace(/\*/g,'').replace(/_/g,'');
+  /* âncora em vez de location.href: assim o aviso de "sair da página" não dispara */
+  var a=document.createElement('a');
+  a.href='mailto:'+(S.emails||'')+'?subject='+encodeURIComponent(assunto)+'&body='+encodeURIComponent(corpo);
+  a.target='_blank'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+};
+$('btnJson').onclick=baixarJson;
+$('btnBack').onclick=function(){
+  $('viewAta').classList.add('hidden'); $('viewRun').classList.remove('hidden'); blocoIni=Date.now();
+  clearInterval(tickTotal); tickTotal=setInterval(function(){ S.totalSeg++; $('totalTime').textContent=fmt(S.totalSeg); },1000);
+  renderBloco();
+};
+$('btnNew').onclick=function(){ if(confirm('Começar uma nova reunião? Salve o backup antes se ainda precisar destes dados.')) location.reload(); };
+window.onbeforeunload=function(){ if(dirty) return 'A reunião em andamento será perdida.'; };
+checkStart();
+</script>
+</body>
+</html>
