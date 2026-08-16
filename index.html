@@ -98,6 +98,20 @@ textarea{resize:vertical;line-height:1.5}
 .semana .chip.ok{border-left-color:var(--ok)}
 .semana .chip.nao{border-left-color:var(--red);text-decoration:line-through;color:var(--muted)}
 .rolar{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+/* ---------- cartões de indicador ---------- */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:#fff;border:1px solid var(--line);border-top:4px solid var(--navy);border-radius:12px;padding:14px}
+.kpi .kv{font-size:26px;font-weight:bold;color:var(--navy);line-height:1.1}
+.kpi .kl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:4px}
+.kpi .kx{font-size:12px;color:var(--muted);margin-top:5px}
+.kpi.ok{border-top-color:var(--ok)} .kpi.ok .kv{color:var(--ok)}
+.kpi.al{border-top-color:#B7791F} .kpi.al .kv{color:#B7791F}
+.kpi.ru{border-top-color:var(--red)} .kpi.ru .kv{color:var(--red)}
+/* ---------- checklist ---------- */
+.cli{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.cli input[type=checkbox]{width:20px;height:20px;accent-color:var(--ok);flex:0 0 auto}
+.cli input[type=text]{flex:1}
+.cli.feito input[type=text]{text-decoration:line-through;color:var(--muted);background:#f8faff}
 
 /* ---------- alerta objetivo ---------- */
 .objbox{background:var(--warn-bg);border:1.5px solid #f0d48a;border-left:5px solid var(--yellow);border-radius:10px;padding:14px 16px}
@@ -263,8 +277,8 @@ tr.incompleto input{background:transparent}
     </div>
 
     <div id="viewRotina" class="hidden">
-      <h1>Rotina da equipe</h1>
-      <p class="sub">Visitas às lojas e tarefas extras. Planeje, registre início e fim, e o tempo é calculado sozinho.</p>
+      <h1>Painel de rotina</h1>
+      <p class="sub">Acompanhamento da equipe. Para marcar visita ou tarefa use <b>📅 Agendar</b>; para registrar chegada e saída, a aba <b>🗓 Agenda</b>.</p>
       <div class="grid2">
         <div><label>Sou</label><input list="listaSup" id="fSou" placeholder="Seu nome"></div>
         <div><label>Mostrar</label>
@@ -279,24 +293,82 @@ tr.incompleto input{background:transparent}
       <datalist id="listaSup"></datalist>
       <datalist id="listaLojas"></datalist>
       <div class="btnrow">
-        <button class="btn btn-primary" id="btnNovaVisita">🚗 + Visita</button>
-        <button class="btn btn-navy" id="btnNovaTarefa">✅ + Tarefa extra</button>
         <button class="btn btn-ghost btn-sm" id="btnAtualizarRotina">↻ Atualizar</button>
       </div>
-      <div id="rotinaLista" style="margin-top:16px"></div>
+      <div id="rotinaKpis" style="margin-top:16px"></div>
+      <div id="rotinaAtencao"></div>
+      <button class="btn btn-primary hidden" id="btnNovaVisita">+ Visita</button>
+      <button class="btn btn-navy hidden" id="btnNovaTarefa">+ Tarefa</button>
       <div id="painelEquipe" class="hidden"></div>
       <div id="semanaEquipe" class="hidden"></div>
     </div>
+    <div id="viewAgendarEscolha" class="hidden">
+      <h1>Agendar</h1>
+      <p class="sub">O que você quer marcar?</p>
+      <div class="models">
+        <button class="model" data-agtipo="reuniao">
+          <div class="mi">📋</div>
+          <div class="mn">Reunião</div>
+          <div class="md">Com roteiro, participantes e objetivo. Cria o evento na Agenda Google e gera o convite para o WhatsApp.</div>
+        </button>
+        <button class="model" data-agtipo="visita">
+          <div class="mi">🚗</div>
+          <div class="mn">Visita a loja</div>
+          <div class="md">Data, loja e o trabalho a ser executado. No dia, o supervisor registra chegada e saída.</div>
+        </button>
+        <button class="model" data-agtipo="tarefa">
+          <div class="mi">✅</div>
+          <div class="mn">Tarefa extra</div>
+          <div class="md">Tudo que não é visita: relatório, campanha, treinamento, reunião externa.</div>
+        </button>
+        <button class="model" data-agtipo="checklist">
+          <div class="mi">📝</div>
+          <div class="mn">Checklist pessoal</div>
+          <div class="md">Sua lista de conferência: o que olhar numa loja, o que levar numa reunião. Fica no seu aparelho e pode virar o trabalho de uma visita.</div>
+        </button>
+      </div>
+    </div>
+
+    <div id="viewChecklist" class="hidden">
+      <button class="btn btn-ghost btn-sm" id="btnVoltarChecklist" style="margin-bottom:14px">← Voltar</button>
+      <h1>Checklist pessoal</h1>
+      <p class="sub">Monte suas listas de conferência. Ficam salvas neste aparelho, só para você.</p>
+      <div class="grid2">
+        <div><label>Meus checklists</label><select id="clSelect"></select></div>
+        <div><label>Nome deste checklist</label><input type="text" id="clNome" placeholder="Ex.: Conferência de loja"></div>
+      </div>
+      <label>Itens</label>
+      <div id="clItens"></div>
+      <div class="btnrow" style="margin-top:8px">
+        <button class="btn btn-ghost btn-sm" id="clAddItem">+ Adicionar item</button>
+        <button class="btn btn-ghost btn-sm" id="clLimparMarcas">↺ Desmarcar tudo</button>
+      </div>
+      <div class="btnrow">
+        <button class="btn btn-primary" id="clSalvar">💾 Salvar checklist</button>
+        <button class="btn btn-navy" id="clUsar">🚗 Usar numa visita</button>
+        <button class="btn btn-navy" id="clCompartilhar">📤 Compartilhar</button>
+        <button class="btn btn-ghost" id="clExcluir" style="color:var(--red);border-color:#f3c6c8">Excluir</button>
+      </div>
+      <div class="hint">O botão "Usar numa visita" leva os itens marcados como o trabalho a ser executado — assim o checklist vira compromisso registrado, não lembrete solto.</div>
+    </div>
+
     <div id="viewAgenda" class="hidden">
-      <h1>Agenda de reuniões</h1>
-      <p class="sub">Tudo que está marcado daqui para a frente. Toque para usar a reunião ou para desmarcar.</p>
-      <div id="agendaLista"></div>
+      <h1>Agenda</h1>
+      <p class="sub">Reuniões, visitas e tarefas de toda a equipe, daqui para a frente.</p>
+      <div class="grid2">
+        <div><label>Mostrar de</label><select id="fAgendaQuem"></select></div>
+        <div style="display:flex;align-items:flex-end">
+          <button class="btn btn-navy" id="btnCompartilharAgenda" style="width:100%">📤 Compartilhar agenda</button>
+        </div>
+      </div>
+      <div id="agendaLista" style="margin-top:14px"></div>
     </div>
     <div id="viewHistorico" class="hidden">
       <h1>Histórico de reuniões</h1>
       <p class="sub">As últimas reuniões registradas. Clique para abrir a ata em PDF.</p>
       <div id="histLista"></div>
     </div>
+    <button class="btn btn-ghost btn-sm hidden" id="btnVoltarEscolha" style="margin-bottom:14px">← Voltar</button>
     <div id="blocoSetup">
     <h1 id="setupTitulo">Preparar a reunião</h1>
     <p class="sub" id="setupSub">Leva 40 segundos. Sem objetivo escrito, o botão de iniciar não libera — é de propósito.</p>
@@ -871,6 +943,7 @@ function renderConvites(){
 
 /* ============ MODO: AGORA x AGENDAR ============ */
 var modo='agora';
+var agendarTipo='';   /* '' = menu de escolha · 'reuniao' = formulário de reunião */
 function setModo(m){
   modo=m;
   $('tabAgora').className='tab'+(m==='agora'?' sel':'');
@@ -883,7 +956,13 @@ function setModo(m){
   $('viewAgenda').classList.toggle('hidden', m!=='agenda');
   $('viewRotina').classList.toggle('hidden', m!=='rotina');
   $('viewDespesas').classList.toggle('hidden', m!=='despesas');
-  var telaCheia = (m==='historico' || m==='agenda' || m==='rotina' || m==='despesas');
+  /* na aba Agendar o formulário só aparece depois de escolher "Reunião" */
+  var escolhendo = (m==='agendar' && !agendarTipo);
+  var noChecklist = (m==='agendar' && agendarTipo==='checklist');
+  $('viewAgendarEscolha').classList.toggle('hidden', !escolhendo);
+  $('viewChecklist').classList.toggle('hidden', !noChecklist);
+  $('btnVoltarEscolha').classList.toggle('hidden', !(m==='agendar' && agendarTipo==='reuniao'));
+  var telaCheia = (m==='historico' || m==='agenda' || m==='rotina' || m==='despesas' || escolhendo || noChecklist);
   $('blocoSetup').classList.toggle('hidden', telaCheia);
   /* o bloco "hoje" acompanha as telas de reunião; a agenda completa tem aba própria */
   $('proximas').classList.toggle('hidden', telaCheia || !temHoje());
@@ -1013,6 +1092,7 @@ function renderAgendaCompleta(){
   var box=$('agendaLista');
   if(!ENVIO_URL){ box.innerHTML='<p class="sub">Agenda indisponível: o envio para o Google não está configurado.</p>'; return; }
 
+  var quem=$('fAgendaQuem').value||'';
   var itens=[];
   PROX.forEach(function(a){
     itens.push({k:'reuniao', data:a.data, hora:a.hora||'', titulo:a.titulo, sub:(a.modelo||'')+(a.duracao?' · '+a.duracao+' min':'')+(a.local?' · '+a.local:''),
@@ -1021,10 +1101,13 @@ function renderAgendaCompleta(){
   VISITAS.forEach(function(v){
     var t=ehTarefa(v);
     itens.push({k:t?'tarefa':'visita', data:v.data, hora:v.hora||'', titulo:(v.loja||(t?'Tarefa extra':'Visita')),
-      sub:'👤 '+(v.supervisor||'')+' · '+(v.status||''), extra:v.trabalho||'', linha:v.linha, status:v.status, obj:v});
+      sub:'👤 '+(v.supervisor||'')+' · '+(v.status||''), extra:v.trabalho||'', linha:v.linha, status:v.status,
+      pessoa:v.supervisor||'', obj:v});
   });
+  if(quem) itens=itens.filter(function(a){ return a.k==='reuniao' || a.pessoa===quem; });
+  AGENDA_ITENS=itens;
   if(!itens.length){
-    box.innerHTML='<p class="sub">Nada marcado. Use <b>📅 Agendar</b> para uma reunião ou <b>🚗 Rotina</b> para visita e tarefa.</p>';
+    box.innerHTML='<p class="sub">Nada marcado neste filtro. Use <b>📅 Agendar</b> para criar reunião, visita ou tarefa.</p>';
     return;
   }
   itens.sort(function(a,b){ return (a.data+a.hora) < (b.data+b.hora) ? -1 : 1; });
@@ -1059,6 +1142,34 @@ function renderAgendaCompleta(){
   });
   box.innerHTML=h;
 }
+var AGENDA_ITENS=[];
+/* Texto da agenda para mandar no WhatsApp ou por e-mail. */
+function textoAgenda(){
+  var quem=$('fAgendaQuem').value||'';
+  var L=[];
+  L.push('*AGENDA — Só Tintas*');
+  L.push(quem ? '👤 '+quem : '👥 Equipe toda');
+  L.push('');
+  if(!AGENDA_ITENS.length){ L.push('Nada marcado no período.'); return L.join('\n'); }
+  var DIAS=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+  var hoje=hojeISO(), amanha=isoMais(1), dia='';
+  var ICO={reuniao:'📋', visita:'🚗', tarefa:'✅'};
+  AGENDA_ITENS.forEach(function(a){
+    if(a.data!==dia){
+      dia=a.data;
+      var p=a.data.split('-'), dt=new Date(+p[0],+p[1]-1,+p[2]);
+      var rot = a.data===hoje?'HOJE':(a.data===amanha?'AMANHÃ':DIAS[dt.getDay()].toUpperCase());
+      L.push('*'+rot+' · '+dataBr(a.data)+'*');
+    }
+    L.push(ICO[a.k]+' '+(a.hora||'')+' — '+a.titulo+(a.pessoa?' ('+a.pessoa+')':''));
+    if(a.k!=='reuniao' && a.extra) L.push('   '+a.extra);
+    if(a.k==='reuniao' && a.sub) L.push('   '+a.sub);
+  });
+  L.push('');
+  L.push('_Só Tintas Meet · assistente de coordenação_');
+  return L.join('\n');
+}
+
 /* A agenda precisa das duas fontes: reuniões (AGENDAMENTOS) e atividades (VISITAS). */
 function carregarAgendaUnificada(){
   $('agendaLista').innerHTML='<p class="sub">Carregando…</p>';
@@ -1106,8 +1217,8 @@ function recuperarSou(){
 function isoMais(dias){ return new Date(Date.now()+dias*86400000).toISOString().slice(0,10); }
 
 function carregarRotina(){
-  var box=$('rotinaLista');
-  if(!ENVIO_URL){ box.innerHTML='<p class="sub">Rotina indisponível: o envio para o Google não está configurado.</p>'; return; }
+  var box=$('rotinaKpis');
+  if(!ENVIO_URL){ box.innerHTML='<p class="sub">Painel indisponível: o envio para o Google não está configurado.</p>'; return; }
   var per=parseInt($('fPeriodo').value,10)||14;
   var de  = per<0 ? isoMais(per) : hojeISO();
   var ate = per<0 ? hojeISO()    : isoMais(per);
@@ -1136,37 +1247,80 @@ function badgeStatus(s){
   var m={'Planejada':'b-plan','Em andamento':'b-and','Concluída':'b-ok','Não realizada':'b-nao'};
   return '<span class="badge '+(m[s]||'b-plan')+'">'+esc(s||'Planejada')+'</span>';
 }
+
+/* A Rotina virou painel: números no topo, o que precisa de atenção logo abaixo,
+   e depois planejado × realizado, cobertura e semana. A execução mora na Agenda. */
 function renderRotina(){
-  var box=$('rotinaLista');
+  var box=$('rotinaKpis');
   if(!VISITAS.length){
-    box.innerHTML='<p class="sub">Nenhuma visita neste período. Toque em <b>+ Nova visita</b> para planejar a primeira.</p>';
+    box.innerHTML='<p class="sub">Nada registrado neste período. Marque visitas e tarefas em <b>📅 Agendar</b>.</p>';
+    $('rotinaAtencao').innerHTML='';
     return;
   }
-  var hoje=hojeISO(), h='', diaAtual='';
-  var DIAS=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
-  VISITAS.forEach(function(v){
-    if(v.data!==diaAtual){
-      diaAtual=v.data;
-      var p=v.data.split('-');
-      var dt=new Date(+p[0],+p[1]-1,+p[2]);
-      var rot = v.data===hoje?'Hoje':(v.data===isoMais(1)?'Amanhã':DIAS[dt.getDay()]);
-      h+='<div style="margin:18px 0 8px;font-size:13px;font-weight:bold;color:'+(v.data===hoje?'var(--red)':'var(--navy)')+
-         ';text-transform:uppercase;letter-spacing:.5px">'+rot+' · '+dataBr(v.data)+'</div>';
-    }
-    var cor = v.status==='Concluída'?'var(--ok)':(v.status==='Não realizada'?'var(--red)':(v.status==='Em andamento'?'#B7791F':'var(--navy)'));
-    var t=ehTarefa(v);
-    h+='<div class="ag" style="border-left-color:'+cor+';align-items:flex-start">'+
-       '<div class="agd" style="background:'+cor+'"><b>'+(v.hora||'--').slice(0,2)+'</b><span>'+(v.hora||'--:--').slice(3)+'</span></div>'+
-       '<div class="agi"><div class="agt">'+(t?'✅ ':'🚗 ')+esc(v.loja|| (t?'Tarefa extra':''))+' '+badgeStatus(v.status)+'</div>'+
-       '<div class="ags">👤 '+esc(v.supervisor||'')+
-       (v.checkin?' · '+(t?'começou ':'chegou ')+esc(v.checkin):'')+
-       (v.checkout?' · '+(t?'concluiu ':'saiu ')+esc(v.checkout):'')+
-       (v.permanencia?' · <b>'+v.permanencia+(t?' min de trabalho':' min em loja')+'</b>':'')+'</div>'+
-       '<div style="font-size:13px;color:var(--ink);margin-top:6px;white-space:pre-wrap">'+esc(v.trabalho||'')+'</div>'+
-       (v.obs?'<div style="font-size:12px;color:var(--red);margin-top:4px">⚠ '+esc(v.obs)+'</div>':'')+
-       '</div><div style="display:flex;gap:8px;flex-wrap:wrap">'+botoesVisita(v)+'</div></div><div style="height:2px"></div>';
+  var vis=VISITAS.filter(function(v){ return !ehTarefa(v); });
+  var tar=VISITAS.filter(ehTarefa);
+  var feitas=vis.filter(function(v){ return v.status==='Concluída'; });
+  var nao=vis.filter(function(v){ return v.status==='Não realizada'; });
+  var pct=vis.length?Math.round(feitas.length/vis.length*100):0;
+  var comT=feitas.filter(function(v){ return v.permanencia; });
+  var med=comT.length?Math.round(comT.reduce(function(a,v){return a+(+v.permanencia);},0)/comT.length):0;
+  var tarOk=tar.filter(function(v){ return v.status==='Concluída'; }).length;
+
+  /* lojas da carteira sem nenhuma visita no período */
+  var visitadas={};
+  feitas.concat(vis.filter(function(v){return v.status==='Em andamento';}))
+        .forEach(function(v){ visitadas[(v.supervisor||'')+'|'+(v.loja||'')]=true; });
+  var quem = ehGestor() ? SUPERVISORES : [souQuem()];
+  var totalCart=0, semVisita=0;
+  quem.forEach(function(s){
+    var l=CARTEIRA[s]; if(!l) return;
+    totalCart+=l.length;
+    l.forEach(function(x){ if(!visitadas[s+'|'+x]) semVisita++; });
   });
+
+  var cls = pct>=80?'ok':(pct>=50?'al':'ru');
+  var h='<div class="kpis">'+
+    '<div class="kpi '+cls+'"><div class="kv">'+pct+'%</div><div class="kl">Cumprimento</div>'+
+      '<div class="kx">'+feitas.length+' de '+vis.length+' visitas</div></div>'+
+    '<div class="kpi'+(nao.length?' ru':'')+'"><div class="kv">'+nao.length+'</div><div class="kl">Não realizadas</div>'+
+      '<div class="kx">'+(nao.length?'com motivo registrado':'nenhuma no período')+'</div></div>'+
+    '<div class="kpi"><div class="kv">'+(med||'—')+'</div><div class="kl">Min. médios em loja</div>'+
+      '<div class="kx">'+comT.length+' visita(s) cronometrada(s)</div></div>'+
+    '<div class="kpi'+(semVisita?' al':' ok')+'"><div class="kv">'+semVisita+'</div><div class="kl">Lojas sem visita</div>'+
+      '<div class="kx">de '+totalCart+' na carteira</div></div>'+
+    '<div class="kpi"><div class="kv">'+tarOk+'/'+tar.length+'</div><div class="kl">Tarefas extras</div>'+
+      '<div class="kx">concluídas no período</div></div>'+
+    '</div>';
   box.innerHTML=h;
+  renderAtencao(vis, nao);
+}
+
+/* O que o gestor precisa olhar: atrasadas e não realizadas. */
+function renderAtencao(vis, nao){
+  var hoje=hojeISO();
+  var atrasadas=vis.filter(function(v){ return v.data<hoje && (v.status==='Planejada'||v.status==='Em andamento'); });
+  if(!atrasadas.length && !nao.length){ $('rotinaAtencao').innerHTML=''; return; }
+  var h='<h3 style="margin:26px 0 6px">Precisa de atenção</h3>';
+  if(atrasadas.length){
+    h+='<p class="sub" style="margin-bottom:8px">Passou da data e não foi registrada — nem como feita, nem como não realizada.</p>';
+    atrasadas.forEach(function(v){
+      h+='<div class="ag" style="border-left-color:#B7791F"><div class="agd" style="background:#B7791F"><b>'+
+         (v.data||'').slice(8)+'</b><span>'+mesCurto((v.data||'').slice(5,7))+'</span></div>'+
+         '<div class="agi"><div class="agt">'+esc(v.loja||'')+' '+badgeStatus(v.status)+'</div>'+
+         '<div class="ags">👤 '+esc(v.supervisor||'')+' · '+dataBr(v.data)+'</div></div></div><div style="height:2px"></div>';
+    });
+  }
+  if(nao.length){
+    h+='<p class="sub" style="margin:14px 0 8px">Não realizadas, com o motivo declarado:</p>';
+    nao.forEach(function(v){
+      h+='<div class="ag" style="border-left-color:var(--red)"><div class="agd" style="background:var(--red)"><b>'+
+         (v.data||'').slice(8)+'</b><span>'+mesCurto((v.data||'').slice(5,7))+'</span></div>'+
+         '<div class="agi"><div class="agt">'+esc(v.loja||'')+'</div>'+
+         '<div class="ags">👤 '+esc(v.supervisor||'')+'</div>'+
+         '<div style="font-size:13px;color:var(--red);margin-top:4px">⚠ '+esc(v.obs||'sem motivo informado')+'</div></div></div><div style="height:2px"></div>';
+    });
+  }
+  $('rotinaAtencao').innerHTML=h;
 }
 function ehTarefa(v){ return (v.tipo||'Visita')==='Tarefa'; }
 function botoesVisita(v){
@@ -1978,8 +2132,59 @@ Array.prototype.forEach.call(document.querySelectorAll('[data-mk]'),function(b){
   b.onclick=function(){ marcar(b.dataset.mk); };
 });
 $('tabAgora').onclick=function(){ setModo('agora'); };
-$('tabAgendar').onclick=function(){ setModo('agendar'); };
+$('tabAgendar').onclick=function(){ agendarTipo=''; setModo('agendar'); };
+Array.prototype.forEach.call(document.querySelectorAll('[data-agtipo]'),function(b){
+  b.onclick=function(){
+    var t=b.dataset.agtipo;
+    if(t==='reuniao'){ agendarTipo='reuniao'; setModo('agendar'); return; }
+    if(t==='checklist'){ agendarTipo='checklist'; setModo('agendar'); return; }
+    abrirNovaVisita(t==='tarefa'?'Tarefa':'Visita');
+  };
+});
+$('btnVoltarEscolha').onclick=function(){ agendarTipo=''; setModo('agendar'); };
+$('btnVoltarChecklist').onclick=function(){ agendarTipo=''; setModo('agendar'); };
+$('clSelect').onchange=function(){ clCarregar(parseInt($('clSelect').value,10)); };
+$('clNome').oninput=function(){ CL_EDIT.nome=$('clNome').value; };
+$('clAddItem').onclick=function(){ CL_EDIT.itens.push({t:'',ok:false}); clRenderItens(); };
+$('clLimparMarcas').onclick=function(){ CL_EDIT.itens.forEach(function(i){i.ok=false;}); clRenderItens(); };
+$('clSalvar').onclick=function(){
+  CL_EDIT.nome=$('clNome').value.trim();
+  if(!CL_EDIT.nome){ toast('Dê um nome ao checklist antes de salvar.'); return; }
+  CL_EDIT.itens=CL_EDIT.itens.filter(function(i){return i.t.trim();});
+  if(!CL_EDIT.itens.length){ toast('Escreva pelo menos um item.'); CL_EDIT.itens=[{t:'',ok:false}]; clRenderItens(); return; }
+  if(CL_ATUAL>=0) CL[CL_ATUAL]=JSON.parse(JSON.stringify(CL_EDIT));
+  else { CL.push(JSON.parse(JSON.stringify(CL_EDIT))); CL_ATUAL=CL.length-1; }
+  clGravar(); clRenderSelect(); clRenderItens(); toast('Checklist salvo.');
+};
+$('clExcluir').onclick=function(){
+  if(CL_ATUAL<0){ clCarregar(-1); return; }
+  if(!confirm('Excluir o checklist "'+(CL[CL_ATUAL].nome||'')+'"?')) return;
+  CL.splice(CL_ATUAL,1); CL_ATUAL=-1; clGravar(); clCarregar(-1); toast('Excluído.');
+};
+$('clCompartilhar').onclick=function(){
+  var t=clTexto(); $('zapText').value=t; $('modalZap').classList.add('show');
+  if(navigator.clipboard) navigator.clipboard.writeText(t).then(function(){toast('Checklist copiado!');},function(){});
+};
+$('clUsar').onclick=function(){
+  var itens=CL_EDIT.itens.filter(function(i){return i.t.trim();});
+  if(!itens.length){ toast('Escreva os itens primeiro.'); return; }
+  abrirNovaVisita('Visita');
+  $('vTrabalho').value = (CL_EDIT.nome? CL_EDIT.nome+':\n' : '') + itens.map(function(i){return '• '+i.t.trim();}).join('\n');
+  validaVisita();
+};
+CL=clLer(); clCarregar(-1);
 $('tabAgenda').onclick=function(){ setModo('agenda'); };
+(function(){
+  var h='<option value="">Equipe toda</option>';
+  SUPERVISORES.forEach(function(s){ h+='<option value="'+esc(s)+'">'+esc(s)+'</option>'; });
+  $('fAgendaQuem').innerHTML=h;
+})();
+$('fAgendaQuem').onchange=renderAgendaCompleta;
+$('btnCompartilharAgenda').onclick=function(){
+  var t=textoAgenda();
+  $('zapText').value=t; $('modalZap').classList.add('show');
+  if(navigator.clipboard) navigator.clipboard.writeText(t).then(function(){toast('Agenda copiada!');},function(){});
+};
 $('tabRotina').onclick=function(){ setModo('rotina'); };
 $('tabDespesas').onclick=function(){ setModo('despesas'); };
 preencherListas(); recuperarSou();
@@ -1996,11 +2201,57 @@ function delegar(id, mapa){
     }
   });
 }
-delegar('rotinaLista', {
-  'data-cin':  function(l){ marcarVisita('checkin', l); },
-  'data-cout': function(l){ marcarVisita('checkout', l); },
-  'data-nfui': function(l){ abrirNaoFui(l); }
-});
+/* ============ CHECKLIST PESSOAL ============
+   Fica no aparelho de quem usa. Não vai para a planilha: é a lista de conferência
+   pessoal, não um registro da empresa. */
+var LS_CL='sotintas_meet_checklists';
+var CL=[], CL_ATUAL=-1;
+function clLer(){ try{ var r=localStorage.getItem(LS_CL); return r?JSON.parse(r):[]; }catch(e){ return []; } }
+function clGravar(){ try{ localStorage.setItem(LS_CL, JSON.stringify(CL)); }catch(e){ toast('Não consegui salvar neste navegador.'); } }
+function clNovoVazio(){ return {nome:'', itens:[{t:'',ok:false}]}; }
+function clRenderSelect(){
+  var h='<option value="-1">— novo checklist —</option>';
+  CL.forEach(function(c,i){ h+='<option value="'+i+'"'+(i===CL_ATUAL?' selected':'')+'>'+esc(c.nome||'(sem nome)')+'</option>'; });
+  $('clSelect').innerHTML=h;
+  $('clSelect').value=String(CL_ATUAL);
+}
+var CL_EDIT=clNovoVazio();
+function clRenderItens(){
+  var h='';
+  CL_EDIT.itens.forEach(function(it,i){
+    h+='<div class="cli'+(it.ok?' feito':'')+'">'+
+       '<input type="checkbox" data-cli="'+i+'"'+(it.ok?' checked':'')+'>'+
+       '<input type="text" data-clt="'+i+'" value="'+esc(it.t)+'" placeholder="Ex.: conferir exposição da linha premium">'+
+       '<button class="delrow" data-cld="'+i+'">×</button></div>';
+  });
+  $('clItens').innerHTML=h;
+  Array.prototype.forEach.call(document.querySelectorAll('[data-cli]'),function(c){
+    c.onchange=function(){ CL_EDIT.itens[+c.dataset.cli].ok=c.checked; c.closest('.cli').classList.toggle('feito',c.checked); };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-clt]'),function(t){
+    t.oninput=function(){ CL_EDIT.itens[+t.dataset.clt].t=t.value; };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-cld]'),function(b){
+    b.onclick=function(){ CL_EDIT.itens.splice(+b.dataset.cld,1); if(!CL_EDIT.itens.length)CL_EDIT.itens=[{t:'',ok:false}]; clRenderItens(); };
+  });
+}
+function clCarregar(i){
+  CL_ATUAL=i;
+  CL_EDIT = i>=0 ? JSON.parse(JSON.stringify(CL[i])) : clNovoVazio();
+  $('clNome').value=CL_EDIT.nome||'';
+  clRenderItens(); clRenderSelect();
+}
+function clTexto(){
+  var L=[];
+  L.push('*'+(CL_EDIT.nome||'Checklist')+' — Só Tintas*');
+  L.push('');
+  CL_EDIT.itens.filter(function(i){return i.t.trim();}).forEach(function(i){
+    L.push((i.ok?'✅ ':'⬜ ')+i.t.trim());
+  });
+  return L.join('\n');
+}
+
+delegar('rotinaAtencao', {});
 delegar('agendaLista', {
   'data-usar':      function(l){ var a=acharPorLinha(l); if(a) usarAgendada(a); },
   'data-desmarcar': function(l){ var a=acharPorLinha(l); if(a) abrirCancelamento(a); },
