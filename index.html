@@ -132,6 +132,15 @@ textarea{resize:vertical;line-height:1.5}
 /* gravando: a gaveta fica destacada mesmo fechada, para ninguém esquecer */
 .gaveta.ativa>summary{background:#fff2f2;color:var(--red)}
 
+/* ---------- seletor de visão ---------- */
+.verbar{display:flex;gap:var(--s1);background:var(--navy-05);border:1px solid var(--navy-10);
+  border-radius:var(--r-pill);padding:3px;margin-bottom:var(--s3);width:fit-content;max-width:100%}
+.verbar button{background:none;border:none;border-radius:var(--r-pill);padding:8px 16px;
+  font-size:var(--fs-sm);font-weight:700;color:var(--muted);white-space:nowrap;
+  display:inline-flex;align-items:center;gap:6px;transition:.12s}
+.verbar button.sel{background:#fff;color:var(--navy);box-shadow:var(--e1)}
+.verbar.hidden{display:none}
+
 /* ---------- sub-abas ---------- */
 .tabs2{display:flex;gap:var(--s1);background:var(--navy-05);border:1px solid var(--navy-10);
   border-radius:var(--r-pill);padding:3px;margin-bottom:var(--s4);width:fit-content;max-width:100%}
@@ -786,10 +795,15 @@ tr.incompleto input{background:transparent}
 
       <div id="rotPainel">
       <h1>Painel de rotina</h1>
-      <p class="sub">Acompanhamento da equipe. Para marcar visita ou tarefa use <b><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg> Agendar</b>; para registrar chegada e saída, a aba <b><svg class="ic" aria-hidden="true"><use href="#i-calendar-days"/></svg> Agenda</b>.</p>
+      <p class="sub" id="rotSub"></p>
+      <!-- quem está sendo olhado é a primeira decisão do painel, não um detalhe -->
+      <div class="verbar" id="verBar"></div>
+      <input type="hidden" id="fSou">
       <div class="grid2">
-        <div><label>Sou</label><input list="listaSup" id="fSou" placeholder="Seu nome"></div>
-        <div><label>Mostrar</label>
+        <div id="wrapVerPessoa"><label>Ver pessoa</label>
+          <select id="fVerPessoa"></select>
+        </div>
+        <div><label>Período</label>
           <select id="fPeriodo">
             <option value="7">Próximos 7 dias</option>
             <option value="14" selected>Próximos 14 dias</option>
@@ -914,17 +928,23 @@ tr.incompleto input{background:transparent}
       <div><label>Hora de início</label><input type="time" id="fHora"></div>
       <div><label>Local / plataforma</label><input type="text" id="fLocal" placeholder="Loja Centro / Google Meet"></div>
     </div>
-    <div class="grid2 hidden" id="wrapDuracao">
-      <div><label>Duração prevista (minutos)</label><input type="text" id="fDuracao" placeholder="55"></div>
-      <div><label>Lembrete antes</label>
-        <select id="fLembrete">
-          <option value="15">15 minutos antes</option>
-          <option value="30" selected>30 minutos antes</option>
-          <option value="60">1 hora antes</option>
-          <option value="1440">1 dia antes</option>
-        </select>
+    <details class="gaveta hidden" id="wrapDuracao">
+      <summary><svg class="ic" aria-hidden="true"><use href="#i-timer"/></svg> <span>Duração e lembrete</span> <span class="gvc" id="durResumo"></span></summary>
+      <div class="grid2" style="padding:0 var(--s3) var(--s3)">
+        <div><label>Duração prevista (minutos)</label><input type="text" id="fDuracao" placeholder="55"></div>
+        <div><label>Lembrete antes</label>
+          <select id="fLembrete">
+            <option value="15">15 minutos antes</option>
+            <option value="30" selected>30 minutos antes</option>
+            <option value="60">1 hora antes</option>
+            <option value="1440">1 dia antes</option>
+          </select>
+        </div>
       </div>
-    </div>
+    </details>
+    <details class="gaveta hidden" id="wrapParts" open>
+      <summary><svg class="ic" aria-hidden="true"><use href="#i-user"/></svg> <span id="labPartsG">Quem convidar</span> <span class="gvc" id="partsResumo"></span></summary>
+      <div style="padding:0 var(--s3) var(--s3)">
     <label id="labParts">Participantes</label>
     <table class="acts" id="tabParts">
       <thead><tr><th style="width:9%">Presente</th><th style="width:28%">Nome</th><th style="width:30%">E-mail</th><th style="width:25%">WhatsApp</th><th style="width:8%"></th></tr></thead>
@@ -933,10 +953,12 @@ tr.incompleto input{background:transparent}
     <datalist id="listaParts"></datalist>
     <div class="hint" id="labEmails">O e-mail recebe a ata. O WhatsApp gera o botão de convite individual — pode deixar em branco quem você não for avisar por lá.</div>
     <button class="btn btn-ghost btn-sm" id="btnAddPart" style="margin-top:10px">+ Adicionar participante</button>
+      </div>
+    </details>
 
     <h3 id="hObj">4. Objetivo da reunião <span style="color:var(--red)">*</span></h3>
     <div class="objbox">
-      <div class="oh">Escreva em UMA frase o que precisa estar resolvido ao final</div>
+      <div class="oh">Em uma frase: o que precisa estar resolvido ao final?</div>
       <textarea id="fObjetivo" rows="2" placeholder="Ex.: Definir o plano de ação para recuperar a meta de tinta imobiliária da Loja Centro até o dia 30."></textarea>
       <div class="ot"><b>Teste rápido:</b> se a frase não tem um verbo de entrega (definir, decidir, alinhar, treinar, aprovar) e um prazo, ela ainda é um assunto — não um objetivo. "Falar sobre vendas" é assunto. "Decidir quem assume a carteira do Marcos até sexta" é objetivo.</div>
     </div>
@@ -1460,6 +1482,7 @@ function renderParts(){
   Array.prototype.forEach.call(document.querySelectorAll('#partsBody [data-pd]'),function(b){
     b.onclick=function(){ PARTS.splice(+b.dataset.pd,1); if(!PARTS.length)PARTS=[{n:'',e:'',f:'',p:true}]; renderParts(); renderConvites(); };
   });
+  if(typeof resumoGavetasAgenda==='function') resumoGavetasAgenda();
 }
 /* alimenta a lista de sugestões do campo "Responsável" na tabela de ações */
 function atualizaListaParts(){
@@ -1523,7 +1546,11 @@ function setModo(m){
   $('proximas').classList.toggle('hidden', telaCheia || !temHoje());
   if(m==='historico'){ carregarHistorico(); return; }
   if(m==='agenda'){ carregarAgendaUnificada(); return; }
-  if(m==='rotina'){ if(ROT_ABA==='pend') carregarPainelPend(); else carregarRotina(); return; }
+  if(m==='rotina'){
+    montarVisaoRotina();
+    if(ROT_ABA==='pend') carregarPainelPend(); else carregarRotina();
+    return;
+  }
   if(m==='despesas'){ iniciarDespesas(); return; }
   $('wrapDuracao').classList.toggle('hidden', m!=='agendar');
 
@@ -1543,20 +1570,31 @@ function setModo(m){
   $('hDados').textContent = agendando ? '2. Quando e onde' : '3. Dados da reunião';
   $('hObj').innerHTML     = (agendando ? '3.' : '4.') + ' Objetivo da reunião <span style="color:var(--red)">*</span>';
   $('labParts').textContent = agendando ? 'Quem convidar' : 'Participantes';
-  if(agendando){ sincronizarTipoSel(); tituloAutomatico(); }
+  /* Fora da tela de Agendar, o roteiro é o guia da condução. Dentro dela é
+     ruído: na hora de marcar você decide QUANDO, ONDE e PARA QUÊ — os blocos
+     só interessam quando a reunião começa. */
+  $('agendaPrev').classList.toggle('hidden', agendando);
+  $('btnLoad').classList.toggle('hidden', agendando);
+  /* nas duas telas os dois grupos existem, mas só na de agendar viram gaveta */
+  $('wrapParts').classList.toggle('hidden', false);
+  $('wrapParts').open = !agendando;
+  if(agendando){ sincronizarTipoSel(); tituloAutomatico(); resumoGavetasAgenda(); }
 
   $('btnStart').classList.toggle('hidden', m!=='agora');
   $('btnAgendar').classList.toggle('hidden', m==='agora');
   $('btnConviteZap').classList.toggle('hidden', m==='agora');
   $('setupTitulo').textContent = m==='agora' ? 'Preparar a reunião' : 'Agendar reunião';
+  /* Na tela de agendar o subtítulo virava um parágrafo explicando o que os
+     próprios botões já dizem. Quem chegou aqui já sabe que vai marcar. */
   $('setupSub').textContent = m==='agora'
-    ? 'Leva 40 segundos. Sem objetivo escrito, o botão de iniciar não libera — é de propósito.'
-    : 'O app cria o evento na Agenda Google convidando os participantes por e-mail, e gera o convite pronto para o WhatsApp.';
+    ? 'Sem objetivo escrito, o botão de iniciar não libera — é de propósito.'
+    : 'Cria o evento na Agenda e o convite para o WhatsApp.';
   $('labEmails').innerHTML = m==='agendar'
     ? 'E-mails dos convidados <span style="text-transform:none;font-weight:normal">(recebem o convite da Agenda e depois a ata)</span>'
     : 'E-mails para envio da ata <span style="text-transform:none;font-weight:normal">(opcional, separados por vírgula)</span>';
   if(m==='agendar' && !$('fDuracao').value) $('fDuracao').value = TPL[sel].blocos.reduce(function(a,b){return a+b.min;},0);
   $('agStatus').classList.add('hidden');
+  if(typeof resumoGavetasAgenda==='function') resumoGavetasAgenda();
   renderConvites();
   checkStart();
 }
@@ -1583,6 +1621,18 @@ function tituloAutomatico(){
   checkStart();
 }
 
+
+/* etiqueta das gavetas de Agendar: gaveta fechada precisa dizer o que guarda */
+function resumoGavetasAgenda(){
+  var d=$('durResumo');
+  if(d) d.textContent = ($('fDuracao').value||'—')+' min · aviso '+
+    ({'15':'15 min','30':'30 min','60':'1 h','1440':'1 dia'}[$('fLembrete').value]||'')+' antes';
+  var p=$('partsResumo');
+  if(p){
+    var n=PARTS.filter(function(x){ return x.n.trim(); }).length;
+    p.textContent = n ? n+' pessoa(s)' : 'ninguém ainda';
+  }
+}
 function agBox(cor,html){
   var b=$('agStatus');
   var e={info:['#eef3ff','#1C3F8F'],ok:['#e9f7ef','#1a8f5a'],erro:['#fdeaea','#D32027']}[cor];
@@ -1793,8 +1843,66 @@ var LS_SOU='sotintas_meet_sou';
 var SOU_CARREGADO='';
 var VISITAS=[], VISITA_ALVO=null;
 
-function souQuem(){ return ($('fSou').value||'').trim(); }
-function ehGestor(){ return souQuem().toLowerCase()===String(GESTOR||'').toLowerCase(); }
+/* ---------- VISÃO DO PAINEL DE ROTINA ----------
+   Duas perguntas diferentes, que estavam misturadas num campo só:
+   "como está a equipe?" (visão do coordenador) e "como está o Ramom?"
+   (visão de uma pessoa). Agora são duas posições explícitas de um botão,
+   e o app sabe qual está ativa.                                        */
+var ROT_VISAO='equipe';   /* 'equipe' | 'pessoa' */
+
+function souQuem(){
+  /* devolve a pessoa em foco, ou '' quando a visão é da equipe toda */
+  if(ROT_VISAO==='equipe' && ehCoordenador()) return '';
+  return ($('fVerPessoa') && $('fVerPessoa').value) || travaEscopo() || '';
+}
+function ehGestor(){ return ROT_VISAO==='equipe' && ehCoordenador(); }
+
+function montarVisaoRotina(){
+  var barra=$('verBar'), sel=$('fVerPessoa');
+  if(!barra || !sel) return;
+  var trava=travaEscopo();
+
+  /* quem não é coordenador não escolhe: vê o próprio e pronto */
+  if(trava){
+    barra.classList.add('hidden');
+    $('wrapVerPessoa').classList.add('hidden');
+    ROT_VISAO='pessoa';
+    sel.innerHTML='<option value="'+esc(trava)+'">'+esc(trava)+'</option>';
+    sel.value=trava;
+    $('rotSub').innerHTML='Sua rotina de visitas e tarefas. Para marcar, use <b>Agendar</b>; '+
+      'para registrar chegada e saída, a aba <b>Agenda</b>.';
+    return;
+  }
+
+  barra.classList.remove('hidden');
+  barra.innerHTML =
+    '<button data-visao="equipe" class="'+(ROT_VISAO==='equipe'?'sel':'')+'">'+
+      ICO('chart')+' Equipe toda</button>'+
+    '<button data-visao="pessoa" class="'+(ROT_VISAO==='pessoa'?'sel':'')+'">'+
+      ICO('user')+' Por pessoa</button>';
+
+  /* remonta sempre: a lista pode ter sido reduzida a uma pessoa antes de
+     sabermos que quem entrou é o coordenador */
+  if(sel.options.length !== Object.keys(EQUIPE).length){
+    var atual = sel.value;
+    sel.innerHTML = Object.keys(EQUIPE).map(function(n){
+      return '<option value="'+esc(n)+'">'+esc(n)+' · '+esc(EQUIPE[n].papel)+'</option>';
+    }).join('');
+    sel.value = (atual && EQUIPE[atual]) ? atual : euSou();
+  }
+  $('wrapVerPessoa').classList.toggle('hidden', ROT_VISAO!=='pessoa');
+  $('rotSub').innerHTML = ROT_VISAO==='equipe'
+    ? 'Visão de coordenação: cobertura de carteira, cumprimento e semana de <b>toda a equipe</b>.'
+    : 'Rotina de <b>'+esc(sel.value)+'</b> — o que foi planejado, feito e o que ficou para trás.';
+}
+
+delegar('verBar', {'data-visao': function(v){
+  if(ROT_VISAO===v) return;
+  ROT_VISAO=v;
+  montarVisaoRotina();
+  preencherLojas(souQuem());
+  carregarRotina();
+}});
 function preencherListas(){
   $('listaSup').innerHTML = SUPERVISORES.map(function(s){return '<option value="'+esc(s)+'">';}).join('');
   preencherLojas(souQuem());
@@ -1805,12 +1913,15 @@ function preencherLojas(sup){
 }
 function lembrarSou(){
   try{
-    var v=souQuem();
+    var v=($('fVerPessoa') && $('fVerPessoa').value)||'';
     if(v) localStorage.setItem(LS_SOU, v);
   }catch(e){}
 }
 function recuperarSou(){
-  try{ var v=localStorage.getItem(LS_SOU); if(v) $('fSou').value=v; }catch(e){}
+  try{
+    var v=localStorage.getItem(LS_SOU);
+    if(v && $('fVerPessoa')) $('fVerPessoa').value=v;
+  }catch(e){}
 }
 function isoMais(dias){ return new Date(Date.now()+dias*86400000).toISOString().slice(0,10); }
 
@@ -2883,7 +2994,7 @@ $('btnCompartilharAgenda').onclick=function(){
 };
 $('tabRotina').onclick=function(){ setModo('rotina'); };
 $('tabDespesas').onclick=function(){ setModo('despesas'); };
-preencherListas(); recuperarSou();
+montarVisaoRotina(); recuperarSou(); montarVisaoRotina(); preencherListas();
 
 /* Delegação: o clique é resolvido no container, que nunca é substituído.
    Assim, mesmo que a lista se redesenhe entre o toque e o soltar do dedo,
@@ -2957,7 +3068,9 @@ delegar('agendaLista', {
 });
 delegar('proximas', { 'data-usar': function(l){ var a=acharPorLinha(l); if(a) usarAgendada(a); } });
 
-$('fSou').onchange=function(){ lembrarSou(); if(souQuem()!==SOU_CARREGADO) carregarRotina(); };
+$('fVerPessoa').onchange=function(){
+  lembrarSou(); montarVisaoRotina(); preencherLojas(souQuem()); carregarRotina();
+};
 $('fPeriodo').onchange=carregarRotina;
 $('btnAtualizarRotina').onclick=carregarRotina;
 $('btnNovaVisita').onclick=function(){ abrirNovaVisita('Visita'); };
@@ -2990,6 +3103,8 @@ $('fTipoSel').onchange=function(){
   tituloAutomatico();
 };
 $('fLocal').addEventListener('input', function(){ if(modo==='agendar') tituloAutomatico(); });
+$('fDuracao').addEventListener('input', resumoGavetasAgenda);
+$('fLembrete').addEventListener('change', resumoGavetasAgenda);
 
 $('btnConviteZap').onclick=function(){
   var t=textoConvite(); $('zapText').value=t; $('modalZap').classList.add('show');
@@ -3273,7 +3388,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v22';
+var VERSAO_APP='v24';
 
 var LS_SESSAO='sotintas_sessao_v1';
 var SESSAO=null;
@@ -3281,7 +3396,10 @@ var SESSAO=null;
 function ehCoordenador(){ return !!(SESSAO && SESSAO.escopo==='todos'); }
 function euSou(){ return (SESSAO && SESSAO.nome) || GESTOR; }
 /* Devolve o nome a forçar no filtro, ou '' quando a pessoa pode ver todos. */
-function travaEscopo(){ return ehCoordenador() ? '' : euSou(); }
+function travaEscopo(){
+  if(!SESSAO) return '';          /* ainda na tela de entrada: nada a travar */
+  return ehCoordenador() ? '' : euSou();
+}
 
 function montarLogin(){
   var v=$('lgVersao'); if(v) v.textContent='Assistente ST '+VERSAO_APP;
@@ -3312,6 +3430,9 @@ function abrirApp(sessao){
 /* Aplica a regra que você escolheu: cada um vê o seu; o coordenador vê tudo. */
 function aplicarEscopo(){
   var travado = travaEscopo();
+  /* a visão da rotina precisa ser remontada em qualquer caso: para o
+     coordenador, para liberar o seletor; para o supervisor, para travá-lo */
+  if(typeof montarVisaoRotina==='function') montarVisaoRotina();
   if(!travado) return;
   /* Despesas */
   var f=$('dpFiltro');
@@ -3321,7 +3442,7 @@ function aplicarEscopo(){
   }
   if($('dpQuem')){ $('dpQuem').value=travado; $('dpQuem').readOnly=true; }
   /* Rotina */
-  if($('fSou')){ $('fSou').value=travado; $('fSou').readOnly=true; }
+  if(typeof montarVisaoRotina==='function') montarVisaoRotina();
   var fq=$('fQuem');
   if(fq){ fq.value=travado; fq.disabled=true; }
   /* Agenda */
