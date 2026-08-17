@@ -3,7 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Só Tintas Meet</title>
+<title>Assistente ST · Só Tintas</title>
+<meta name="theme-color" content="#1C3F8F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Assistente ST">
 <style>
 :root{
   --navy:#1C3F8F; --navy-d:#152F69; --red:#D32027; --yellow:#FFD100;
@@ -18,7 +21,7 @@ input,textarea,select{font-family:inherit;font-size:15px;color:var(--ink)}
 .wrap{max-width:1040px;margin:0 auto;padding:0 16px 80px}
 
 /* ---------- topo ---------- */
-.topbar{background:var(--navy);color:#fff;position:sticky;top:0;z-index:50;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.topbar{background:var(--navy);color:#fff;position:sticky;top:0;z-index:50;box-shadow:0 2px 10px rgba(0,0,0,.15);padding-top:env(safe-area-inset-top,0px)}
 .topbar-in{max-width:1040px;margin:0 auto;padding:8px 16px;display:flex;align-items:center;gap:12px}
 .topbar img{height:34px;background:#fff;border-radius:6px;padding:2px 6px}
 .topbar .tt{font-weight:bold;font-size:15px;line-height:1.1}
@@ -64,8 +67,10 @@ textarea{resize:vertical;line-height:1.5}
 .model .mt{font-size:11px;color:var(--red);font-weight:bold;margin-top:8px}
 
 /* ---------- abas agora / agendar ---------- */
-.tabs{display:flex;gap:8px;margin:0 0 16px;border-bottom:2px solid var(--line);padding-bottom:0}
-.tab{background:none;border:none;border-bottom:3px solid transparent;padding:9px 14px;font-size:15px;font-weight:bold;color:var(--muted);margin-bottom:-2px}
+.tabs{display:flex;gap:8px;margin:0 0 16px;border-bottom:2px solid var(--line);padding-bottom:0;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{background:none;border:none;border-bottom:3px solid transparent;padding:9px 14px;font-size:15px;font-weight:bold;color:var(--muted);margin-bottom:-2px;white-space:nowrap;flex:0 0 auto}
 .tab.sel{color:var(--navy);border-bottom-color:var(--red)}
 .tab:hover{color:var(--navy)}
 /* ---------- cartões de reunião agendada ---------- */
@@ -143,6 +148,42 @@ textarea{resize:vertical;line-height:1.5}
 .gitem input{margin-top:3px;width:17px;height:17px;accent-color:var(--red);flex:0 0 auto}
 .gitem.chk span{text-decoration:line-through;color:var(--muted)}
 
+/* ---------- cabeçalho da reunião ---------- */
+.runcard{padding:14px 20px}
+.runhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.runid{flex:1;min-width:200px}
+.runt{font-weight:bold;font-size:16px;color:var(--navy);line-height:1.2}
+.runm{font-size:12px;color:var(--muted);margin-top:2px}
+.runid .hint{display:inline-block;margin:2px 0 0}
+.runacts{display:flex;gap:8px;flex-wrap:wrap}
+.objrun{margin-top:12px;padding:10px 14px}
+.stepc{display:none}
+.lc{display:none}   /* rótulo curto: só no celular */
+
+/* ---------- ações abertas da última reunião ---------- */
+.pend{background:#fff;border:1.5px solid #f0d48a;border-left:5px solid var(--yellow);
+  border-radius:10px;padding:13px 15px;margin-bottom:14px}
+.pend .ph{font-weight:bold;color:#8a6100;font-size:13px;display:flex;align-items:center;
+  gap:8px;flex-wrap:wrap;margin-bottom:4px}
+.pend .ph .cnt{background:#8a6100;color:#fff;border-radius:20px;padding:2px 9px;font-size:11px}
+.pend .ph .cnt.venc{background:var(--red)}
+.pend .pe{font-size:12px;color:#8a6100;line-height:1.5;margin-bottom:10px}
+.pi{border:1px solid var(--line);border-radius:9px;padding:10px 12px;margin-top:8px;background:#fff}
+.pi.venc{border-color:#f3c2c4;background:#fffafa}
+.pi .pt{font-size:14px;line-height:1.45}
+.pi .pm{font-size:11.5px;color:var(--muted);margin-top:4px}
+.pi .pm b{color:var(--navy)}
+.pi .pm .atraso{color:var(--red);font-weight:bold}
+.pi .pb{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+.pi .pb .btn{flex:0 0 auto}
+.pi.resolvida{opacity:.5}
+.pi.resolvida .pt{text-decoration:line-through}
+.pend.vazio{display:flex;align-items:center;gap:8px;padding:8px 12px}
+.pend.vazio .pv{font-size:12.5px;color:#8a6100;flex:1;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.pend.vazio .pvb{display:flex;gap:6px;flex:0 0 auto}
+.pend.vazio .btn{padding:5px 9px;font-size:11.5px;white-space:nowrap}
+
 /* ---------- captura ---------- */
 .capbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
 .cap{border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:9px 13px;font-size:13px;font-weight:bold;color:var(--navy);display:inline-flex;align-items:center;gap:7px}
@@ -205,6 +246,172 @@ tr.incompleto input{background:transparent}
 .modal .mbox{background:#fff;border-radius:14px;padding:22px;max-width:620px;width:100%;max-height:88vh;overflow:auto}
 .hidden{display:none!important}
 
+/* ============================================================
+   CELULAR — é onde o app vive de verdade: supervisor em loja,
+   uma mão no celular e outra na conversa.
+   ============================================================ */
+.agb{display:flex;gap:8px;flex-wrap:wrap}
+
+/* barra inferior de navegação e barra de avanço — só existem no celular */
+.bnav,.runbar{display:none}
+@media(max-width:640px){
+  .bnav{
+    display:flex;position:fixed;left:0;right:0;bottom:0;z-index:120;
+    background:#fff;border-top:1px solid var(--line);
+    box-shadow:0 -2px 14px rgba(20,35,70,.10);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  .bnav.oculta{display:none}
+  .bnav button{
+    flex:1;background:none;border:none;padding:7px 2px 8px;
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+    font-size:10px;font-weight:bold;color:var(--muted);
+    letter-spacing:.2px;min-height:56px;justify-content:center;
+    border-top:3px solid transparent;margin-top:-1px;
+  }
+  .bnav button .bi{font-size:19px;line-height:1}
+  .bnav button.sel{color:var(--navy);border-top-color:var(--red)}
+  /* as abas de cima somem: navegar por baixo é onde o polegar alcança */
+  .tabs{display:none}
+  /* barra fixa de avançar/voltar dentro da reunião */
+  .runbar{
+    position:fixed;left:0;right:0;bottom:0;z-index:120;background:#fff;
+    border-top:1px solid var(--line);box-shadow:0 -2px 14px rgba(20,35,70,.10);
+    display:flex;gap:8px;padding:9px 10px;
+    padding-bottom:calc(9px + env(safe-area-inset-bottom,0px));
+  }
+  .runbar .btn{flex:1;min-height:48px;margin:0}
+  .runbar .btn-ghost{flex:0 0 38%}
+  #btnPrev,#btnNext{display:none}
+  /* modais viram folha que sobe de baixo — gesto de celular */
+  .modal{align-items:flex-end;padding:0}
+  .modal .mbox{
+    border-radius:16px 16px 0 0;max-height:93vh;padding:18px 16px;
+    padding-bottom:calc(18px + env(safe-area-inset-bottom,0px));
+    animation:sobe .22s ease-out;
+  }
+  @keyframes sobe{from{transform:translateY(26px);opacity:.4}to{transform:none;opacity:1}}
+  .modal .mbox:before{
+    content:'';display:block;width:38px;height:4px;border-radius:3px;
+    background:var(--line);margin:-6px auto 12px;
+  }
+}
+@media(max-width:640px){
+  .wrap{padding:0 10px 88px}
+  .card{padding:14px;border-radius:12px;margin:12px 0}
+  h1{font-size:20px}
+  h2{font-size:17px}
+  /* 16px evita o zoom automático do iPhone ao tocar num campo */
+  input[type=text],input[type=date],input[type=time],input[type=number],textarea,select{font-size:16px;padding:12px}
+  .tabs{gap:2px;margin-bottom:12px}
+  .tab{padding:9px 10px;font-size:14px}
+  .topbar-in{padding:7px 12px;gap:9px}
+  .topbar img{height:30px}
+  .topbar .tt{font-size:14px}
+  .topbar .ts{font-size:10px}
+  /* botões: dois por linha, alvo grande para o dedo */
+  .btnrow{gap:8px}
+  .btnrow .btn{flex:1 1 calc(50% - 4px);min-height:46px}
+  .btnrow .btn-sm{min-height:40px}
+  .agb{width:100%;margin-top:4px}
+  .agb .btn{flex:1 1 calc(50% - 4px);min-height:42px}
+  .ag{align-items:flex-start;padding:12px;gap:10px}
+  .ag .agd{padding:5px 8px}
+  .ag .agd b{font-size:15px}
+  .ata{padding:16px;border-radius:12px}
+  .ata .ahead img{height:52px}
+  .ata .ahead .t{font-size:18px}
+  .ata .meta{grid-template-columns:1fr}
+  .modal{padding:10px}
+  .modal .mbox{padding:16px;border-radius:12px;max-height:92vh}
+  .kpi{padding:12px}
+  .kpi .kv{font-size:22px}
+  .delrow{padding:10px 12px;font-size:20px}
+  .cap{padding:11px 13px}
+  .gitem input{width:20px;height:20px}
+  .steps{gap:5px}
+  .step{padding:8px 11px;font-size:12px}
+  .bt{font-size:17px}
+  .btime .v{font-size:18px}
+  .models{gap:9px}
+  .model{padding:12px}
+  .toast{left:10px;right:10px;transform:none;text-align:center;bottom:76px}
+  .toast.show{bottom:86px}
+  /* tabelas largas: rolagem lateral com aviso, em vez de texto espremido */
+  .rolar{margin:0 -4px}
+  .pnl{font-size:12px} .pnl td{padding:7px 6px}
+  .semana{grid-template-columns:96px repeat(7,minmax(84px,1fr));min-width:700px}
+  .capbar{gap:6px}
+  .cap{flex:1 1 calc(50% - 3px);justify-content:center;min-height:44px}
+  .objbox{padding:12px 13px}
+  .bhead{gap:9px;padding-bottom:10px;margin-bottom:12px}
+  .btime{margin-left:0;width:100%;text-align:left;order:3;display:flex;gap:6px;align-items:baseline}
+  .bhead{flex-wrap:wrap}
+  .guia{padding:11px 12px}
+  .livebox{font-size:15px}
+  #bNotas{min-height:170px}
+  .pend{padding:11px 12px}
+  .pi .pb .btn{flex:1 1 calc(50% - 4px);min-height:42px}
+
+  /* ---- disposição do celular: menos moldura, mais conteúdo ---- */
+  /* o subtítulo do topo é decoração; a altura da tela é o recurso escasso */
+  .topbar .ts{display:none}
+  .topbar .tt{font-size:16px}
+  .topbar-in{padding:9px 12px}
+
+  /* rótulos: versão curta */
+  .lf{display:none} .lc{display:inline}
+
+  /* cabeçalho da reunião: identificação em cima, ações numa faixa própria */
+  .runcard{padding:13px 14px}
+  .runhead{gap:8px}
+  .runid{min-width:100%}
+  .runt{font-size:17px}
+  .runacts{width:100%;gap:7px}
+  .runacts .btn{flex:1 1 calc(50% - 4px);min-height:36px;font-size:12.5px;padding:6px 10px}
+  .objrun{margin-top:10px;padding:9px 11px;font-size:13px}
+
+  /* régua de blocos: uma linha em vez de etiquetas roláveis */
+  .steps{display:none}
+  .stepc{display:flex;align-items:baseline;gap:7px;padding:10px 0 6px;flex-wrap:wrap}
+  .stepc .sq{background:var(--navy);color:#fff;border-radius:7px;padding:3px 9px;
+    font-size:11px;font-weight:bold;letter-spacing:.3px;white-space:nowrap}
+  /* o nome do bloco já aparece no cartão logo abaixo — aqui só a posição */
+  .stepc .st{display:none}
+  .stepc .sr{font-size:11.5px;color:var(--muted);margin-left:auto;white-space:nowrap}
+
+  /* labels: menos respiro vertical entre campos */
+  label{margin:11px 0 4px;font-size:11.5px}
+  h3{margin:14px 0 6px}
+  .sub{margin-bottom:12px}
+  .btnrow{margin-top:14px}
+
+  /* roteiro do bloco: mais enxuto, sem perder legibilidade */
+  .guia{padding:10px 11px;margin-bottom:11px}
+  .gitem{padding:6px 0;font-size:13.5px}
+
+  /* cartão de agenda: data e título na mesma linha */
+  .ag{align-items:center}
+  .ag .agd{padding:4px 8px;min-width:44px}
+  .ag .agi{min-width:calc(100% - 66px)}
+  .ag .agt{font-size:14.5px;line-height:1.25}
+  .ag .ags{font-size:11.5px;margin-top:3px}
+
+  /* indicadores: dois por linha, sempre */
+  .kpis{grid-template-columns:1fr 1fr;gap:8px}
+  .kpi{padding:11px}
+  .kpi .kl{font-size:10px}
+
+  /* escolha de modelo: cartão mais raso, o texto explicativo cabe */
+  .model{padding:11px 12px}
+  .model .mn{font-size:14.5px;margin:4px 0 3px}
+  .model .md{font-size:11.5px}
+}
+/* telas bem estreitas: um botão por linha */
+@media(max-width:400px){
+  .btnrow .btn, .agb .btn{flex:1 1 100%}
+}
+
 @media print{
   body{background:#fff}
   .topbar,.noprint,.btnrow{display:none!important}
@@ -221,8 +428,8 @@ tr.incompleto input{background:transparent}
   <div class="topbar-in">
     <img src="data:image/jpeg;base64,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" alt="Só Tintas">
     <div>
-      <div class="tt">Só Tintas Meet</div>
-      <div class="ts">Assistente de coordenação · reuniões, rotina e equipe</div>
+      <div class="tt">Assistente ST</div>
+      <div class="ts">Só Tintas · reuniões, rotina e equipe</div>
     </div>
     <div class="spacer"></div>
     <div class="chip-timer hidden" id="chipTimer">⏱ <b id="totalTime">00:00</b></div>
@@ -449,19 +656,24 @@ tr.incompleto input{background:transparent}
 
 <!-- ================= TELA 2: CONDUÇÃO ================= -->
 <section id="viewRun" class="hidden">
-  <div class="card" style="padding:14px 20px">
-    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-      <div style="flex:1;min-width:200px">
-        <div style="font-weight:bold;font-size:16px;color:var(--navy)" id="runTitulo"></div>
-        <div style="font-size:12px;color:var(--muted)" id="runMeta"></div>
+  <div class="card runcard">
+    <div class="runhead">
+      <div class="runid">
+        <div class="runt" id="runTitulo"></div>
+        <div class="runm" id="runMeta"></div>
+        <span class="hint" id="salvoEm"></span>
       </div>
-      <span class="hint" id="salvoEm" style="align-self:center;margin:0"></span>
-      <button class="btn btn-ghost btn-sm" id="btnSave">💾 Salvar backup</button>
-      <button class="btn btn-navy btn-sm" id="btnFinish">✓ Encerrar e gerar ata</button>
+      <div class="runacts">
+        <button class="btn btn-ghost btn-sm" id="btnSave">💾<span class="lf"> Salvar backup</span><span class="lc"> Backup</span></button>
+        <button class="btn btn-navy btn-sm" id="btnFinish">✓<span class="lf"> Encerrar e gerar ata</span><span class="lc"> Encerrar</span></button>
+      </div>
     </div>
-    <div class="objbox" style="margin-top:12px;padding:10px 14px">
+    <div class="objbox objrun">
       <div class="oh" style="margin:0">🎯 Objetivo: <span style="font-weight:normal" id="runObjetivo"></span></div>
     </div>
+    <!-- no celular a régua de blocos vira uma linha só: rolagem lateral de
+         etiquetas consome altura e ninguém rola para achar o bloco 5 -->
+    <div class="stepc" id="stepc"></div>
     <div class="steps" id="steps"></div>
     <div class="pbar"><div id="pbarFill" style="width:0%"></div></div>
   </div>
@@ -476,13 +688,16 @@ tr.incompleto input{background:transparent}
       <div class="btime" id="bTimeBox"><div class="v" id="bTime">00:00</div><div class="l" id="bTimeL">de 5 min</div></div>
     </div>
 
+    <!-- o que ficou combinado da última vez — a memória da reunião -->
+    <div id="pendBox" class="hidden"></div>
+
     <div class="guia" id="guia"></div>
 
     <div class="capbar">
-      <button class="cap" id="capMic"><span class="dot"></span>🎤 Transcrever ao vivo</button>
-      <button class="cap" id="capAudio"><span class="dot"></span>⏺ Gravar áudio</button>
-      <button class="cap" id="capVideo"><span class="dot"></span>🎥 Gravar vídeo</button>
-      <button class="cap" id="capPaste">📋 Colar transcrição</button>
+      <button class="cap" id="capMic"><span class="dot"></span>🎤<span class="lf"> Transcrever ao vivo</span><span class="lc"> Ao vivo</span></button>
+      <button class="cap" id="capAudio"><span class="dot"></span>⏺<span class="lf"> Gravar áudio</span><span class="lc"> Áudio</span></button>
+      <button class="cap" id="capVideo"><span class="dot"></span>🎥<span class="lf"> Gravar vídeo</span><span class="lc"> Vídeo</span></button>
+      <button class="cap" id="capPaste">📋<span class="lf"> Colar transcrição</span><span class="lc"> Colar</span></button>
     </div>
     <div class="livebox hidden" id="liveBox"></div>
     <div id="recInfo" class="hint hidden"></div>
@@ -646,6 +861,22 @@ tr.incompleto input{background:transparent}
     </div>
     <div id="cancelStatus" class="hidden" style="margin-top:12px;padding:11px 14px;border-radius:10px;font-size:14px"></div>
   </div>
+</div>
+
+<!-- navegação inferior (só aparece no celular) -->
+<nav class="bnav" id="bnav">
+  <button data-nav="agendar" class="sel"><span class="bi">📅</span>Agendar</button>
+  <button data-nav="agenda"><span class="bi">🗓</span>Agenda</button>
+  <button data-nav="rotina"><span class="bi">🚗</span>Rotina</button>
+  <button data-nav="agora"><span class="bi">▶</span>Reunião</button>
+  <button data-nav="despesas"><span class="bi">💰</span>Despesas</button>
+  <button data-nav="historico"><span class="bi">📚</span>Histórico</button>
+</nav>
+
+<!-- avançar/voltar fixos durante a reunião (só no celular) -->
+<div class="runbar hidden" id="runbar">
+  <button class="btn btn-ghost" id="btnPrevM">← Voltar</button>
+  <button class="btn btn-primary" id="btnNextM">Próximo bloco →</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -952,6 +1183,7 @@ function setModo(m){
   $('tabHistorico').className='tab'+(m==='historico'?' sel':'');
   $('tabRotina').className='tab'+(m==='rotina'?' sel':'');
   $('tabDespesas').className='tab'+(m==='despesas'?' sel':'');
+  if(typeof syncNav==='function') syncNav();
   $('viewHistorico').classList.toggle('hidden', m!=='historico');
   $('viewAgenda').classList.toggle('hidden', m!=='agenda');
   $('viewRotina').classList.toggle('hidden', m!=='rotina');
@@ -1138,7 +1370,7 @@ function renderAgendaCompleta(){
        '<div class="agi"><div class="agt">'+ICO[a.k]+' '+esc(a.titulo||'')+(a.status?' '+badgeStatus(a.status):'')+'</div>'+
        '<div class="ags">'+esc(a.sub)+'</div>'+
        (a.extra?'<div style="font-size:13px;color:var(--ink);margin-top:5px;white-space:pre-wrap">'+esc(a.extra)+'</div>':'')+
-       '</div><div style="display:flex;gap:8px;flex-wrap:wrap">'+acoes+'</div></div><div style="height:2px"></div>';
+       '</div><div class="agb">'+acoes+'</div></div><div style="height:2px"></div>';
   });
   box.innerHTML=h;
 }
@@ -1166,7 +1398,7 @@ function textoAgenda(){
     if(a.k==='reuniao' && a.sub) L.push('   '+a.sub);
   });
   L.push('');
-  L.push('_Só Tintas Meet · assistente de coordenação_');
+  L.push('_Assistente ST · Só Tintas_');
   return L.join('\n');
 }
 
@@ -1699,6 +1931,16 @@ function renderSteps(){
     s.onclick=function(){salvarBloco();S.cur=+s.dataset.i;renderBloco();};
   });
   $('pbarFill').style.width=Math.round((S.cur)/(S.blocos.length-1)*100)+'%';
+  /* versão de uma linha, para o celular */
+  var sc=$('stepc');
+  if(sc){
+    var b=S.blocos[S.cur]||{t:''};
+    var falta=S.blocos.length-1-S.cur;
+    sc.innerHTML='<span class="sq">'+(S.cur+1)+'/'+S.blocos.length+'</span>'+
+      '<span class="st">'+esc(b.t)+'</span>'+
+      '<span class="sr">'+(falta>0?('faltam '+falta+' bloco'+(falta>1?'s':'')):'último bloco')+'</span>';
+    sc.title = (S.cur+1)+' de '+S.blocos.length+' · '+b.t;
+  }
 }
 function renderBloco(){
   var b=S.blocos[S.cur];
@@ -1731,6 +1973,8 @@ function renderBloco(){
   }
   $('btnPrev').disabled = S.cur===0;
   $('btnNext').textContent = S.cur===S.blocos.length-1 ? 'Ir para a ata →' : 'Próximo bloco →';
+  if(typeof syncNav==='function') syncNav();
+  if(typeof carregarPendencias==='function') carregarPendencias(false);
   window.scrollTo({top:0,behavior:'smooth'});
 }
 /* ============ MODO CORRIDO ============ */
@@ -1739,6 +1983,8 @@ function renderCorrido(b){
   $('guia').classList.add('hidden'); $('marcadores').classList.remove('hidden');
   $('btnPrev').classList.add('hidden'); $('btnNext').classList.add('hidden');
   $('bNum').textContent='🔴';
+  if(typeof syncNav==='function') syncNav();
+  if(typeof carregarPendencias==='function') carregarPendencias(false);
   $('bTitulo').textContent='Reunião em andamento';
   $('bPergunta').textContent='Ligue o microfone, deixe a conversa correr e marque os momentos importantes.';
   $('bTime').textContent=fmt(b.seg);
@@ -1945,7 +2191,7 @@ function gerarAta(){
     S.gravacoes.forEach(function(g){ h+='<p style="font-size:13px">🎧 '+esc(g.arquivo)+' — bloco "'+esc(g.bloco)+'" ('+fmt(g.dur)+')</p>'; });
   }
 
-  h+='<div class="foot">Só Tintas – Documento interno · Gerado no <b>Só Tintas Meet</b> em '+new Date().toLocaleString('pt-BR')+'<br><b>Só Tintas – Colorindo vidas e realizando sonhos</b></div>';
+  h+='<div class="foot">Só Tintas – Documento interno · Gerado no <b>Assistente ST</b> em '+new Date().toLocaleString('pt-BR')+'<br><b>Só Tintas – Colorindo vidas e realizando sonhos</b></div>';
 
   $('ataBox').innerHTML=h;
   $('viewRun').classList.add('hidden'); $('viewAta').classList.remove('hidden');
@@ -2085,7 +2331,7 @@ function textoResumo(){
   L.push('*Objetivo atingido:* '+S.status);
   if(pendTxt) L.push('*Pendência:* '+pendTxt);
   L.push('');
-  L.push('_Ata gerada no Só Tintas Meet · Colorindo vidas e realizando sonhos_');
+  L.push('_Ata gerada no Assistente ST · Colorindo vidas e realizando sonhos_');
   return L.join('\n');
 }
 
@@ -2347,9 +2593,216 @@ $('btnNew').onclick=function(){
   if(confirm('Começar uma nova reunião? Salve o backup antes se ainda precisar destes dados.')){ limparLocal(); dirty=false; location.reload(); }
 };
 window.onbeforeunload=function(){ if(dirty) return 'A reunião em andamento será perdida.'; };
+
+/* ============ AÇÕES ABERTAS DA ÚLTIMA REUNIÃO ============
+   Sem isto o app é um caderno com memória de uma página: registra o
+   combinado e esquece na semana seguinte. O que muda a gestão não é
+   registrar a ação — é ela reaparecer na frente do responsável antes
+   de qualquer assunto novo.                                        */
+var PEND = { itens:[], carregando:false, chave:'', soLoja:true };
+
+function pendVisivel(){
+  if(!S) return false;
+  if(S.modoCond==='corrido') return true;      /* na gravação contínua fica sempre à vista */
+  return S.cur === 0;                          /* no guiado, só na Abertura */
+}
+
+function carregarPendencias(forcar){
+  var box=$('pendBox');
+  if(!box) return;
+  if(!pendVisivel()){ box.classList.add('hidden'); return; }
+  box.classList.remove('hidden');
+
+  if(!ENVIO_URL){
+    box.innerHTML='<div class="pend"><div class="ph">📌 Ações da última reunião</div>'+
+      '<div class="pe">Indisponível: o envio para o Google não está configurado neste arquivo.</div></div>';
+    return;
+  }
+
+  var chave = (PEND.soLoja ? norml(S.local) : '*');
+  if(!forcar && PEND.chave===chave && !PEND.carregando){ renderPend(); return; }
+
+  PEND.chave=chave; PEND.carregando=true;
+  box.innerHTML='<div class="pend"><div class="ph">📌 Ações da última reunião</div>'+
+    '<div class="pe">Buscando o que ficou combinado…</div></div>';
+
+  var url = ENVIO_URL+'?acao=pendencias';
+  if(PEND.soLoja && S.local) url += '&local='+encodeURIComponent(S.local);
+
+  fetch(url)
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      PEND.carregando=false;
+      if(!res || !res.ok){ pendErro(res && res.erro); return; }
+      PEND.itens=(res.itens||[]).map(function(i){ i.resolvida=''; return i; });
+      renderPend();
+    })
+    .catch(function(){ PEND.carregando=false; pendErro(''); });
+}
+
+function pendErro(msg){
+  $('pendBox').innerHTML='<div class="pend"><div class="ph">📌 Ações da última reunião</div>'+
+    '<div class="pe">Não consegui buscar as ações em aberto'+(msg?': '+esc(msg):'')+
+    '. Confira se o Apps Script está na versão nova (a que tem <code>acao=pendencias</code>).</div>'+
+    '<button class="btn btn-ghost btn-sm" data-pend="recarregar">↻ Tentar de novo</button></div>';
+}
+
+function renderPend(){
+  var box=$('pendBox');
+  var itens=PEND.itens||[];
+  var abertas=itens.filter(function(i){ return !i.resolvida; });
+  var venc=abertas.filter(function(i){ return i.vencida; }).length;
+
+  var alvo = PEND.soLoja && S.local ? esc(S.local) : 'todas as lojas';
+
+  /* nada em aberto não merece um painel inteiro: vira uma linha */
+  if(!itens.length){
+    box.innerHTML='<div class="pend vazio" title="Nenhuma ação em aberto para '+alvo+'">'+
+      '<span class="pv">📌 Nada em aberto</span>'+
+      '<span class="pvb">'+
+      '<button class="btn btn-ghost btn-sm" data-pend="alternar">'+
+      (PEND.soLoja?'🔎 Todas as lojas':'📍 Só esta loja')+'</button>'+
+      '<button class="btn btn-ghost btn-sm" data-pend="recarregar">↻</button>'+
+      '</span></div>';
+    return;
+  }
+
+  var h='<div class="pend"><div class="ph">📌 Ações da última reunião'+
+        '<span class="cnt'+(venc?' venc':'')+'">'+abertas.length+' em aberto'+
+        (venc?' · '+venc+' vencida'+(venc>1?'s':''):'')+'</span></div>';
+
+  {
+    h+='<div class="pe">Leia em voz alta antes de abrir assunto novo. '+
+       'Ação que não é retomada no início vira intenção.</div>';
+    itens.forEach(function(i,ix){
+      var atraso = i.vencida && i.prazo ? diasDe(i.prazo) : 0;
+      h+='<div class="pi'+(i.vencida?' venc':'')+(i.resolvida?' resolvida':'')+'">'+
+         '<div class="pt">'+esc(i.acao)+'</div>'+
+         '<div class="pm"><b>'+esc(i.responsavel||'sem dono')+'</b>'+
+         (i.prazo?' · prazo '+brData(i.prazo):' · sem prazo')+
+         (atraso>0?' · <span class="atraso">'+atraso+' dia'+(atraso>1?'s':'')+' de atraso</span>':'')+
+         (i.reuniao?' · de "'+esc(i.reuniao)+'"':'')+
+         (PEND.soLoja?'':(i.local?' · '+esc(i.local):''))+'</div>';
+      if(i.resolvida){
+        h+='<div class="pm" style="color:var(--ok);font-weight:bold;margin-top:6px">'+esc(i.resolvida)+'</div>';
+      } else {
+        h+='<div class="pb">'+
+           '<button class="btn btn-ghost btn-sm" data-pfeito="'+ix+'">✅ Concluída</button>'+
+           '<button class="btn btn-ghost btn-sm" data-psegue="'+ix+'">🔁 Continua aberta</button>'+
+           '</div>';
+      }
+      h+='</div>';
+    });
+  }
+
+  h+='<div class="pb" style="margin-top:12px">'+
+     '<button class="btn btn-ghost btn-sm" data-pend="alternar">'+
+     (PEND.soLoja?'🔎 Ver de todas as lojas':'📍 Só '+(esc(S.local)||'esta loja'))+'</button>'+
+     '<button class="btn btn-ghost btn-sm" data-pend="recarregar">↻ Atualizar</button>'+
+     '</div></div>';
+
+  box.innerHTML=h;
+}
+
+/* Uma ação que "continua aberta" entra na tabela desta reunião já com o
+   dono preenchido e o prazo em branco de propósito: repactuar a data é a
+   parte que faz o combinado voltar a valer. */
+function pendSegue(ix){
+  var i=PEND.itens[ix]; if(!i) return;
+  var vazia = S.acoes.length===1 && !S.acoes[0].a.trim();
+  var nova = { a:'↻ '+i.acao, r:i.responsavel||'', p:'' };
+  if(vazia) S.acoes[0]=nova; else S.acoes.push(nova);
+  i.resolvida='↻ Repactuada — entrou na tabela de ações desta reunião. Defina o novo prazo.';
+  renderPend(); renderActs(); agendarSalvar();
+  toast('Entrou nas ações desta reunião — falta o novo prazo.');
+}
+
+function pendFeito(ix){
+  var i=PEND.itens[ix]; if(!i) return;
+  i.resolvida='✓ Marcada como concluída na planilha.';
+  renderPend();
+  fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({tipo:'baixaAcao', linha:i.linha, acao:i.acao,
+                         novoStatus:'concluida', quem:(S.condutor||GESTOR)})})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if(res && res.ok){ toast('Ação baixada na planilha.'); }
+      else { i.resolvida=''; renderPend(); toast('Não consegui baixar: '+((res&&res.erro)||'erro')); }
+    })
+    .catch(function(){ i.resolvida=''; renderPend(); toast('Sem conexão — a baixa não foi gravada.'); });
+}
+
+/* delegação: a lista se redesenha a cada toque, então o clique não pode
+   depender do botão que estava lá no momento do render */
+delegar('pendBox', {
+  'data-pfeito': function(v){ pendFeito(+v); },
+  'data-psegue': function(v){ pendSegue(+v); },
+  'data-pend'  : function(v){
+    if(v==='alternar'){ PEND.soLoja=!PEND.soLoja; carregarPendencias(true); }
+    if(v==='recarregar'){ carregarPendencias(true); }
+  }
+});
+
+function norml(v){ return String(v||'').trim().toLowerCase(); }
+function brData(iso){ var p=String(iso||'').split('-'); return p.length===3 ? p[2]+'/'+p[1] : (iso||''); }
+function diasDe(iso){
+  try{ return Math.max(0, Math.round((new Date(hojeISO()+'T00:00:00') - new Date(iso+'T00:00:00'))/86400000)); }
+  catch(e){ return 0; }
+}
+
+/* ============ NAVEGAÇÃO INFERIOR (CELULAR) ============
+   No celular a mão segura o aparelho por baixo. Aba no topo é
+   como colocar a maçaneta da porta na altura do teto: existe,
+   mas ninguém alcança sem soltar o que está segurando.        */
+(function(){
+  var nav=$('bnav'); if(!nav) return;
+  var mapaTab={agendar:'tabAgendar',agenda:'tabAgenda',rotina:'tabRotina',
+               agora:'tabAgora',despesas:'tabDespesas',historico:'tabHistorico'};
+  nav.addEventListener('click',function(ev){
+    var b=ev.target && ev.target.closest ? ev.target.closest('[data-nav]') : null;
+    if(!b) return;
+    var alvo=$(mapaTab[b.getAttribute('data-nav')]);
+    if(alvo) alvo.click();
+    window.scrollTo(0,0);
+  });
+})();
+
+/* mantém a barra de baixo em sincronia com a aba escolhida */
+function syncNav(){
+  var nav=$('bnav'); if(!nav) return;
+  Array.prototype.forEach.call(nav.querySelectorAll('[data-nav]'),function(b){
+    b.className = (b.getAttribute('data-nav')===modo) ? 'sel' : '';
+  });
+  var naReuniao = !$('viewRun').classList.contains('hidden');
+  var naAta     = !$('viewAta').classList.contains('hidden');
+  /* durante a reunião a navegação some e dá lugar ao avançar/voltar */
+  nav.classList.toggle('oculta', naReuniao || naAta);
+  $('runbar').classList.toggle('hidden', !naReuniao);
+  if(naReuniao){
+    var p=$('btnPrev'), n=$('btnNext');
+    $('btnPrevM').disabled = p.disabled;
+    $('btnNextM').textContent = n.textContent;
+    var escondido = n.classList.contains('hidden');
+    $('runbar').classList.toggle('hidden', escondido);
+  }
+}
+$('btnPrevM').onclick=function(){ $('btnPrev').click(); window.scrollTo(0,0); };
+$('btnNextM').onclick=function(){ $('btnNext').click(); window.scrollTo(0,0); };
+
+/* qualquer troca de tela reavalia as barras — evita ter que lembrar
+   de chamar syncNav em cada um dos pontos que trocam de seção      */
+(function(){
+  if(!window.MutationObserver) return;
+  var obs=new MutationObserver(function(){ syncNav(); });
+  ['viewSetup','viewRun','viewAta'].forEach(function(id){
+    var el=$(id); if(el) obs.observe(el,{attributes:true,attributeFilter:['class']});
+  });
+})();
+
 checkStart();
 /* o app abre em Agendar: no dia a dia se planeja mais do que se começa reunião na hora */
 setModo('agendar');
+syncNav();
 </script>
 </body>
 </html>
