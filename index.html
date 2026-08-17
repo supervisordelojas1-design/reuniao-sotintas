@@ -3273,7 +3273,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v21';
+var VERSAO_APP='v22';
 
 var LS_SESSAO='sotintas_sessao_v1';
 var SESSAO=null;
@@ -3460,20 +3460,31 @@ function receberArquivos(lista){
   var arr = Array.prototype.slice.call(lista||[]);
   if(!arr.length) return;
   var pendentes = arr.length;
-  arr.forEach(function(f){
+  /* Cada arquivo termina de ser lido na hora que quiser. Sem reservar o
+     lugar antes, a ordem na tela sai embaralhada — e como a leitura numera
+     os anexos por essa ordem, o comprovante errado iria para a despesa errada. */
+  var base = DP_ANEXOS.length;
+  arr.forEach(function(){ DP_ANEXOS.push(null); });
+  function guardar(pos, item){ DP_ANEXOS[base+pos]=item; }
+  function terminou(){
+    if(--pendentes>0) return;
+    DP_ANEXOS = DP_ANEXOS.filter(function(x){ return !!x; });
+    renderAnexos();
+  }
+  arr.forEach(function(f, pos){
     if(f.size > MAX_ANEXO_MB*1024*1024){
       dpBox('erro','"'+esc(f.name)+'" tem mais de '+MAX_ANEXO_MB+' MB e não cabe no envio. '+
         'Se for PDF, mande só a página do comprovante.');
-      if(--pendentes===0) renderAnexos();
+      terminou();
       return;
     }
     var ehPdf = /pdf/i.test(f.type) || /\.pdf$/i.test(f.name);
     var fr=new FileReader();
     fr.onload=function(){
       if(ehPdf){
-        DP_ANEXOS.push({nome:f.name, mime:'application/pdf', dados:fr.result,
-                        kb:Math.round(fr.result.length*0.75/1024)});
-        if(--pendentes===0) renderAnexos();
+        guardar(pos,{nome:f.name, mime:'application/pdf', dados:fr.result,
+                     kb:Math.round(fr.result.length*0.75/1024)});
+        terminou();
         return;
       }
       var img=new Image();
@@ -3483,20 +3494,19 @@ function receberArquivos(lista){
         var c=document.createElement('canvas'); c.width=w; c.height=h;
         c.getContext('2d').drawImage(img,0,0,w,h);
         var url=c.toDataURL('image/jpeg',0.7);
-        DP_ANEXOS.push({nome:f.name||'foto.jpg', mime:'image/jpeg', dados:url,
-                        kb:Math.round(url.length*0.75/1024)});
-        if(--pendentes===0) renderAnexos();
+        guardar(pos,{nome:f.name||'foto.jpg', mime:'image/jpeg', dados:url,
+                     kb:Math.round(url.length*0.75/1024)});
+        terminou();
       };
       img.onerror=function(){
         /* HEIC do iPhone antigo não abre no canvas: sobe o original sem reduzir */
-        DP_ANEXOS.push({nome:f.name, mime:f.type||'image/jpeg', dados:fr.result,
-                        kb:Math.round(fr.result.length*0.75/1024)});
-        if(--pendentes===0) renderAnexos();
+        guardar(pos,{nome:f.name, mime:f.type||'image/jpeg', dados:fr.result,
+                     kb:Math.round(fr.result.length*0.75/1024)});
+        terminou();
       };
       img.src=fr.result;
     };
-    fr.onerror=function(){ dpBox('erro','Não consegui ler "'+esc(f.name)+'".');
-      if(--pendentes===0) renderAnexos(); };
+    fr.onerror=function(){ dpBox('erro','Não consegui ler "'+esc(f.name)+'".'); terminou(); };
     fr.readAsDataURL(f);
   });
 }
@@ -3584,6 +3594,7 @@ function aplicarLeitura(d){
   if(d.estabelecimento && !$('dpRef').value.trim()){ $('dpRef').value=d.estabelecimento; achou.push('estabelecimento'); }
   if(d.observacao && !$('dpObs').value.trim()) $('dpObs').value=d.observacao;
   DP_LIDO=true; DP_EXTRA={estabelecimento:d.estabelecimento||'', cnpj:d.cnpj||''};
+  DP_DOCS = (d.mesmoDocumento===false && (d.documentos||[]).length>1) ? d.documentos : [];
 
   var conf=(d.confianca||'media').toLowerCase();
   var rotulo={alta:'confiança alta',media:'confiança média',baixa:'confiança baixa'}[conf]||'confiança média';
@@ -3598,8 +3609,8 @@ function aplicarLeitura(d){
     /* Somar duas páginas do mesmo cupom dobraria a despesa; tratar dois
        recibos como um esconderia metade. Por isso a leitura decide e avisa. */
     h+='<div class="lg" style="color:#8a6100"><b>São '+docs.length+' comprovantes diferentes.</b> '+
-       'Preenchi com o primeiro. Os outros precisam de lançamentos próprios — '+
-       'despesas distintas na mesma linha viram um número que ninguém consegue explicar depois.</div>';
+       'Preenchi o formulário com o primeiro. Se quiser os dois de uma vez, use o botão abaixo — '+
+       'ele cria um lançamento por comprovante, cada um com o seu anexo.</div>';
     h+='<div class="lg" style="margin-top:8px">';
     docs.forEach(function(x,i){
       h+=(i===0?'<b>1. '+ (x.valor?brl(x.valor):'sem valor') +'</b> — preenchido':
@@ -3608,6 +3619,9 @@ function aplicarLeitura(d){
          (x.estabelecimento?' · '+esc(x.estabelecimento):'')+'<br>';
     });
     h+=(d.valorTotal?'<b>Total dos '+docs.length+': '+brl(d.valorTotal)+'</b>':'')+'</div>';
+    h+='<div class="btnrow" style="margin-top:12px">'+
+       '<button class="btn btn-primary btn-sm" data-lotetodos="1">'+ICO('plus')+
+       ' Lançar os '+docs.length+' separadamente</button></div>';
   } else {
     h+='<div class="lg">'+
       (docs.length>1||d.mesmoDocumento ? '<b>Mesmo comprovante</b> em '+(d.lidos||docs.length)+' arquivos — somei uma vez só.<br>' : '')+
@@ -3633,6 +3647,92 @@ function aplicarLeitura(d){
                : 'Campos preenchidos pela leitura. Confira antes de lançar.');
 }
 var DP_EXTRA = {estabelecimento:'', cnpj:''};
+var DP_DOCS = [];   /* comprovantes distintos identificados na leitura */
+
+
+/* ---------- LANÇAR VÁRIOS DE UMA VEZ ----------
+   Um envelope com dois recibos é um envelope só na sua mão, mas duas
+   despesas na planilha. Aqui o app faz a separação: cria um lançamento por
+   comprovante e manda para cada um só o anexo que lhe pertence.          */
+delegar('dpLeitura', {'data-lotetodos': function(){ lancarLote(); }});
+
+function anexosDoDoc(doc){
+  /* "arquivos" vem 1-based do Gemini, ex.: "1" ou "1,2" */
+  var idx = String(doc.arquivos||'').split(',')
+    .map(function(x){ return parseInt(x,10)-1; })
+    .filter(function(i){ return i>=0 && i<DP_ANEXOS.length; });
+  if(!idx.length) return [];
+  return idx.map(function(i){ return {nome:DP_ANEXOS[i].nome, dados:DP_ANEXOS[i].dados}; });
+}
+
+function lancarLote(){
+  if(!DP_DOCS.length) return;
+  var quem = travaEscopo() || $('dpQuem').value.trim();
+  if(!quem){ dpBox('erro','Informe quem gastou antes de lançar.'); return; }
+
+  var resumo = DP_DOCS.map(function(x,i){
+    var a=anexosDoDoc(x).length;
+    return (i+1)+'. '+(x.valor?brl(x.valor):'sem valor')+' · '+(x.tipo||'Outros')+
+           (x.data?' · '+dataBr(x.data):'')+' · '+(a?a+' anexo(s)':'sem anexo');
+  }).join('\n');
+  if(!confirm('Lançar '+DP_DOCS.length+' despesas separadas?\n\n'+resumo+
+              '\n\nCada uma vai com o comprovante que corresponde a ela.')) return;
+
+  var fila = DP_DOCS.slice(), enviados=0, guardados=0;
+  $('dpSalvar').disabled=true;
+  dpBox('info','Lançando 1 de '+fila.length+'…');
+
+  (function proximo(){
+    if(!fila.length){
+      $('dpSalvar').disabled=false;
+      dpLimparForm();
+      dpBox('ok', ICO('check')+' <b>'+enviados+' despesa(s) lançada(s).</b>'+
+        (guardados? ' '+guardados+' ficaram na fila esperando sinal.' : '')+' Relatório atualizado.');
+      carregarDespesas();
+      return;
+    }
+    var doc = fila.shift();
+    var i = DP_DOCS.length - fila.length;
+    dpBox('info','Lançando '+i+' de '+DP_DOCS.length+'…');
+
+    var corpo = {
+      tipo:'despesa',
+      data: (/^\d{4}-\d{2}-\d{2}$/.test(doc.data||'') ? doc.data : $('dpData').value),
+      responsavel: quem,
+      tipoDespesa: tipoValido(doc.tipo),
+      valor: String(doc.valor||'').replace('.',','),
+      referencia: doc.estabelecimento || $('dpRef').value.trim(),
+      obs: doc.observacao || '',
+      lancadoPor: euSou(),
+      anexos: anexosDoDoc(doc),
+      estabelecimento: doc.estabelecimento||'', cnpj: doc.cnpj||'', lidoPorIA: true
+    };
+    if(!corpo.valor){ proximo(); return; }   /* sem valor não vira despesa */
+
+    fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify(corpo)})
+      .then(function(r){ return r.json(); })
+      .then(function(res){ if(res&&res.ok) enviados++; else guardados+=0; proximo(); })
+      .catch(function(){ filaAdicionar({tipo:'despesa', dados:corpo}); guardados++; proximo(); });
+  })();
+}
+
+/* o Gemini às vezes devolve um tipo fora da lista; caímos em "Outros" em
+   vez de gravar um tipo que o relatório não sabe agrupar */
+function tipoValido(t){
+  var achado='Outros';
+  Array.prototype.forEach.call($('dpTipo').options,function(o){
+    if(semAcento(o.value)===semAcento(t)) achado=o.value;
+  });
+  return achado;
+}
+/* "ALIMENTACAO" e "Alimentação" são a mesma coisa para quem lê; precisam ser
+   a mesma coisa para o relatório também, senão o agrupamento se parte em dois */
+function semAcento(v){
+  var t=String(v||'').trim().toLowerCase();
+  try{ t=t.normalize('NFD').replace(/[\u0300-\u036f]/g,''); }catch(e){}
+  return t;
+}
 
 function dpBox(cor,html){
   var b=$('dpStatus');
@@ -3642,7 +3742,7 @@ function dpBox(cor,html){
 }
 
 function dpLimparForm(){
-  DP_ANEXOS=[]; DP_LIDO=false; DP_EXTRA={estabelecimento:'',cnpj:''};
+  DP_ANEXOS=[]; DP_LIDO=false; DP_EXTRA={estabelecimento:'',cnpj:''}; DP_DOCS=[];
   $('dpValor').value=''; $('dpRef').value=''; $('dpObs').value='';
   $('dpStatus').classList.add('hidden');
   $('dpLeitura').classList.add('hidden'); $('dpLeitura').innerHTML='';
