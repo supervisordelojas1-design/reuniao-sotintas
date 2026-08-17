@@ -3517,7 +3517,8 @@ function renderAnexos(){
   $('dpFotoInfo').innerHTML=ICO('check')+' '+DP_ANEXOS.length+' anexo(s) · '+
     (total>1024 ? (total/1024).toFixed(1)+' MB' : total+' KB')+
     (total > MAX_TOTAL_MB*1024 ? ' — <b style="color:var(--red)">acima do limite de '+MAX_TOTAL_MB+' MB</b>' : '')+
-    '. Toque em <b>Ler o comprovante</b> para o app preencher os campos sozinho.';
+    '. Toque em <b>Ler o comprovante</b> — ele lê <b>todos</b> os anexos juntos e '+
+    'identifica se são páginas do mesmo comprovante ou comprovantes diferentes.';
 }
 delegar('dpPrev', {'data-anx': function(i){ DP_ANEXOS.splice(+i,1); renderAnexos(); $('dpLeitura').classList.add('hidden'); }});
 
@@ -3530,13 +3531,15 @@ var DP_LIDO = false;
 $('dpLer').onclick=function(){
   if(!DP_ANEXOS.length){ dpBox('erro','Anexe a foto ou o PDF primeiro.'); return; }
   if(!ENVIO_URL){ dpBox('erro','Envio para o Google não configurado neste arquivo.'); return; }
-  var a=DP_ANEXOS[0];
+  var n=DP_ANEXOS.length;
   $('dpLer').disabled=true;
   $('dpLeitura').classList.remove('hidden');
-  $('dpLeitura').innerHTML='<div class="leitura"><div class="lh">'+ICO('search')+' Lendo "'+esc(a.nome)+'"…</div>'+
-    '<div class="lg">Costuma levar de 3 a 8 segundos.</div></div>';
+  $('dpLeitura').innerHTML='<div class="leitura"><div class="lh">'+ICO('search')+' Lendo '+
+    (n>1 ? 'os '+n+' anexos juntos' : '"'+esc(DP_ANEXOS[0].nome)+'"')+'…</div>'+
+    '<div class="lg">Costuma levar de 3 a 8 segundos'+(n>1?', um pouco mais com vários arquivos':'')+'.</div></div>';
   fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify({tipo:'lerComprovante', arquivo:a.dados})})
+    body:JSON.stringify({tipo:'lerComprovante',
+      arquivos: DP_ANEXOS.map(function(x){ return x.dados; })})})
     .then(function(r){ return r.json(); })
     .then(function(res){
       $('dpLer').disabled=false;
@@ -3576,23 +3579,50 @@ function aplicarLeitura(d){
 
   var conf=(d.confianca||'media').toLowerCase();
   var rotulo={alta:'confiança alta',media:'confiança média',baixa:'confiança baixa'}[conf]||'confiança média';
-  $('dpLeitura').innerHTML='<div class="leitura">'+
-    '<div class="lh">'+ICO('search')+' Lido do comprovante <span class="conf '+esc(conf)+'">'+esc(rotulo)+'</span></div>'+
-    '<div class="lg">'+
+  var docs=d.documentos||[];
+  var varios = docs.length>1 && d.mesmoDocumento===false;
+
+  var h='<div class="leitura">'+
+    '<div class="lh">'+ICO('search')+' Lido de '+(d.lidos||1)+' anexo(s) '+
+    '<span class="conf '+esc(conf)+'">'+esc(rotulo)+'</span></div>';
+
+  if(varios){
+    /* Somar duas páginas do mesmo cupom dobraria a despesa; tratar dois
+       recibos como um esconderia metade. Por isso a leitura decide e avisa. */
+    h+='<div class="lg" style="color:#8a6100"><b>São '+docs.length+' comprovantes diferentes.</b> '+
+       'Preenchi com o primeiro. Os outros precisam de lançamentos próprios — '+
+       'despesas distintas na mesma linha viram um número que ninguém consegue explicar depois.</div>';
+    h+='<div class="lg" style="margin-top:8px">';
+    docs.forEach(function(x,i){
+      h+=(i===0?'<b>1. '+ (x.valor?brl(x.valor):'sem valor') +'</b> — preenchido':
+                 (i+1)+'. '+(x.valor?brl(x.valor):'sem valor'))+
+         ' · '+esc(x.tipo||'tipo?')+(x.data?' · '+dataBr(x.data):'')+
+         (x.estabelecimento?' · '+esc(x.estabelecimento):'')+'<br>';
+    });
+    h+=(d.valorTotal?'<b>Total dos '+docs.length+': '+brl(d.valorTotal)+'</b>':'')+'</div>';
+  } else {
+    h+='<div class="lg">'+
+      (docs.length>1||d.mesmoDocumento ? '<b>Mesmo comprovante</b> em '+(d.lidos||docs.length)+' arquivos — somei uma vez só.<br>' : '')+
       '<b>Valor:</b> '+(d.valor?brl(d.valor):'não encontrei')+'<br>'+
       '<b>Data:</b> '+(d.data?dataBr(d.data):'não encontrei')+'<br>'+
       '<b>Tipo:</b> '+esc(d.tipo||'não encontrei')+'<br>'+
       (d.estabelecimento?'<b>Estabelecimento:</b> '+esc(d.estabelecimento)+'<br>':'')+
       (d.cnpj?'<b>CNPJ:</b> '+esc(d.cnpj)+'<br>':'')+
       (d.observacao?'<b>Obs.:</b> '+esc(d.observacao)+'<br>':'')+
-    '</div>'+
-    '<div class="hint" style="margin-top:8px">'+
-      (conf==='baixa'
-        ? ICO('alert')+' <b>Leitura duvidosa</b> — a imagem pode estar borrada ou cortada. Confira valor e data antes de lançar.'
-        : 'Os campos acima já foram preenchidos. <b>Confira antes de lançar</b> — a leitura acerta a maioria, não todas.')+
-      (faltou.length?' Não achei: '+faltou.join(', ')+'.':'')+
-    '</div></div>';
-  toast('Campos preenchidos pela leitura. Confira antes de lançar.');
+      '</div>';
+  }
+
+  if(d.aviso) h+='<div class="lg" style="color:var(--red);margin-top:8px">'+ICO('alert')+' '+esc(d.aviso)+'</div>';
+
+  h+='<div class="hint" style="margin-top:8px">'+
+     (conf==='baixa'
+       ? ICO('alert')+' <b>Leitura duvidosa</b> — alguma imagem pode estar borrada ou cortada. Confira valor e data antes de lançar.'
+       : 'Os campos foram preenchidos. <b>Confira antes de lançar</b> — a leitura acerta a maioria, não todas.')+
+     (faltou.length?' Não achei: '+faltou.join(', ')+'.':'')+
+     '</div></div>';
+  $('dpLeitura').innerHTML=h;
+  toast(varios ? docs.length+' comprovantes diferentes — lance um de cada vez.'
+               : 'Campos preenchidos pela leitura. Confira antes de lançar.');
 }
 var DP_EXTRA = {estabelecimento:'', cnpj:''};
 
