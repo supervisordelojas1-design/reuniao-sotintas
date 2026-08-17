@@ -664,7 +664,9 @@ tr.incompleto input{background:transparent}
       <button class="btn btn-primary" id="lgEntrar" style="flex:1">Entrar</button>
     </div>
     <div id="lgErro" class="hidden" style="margin-top:12px;padding:10px 13px;border-radius:8px;background:#fdeaea;color:var(--red);font-size:13px;font-weight:700"></div>
-    <div class="hint" style="margin-top:14px">Primeiro acesso: o PIN e <b>1234</b>. Troque na aba
+    <div id="lgVersao" style="margin-top:16px;text-align:center;font-size:11px;color:var(--muted);
+      letter-spacing:.5px;font-weight:700"></div>
+    <div class="hint" style="margin-top:10px">Primeiro acesso: o PIN e <b>1234</b>. Troque na aba
     <b>USUARIOS</b> da planilha. Isto nao e seguranca de banco — e a fechadura do vestiario: nao impede
     quem quer invadir, impede o olhar casual e registra quem lancou o que.</div>
   </div>
@@ -3269,6 +3271,10 @@ function renderPainelPend(r){
    aqui, bastaria "ver código-fonte". Ainda assim não é segurança de banco:
    é a fechadura do vestiário. Não impede quem quer invadir; impede o olhar
    casual e deixa registro de quem lançou o quê.                          */
+/* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
+   novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
+var VERSAO_APP='v21';
+
 var LS_SESSAO='sotintas_sessao_v1';
 var SESSAO=null;
 
@@ -3278,6 +3284,7 @@ function euSou(){ return (SESSAO && SESSAO.nome) || GESTOR; }
 function travaEscopo(){ return ehCoordenador() ? '' : euSou(); }
 
 function montarLogin(){
+  var v=$('lgVersao'); if(v) v.textContent='Assistente ST '+VERSAO_APP;
   var h='';
   Object.keys(EQUIPE).forEach(function(n){
     h+='<option value="'+esc(n)+'">'+esc(n)+' · '+esc(EQUIPE[n].papel)+'</option>';
@@ -3295,6 +3302,7 @@ function abrirApp(sessao){
   $('telaLogin').classList.add('pronto');
   document.body.classList.remove('travado');
   $('btnUser').innerHTML = ICO('user')+'<span class="ct"> '+esc(sessao.nome.split(' ')[0])+'</span>';
+  $('btnUser').title = sessao.nome+' · '+sessao.papel+' · Assistente ST '+VERSAO_APP;
   aplicarEscopo();
   if(sessao.pinPadrao && ehCoordenador()){
     setTimeout(function(){ toast('Seu PIN ainda é 1234. Troque na aba USUARIOS da planilha.'); }, 1200);
