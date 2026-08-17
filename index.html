@@ -447,6 +447,7 @@ tr.incompleto input{background:transparent}
 .toast.show{opacity:1;bottom:34px}
 .modal{position:fixed;inset:0;background:rgba(18,28,50,.55);display:none;align-items:center;justify-content:center;z-index:150;padding:16px}
 .modal.show{display:flex}
+#modalZap{z-index:170}
 .modal .mbox{background:#fff;border-radius:var(--r-lg);padding:var(--s5);max-width:620px;
   width:100%;max-height:88vh;overflow:auto;box-shadow:var(--e3)}
 .hidden{display:none!important}
@@ -559,9 +560,8 @@ tr.incompleto input{background:transparent}
   .pi .pb .btn{flex:1 1 calc(50% - 4px);min-height:42px}
 
   /* ---- disposição do celular: menos moldura, mais conteúdo ---- */
-  /* o subtítulo do topo é decoração; a altura da tela é o recurso escasso */
-  .topbar .ts{display:none}
-  .topbar .tt{font-size:16px}
+  .topbar .ts{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .topbar .tt{font-size:15px}
   .topbar-in{padding:9px 12px}
 
   /* rótulos: versão curta */
@@ -649,8 +649,8 @@ tr.incompleto input{background:transparent}
   <div class="topbar-in">
     <img src="data:image/jpeg;base64,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" alt="Só Tintas">
     <div>
-      <div class="tt">Assistente ST</div>
-      <div class="ts">Só Tintas · reuniões, rotina e equipe</div>
+      <div class="tt" id="topTitulo">Assistente ST</div>
+      <div class="ts">Assistente ST - Só Tintas Meet</div>
     </div>
     <div class="spacer"></div>
     <button class="chip-dica" id="btnUser" title="Trocar de usuario"></button>
@@ -1235,6 +1235,7 @@ tr.incompleto input{background:transparent}
     <textarea id="vTrabalho" rows="4" placeholder="Ex.: Revisar a exposição da linha premium, conferir o estoque de imobiliária e treinar a Ana na abordagem de fechamento."></textarea>
     <div class="btnrow">
       <button class="btn btn-primary" id="vSalvar" disabled>Salvar visita</button>
+      <button class="btn btn-ghost hidden" id="vExcluir" style="color:var(--red);border-color:#f3c6c8">Cancelar este compromisso</button>
       <button class="btn btn-ghost" id="vCancelar">Voltar</button>
     </div>
     <div id="vStatus" class="hidden" style="margin-top:12px;padding:11px 14px;border-radius:10px;font-size:14px"></div>
@@ -1253,6 +1254,33 @@ tr.incompleto input{background:transparent}
       <button class="btn btn-primary" id="naoFuiConfirmar">Registrar</button>
       <button class="btn btn-ghost" id="naoFuiCancelar">Voltar</button>
     </div>
+  </div>
+</div>
+
+<!-- modal editar reunião agendada -->
+<div class="modal" id="modalEditR">
+  <div class="mbox">
+    <h2>Editar reunião</h2>
+    <p class="sub" id="edrSub"></p>
+    <label>Título</label>
+    <input type="text" id="edrTitulo">
+    <div class="grid3">
+      <div><label>Data</label><input type="date" id="edrData"></div>
+      <div><label>Hora</label><input type="time" id="edrHora"></div>
+      <div><label>Duração (min)</label><input type="text" id="edrDur" inputmode="numeric"></div>
+    </div>
+    <label>Local / plataforma</label>
+    <input type="text" id="edrLocal">
+    <label>Objetivo</label>
+    <textarea id="edrObjetivo" rows="3"></textarea>
+    <div class="hint">Mudando data ou hora, o app move o evento na Agenda Google e libera o lembrete
+    para disparar de novo. Quem foi convidado recebe a atualização pelo próprio Google.</div>
+    <div class="btnrow">
+      <button class="btn btn-primary" id="edrSalvar">Salvar alterações</button>
+      <button class="btn btn-navy" id="edrAvisar"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg> Avisar no WhatsApp</button>
+      <button class="btn btn-ghost" id="edrFechar">Voltar</button>
+    </div>
+    <div id="edrStatus" class="hidden" style="margin-top:12px;padding:11px 14px;border-radius:10px;font-size:14px"></div>
   </div>
 </div>
 
@@ -1781,8 +1809,8 @@ function dadosAgendamento(){
 /* Convite curto de propósito: quem recebe no WhatsApp lê em 5 segundos.
    Roteiro e link do app ficam no evento da Agenda, não aqui. */
 function textoConvite(nome){
-  var d=dadosAgendamento(), L=[];
-  L.push('*Convite de reunião — Só Tintas*');
+  var d=dadosAgendamento(), L=cabecalhoMsg();
+  L.push('*Convite de reunião*');
   L.push('');
   if(nome) { L.push('Oi, '+nome+'!'); L.push(''); }
   L.push('📌 *'+(d.titulo||'Reunião')+'*');
@@ -1864,8 +1892,11 @@ function renderAgendaCompleta(){
   var quem=$('fAgendaQuem').value||'';
   var itens=[];
   PROX.forEach(function(a){
-    itens.push({k:'reuniao', data:a.data, hora:a.hora||'', titulo:a.titulo, sub:(a.modelo||'')+(a.duracao?' · '+a.duracao+' min':'')+(a.local?' · '+a.local:''),
-      extra:a.participantes?a.participantes:'', linha:a.linha});
+    /* leva os campos que a edição precisa: sem eles o modal abriria vazio */
+    itens.push({k:'reuniao', data:a.data, hora:a.hora||'', titulo:a.titulo,
+      sub:(a.modelo||'')+(a.duracao?' · '+a.duracao+' min':'')+(a.local?' · '+a.local:''),
+      extra:a.participantes?a.participantes:'', linha:a.linha,
+      local:a.local||'', objetivo:a.objetivo||'', duracao:a.duracao||''});
   });
   VISITAS.forEach(function(v){
     var t=ehTarefa(v);
@@ -1900,8 +1931,11 @@ function renderAgendaCompleta(){
     var cor = a.k==='reuniao' ? COR.reuniao : (a.status==='Concluída'?'var(--ok)':(a.status==='Não realizada'?'var(--red)':COR[a.k]));
     var acoes = a.k==='reuniao'
       ? '<button class="btn btn-primary btn-sm" data-usar="'+a.linha+'">Usar</button>'+
+        '<button class="btn btn-ghost btn-sm" data-edreuniao="'+a.linha+'">'+ICO('pencil')+' Editar</button>'+
         '<button class="btn btn-ghost btn-sm" data-desmarcar="'+a.linha+'" style="color:var(--red);border-color:#f3c6c8">Desmarcar</button>'
-      : botoesVisita(a.obj);
+      : botoesVisita(a.obj) +
+        (a.status==='Realizada' ? ''
+          : '<button class="btn btn-ghost btn-sm" data-edvisita="'+a.linha+'">'+ICO('pencil')+' Editar</button>');
     h+='<div class="ag'+(a.data===hoje?' hoje':'')+'" style="border-left-color:'+cor+';align-items:flex-start">'+
        '<div class="agd" style="background:'+cor+'"><b>'+(a.hora||'--').slice(0,2)+'</b><span>'+(a.hora||'--:--').slice(3)+'</span></div>'+
        '<div class="agi"><div class="agt">'+TIPOICO[a.k]+' '+esc(a.titulo||'')+(a.status?' '+badgeStatus(a.status):'')+'</div>'+
@@ -1915,8 +1949,8 @@ var AGENDA_ITENS=[];
 /* Texto da agenda para mandar no WhatsApp ou por e-mail. */
 function textoAgenda(){
   var quem=$('fAgendaQuem').value||'';
-  var L=[];
-  L.push('*AGENDA — Só Tintas*');
+  var L=cabecalhoMsg();
+  L.push('*AGENDA*');
   L.push(quem ? '👤 '+quem : '👥 Equipe toda');
   L.push('');
   if(!AGENDA_ITENS.length){ L.push('Nada marcado no período.'); return L.join('\n'); }
@@ -1936,7 +1970,7 @@ function textoAgenda(){
     if(a.k==='reuniao' && a.sub) L.push('   '+a.sub);
   });
   L.push('');
-  L.push('_Assistente ST · Só Tintas_');
+
   return L.join('\n');
 }
 
@@ -2163,7 +2197,7 @@ function botoesVisita(v){
   if(v.status==='Em andamento'){
     return '<button class="btn btn-navy btn-sm" data-cout="'+v.linha+'">'+(t?ICO('check-square')+' Concluí':ICO('check')+' Saí da loja')+'</button>';
   }
-  return '';
+  return '';  
 }
 function acharVisita(l){
   for(var i=0;i<VISITAS.length;i++){ if(String(VISITAS[i].linha)===String(l)) return VISITAS[i]; }
@@ -2303,7 +2337,10 @@ function renderSemana(){
 
 /* ---------- criar visita ---------- */
 var TIPO_NOVO='Visita';
+var VISITA_EDIT = null;   /* linha em edição, ou null quando é criação */
+
 function abrirNovaVisita(tipo){
+  VISITA_EDIT = null;
   TIPO_NOVO = tipo==='Tarefa' ? 'Tarefa' : 'Visita';
   var t = TIPO_NOVO==='Tarefa';
   $('visitaTitulo').textContent = t ? 'Nova tarefa extra' : 'Nova visita';
@@ -2323,8 +2360,138 @@ function abrirNovaVisita(tipo){
   preencherLojas($('vSup').value);
   $('vTrabalho').value='';
   $('vStatus').classList.add('hidden');
+  $('vSalvar').textContent = 'Salvar '+(t?'tarefa':'visita');
+  $('vExcluir').classList.add('hidden');
   validaVisita();
   $('modalVisita').classList.add('show');
+}
+
+
+/* ---------- EDITAR REUNIÃO AGENDADA ----------
+   A reunião tem um evento na Agenda Google junto. Editar só a planilha
+   deixaria os dois discordando — e quem foi convidado confia no convite,
+   não na planilha.                                                       */
+var REUNIAO_EDIT=null;
+
+function abrirEditarReuniao(a){
+  REUNIAO_EDIT=a;
+  $('edrSub').textContent='Marcada para '+dataBr(a.data)+(a.hora?' às '+a.hora:'')+'.';
+  $('edrTitulo').value=a.titulo||'';
+  $('edrData').value=a.data||'';
+  $('edrHora').value=(a.hora||'09:00').slice(0,5);
+  $('edrDur').value=a.duracao||'';
+  $('edrLocal').value=a.local||'';
+  $('edrObjetivo').value=a.objetivo||'';
+  $('edrStatus').classList.add('hidden');
+  $('modalEditR').classList.add('show');
+}
+$('edrFechar').onclick=function(){ $('modalEditR').classList.remove('show'); };
+
+function edrBox(cor,html){
+  var b=$('edrStatus');
+  var e={info:['#eef3ff','#1C3F8F'],ok:['#e9f7ef','#177a4d'],erro:['#fdeaea','#D32027']}[cor];
+  b.style.background=e[0]; b.style.color=e[1]; b.style.border='1px solid '+e[1];
+  b.innerHTML=html; b.classList.remove('hidden');
+}
+
+$('edrSalvar').onclick=function(){
+  if(!REUNIAO_EDIT || !ENVIO_URL) return;
+  if(!$('edrTitulo').value.trim()){ edrBox('erro','O título não pode ficar vazio.'); return; }
+  $('edrSalvar').disabled=true;
+  edrBox('info','Salvando e movendo o evento na Agenda…');
+  fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({tipo:'editarAgendamento', linha:REUNIAO_EDIT.linha,
+      titulo:$('edrTitulo').value.trim(), data:$('edrData').value, hora:$('edrHora').value,
+      duracao:parseInt($('edrDur').value,10)||0, local:$('edrLocal').value.trim(),
+      objetivo:$('edrObjetivo').value.trim()})})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      $('edrSalvar').disabled=false;
+      if(!res || !res.ok){ edrBox('erro','Não consegui salvar: '+((res&&res.erro)||'erro')); return; }
+      edrBox('ok', ICO('check')+' <b>Alterações salvas.</b>'+
+        (res.eventoAtualizado ? ' O evento na Agenda Google foi movido e os convidados foram avisados pelo Google.'
+                              : ' <b>O evento na Agenda não foi encontrado</b> — avise os participantes pelo WhatsApp.'));
+      /* atualiza o objeto em memória para o aviso de WhatsApp sair certo */
+      REUNIAO_EDIT.titulo=$('edrTitulo').value.trim();
+      REUNIAO_EDIT.data=$('edrData').value;
+      REUNIAO_EDIT.hora=$('edrHora').value;
+      REUNIAO_EDIT.local=$('edrLocal').value.trim();
+      carregarAgendaUnificada();
+    })
+    .catch(function(){ $('edrSalvar').disabled=false; edrBox('erro','Sem sinal — nada foi alterado.'); });
+};
+
+/* O Google avisa quem tem o convite no calendário. Quem só recebeu no
+   WhatsApp não fica sabendo — por isso o aviso manual continua existindo. */
+$('edrAvisar').onclick=function(){
+  if(!REUNIAO_EDIT) return;
+  var L=cabecalhoMsg();
+  L.push('*Reunião REMARCADA*');
+  L.push('');
+  L.push('*'+($('edrTitulo').value.trim()||'Reunião')+'*');
+  L.push('Nova data: *'+dataBr($('edrData').value)+' às '+$('edrHora').value+'*');
+  if($('edrLocal').value.trim()) L.push('Local: '+$('edrLocal').value.trim());
+  if($('edrObjetivo').value.trim()){ L.push(''); L.push('Objetivo: '+$('edrObjetivo').value.trim()); }
+  var txt=L.join('\n');
+  $('zapText').value=txt;
+  try{ navigator.clipboard.writeText(txt); }catch(e){}
+  $('modalEditR').classList.remove('show');   /* um modal por vez */
+  $('modalZap').classList.add('show');
+};
+
+/* ---------- EDITAR VISITA OU TAREFA ----------
+   Compromisso muda: a loja pede para adiar, o trabalho vira outro. Sem
+   edição a saída é cancelar e remarcar, e aí o histórico perde o fio de que
+   era o mesmo assunto.                                                    */
+function abrirEditarVisita(linha){
+  var v = (VISITAS||[]).filter(function(x){ return String(x.linha)===String(linha); })[0];
+  if(!v){ toast('Não encontrei este item. Atualize a lista.'); return; }
+  if(v.status==='Realizada'){
+    toast('Esta já foi concluída — registro do que aconteceu não se edita.');
+    return;
+  }
+  VISITA_EDIT = v;
+  TIPO_NOVO = ehTarefa(v) ? 'Tarefa' : 'Visita';
+  var t = TIPO_NOVO==='Tarefa';
+  $('visitaTitulo').textContent = t ? 'Editar tarefa' : 'Editar visita';
+  $('visitaSub').textContent = 'Alterando o que já está marcado para '+dataBr(v.data)+
+    (v.hora?' às '+v.hora:'')+'.';
+  $('labLoja').innerHTML = t ? 'Referência <span style="text-transform:none;font-weight:normal">(opcional)</span>' : 'Loja';
+  $('labTrabalho').innerHTML = (t?'O que precisa ser feito':'Trabalho a ser executado')+' <span style="color:var(--red)">*</span>';
+  $('vData').value=v.data;
+  $('vHora').value=(v.hora||'09:00').slice(0,5);
+  $('vLoja').value=v.loja||'';
+  $('vSup').value=v.supervisor||'';
+  preencherLojas(v.supervisor||'');
+  $('vTrabalho').value=v.trabalho||'';
+  $('vStatus').classList.add('hidden');
+  $('vSalvar').textContent='Salvar alterações';
+  $('vExcluir').classList.remove('hidden');
+  validaVisita();
+  $('modalVisita').classList.add('show');
+}
+
+$('vExcluir').onclick=function(){
+  if(!VISITA_EDIT) return;
+  var motivo=prompt('Cancelar '+(TIPO_NOVO==='Tarefa'?'esta tarefa':'esta visita')+'?\n\nMotivo (opcional):');
+  if(motivo===null) return;
+  fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({tipo:'excluirVisita', linha:VISITA_EDIT.linha, motivo:motivo, quem:euSou()})})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if(res && res.ok){
+        $('modalVisita').classList.remove('show');
+        toast('Cancelada. Sai da agenda, mas fica registrada na planilha.');
+        recarregarTudo();
+      } else toast('Não consegui cancelar: '+((res&&res.erro)||'erro'));
+    })
+    .catch(function(){ toast('Sem sinal — nada foi alterado.'); });
+};
+
+function recarregarTudo(){
+  if(modo==='agenda') carregarAgendaUnificada();
+  else if(modo==='rotina') carregarRotina();
+  else carregarRotina();
 }
 function validaVisita(){
   /* na tarefa extra a referência é opcional; na visita, a loja é obrigatória */
@@ -2339,12 +2506,20 @@ function salvarVisita(){
   var b=$('vStatus');
   b.style.background='#eef3ff'; b.style.color='var(--navy)'; b.style.border='1.5px solid var(--navy)';
   b.textContent='⏳ Salvando…'; b.classList.remove('hidden');
+  var corpo = VISITA_EDIT
+    ? {tipo:'editarVisita', linha:VISITA_EDIT.linha, data:$('vData').value, hora:$('vHora').value,
+       loja:$('vLoja').value.trim(), responsavel:$('vSup').value.trim(), trabalho:$('vTrabalho').value.trim()}
+    : {tipo:'visita', atividade:TIPO_NOVO, data:$('vData').value, hora:$('vHora').value,
+       loja:$('vLoja').value.trim(), supervisor:$('vSup').value.trim(), trabalho:$('vTrabalho').value.trim()};
   fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify({tipo:'visita', atividade:TIPO_NOVO, data:$('vData').value, hora:$('vHora').value,
-      loja:$('vLoja').value.trim(), supervisor:$('vSup').value.trim(), trabalho:$('vTrabalho').value.trim()})})
+    body:JSON.stringify(corpo)})
     .then(function(r){ return r.json(); })
     .then(function(res){
-      if(res && res.ok){ $('modalVisita').classList.remove('show'); toast(TIPO_NOVO==='Tarefa'?'Tarefa planejada.':'Visita planejada.'); carregarRotina(); }
+      if(res && res.ok){
+        $('modalVisita').classList.remove('show');
+        toast(VISITA_EDIT ? 'Alterações salvas.' : (TIPO_NOVO==='Tarefa'?'Tarefa planejada.':'Visita planejada.'));
+        recarregarTudo();
+      }
       else {
         b.style.background='#fdeaea'; b.style.color='var(--red)'; b.style.border='1.5px solid var(--red)';
         b.textContent='⚠ '+((res&&res.erro)||'erro desconhecido');
@@ -2361,8 +2536,8 @@ function salvarVisita(){
 /* ============ DESMARCAR ============ */
 var CANCEL_ALVO=null;
 function textoCancelamento(a, motivo, nome){
-  var L=[];
-  L.push('*Reunião DESMARCADA — Só Tintas*');
+  var L=cabecalhoMsg();
+  L.push('*Reunião DESMARCADA*');
   L.push('');
   if(nome){ L.push('Oi, '+nome+'!'); L.push(''); }
   L.push('❌ *'+(a.titulo||'Reunião')+'*');
@@ -2992,7 +3167,7 @@ function textoResumo(){
     }
     acoes=arr;
   }
-  var L=[];
+  var L=cabecalhoMsg();
   L.push('*ATA — '+(S.titulo||'Reunião')+'*');
   L.push(dataBr(S.data)+(S.hora?' às '+S.hora:'')+(S.local?' · '+S.local:''));
   L.push('');
@@ -3173,8 +3348,8 @@ function clCarregar(i){
   clRenderItens(); clRenderSelect();
 }
 function clTexto(){
-  var L=[];
-  L.push('*'+(CL_EDIT.nome||'Checklist')+' — Só Tintas*');
+  var L=cabecalhoMsg();
+  L.push('*'+(CL_EDIT.nome||'Checklist')+'*');
   L.push('');
   CL_EDIT.itens.filter(function(i){return i.t.trim();}).forEach(function(i){
     L.push((i.ok?'✅ ':'⬜ ')+i.t.trim());
@@ -3186,6 +3361,8 @@ delegar('rotinaAtencao', {});
 delegar('agendaLista', {
   'data-usar':      function(l){ var a=acharPorLinha(l); if(a) usarAgendada(a); },
   'data-desmarcar': function(l){ var a=acharPorLinha(l); if(a) abrirCancelamento(a); },
+  'data-edvisita':  function(l){ abrirEditarVisita(l); },
+  'data-edreuniao': function(l){ var a=acharPorLinha(l); if(a) abrirEditarReuniao(a); },
   'data-cin':       function(l){ marcarVisita('checkin', l); },
   'data-cout':      function(l){ marcarVisita('checkout', l); },
   'data-nfui':      function(l){ abrirNaoFui(l); }
@@ -3512,7 +3689,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v25';
+var VERSAO_APP='v26';
 
 var LS_SESSAO='sotintas_sessao_v1';
 var SESSAO=null;
@@ -3543,6 +3720,9 @@ function abrirApp(sessao){
   try{ localStorage.setItem(LS_SESSAO, JSON.stringify(sessao)); }catch(e){}
   $('telaLogin').classList.add('pronto');
   document.body.classList.remove('travado');
+  /* o topo passa a dizer de quem é a agenda aberta: com PIN e escopo por
+     pessoa, saber em nome de quem se está lançando deixou de ser detalhe */
+  $('topTitulo').textContent = 'Agenda ' + sessao.nome.split(' ')[0];
   $('btnUser').innerHTML = ICO('user')+'<span class="ct"> '+esc(sessao.nome.split(' ')[0])+'</span>';
   $('btnUser').title = sessao.nome+' · '+sessao.papel+' · Assistente ST '+VERSAO_APP;
   aplicarEscopo();
@@ -3934,6 +4114,14 @@ function mostrarPrevia(lidos){
    Comparar reais absolutos seria comparar o consumo de um caminhão com o de
    uma moto sem olhar a distância percorrida.                              */
 var DP_FOTO = '', DP_DADOS = null, DP_PRONTO = false;
+
+/* Cabeçalho padrão de toda mensagem que sai do app. Duas linhas: de quem é
+   a agenda, e de onde veio. Quem recebe um convite no WhatsApp precisa saber
+   as duas coisas antes de ler o resto. */
+function cabecalhoMsg(){
+  var quem = (SESSAO && SESSAO.nome) ? SESSAO.nome.split(' ')[0] : GESTOR;
+  return ['*Agenda '+quem+'*', '_Assistente ST - Só Tintas Meet_', ''];
+}
 
 function brl(v){
   return 'R$ ' + (Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -4449,8 +4637,8 @@ function decidir(linha, decisao, motivo){
 
 $('dpZap').onclick=function(){
   if(!DP_DADOS || !DP_DADOS.lancamentos){ toast('Nada para resumir neste período.'); return; }
-  var r=DP_DADOS, L=[];
-  L.push('*DESPESAS · Só Tintas*');
+  var r=DP_DADOS, L=cabecalhoMsg();
+  L.push('*DESPESAS*');
   L.push(dataBr(r.de)+' a '+dataBr(r.ate));
   L.push('');
   L.push('Total: *'+brl(r.total)+'* em '+r.lancamentos+' lançamento(s)');
@@ -4464,7 +4652,7 @@ $('dpZap').onclick=function(){
   L.push('*Por tipo*');
   r.tipos.forEach(function(t){ L.push('• '+t.tipo+': '+brl(t.total)); });
   L.push('');
-  L.push('_Assistente ST_');
+
   var txt=L.join('\n');
   $('zapText').value=txt;
   try{ navigator.clipboard.writeText(txt); }catch(e){}
