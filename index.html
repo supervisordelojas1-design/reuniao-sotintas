@@ -267,6 +267,8 @@ body.semDicas .dica{display:none}
   .chip-timer{padding:5px 8px;font-size:13px}
 }
 body.semDicas .chip-dica{opacity:.6}
+/* PIN ainda no padrão: o chip pisca em vermelho até ser resolvido */
+.chip-dica.alerta{background:var(--red);border-color:var(--red)}
 
 /* ---------- cartões de reunião agendada ---------- */
 .ag{background:#fff;border:1px solid var(--line);border-left:5px solid var(--navy);border-radius:12px;padding:13px 16px;margin-bottom:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
@@ -1257,6 +1259,63 @@ tr.incompleto input{background:transparent}
   </div>
 </div>
 
+<!-- modal corrigir despesa -->
+<div class="modal" id="modalDpEdit">
+  <div class="mbox">
+    <h2>Corrigir despesa</h2>
+    <p class="sub" id="dpeSub"></p>
+    <div id="dpeAviso" class="hidden" style="background:#FFF7E0;border:1px solid #f0d48a;border-radius:10px;
+      padding:11px 14px;font-size:13px;color:#8a6100;margin-bottom:14px">
+      Esta despesa já estava <b>aprovada</b>. Mudando o valor, a aprovação cai e ela volta para a fila —
+      aprovar um valor e ficar com outro seria assinar em branco.
+    </div>
+    <div class="grid2">
+      <div><label>Valor (R$)</label><input type="text" id="dpeValor" inputmode="decimal"></div>
+      <div><label>Data</label><input type="date" id="dpeData"></div>
+    </div>
+    <label>Tipo</label>
+    <select id="dpeTipo"></select>
+    <label>Loja ou motivo</label>
+    <input list="listaLojas" type="text" id="dpeRef">
+    <label>Observação</label>
+    <input type="text" id="dpeObs">
+    <div class="btnrow">
+      <button class="btn btn-primary" id="dpeSalvar">Salvar correção</button>
+      <button class="btn btn-ghost" id="dpeExcluir" style="color:var(--red);border-color:#f3c6c8">Estornar</button>
+      <button class="btn btn-ghost" id="dpeFechar">Voltar</button>
+    </div>
+    <div id="dpeStatus" class="hidden" style="margin-top:12px;padding:11px 14px;border-radius:10px;font-size:14px"></div>
+  </div>
+</div>
+
+<!-- modal minha conta -->
+<div class="modal" id="modalConta">
+  <div class="mbox">
+    <h2>Minha conta</h2>
+    <p class="sub" id="cnQuem"></p>
+    <div id="cnAviso" class="hidden" style="background:#FFF7E0;border:1px solid #f0d48a;border-radius:10px;
+      padding:11px 14px;font-size:13px;color:#8a6100;margin-bottom:14px">
+      <b>Seu PIN ainda é 1234.</b> Enquanto for, qualquer um da equipe entra no seu nome.
+    </div>
+    <label>E-mail para o resumo da manhã</label>
+    <input type="text" id="cnEmail" placeholder="voce@sotintas.com.br">
+    <div class="hint">Todo dia cedo você recebe o que é seu: compromissos do dia, ações vencidas e
+    despesas questionadas. Dia sem nada não gera e-mail.</div>
+    <label>PIN atual <span style="color:var(--red)">*</span></label>
+    <input type="password" id="cnAtual" inputmode="numeric" maxlength="6" placeholder="&#8226;&#8226;&#8226;&#8226;">
+    <div class="grid2">
+      <div><label>PIN novo</label><input type="password" id="cnNovo" inputmode="numeric" maxlength="6" placeholder="opcional"></div>
+      <div><label>Repita o novo</label><input type="password" id="cnNovo2" inputmode="numeric" maxlength="6"></div>
+    </div>
+    <div class="btnrow">
+      <button class="btn btn-primary" id="cnSalvar">Salvar</button>
+      <button class="btn btn-ghost" id="cnSair" style="color:var(--red);border-color:#f3c6c8">Sair desta conta</button>
+      <button class="btn btn-ghost" id="cnFechar">Voltar</button>
+    </div>
+    <div id="cnStatus" class="hidden" style="margin-top:12px;padding:11px 14px;border-radius:10px;font-size:14px"></div>
+  </div>
+</div>
+
 <!-- modal editar reunião agendada -->
 <div class="modal" id="modalEditR">
   <div class="mbox">
@@ -1361,6 +1420,29 @@ var EQUIPE = {
   'Amanda': { papel:'Marketing', lojas:[] }
 };
 var GESTOR = 'Bruno';
+
+/* A lista acima é só a semente: quem manda é a aba EQUIPE da planilha.
+   Antes disto, mudar quem atende Itaguaí exigia editar dois arquivos e
+   republicar — mapa da operação preso na sala de máquinas. */
+function carregarEquipe(){
+  if(!ENVIO_URL) return;
+  fetch(ENVIO_URL+'?acao=equipe')
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if(!res || !res.ok || !res.equipe) return;
+      var n=Object.keys(res.equipe).length;
+      if(!n) return;                       /* planilha vazia: mantém a semente */
+      EQUIPE=res.equipe;
+      SUPERVISORES=Object.keys(EQUIPE);
+      preencherListas();
+      montarVisaoRotina();
+      montarLogin();
+      if(typeof iniciarDespesas==='function' && DP_PRONTO){
+        DP_PRONTO=false; iniciarDespesas();
+      }
+    })
+    .catch(function(){ /* offline: segue com a semente */ });
+}
 
 var SUPERVISORES = Object.keys(EQUIPE);
 var CARTEIRA = (function(){
@@ -3689,7 +3771,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v26';
+var VERSAO_APP='v27';
 
 var LS_SESSAO='sotintas_sessao_v1';
 var SESSAO=null;
@@ -3726,9 +3808,11 @@ function abrirApp(sessao){
   $('btnUser').innerHTML = ICO('user')+'<span class="ct"> '+esc(sessao.nome.split(' ')[0])+'</span>';
   $('btnUser').title = sessao.nome+' · '+sessao.papel+' · Assistente ST '+VERSAO_APP;
   aplicarEscopo();
-  if(sessao.pinPadrao && ehCoordenador()){
-    setTimeout(function(){ toast('Seu PIN ainda é 1234. Troque na aba USUARIOS da planilha.'); }, 1200);
+  $('btnUser').classList.toggle('alerta', !!sessao.pinPadrao);
+  if(sessao.pinPadrao){
+    setTimeout(function(){ toast('Seu PIN ainda é 1234 — toque no seu nome, no topo, para trocar.'); }, 1500);
   }
+  carregarEquipe();
 }
 
 /* Aplica a regra que você escolheu: cada um vê o seu; o coordenador vê tudo. */
@@ -3789,10 +3873,53 @@ $('lgEntrar').onclick=function(){
 $('lgPin').addEventListener('keydown',function(e){ if(e.key==='Enter') $('lgEntrar').click(); });
 function lgErro(m){ var b=$('lgErro'); b.textContent=m; b.classList.remove('hidden'); }
 
-$('btnUser').onclick=function(){
+$('btnUser').onclick=function(){ abrirConta(); };
+
+/* ---------- MINHA CONTA ----------
+   "Troque o PIN na aba USUARIOS" nunca acontece: sem uma tela, o 1234 vira
+   permanente. E sem e-mail cadastrado, o resumo da manhã não tem para onde ir. */
+function abrirConta(){
+  if(!SESSAO) return;
+  $('cnQuem').textContent = SESSAO.nome+' · '+SESSAO.papel;
+  $('cnAtual').value=''; $('cnNovo').value=''; $('cnNovo2').value='';
+  $('cnEmail').value = SESSAO.email||'';
+  $('cnStatus').classList.add('hidden');
+  $('cnAviso').classList.toggle('hidden', !SESSAO.pinPadrao);
+  $('modalConta').classList.add('show');
+}
+$('cnFechar').onclick=function(){ $('modalConta').classList.remove('show'); };
+$('cnSair').onclick=function(){
   if(!confirm('Sair e entrar com outro nome?')) return;
   try{ localStorage.removeItem(LS_SESSAO); }catch(e){}
   location.reload();
+};
+function cnBox(cor,html){
+  var b=$('cnStatus');
+  var e={info:['#eef3ff','#1C3F8F'],ok:['#e9f7ef','#177a4d'],erro:['#fdeaea','#D32027']}[cor];
+  b.style.background=e[0]; b.style.color=e[1]; b.style.border='1px solid '+e[1];
+  b.innerHTML=html; b.classList.remove('hidden');
+}
+$('cnSalvar').onclick=function(){
+  var novo=$('cnNovo').value.trim();
+  if(novo && novo!==$('cnNovo2').value.trim()){ cnBox('erro','Os dois campos do PIN novo estão diferentes.'); return; }
+  if(novo && !/^\d{4,6}$/.test(novo)){ cnBox('erro','O PIN precisa ter de 4 a 6 dígitos.'); return; }
+  if(!novo && !$('cnEmail').value.trim()){ cnBox('erro','Mude o PIN ou informe o e-mail.'); return; }
+  if(!$('cnAtual').value.trim()){ cnBox('erro','Digite o PIN atual para confirmar.'); return; }
+  $('cnSalvar').disabled=true; cnBox('info','Salvando…');
+  fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({tipo:'trocarPin', nome:SESSAO.nome, atual:$('cnAtual').value.trim(),
+      novo: novo || $('cnAtual').value.trim(), email:$('cnEmail').value.trim()})})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      $('cnSalvar').disabled=false;
+      if(!res || !res.ok){ cnBox('erro',(res&&res.erro)||'Não consegui salvar.'); return; }
+      SESSAO.pinPadrao=false; SESSAO.email=$('cnEmail').value.trim();
+      try{ localStorage.setItem(LS_SESSAO, JSON.stringify(SESSAO)); }catch(e){}
+      $('cnAviso').classList.add('hidden');
+      cnBox('ok', ICO('check')+' Salvo.'+(novo?' Use o PIN novo da próxima vez.':'')+
+        ($('cnEmail').value.trim()?' O resumo da manhã vai para esse e-mail.':''));
+    })
+    .catch(function(){ $('cnSalvar').disabled=false; cnBox('erro','Sem sinal — nada foi alterado.'); });
 };
 
 /* ============ FILA OFFLINE ============
@@ -4535,9 +4662,10 @@ function renderDespesas(r){
   }
   var pctFoto = Math.round(r.comComprovante/r.lancamentos*100);
 
+  var ant=r.anterior;
   var h='<div class="kpis">'+
     '<div class="kpi"><div class="kv">'+brl(r.total)+'</div><div class="kl">total do período</div>'+
-      '<div class="kx">'+r.lancamentos+' lançamento(s)</div></div>'+
+      '<div class="kx">'+r.lancamentos+' lançamento(s)'+(ant?'<br>'+seta(r.total, ant.total, true):'')+'</div></div>'+
     '<div class="kpi"><div class="kv">'+brl(r.ticket)+'</div><div class="kl">valor médio</div>'+
       '<div class="kx">por lançamento</div></div>'+
     '<div class="kpi '+(pctFoto>=90?'ok':(pctFoto>=70?'al':'ru'))+'"><div class="kv">'+pctFoto+'%</div>'+
@@ -4564,8 +4692,19 @@ function renderDespesas(r){
          ? '<span style="color:var(--muted)">sem visita registrada</span>'
          : '<b style="color:var(--navy)">'+brl(p.porVisita)+'</b>')+'</td></tr>';
   });
-  h+='</tbody></table></div>'+
-     '<div class="hint">O total em reais compara mal: quem atende de Angra a Friburgo gasta mais que quem atende a '+
+  h+='</tbody></table></div>';
+  if(ant && ant.porVisita){
+    var visitasAgora=r.pessoas.reduce(function(a,p){ return a+(p.visitas||0); },0);
+    var porVisitaAgora=visitasAgora ? r.total/visitasAgora : null;
+    if(porVisitaAgora!==null){
+      h+='<div class="kpi" style="margin-top:10px"><div class="kv">'+brl(porVisitaAgora)+'</div>'+
+         '<div class="kl">custo por visita · equipe</div>'+
+         '<div class="kx">'+visitasAgora+' visita(s) no período<br>'+
+         seta(porVisitaAgora, ant.porVisita, true)+'<br>'+
+         '<span style="color:var(--muted)">anterior: '+brl(ant.porVisita)+' em '+ant.visitas+' visita(s)</span></div></div>';
+    }
+  }
+  h+='<div class="hint">O total em reais compara mal: quem atende de Angra a Friburgo gasta mais que quem atende a '+
      'Baixada inteira sem sair de 40 km. O <b>custo por visita</b> é a coluna que dá para cobrar.</div>';
 
   /* ---- por tipo ---- */
@@ -4595,15 +4734,105 @@ function renderDespesas(r){
            ((i.anexos||1)>1?' ('+i.anexos+')':'')+'</a>'
          : '<span class="badge b-nao">sem comprovante</span>')+
        selo(i)+
-       (ehCoordenador() && !i.aprovacao
-         ? '<div class="agb" style="width:100%">'+
-           '<button class="btn btn-ghost btn-sm" data-apr="'+i.linha+'">'+ICO('check')+' Aprovar</button>'+
-           '<button class="btn btn-ghost btn-sm" data-que="'+i.linha+'">'+ICO('help')+' Questionar</button></div>'
-         : '')+
+       '<div class="agb" style="width:100%">'+
+         (ehCoordenador() && !i.aprovacao
+           ? '<button class="btn btn-ghost btn-sm" data-apr="'+i.linha+'">'+ICO('check')+' Aprovar</button>'+
+             '<button class="btn btn-ghost btn-sm" data-que="'+i.linha+'">'+ICO('help')+' Questionar</button>'
+           : '')+
+         (podeCorrigir(i)
+           ? '<button class="btn btn-ghost btn-sm" data-dpedit="'+i.linha+'">'+ICO('pencil')+' Corrigir</button>'
+           : '')+
+       '</div>'+
        '</div>';
   });
 
   box.innerHTML=h;
+}
+
+
+/* ---------- CORRIGIR DESPESA ----------
+   Digitou 3.200 em vez de 320 e o número entra no total, no custo por visita
+   e no relatório. Sem correção dentro do app, a saída vira "compenso no mês
+   que vem" — e o dado deixa de valer.                                     */
+var DP_EDIT=null;
+function podeCorrigir(i){
+  if(i.aprovacao==='Aprovada') return ehCoordenador();
+  if(!ehCoordenador() && norml(i.responsavel)!==norml(euSou())) return false;
+  return true;
+}
+delegar('dpRel', {'data-dpedit': function(l){ abrirCorrigir(l); }});
+
+function abrirCorrigir(linha){
+  var i=(DP_DADOS&&DP_DADOS.itens||[]).filter(function(x){ return String(x.linha)===String(linha); })[0];
+  if(!i) return;
+  DP_EDIT=i;
+  $('dpeSub').textContent='Lançada em '+dataBr(i.data)+' por '+i.responsavel+'.';
+  $('dpeValor').value=String(i.valor).replace('.',',');
+  $('dpeData').value=i.data;
+  $('dpeRef').value=i.referencia||'';
+  $('dpeObs').value=i.obs||'';
+  var sel=$('dpeTipo');
+  sel.innerHTML=$('dpTipo').innerHTML;
+  sel.value=tipoValido(i.tipo);
+  $('dpeAviso').classList.toggle('hidden', i.aprovacao!=='Aprovada');
+  $('dpeStatus').classList.add('hidden');
+  $('modalDpEdit').classList.add('show');
+}
+$('dpeFechar').onclick=function(){ $('modalDpEdit').classList.remove('show'); };
+function dpeBox(cor,html){
+  var b=$('dpeStatus');
+  var e={info:['#eef3ff','#1C3F8F'],ok:['#e9f7ef','#177a4d'],erro:['#fdeaea','#D32027']}[cor];
+  b.style.background=e[0]; b.style.color=e[1]; b.style.border='1px solid '+e[1];
+  b.innerHTML=html; b.classList.remove('hidden');
+}
+$('dpeSalvar').onclick=function(){
+  if(!DP_EDIT) return;
+  if(!$('dpeValor').value.trim()){ dpeBox('erro','Informe o valor.'); return; }
+  $('dpeSalvar').disabled=true; dpeBox('info','Salvando…');
+  fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({tipo:'editarDespesa', linha:DP_EDIT.linha, valor:$('dpeValor').value.trim(),
+      data:$('dpeData').value, tipoDespesa:$('dpeTipo').value, referencia:$('dpeRef').value.trim(),
+      obs:$('dpeObs').value.trim(), quem:euSou(), escopo:(SESSAO&&SESSAO.escopo)||'proprio',
+      forcar: ehCoordenador()})})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      $('dpeSalvar').disabled=false;
+      if(!res || !res.ok){ dpeBox('erro',(res&&res.erro)||'Não consegui salvar.'); return; }
+      $('modalDpEdit').classList.remove('show');
+      toast(res.reabriu ? 'Corrigida — voltou a aguardar aprovação.' : 'Corrigida.');
+      carregarDespesas();
+    })
+    .catch(function(){ $('dpeSalvar').disabled=false; dpeBox('erro','Sem sinal — nada foi alterado.'); });
+};
+$('dpeExcluir').onclick=function(){
+  if(!DP_EDIT) return;
+  var m=prompt('Estornar esta despesa de '+brl(DP_EDIT.valor)+'?\n\nMotivo:');
+  if(m===null) return;
+  fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({tipo:'excluirDespesa', linha:DP_EDIT.linha, motivo:m, quem:euSou(),
+      escopo:(SESSAO&&SESSAO.escopo)||'proprio'})})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if(res && res.ok){
+        $('modalDpEdit').classList.remove('show');
+        toast('Estornada. Sai do relatório, fica no registro da planilha.');
+        carregarDespesas();
+      } else toast('Não consegui estornar: '+((res&&res.erro)||'erro'));
+    })
+    .catch(function(){ toast('Sem sinal.'); });
+};
+
+/* ---------- COMPARAÇÃO COM O PERÍODO ANTERIOR ----------
+   Sem tendência você reage ao mês; com ela, antecipa. */
+function seta(atual, anterior, menorEhMelhor){
+  if(anterior===null || anterior===undefined || !anterior) return '';
+  var d=(atual-anterior)/anterior*100;
+  if(Math.abs(d)<1) return '<span style="color:var(--muted);font-size:12px"> = igual ao período anterior</span>';
+  var sobe=d>0;
+  var bom = menorEhMelhor ? !sobe : sobe;
+  return '<span style="color:'+(bom?'var(--ok)':'var(--red)')+';font-size:12px;font-weight:700"> '+
+         (sobe?'▲':'▼')+' '+Math.abs(Math.round(d))+'%</span>'+
+         '<span style="color:var(--muted);font-size:12px"> vs. período anterior</span>';
 }
 
 function selo(i){
