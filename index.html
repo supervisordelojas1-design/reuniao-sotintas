@@ -7,6 +7,9 @@
 <meta name="theme-color" content="#1C3F8F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Assistente ST">
+<link rel="manifest" href="./manifest.json">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="./icone-192.png">
 <style>
 :root{
   /* identidade Só Tintas — inalterada */
@@ -39,7 +42,6 @@ body{
   font-size:var(--fs-md);line-height:1.5;
 }
 ::selection{background:var(--navy-20)}
-html{scroll-behavior:smooth}
 /* foco visível pelo teclado, invisível pelo dedo — acessibilidade sem poluir */
 :focus-visible{outline:2px solid var(--navy);outline-offset:2px}
 button:focus:not(:focus-visible){outline:none}
@@ -111,6 +113,112 @@ textarea{resize:vertical;line-height:1.5}
 .tab{background:none;border:none;border-bottom:3px solid transparent;padding:9px 14px;font-size:15px;font-weight:bold;color:var(--muted);margin-bottom:-2px;white-space:nowrap;flex:0 0 auto}
 .tab.sel{color:var(--navy);border-bottom-color:var(--red)}
 .tab:hover{color:var(--navy)}
+/* ---------- gavetas da tela de reunião ----------
+   A tela tinha dez zonas de atenção competindo enquanto você conduz uma
+   conversa. Um mesário treinado olha para duas coisas: o que dizer agora e
+   quanto tempo resta. O resto ele consulta quando precisa.               */
+.gaveta{border:1px solid var(--line);border-radius:var(--r-md);margin-bottom:var(--s3);
+  background:#fff;overflow:hidden}
+.gaveta>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:var(--s2);
+  padding:11px var(--s3);font-size:var(--fs-sm);font-weight:700;color:var(--navy);
+  background:var(--navy-05);transition:background .12s}
+.gaveta>summary::-webkit-details-marker{display:none}
+.gaveta>summary:hover{background:var(--navy-10)}
+.gaveta>summary:after{content:'▾';margin-left:auto;font-size:11px;opacity:.6;transition:transform .15s}
+.gaveta[open]>summary:after{transform:rotate(180deg)}
+.gaveta>summary .gvc{font-weight:400;color:var(--muted);font-size:var(--fs-xs)}
+.gaveta .guia,.gaveta .capbar{margin:0;border:none;border-radius:0;padding:var(--s3)}
+.gaveta .guia{background:#fff}
+/* gravando: a gaveta fica destacada mesmo fechada, para ninguém esquecer */
+.gaveta.ativa>summary{background:#fff2f2;color:var(--red)}
+
+/* ---------- sub-abas ---------- */
+.tabs2{display:flex;gap:var(--s1);background:var(--navy-05);border:1px solid var(--navy-10);
+  border-radius:var(--r-pill);padding:3px;margin-bottom:var(--s4);width:fit-content;max-width:100%}
+.tab2{background:none;border:none;border-radius:var(--r-pill);padding:7px 16px;
+  font-size:var(--fs-sm);font-weight:700;color:var(--muted);white-space:nowrap;transition:.12s}
+.tab2.sel{background:#fff;color:var(--navy);box-shadow:var(--e1)}
+
+/* ---------- grupos de pendência ---------- */
+.grp{margin-bottom:var(--s4)}
+.grp .gh{display:flex;align-items:baseline;gap:var(--s2);flex-wrap:wrap;
+  padding:8px 0 6px;border-bottom:2px solid var(--navy-10);margin-bottom:var(--s2)}
+.grp .gn{font-weight:700;color:var(--navy);font-size:var(--fs-lg)}
+.grp .gc{font-size:var(--fs-xs);color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.grp .gv{color:var(--red)}
+
+/* ---------- entrada ---------- */
+.login{position:fixed;inset:0;z-index:300;background:var(--navy);
+  display:flex;align-items:center;justify-content:center;padding:20px;
+  padding-top:calc(20px + env(safe-area-inset-top,0px))}
+.login.pronto{display:none}
+.lbox{background:#fff;border-radius:var(--r-lg);padding:var(--s5);max-width:380px;width:100%;
+  box-shadow:var(--e3);text-align:left}
+.lbox .llogo{height:44px;display:block;margin:0 auto var(--s3)}
+.lbox h2{text-align:center;margin-bottom:var(--s2)}
+.lbox .sub{text-align:center}
+#lgPin{letter-spacing:8px;font-size:20px;text-align:center;font-weight:700}
+body.travado{overflow:hidden}
+
+/* ---------- fila offline ---------- */
+.fila{position:fixed;left:10px;right:10px;bottom:76px;z-index:130;
+  background:var(--warn-bg);border:1px solid #f0d48a;border-radius:var(--r-md);
+  padding:10px 13px;font-size:var(--fs-sm);color:#8a6100;display:flex;
+  align-items:center;gap:10px;box-shadow:var(--e2)}
+.fila .btn{margin-left:auto}
+@media(min-width:641px){.fila{left:auto;right:20px;bottom:20px;max-width:380px}}
+
+/* ---------- ícones ----------
+   Emoji é fonte, não desenho: cada aparelho renderiza o seu, com peso e
+   linha de base diferentes — por isso desalinhavam. Estes são traço vetorial,
+   herdam a cor do texto e ficam idênticos em iPhone, Android e PC. */
+.ic{width:1.15em;height:1.15em;flex:0 0 auto;vertical-align:-.22em;
+  fill:none;stroke:currentColor;stroke-width:1.9;
+  stroke-linecap:round;stroke-linejoin:round}
+.ic-lg{width:1.5em;height:1.5em;vertical-align:-.35em}
+.btn .ic,.cap .ic,.tab .ic{margin-right:-1px}
+.bnav .ic{width:21px;height:21px;vertical-align:0}
+.model .mi .ic{width:26px;height:26px;stroke-width:1.7;color:var(--navy)}
+.topbar .ic{width:1em;height:1em}
+
+/* ---------- troca de aba ----------
+   160ms: curto o bastante para não atrasar o toque, longo o bastante para
+   o olho entender que a tela mudou em vez de piscar. */
+@keyframes entraTela{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.entrando{animation:entraTela .16s cubic-bezier(.22,.61,.36,1)}
+/* quem desliga animação no sistema não recebe nenhuma */
+@media(prefers-reduced-motion:reduce){
+  .entrando{animation:none}
+
+  .btn:active{transform:none}
+  .modal .mbox{animation:none!important}
+}
+
+/* ---------- anexos de despesa ---------- */
+.upbar{display:flex;gap:var(--s2);flex-wrap:wrap;margin-top:var(--s1)}
+.anexos{display:flex;gap:var(--s2);flex-wrap:wrap;margin-top:10px}
+.anx{position:relative;border:1px solid var(--line);border-radius:var(--r-md);
+  background:#fff;padding:6px;width:92px;text-align:center;box-shadow:var(--e1)}
+.anx img{width:100%;height:64px;object-fit:cover;border-radius:var(--r-sm);display:block}
+.anx .pdfico{height:64px;display:flex;align-items:center;justify-content:center;
+  font-size:26px;background:var(--navy-05);border-radius:var(--r-sm)}
+.anx .anm{font-size:10px;color:var(--muted);margin-top:4px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.anx .anx-x{position:absolute;top:-7px;right:-7px;width:22px;height:22px;border-radius:50%;
+  background:var(--red);color:#fff;border:2px solid #fff;font-size:13px;line-height:1;
+  display:flex;align-items:center;justify-content:center;padding:0}
+.leitura{border:1px solid var(--navy-20);background:var(--navy-05);border-radius:var(--r-md);
+  padding:12px 14px;margin-top:10px}
+.leitura .lh{font-size:var(--fs-sm);font-weight:700;color:var(--navy);margin-bottom:6px;
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.leitura .lg{font-size:var(--fs-sm);line-height:1.7}
+.leitura .lg b{color:var(--navy)}
+.conf{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+  padding:2px 8px;border-radius:var(--r-pill)}
+.conf.alta{background:#e3f6ec;color:var(--ok)}
+.conf.media{background:var(--warn-bg);color:#8a6100}
+.conf.baixa{background:#fdeaea;color:var(--red)}
+
 /* ---------- dicas recolhíveis ----------
    As orientações continuam no app, mas guardadas. Manual aberto em cima da
    bancada o tempo todo atrapalha o serviço; na gaveta, ao alcance da mão,
@@ -140,6 +248,15 @@ body.semDicas .dica{display:none}
   white-space:nowrap;transition:background .12s;
 }
 .chip-dica:hover{background:rgba(255,255,255,.26)}
+/* No celular o topo é estreito demais para logo + nome + dois chips + relógio.
+   Os chips viram só ícone; o rótulo volta no computador. */
+@media(max-width:640px){
+  .chip-dica{padding:6px 9px}
+  .chip-dica .ct{display:none}
+  .topbar .tt{white-space:nowrap}
+  .topbar-in{gap:6px}
+  .chip-timer{padding:5px 8px;font-size:13px}
+}
 body.semDicas .chip-dica{opacity:.6}
 
 /* ---------- cartões de reunião agendada ---------- */
@@ -517,6 +634,7 @@ tr.incompleto input{background:transparent}
 </style>
 </head>
 <body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true"><defs><symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol><symbol id="i-calendar-days" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M7.5 14h1M11.5 14h1M15.5 14h1M7.5 17.5h1M11.5 17.5h1"/></symbol><symbol id="i-car" viewBox="0 0 24 24"><path d="M5 17h14M4 17v-4.2l1.8-4.3A2 2 0 0 1 7.6 7h8.8a2 2 0 0 1 1.8 1.5L20 12.8V17"/><path d="M4 12.8h16"/><circle cx="7.5" cy="17" r="1.6"/><circle cx="16.5" cy="17" r="1.6"/></symbol><symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.8v14.4l12-7.2z"/></symbol><symbol id="i-wallet" viewBox="0 0 24 24"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H18v3"/><rect x="3" y="7.5" width="18" height="12.5" rx="2"/><circle cx="16.5" cy="14" r="1.2"/></symbol><symbol id="i-book" viewBox="0 0 24 24"><path d="M12 6.4v13.2"/><path d="M12 6.4C10.6 5.1 8.6 4.4 6 4.4H3.6v13.2H6c2.6 0 4.6.7 6 2 1.4-1.3 3.4-2 6-2h2.4V4.4H18c-2.6 0-4.6.7-6 2z"/></symbol><symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-.7 4.4"/><path d="M20 5v6h-6"/></symbol><symbol id="i-chat" viewBox="0 0 24 24"><path d="M20 12a7.5 7.5 0 0 1-11 6.6L4 20l1.5-4.4A7.5 7.5 0 1 1 20 12z"/></symbol><symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></symbol><symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol><symbol id="i-share" viewBox="0 0 24 24"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 14v4.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V14"/></symbol><symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9.6 17.2h4.8M10.3 20.3h3.4"/><path d="M12 2.9a5.6 5.6 0 0 0-3.3 10.1c.5.4.8 1 .9 1.6l.1.6h4.6l.1-.6c.1-.6.4-1.2.9-1.6A5.6 5.6 0 0 0 12 2.9z"/></symbol><symbol id="i-timer" viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 9.5v4l2.5 1.8M9.5 2.5h5"/></symbol><symbol id="i-pause" viewBox="0 0 24 24"><rect x="7" y="5" width="3.5" height="14" rx="1"/><rect x="13.5" y="5" width="3.5" height="14" rx="1"/></symbol><symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l1.5-2.5h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></symbol><symbol id="i-clip" viewBox="0 0 24 24"><path d="M20 11.5 12 19.5a4.5 4.5 0 0 1-6.4-6.4l8.2-8.2a3 3 0 0 1 4.3 4.3l-8.2 8.2a1.5 1.5 0 0 1-2.2-2.1L15.5 8"/></symbol><symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4"/></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol><symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="5" y="4.5" width="14" height="16" rx="2"/><rect x="9" y="2.5" width="6" height="4" rx="1.2"/><path d="M8.5 11h7M8.5 15h5"/></symbol><symbol id="i-check-square" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 12.2l2.8 2.8L16.5 9.3"/></symbol><symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20l.9-3.6L16 5.3a2 2 0 0 1 2.8 2.8L7.6 19.1z"/><path d="M14.2 7.1l2.7 2.7"/></symbol><symbol id="i-save" viewBox="0 0 24 24"><path d="M5 4.5h11L20 8.5V18a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18V6a1.5 1.5 0 0 1 1-1.5z"/><path d="M8 4.5v5h7v-5M8 19v-5h8v5"/></symbol><symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M15.2 8.8l-1.8 4.4-4.4 1.8 1.8-4.4z"/></symbol><symbol id="i-record" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/></symbol><symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7.5a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18z"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></symbol><symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21v-6.5"/><path d="M8 3.5h8l-1 5.2 2.6 3.1a1 1 0 0 1-.8 1.7H7.2a1 1 0 0 1-.8-1.7L9 8.7z"/></symbol><symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.6l2.7 5.5 6 .9-4.3 4.2 1 6-5.4-2.8-5.4 2.8 1-6L3.3 10l6-.9z"/></symbol><symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.7.3-1 .9-1 1.6v.4"/><circle cx="12" cy="16.8" r="1" fill="currentColor" stroke="none"/></symbol><symbol id="i-flag" viewBox="0 0 24 24"><path d="M5.5 21V3.5M5.5 4.5h11l-2 3.4 2 3.4h-11"/></symbol><symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/></symbol><symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2.8" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3.2M9 21.2h6"/></symbol><symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="6.5" width="12.5" height="11" rx="2"/><path d="M15.5 11l5.5-3v8l-5.5-3z"/></symbol><symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.8L21 19.5H3z"/><path d="M12 9.8v4.4"/><circle cx="12" cy="16.8" r="1" fill="currentColor" stroke="none"/></symbol><symbol id="i-file" viewBox="0 0 24 24"><path d="M6 3.5h7l5 5V19a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 19V5a1.5 1.5 0 0 1 1-1.5z"/><path d="M13 3.5v5h5M8.5 13h7M8.5 16.5h5"/></symbol><symbol id="i-cloud-up" viewBox="0 0 24 24"><path d="M7 18a4 4 0 0 1-.4-8 5.5 5.5 0 0 1 10.6 1.2A3.6 3.6 0 0 1 17.5 18"/><path d="M12 21v-8M9 15.5l3-3 3 3"/></symbol><symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/></symbol><symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></symbol><symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3.5v11M8 11l4 4 4-4"/><path d="M4.5 18v1.5A1.5 1.5 0 0 0 6 21h12a1.5 1.5 0 0 0 1.5-1.5V18"/></symbol><symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></symbol><symbol id="i-repeat" viewBox="0 0 24 24"><path d="M4 9.5A3.5 3.5 0 0 1 7.5 6H19"/><path d="M16 3l3 3-3 3"/><path d="M20 14.5a3.5 3.5 0 0 1-3.5 3.5H5"/><path d="M8 21l-3-3 3-3"/></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol><symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none"/></symbol><symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.4M12 18.8v2.4M21.2 12h-2.4M5.2 12H2.8M18.5 5.5l-1.7 1.7M7.2 16.8l-1.7 1.7M18.5 18.5l-1.7-1.7M7.2 7.2L5.5 5.5"/></symbol><symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V4M4 20h16"/><rect x="7.5" y="12" width="3" height="5" rx=".8"/><rect x="12.5" y="8.5" width="3" height="8.5" rx=".8"/><rect x="17.5" y="5.5" width="3" height="11.5" rx=".8"/></symbol><symbol id="i-store" viewBox="0 0 24 24"><path d="M4 10.5V20h16v-9.5"/><path d="M3 10.5 4.6 5A1.5 1.5 0 0 1 6 4h12a1.5 1.5 0 0 1 1.4 1l1.6 5.5a3 3 0 0 1-6 .6 3 3 0 0 1-6 0 3 3 0 0 1-6-.6z"/><path d="M10 20v-5h4v5"/></symbol><symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></symbol></defs></svg>
 
 <div class="topbar">
   <div class="topbar-in">
@@ -526,8 +644,29 @@ tr.incompleto input{background:transparent}
       <div class="ts">Só Tintas · reuniões, rotina e equipe</div>
     </div>
     <div class="spacer"></div>
-    <button class="chip-dica" id="btnDicas" title="Mostrar ou esconder as orientações">💡 Dicas</button>
-    <div class="chip-timer hidden" id="chipTimer">⏱ <b id="totalTime">00:00</b></div>
+    <button class="chip-dica" id="btnUser" title="Trocar de usuario"></button>
+    <button class="chip-dica" id="btnDicas" title="Mostrar ou esconder as orientações"><svg class="ic" aria-hidden="true"><use href="#i-bulb"/></svg><span class="ct"> Dicas</span></button>
+    <div class="chip-timer hidden" id="chipTimer"><svg class="ic" aria-hidden="true"><use href="#i-timer"/></svg> <b id="totalTime">00:00</b></div>
+  </div>
+</div>
+
+<!-- ================= ENTRADA ================= -->
+<div class="login" id="telaLogin">
+  <div class="lbox">
+    <img src="data:image/jpeg;base64,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" alt="Só Tintas" class="llogo">
+    <h2>Assistente ST</h2>
+    <p class="sub">Entre com seu nome e PIN. Cada um vê e lança o que é seu — o coordenador vê o consolidado.</p>
+    <label>Quem é você</label>
+    <select id="lgNome"></select>
+    <label>PIN de 4 dígitos</label>
+    <input type="password" id="lgPin" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="&#8226;&#8226;&#8226;&#8226;">
+    <div class="btnrow">
+      <button class="btn btn-primary" id="lgEntrar" style="flex:1">Entrar</button>
+    </div>
+    <div id="lgErro" class="hidden" style="margin-top:12px;padding:10px 13px;border-radius:8px;background:#fdeaea;color:var(--red);font-size:13px;font-weight:700"></div>
+    <div class="hint" style="margin-top:14px">Primeiro acesso: o PIN e <b>1234</b>. Troque na aba
+    <b>USUARIOS</b> da planilha. Isto nao e seguranca de banco — e a fechadura do vestiario: nao impede
+    quem quer invadir, impede o olhar casual e registra quem lancou o que.</div>
   </div>
 </div>
 
@@ -538,7 +677,7 @@ tr.incompleto input{background:transparent}
 
   <!-- faixa de reunião interrompida -->
   <div id="banRetomar" class="hidden" style="background:#FFF3CD;border:1.5px solid #f0d48a;border-left:5px solid var(--yellow);border-radius:12px;padding:14px 16px;margin:16px 0">
-    <div style="font-weight:bold;color:#8a6100;font-size:14px">⏸ Você tem uma reunião interrompida</div>
+    <div style="font-weight:bold;color:#8a6100;font-size:14px"><svg class="ic" aria-hidden="true"><use href="#i-pause"/></svg> Você tem uma reunião interrompida</div>
     <div id="banRetomarInfo" style="font-size:13px;color:#8a6100;margin:4px 0 10px"></div>
     <button class="btn btn-primary btn-sm" id="btnRetomar">Retomar de onde parei</button>
     <button class="btn btn-ghost btn-sm" id="btnDescartar">Descartar</button>
@@ -549,12 +688,12 @@ tr.incompleto input{background:transparent}
 
   <div class="card">
     <div class="tabs">
-      <button class="tab sel" id="tabAgendar">📅 Agendar</button>
-      <button class="tab" id="tabAgenda">🗓 Agenda</button>
-      <button class="tab" id="tabRotina">🚗 Rotina</button>
-      <button class="tab" id="tabAgora">▶ Reunião</button>
-      <button class="tab" id="tabDespesas">💰 Despesas</button>
-      <button class="tab" id="tabHistorico">📚 Histórico</button>
+      <button class="tab sel" id="tabAgendar"><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg> Agendar</button>
+      <button class="tab" id="tabAgenda"><svg class="ic" aria-hidden="true"><use href="#i-calendar-days"/></svg> Agenda</button>
+      <button class="tab" id="tabRotina"><svg class="ic" aria-hidden="true"><use href="#i-car"/></svg> Rotina</button>
+      <button class="tab" id="tabAgora"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg> Reunião</button>
+      <button class="tab" id="tabDespesas"><svg class="ic" aria-hidden="true"><use href="#i-wallet"/></svg> Despesas</button>
+      <button class="tab" id="tabHistorico"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg> Histórico</button>
     </div>
 
     <div id="viewDespesas" class="hidden">
@@ -586,19 +725,23 @@ tr.incompleto input{background:transparent}
         <label>Observação <span style="text-transform:none;font-weight:normal">(opcional)</span></label>
         <input type="text" id="dpObs" placeholder="Ex.: ida e volta Macaé, 210 km">
 
-        <label>Foto do comprovante</label>
-        <!-- capture=environment abre a câmera de trás direto no celular -->
-        <input type="file" id="dpFoto" accept="image/*" capture="environment"
-               style="width:100%;padding:11px 12px;border:1.5px dashed var(--line);border-radius:9px;background:#fff;font-size:14px">
-        <div class="hint" id="dpFotoInfo">A foto é reduzida no aparelho antes de subir, para não gastar seus dados. Ela vai
-        para a pasta <b>Comprovantes de Despesa</b> no Drive e a planilha guarda só o link.</div>
-        <div id="dpPrev" class="hidden" style="margin-top:10px">
-          <img id="dpPrevImg" alt="prévia do comprovante"
-               style="max-width:100%;max-height:200px;border-radius:10px;border:1px solid var(--line)">
+        <label>Comprovantes</label>
+        <div class="upbar">
+          <button type="button" class="btn btn-ghost btn-sm" id="dpCam"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg> Tirar foto</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="dpArq"><svg class="ic" aria-hidden="true"><use href="#i-clip"/></svg> Anexar arquivo</button>
+          <button type="button" class="btn btn-navy btn-sm hidden" id="dpLer"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg> Ler o comprovante</button>
         </div>
+        <!-- capture=environment abre a câmera de trás; o segundo campo aceita
+             foto da galeria, PDF, e vários arquivos de uma vez -->
+        <input type="file" id="dpFoto" accept="image/*" capture="environment" class="hidden">
+        <input type="file" id="dpFile" accept="image/*,application/pdf,.pdf,.jpg,.jpeg,.png,.heic,.webp" multiple class="hidden">
+        <div class="hint" id="dpFotoInfo">Fotos são reduzidas no aparelho antes de subir; PDF vai como está.
+        Tudo vai para a pasta <b>Comprovantes de Despesa</b> no Drive e a planilha guarda o link.</div>
+        <div id="dpPrev" class="hidden anexos"></div>
+        <div id="dpLeitura" class="hidden"></div>
 
         <div class="btnrow">
-          <button class="btn btn-primary" id="dpSalvar">＋ Lançar despesa</button>
+          <button class="btn btn-primary" id="dpSalvar"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg> Lançar despesa</button>
           <button class="btn btn-ghost" id="dpLimpar">Limpar</button>
         </div>
         <div id="dpStatus" class="hidden" style="margin-top:12px;padding:11px 14px;border-radius:10px;font-size:14px"></div>
@@ -613,16 +756,35 @@ tr.incompleto input{background:transparent}
         </div>
       </div>
       <div class="btnrow" style="margin-top:10px">
-        <button class="btn btn-ghost btn-sm" id="dpAtualizar">↻ Atualizar relatório</button>
-        <button class="btn btn-navy btn-sm" id="dpZap">💬 Resumo para WhatsApp</button>
+        <button class="btn btn-ghost btn-sm" id="dpAtualizar"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg> Atualizar relatório</button>
+        <button class="btn btn-navy btn-sm" id="dpZap"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg> Resumo para WhatsApp</button>
         <button class="btn btn-ghost btn-sm" id="dpCsv">⤓ Baixar planilha (.csv)</button>
       </div>
       <div id="dpRel" style="margin-top:16px"></div>
     </div>
 
     <div id="viewRotina" class="hidden">
+      <div class="tabs2">
+        <button class="tab2 sel" data-rot="rotina">Rotina</button>
+        <button class="tab2" data-rot="pend">Pendências</button>
+      </div>
+
+      <div id="rotPend" class="hidden">
+        <h1>Ações em aberto</h1>
+        <p class="sub">Tudo que foi combinado em reunião e ainda não foi baixado. Vencidas primeiro.</p>
+        <div class="btnrow" style="margin-top:0">
+          <button class="btn btn-ghost btn-sm" id="pnRecarregar">Atualizar</button>
+          <select id="pnAgrupar" style="width:auto;min-width:180px">
+            <option value="loja">Agrupar por loja</option>
+            <option value="responsavel">Agrupar por responsável</option>
+          </select>
+        </div>
+        <div id="pnBox" style="margin-top:16px"></div>
+      </div>
+
+      <div id="rotPainel">
       <h1>Painel de rotina</h1>
-      <p class="sub">Acompanhamento da equipe. Para marcar visita ou tarefa use <b>📅 Agendar</b>; para registrar chegada e saída, a aba <b>🗓 Agenda</b>.</p>
+      <p class="sub">Acompanhamento da equipe. Para marcar visita ou tarefa use <b><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg> Agendar</b>; para registrar chegada e saída, a aba <b><svg class="ic" aria-hidden="true"><use href="#i-calendar-days"/></svg> Agenda</b>.</p>
       <div class="grid2">
         <div><label>Sou</label><input list="listaSup" id="fSou" placeholder="Seu nome"></div>
         <div><label>Mostrar</label>
@@ -637,7 +799,7 @@ tr.incompleto input{background:transparent}
       <datalist id="listaSup"></datalist>
       <datalist id="listaLojas"></datalist>
       <div class="btnrow">
-        <button class="btn btn-ghost btn-sm" id="btnAtualizarRotina">↻ Atualizar</button>
+        <button class="btn btn-ghost btn-sm" id="btnAtualizarRotina"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg> Atualizar</button>
       </div>
       <div id="rotinaKpis" style="margin-top:16px"></div>
       <div id="rotinaAtencao"></div>
@@ -645,28 +807,29 @@ tr.incompleto input{background:transparent}
       <button class="btn btn-navy hidden" id="btnNovaTarefa">+ Tarefa</button>
       <div id="painelEquipe" class="hidden"></div>
       <div id="semanaEquipe" class="hidden"></div>
+      </div><!-- /rotPainel -->
     </div>
     <div id="viewAgendarEscolha" class="hidden">
       <h1>Agendar</h1>
       <p class="sub">O que você quer marcar?</p>
       <div class="models">
         <button class="model" data-agtipo="reuniao">
-          <div class="mi">📋</div>
+          <div class="mi"><svg class="ic" aria-hidden="true"><use href="#i-clipboard"/></svg></div>
           <div class="mn">Reunião</div>
           <div class="md">Com roteiro, participantes e objetivo. Cria o evento na Agenda Google e gera o convite para o WhatsApp.</div>
         </button>
         <button class="model" data-agtipo="visita">
-          <div class="mi">🚗</div>
+          <div class="mi"><svg class="ic" aria-hidden="true"><use href="#i-car"/></svg></div>
           <div class="mn">Visita a loja</div>
           <div class="md">Data, loja e o trabalho a ser executado. No dia, o supervisor registra chegada e saída.</div>
         </button>
         <button class="model" data-agtipo="tarefa">
-          <div class="mi">✅</div>
+          <div class="mi"><svg class="ic" aria-hidden="true"><use href="#i-check-square"/></svg></div>
           <div class="mn">Tarefa extra</div>
           <div class="md">Tudo que não é visita: relatório, campanha, treinamento, reunião externa.</div>
         </button>
         <button class="model" data-agtipo="checklist">
-          <div class="mi">📝</div>
+          <div class="mi"><svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg></div>
           <div class="mn">Checklist pessoal</div>
           <div class="md">Sua lista de conferência: o que olhar numa loja, o que levar numa reunião. Fica no seu aparelho e pode virar o trabalho de uma visita.</div>
         </button>
@@ -674,7 +837,7 @@ tr.incompleto input{background:transparent}
     </div>
 
     <div id="viewChecklist" class="hidden">
-      <button class="btn btn-ghost btn-sm" id="btnVoltarChecklist" style="margin-bottom:14px">← Voltar</button>
+      <button class="btn btn-ghost btn-sm" id="btnVoltarChecklist" style="margin-bottom:14px"><svg class="ic" aria-hidden="true"><use href="#i-arrow-left"/></svg> Voltar</button>
       <h1>Checklist pessoal</h1>
       <p class="sub">Monte suas listas de conferência. Ficam salvas neste aparelho, só para você.</p>
       <div class="grid2">
@@ -685,12 +848,12 @@ tr.incompleto input{background:transparent}
       <div id="clItens"></div>
       <div class="btnrow" style="margin-top:8px">
         <button class="btn btn-ghost btn-sm" id="clAddItem">+ Adicionar item</button>
-        <button class="btn btn-ghost btn-sm" id="clLimparMarcas">↺ Desmarcar tudo</button>
+        <button class="btn btn-ghost btn-sm" id="clLimparMarcas"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg> Desmarcar tudo</button>
       </div>
       <div class="btnrow">
-        <button class="btn btn-primary" id="clSalvar">💾 Salvar checklist</button>
-        <button class="btn btn-navy" id="clUsar">🚗 Usar numa visita</button>
-        <button class="btn btn-navy" id="clCompartilhar">📤 Compartilhar</button>
+        <button class="btn btn-primary" id="clSalvar"><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg> Salvar checklist</button>
+        <button class="btn btn-navy" id="clUsar"><svg class="ic" aria-hidden="true"><use href="#i-car"/></svg> Usar numa visita</button>
+        <button class="btn btn-navy" id="clCompartilhar"><svg class="ic" aria-hidden="true"><use href="#i-share"/></svg> Compartilhar</button>
         <button class="btn btn-ghost" id="clExcluir" style="color:var(--red);border-color:#f3c6c8">Excluir</button>
       </div>
       <div class="hint">O botão "Usar numa visita" leva os itens marcados como o trabalho a ser executado — assim o checklist vira compromisso registrado, não lembrete solto.</div>
@@ -702,7 +865,7 @@ tr.incompleto input{background:transparent}
       <div class="grid2">
         <div><label>Mostrar de</label><select id="fAgendaQuem"></select></div>
         <div style="display:flex;align-items:flex-end">
-          <button class="btn btn-navy" id="btnCompartilharAgenda" style="width:100%">📤 Compartilhar agenda</button>
+          <button class="btn btn-navy" id="btnCompartilharAgenda" style="width:100%"><svg class="ic" aria-hidden="true"><use href="#i-share"/></svg> Compartilhar agenda</button>
         </div>
       </div>
       <div id="agendaLista" style="margin-top:14px"></div>
@@ -712,7 +875,7 @@ tr.incompleto input{background:transparent}
       <p class="sub">As últimas reuniões registradas. Clique para abrir a ata em PDF.</p>
       <div id="histLista"></div>
     </div>
-    <button class="btn btn-ghost btn-sm hidden" id="btnVoltarEscolha" style="margin-bottom:14px">← Voltar</button>
+    <button class="btn btn-ghost btn-sm hidden" id="btnVoltarEscolha" style="margin-bottom:14px"><svg class="ic" aria-hidden="true"><use href="#i-arrow-left"/></svg> Voltar</button>
     <div id="blocoSetup">
     <h1 id="setupTitulo">Preparar a reunião</h1>
     <p class="sub" id="setupSub">Leva 40 segundos. Sem objetivo escrito, o botão de iniciar não libera — é de propósito.</p>
@@ -728,12 +891,12 @@ tr.incompleto input{background:transparent}
     <h3 id="hCond">2. Como você quer conduzir?</h3>
     <div class="models" id="modosCond">
       <button class="model sel" data-mc="blocos">
-        <div class="mi">🧭</div>
+        <div class="mi"><svg class="ic" aria-hidden="true"><use href="#i-compass"/></svg></div>
         <div class="mn">Guiado por blocos</div>
         <div class="md">O app conduz etapa por etapa, com cronômetro e checklist em cada bloco. Melhor para dar ritmo e não deixar assunto escapar.</div>
       </button>
       <button class="model" data-mc="corrido">
-        <div class="mi">🔴</div>
+        <div class="mi"><svg class="ic" aria-hidden="true"><use href="#i-record"/></svg></div>
         <div class="mn">Corrido — gravação contínua</div>
         <div class="md">Uma tela só. Liga o microfone e a reunião corre solta; você marca decisões e pontos importantes com um toque. Melhor quando a conversa não cabe num roteiro.</div>
       </button>
@@ -779,11 +942,11 @@ tr.incompleto input{background:transparent}
     <div id="agendaPrev"></div>
 
     <div class="btnrow">
-      <button class="btn btn-primary" id="btnStart" disabled>▶ Iniciar reunião</button>
-      <button class="btn btn-primary hidden" id="btnAgendar" disabled>📅 Agendar e convidar</button>
-      <button class="btn btn-navy hidden" id="btnConviteZap">💬 Convite para WhatsApp</button>
+      <button class="btn btn-primary" id="btnStart" disabled><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg> Iniciar reunião</button>
+      <button class="btn btn-primary hidden" id="btnAgendar" disabled><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg> Agendar e convidar</button>
+      <button class="btn btn-navy hidden" id="btnConviteZap"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg> Convite para WhatsApp</button>
       <span class="hint" id="startHint" style="align-self:center"></span>
-      <button class="btn btn-ghost btn-sm" id="btnLoad">📂 Retomar reunião salva (.json)</button>
+      <button class="btn btn-ghost btn-sm" id="btnLoad"><svg class="ic" aria-hidden="true"><use href="#i-folder"/></svg> Retomar reunião salva (.json)</button>
       <input type="file" id="fileLoad" accept=".json" class="hidden">
     </div>
     <div id="agStatus" class="hidden" style="margin-top:14px;padding:12px 16px;border-radius:10px;font-size:14px;line-height:1.5"></div>
@@ -806,12 +969,12 @@ tr.incompleto input{background:transparent}
         <span class="hint" id="salvoEm"></span>
       </div>
       <div class="runacts">
-        <button class="btn btn-ghost btn-sm" id="btnSave">💾<span class="lf"> Salvar backup</span><span class="lc"> Backup</span></button>
-        <button class="btn btn-navy btn-sm" id="btnFinish">✓<span class="lf"> Encerrar e gerar ata</span><span class="lc"> Encerrar</span></button>
+        <button class="btn btn-ghost btn-sm" id="btnSave"><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg><span class="lf"> Salvar backup</span><span class="lc"> Backup</span></button>
+        <button class="btn btn-navy btn-sm" id="btnFinish"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><span class="lf"> Encerrar e gerar ata</span><span class="lc"> Encerrar</span></button>
       </div>
     </div>
     <div class="objbox objrun">
-      <div class="oh" style="margin:0">🎯 Objetivo: <span style="font-weight:normal" id="runObjetivo"></span></div>
+      <div class="oh" style="margin:0"><svg class="ic" aria-hidden="true"><use href="#i-target"/></svg> Objetivo: <span style="font-weight:normal" id="runObjetivo"></span></div>
     </div>
     <!-- no celular a régua de blocos vira uma linha só: rolagem lateral de
          etiquetas consome altura e ninguém rola para achar o bloco 5 -->
@@ -833,24 +996,30 @@ tr.incompleto input{background:transparent}
     <!-- o que ficou combinado da última vez — a memória da reunião -->
     <div id="pendBox" class="hidden"></div>
 
-    <div class="guia" id="guia"></div>
+    <details class="gaveta" id="gvGuia" open>
+      <summary><svg class="ic" aria-hidden="true"><use href="#i-clipboard"/></svg> <span>Roteiro do bloco</span> <span class="gvc"></span></summary>
+      <div class="guia" id="guia"></div>
+    </details>
 
-    <div class="capbar">
-      <button class="cap" id="capMic"><span class="dot"></span>🎤<span class="lf"> Transcrever ao vivo</span><span class="lc"> Ao vivo</span></button>
-      <button class="cap" id="capAudio"><span class="dot"></span>⏺<span class="lf"> Gravar áudio</span><span class="lc"> Áudio</span></button>
-      <button class="cap" id="capVideo"><span class="dot"></span>🎥<span class="lf"> Gravar vídeo</span><span class="lc"> Vídeo</span></button>
-      <button class="cap" id="capPaste">📋<span class="lf"> Colar transcrição</span><span class="lc"> Colar</span></button>
+    <details class="gaveta" id="gvCap">
+      <summary><svg class="ic" aria-hidden="true"><use href="#i-mic"/></svg> <span>Gravar ou transcrever</span> <span class="gvc"></span></summary>
+      <div class="capbar">
+      <button class="cap" id="capMic"><span class="dot"></span><svg class="ic" aria-hidden="true"><use href="#i-mic"/></svg><span class="lf"> Transcrever ao vivo</span><span class="lc"> Ao vivo</span></button>
+      <button class="cap" id="capAudio"><span class="dot"></span><svg class="ic" aria-hidden="true"><use href="#i-record"/></svg><span class="lf"> Gravar áudio</span><span class="lc"> Áudio</span></button>
+      <button class="cap" id="capVideo"><span class="dot"></span><svg class="ic" aria-hidden="true"><use href="#i-video"/></svg><span class="lf"> Gravar vídeo</span><span class="lc"> Vídeo</span></button>
+      <button class="cap" id="capPaste"><svg class="ic" aria-hidden="true"><use href="#i-clipboard"/></svg><span class="lf"> Colar transcrição</span><span class="lc"> Colar</span></button>
     </div>
+    </details>
     <div class="livebox hidden" id="liveBox"></div>
     <div id="recInfo" class="hint hidden"></div>
 
     <div id="marcadores" class="hidden">
       <label>Marcar um momento</label>
       <div class="capbar">
-        <button class="cap" data-mk="📌 DECISÃO">📌 Decisão</button>
-        <button class="cap" data-mk="⭐ IMPORTANTE">⭐ Importante</button>
-        <button class="cap" data-mk="❓ PENDÊNCIA">❓ Pendência</button>
-        <button class="cap" data-mk="🚩 FORA DE PAUTA">🚩 Fora de pauta</button>
+        <button class="cap" data-mk="📌 DECISÃO"><svg class="ic" aria-hidden="true"><use href="#i-pin"/></svg> Decisão</button>
+        <button class="cap" data-mk="⭐ IMPORTANTE"><svg class="ic" aria-hidden="true"><use href="#i-star"/></svg> Importante</button>
+        <button class="cap" data-mk="❓ PENDÊNCIA"><svg class="ic" aria-hidden="true"><use href="#i-help"/></svg> Pendência</button>
+        <button class="cap" data-mk="🚩 FORA DE PAUTA"><svg class="ic" aria-hidden="true"><use href="#i-flag"/></svg> Fora de pauta</button>
       </div>
       <div class="hint">Cada marcação entra na transcrição com o minuto exato e vira um destaque na ata. Marque na hora — depois ninguém lembra em que momento a decisão saiu.</div>
       <details id="roteiroLembrete" style="margin:14px 0">
@@ -869,7 +1038,7 @@ tr.incompleto input{background:transparent}
         <thead><tr><th style="width:44%">Ação combinada</th><th style="width:24%">Responsável</th><th style="width:22%">Prazo</th><th style="width:10%"></th></tr></thead>
         <tbody id="actsBody"></tbody>
       </table>
-      <div class="flagbad" id="actsFlag">⚠ Linhas em vermelho estão sem responsável ou sem prazo. Ação sem dono e sem data não é decisão, é intenção.</div>
+      <div class="flagbad" id="actsFlag"><svg class="ic" aria-hidden="true"><use href="#i-alert"/></svg> Linhas em vermelho estão sem responsável ou sem prazo. Ação sem dono e sem data não é decisão, é intenção.</div>
       <button class="btn btn-ghost btn-sm" id="btnAddAct" style="margin-top:10px">+ Adicionar ação</button>
     </div>
 
@@ -891,8 +1060,8 @@ tr.incompleto input{background:transparent}
     </div>
 
     <div class="btnrow">
-      <button class="btn btn-ghost" id="btnPrev">← Bloco anterior</button>
-      <button class="btn btn-primary" id="btnNext">Próximo bloco →</button>
+      <button class="btn btn-ghost" id="btnPrev"><svg class="ic" aria-hidden="true"><use href="#i-arrow-left"/></svg> Bloco anterior</button>
+      <button class="btn btn-primary" id="btnNext">Próximo bloco <svg class="ic" aria-hidden="true"><use href="#i-arrow-right"/></svg></button>
     </div>
   </div>
 </section>
@@ -903,13 +1072,13 @@ tr.incompleto input{background:transparent}
     <h2 style="margin:0 0 4px">Ata gerada</h2>
     <p class="sub" style="margin:0">Tudo abaixo é editável — clique e ajuste antes de enviar. Depois escolha a saída.</p>
     <div class="btnrow" style="margin-top:14px">
-      <button class="btn btn-primary" id="btnPdf">📄 Salvar em PDF</button>
-      <button class="btn btn-navy" id="btnGoogle">☁ Enviar para o Google</button>
-      <button class="btn btn-navy" id="btnZap">💬 Copiar para WhatsApp</button>
-      <button class="btn btn-navy" id="btnMail">✉ Enviar por e-mail</button>
-      <button class="btn btn-ghost" id="btnJson">💾 Baixar backup (.json)</button>
-      <button class="btn btn-ghost" id="btnBack">← Voltar e ajustar</button>
-      <button class="btn btn-ghost" id="btnNew">＋ Nova reunião</button>
+      <button class="btn btn-primary" id="btnPdf"><svg class="ic" aria-hidden="true"><use href="#i-file"/></svg> Salvar em PDF</button>
+      <button class="btn btn-navy" id="btnGoogle"><svg class="ic" aria-hidden="true"><use href="#i-cloud-up"/></svg> Enviar para o Google</button>
+      <button class="btn btn-navy" id="btnZap"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg> Copiar para WhatsApp</button>
+      <button class="btn btn-navy" id="btnMail"><svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg> Enviar por e-mail</button>
+      <button class="btn btn-ghost" id="btnJson"><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg> Baixar backup (.json)</button>
+      <button class="btn btn-ghost" id="btnBack"><svg class="ic" aria-hidden="true"><use href="#i-arrow-left"/></svg> Voltar e ajustar</button>
+      <button class="btn btn-ghost" id="btnNew"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg> Nova reunião</button>
     </div>
   </div>
   <div id="googleStatus" class="noprint hidden" style="margin:0 0 16px;padding:12px 16px;border-radius:10px;font-size:14px;line-height:1.5"></div>
@@ -997,8 +1166,8 @@ tr.incompleto input{background:transparent}
     <textarea id="cancelTexto" rows="10"></textarea>
     <div id="cancelZaps" class="btnrow" style="margin-top:12px"></div>
     <div class="btnrow">
-      <button class="btn btn-primary" id="cancelConfirmar">✓ Desmarcar e avisar por e-mail</button>
-      <button class="btn btn-navy" id="cancelCopiar">📋 Copiar aviso</button>
+      <button class="btn btn-primary" id="cancelConfirmar"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg> Desmarcar e avisar por e-mail</button>
+      <button class="btn btn-navy" id="cancelCopiar"><svg class="ic" aria-hidden="true"><use href="#i-clipboard"/></svg> Copiar aviso</button>
       <button class="btn btn-ghost" id="cancelFechar">Voltar</button>
     </div>
     <div id="cancelStatus" class="hidden" style="margin-top:12px;padding:11px 14px;border-radius:10px;font-size:14px"></div>
@@ -1007,18 +1176,24 @@ tr.incompleto input{background:transparent}
 
 <!-- navegação inferior (só aparece no celular) -->
 <nav class="bnav" id="bnav">
-  <button data-nav="agendar" class="sel"><span class="bi">📅</span>Agendar</button>
-  <button data-nav="agenda"><span class="bi">🗓</span>Agenda</button>
-  <button data-nav="rotina"><span class="bi">🚗</span>Rotina</button>
-  <button data-nav="agora"><span class="bi">▶</span>Reunião</button>
-  <button data-nav="despesas"><span class="bi">💰</span>Despesas</button>
-  <button data-nav="historico"><span class="bi">📚</span>Histórico</button>
+  <button data-nav="agendar" class="sel"><span class="bi"><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg></span>Agendar</button>
+  <button data-nav="agenda"><span class="bi"><svg class="ic" aria-hidden="true"><use href="#i-calendar-days"/></svg></span>Agenda</button>
+  <button data-nav="rotina"><span class="bi"><svg class="ic" aria-hidden="true"><use href="#i-car"/></svg></span>Rotina</button>
+  <button data-nav="agora"><span class="bi"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg></span>Reunião</button>
+  <button data-nav="despesas"><span class="bi"><svg class="ic" aria-hidden="true"><use href="#i-wallet"/></svg></span>Despesas</button>
+  <button data-nav="historico"><span class="bi"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg></span>Histórico</button>
 </nav>
 
 <!-- avançar/voltar fixos durante a reunião (só no celular) -->
 <div class="runbar hidden" id="runbar">
-  <button class="btn btn-ghost" id="btnPrevM">← Voltar</button>
-  <button class="btn btn-primary" id="btnNextM">Próximo bloco →</button>
+  <button class="btn btn-ghost" id="btnPrevM"><svg class="ic" aria-hidden="true"><use href="#i-arrow-left"/></svg> Voltar</button>
+  <button class="btn btn-primary" id="btnNextM">Próximo bloco <svg class="ic" aria-hidden="true"><use href="#i-arrow-right"/></svg></button>
+</div>
+
+<!-- fila de lançamentos que não subiram por falta de sinal -->
+<div class="fila hidden" id="filaBox">
+  <span id="filaTxt"></span>
+  <button class="btn btn-ghost btn-sm" id="filaEnviar">Enviar agora</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1077,28 +1252,28 @@ var LOGO = document.querySelector('.topbar img').src;
 
 /* ============ MODELOS DE REUNIÃO ============ */
 var TPL = {
- padrao:{icone:'📋',nome:'Reunião Padrão',desc:'Estrutura Só Tintas de 6 blocos. Serve para qualquer pauta.',blocos:[
+ padrao:{icone:'clipboard',nome:'Reunião Padrão',desc:'Estrutura Só Tintas de 6 blocos. Serve para qualquer pauta.',blocos:[
   {t:'Abertura',min:5,q:'Todos entraram sabendo por que estão aqui?',guia:['Confirmar presença e quem falta','Ler o objetivo em voz alta para o grupo','Combinar duração e ordem dos assuntos','Pedir que celulares fiquem de lado']},
   {t:'Contexto e Dados',min:15,q:'Aqui só fatos. Opinião fica para o próximo bloco.',guia:['Apresentar os números / fatos que motivaram a reunião','Mostrar o histórico: o que já foi tentado antes','Checar se todos entenderam os dados antes de seguir']},
   {t:'Discussão e Análise',min:20,q:'Quem ainda não falou nada?',guia:['Perguntar nominalmente para quem está calado','Separar causa de sintoma: "por que isso aconteceu?"','Registrar as divergências, não só os acordos','Cortar assunto fora de pauta para o estacionamento']},
   {t:'Decisões e Próximos Passos',min:10,q:'Toda ação precisa de dono e data.',tipo:'acoes',guia:['Repetir em voz alta cada decisão antes de anotar','Confirmar com o responsável: "combinado assim?"','Definir prazo com data, não com "essa semana"']},
   {t:'Conclusão',min:5,q:'A reunião fecha do mesmo jeito que abriu: pelo objetivo.',tipo:'fecho',guia:['Reler as ações e responsáveis para o grupo','Declarar se o objetivo foi atingido ou não','Marcar o follow-up antes de todos saírem']}
  ]},
- vendas:{icone:'📈',nome:'Resultados e Vendas',desc:'Reunião de números com loja ou equipe comercial.',blocos:[
+ vendas:{icone:'chart',nome:'Resultados e Vendas',desc:'Reunião de números com loja ou equipe comercial.',blocos:[
   {t:'Abertura e clima',min:5,q:'Como o time chega hoje?',guia:['Reconhecer publicamente um resultado bom da semana','Ler o objetivo da reunião','Avisar que o foco é ação, não cobrança']},
   {t:'Números da semana',min:10,q:'O número por si só não explica nada.',guia:['Faturamento x meta (valor e %)','Ticket médio e peças por atendimento','Indicadores de bônus atingidos e não atingidos','Ranking individual sem exposição negativa']},
   {t:'O que explica o número',min:15,q:'Causa, não desculpa.',guia:['Perguntar ao vendedor: "o que você fez diferente?"','Separar o que é externo do que está sob controle do time','Identificar o indicador que mais derruba o bônus']},
   {t:'Foco e ações da semana',min:15,q:'Poucas ações, bem definidas.',tipo:'acoes',guia:['Escolher no máximo 3 focos para a semana','Traduzir foco em comportamento diário observável','Definir quem acompanha e como será medido']},
   {t:'Compromisso e fechamento',min:5,q:'Cada um sai sabendo o próprio número.',tipo:'fecho',guia:['Cada vendedor diz em voz alta a própria meta da semana','Confirmar data da próxima checagem']}
  ]},
- individual:{icone:'🤝',nome:'Feedback 1:1',desc:'Conversa individual de desenvolvimento com um liderado.',blocos:[
+ individual:{icone:'user',nome:'Feedback 1:1',desc:'Conversa individual de desenvolvimento com um liderado.',blocos:[
   {t:'Abertura e acordo',min:5,q:'Conversa de desenvolvimento, não julgamento.',guia:['Explicar o propósito da conversa em uma frase','Combinar que os dois vão falar','Garantir sigilo e ambiente reservado']},
   {t:'Como a pessoa se vê',min:10,q:'Ela fala primeiro. Sempre.',guia:['"Como você avalia seu último mês?"','"O que funcionou e o que te travou?"','Ouvir sem interromper e sem corrigir ainda']},
   {t:'Fatos observados',min:15,q:'Comportamento observado, não característica de personalidade.',guia:['Descrever situação, comportamento e impacto (SBI)','Usar exemplo concreto com data e cliente','Evitar "você sempre" / "você nunca"','Reconhecer o que está bem feito com o mesmo detalhe']},
   {t:'Expectativa e plano',min:10,q:'O que muda a partir de segunda?',tipo:'acoes',guia:['Deixar claro o padrão esperado, em comportamento','Perguntar do que a pessoa precisa de você','Combinar 1 ou 2 mudanças, não uma lista']},
   {t:'Fechamento',min:5,q:'Ela sai sabendo onde está e para onde vai.',tipo:'fecho',guia:['Pedir que ela resuma o combinado com as palavras dela','Marcar a data da próxima conversa']}
  ]},
- treinamento:{icone:'🎓',nome:'Treinamento',desc:'Capacitação de produto, sistema ou técnica de venda.',blocos:[
+ treinamento:{icone:'compass',nome:'Treinamento',desc:'Capacitação de produto, sistema ou técnica de venda.',blocos:[
   {t:'Abertura e objetivo de aprendizagem',min:5,q:'O que a pessoa vai saber FAZER ao final?',guia:['Declarar a habilidade que será treinada','Conectar com um problema real da loja','Levantar o nível atual do grupo']},
   {t:'Conteúdo',min:20,q:'Ensinar menos, fixar mais.',guia:['Explicar o conceito com exemplo da rotina da loja','Mostrar o certo e o errado lado a lado','Checar entendimento a cada bloco']},
   {t:'Prática',min:20,q:'Ninguém aprende assistindo.',guia:['Simulação de atendimento em dupla','Corrigir na hora, com elogio antes do ajuste','Rodar pelo menos duas rodadas']},
@@ -1106,7 +1281,7 @@ var TPL = {
   {t:'Compromisso de aplicação',min:10,q:'Treinamento sem aplicação vira palestra.',tipo:'acoes',guia:['Cada participante escolhe onde aplica ainda esta semana','Definir como o gestor vai observar a aplicação']},
   {t:'Fechamento',min:5,q:'',tipo:'fecho',guia:['Resumir os 3 pontos-chave','Marcar a checagem de aplicação']}
  ]},
- supervisores:{icone:'🏬',nome:'Reunião de Supervisores',desc:'Alinhamento entre lojas, indicadores e planos regionais.',blocos:[
+ supervisores:{icone:'store',nome:'Reunião de Supervisores',desc:'Alinhamento entre lojas, indicadores e planos regionais.',blocos:[
   {t:'Abertura',min:5,q:'',guia:['Ler o objetivo','Revisar as ações da reunião anterior: feito / não feito']},
   {t:'Painel de indicadores por loja',min:15,q:'Comparar lojas, não julgar pessoas.',guia:['Ranking das lojas nos indicadores do mês','Destacar quem evoluiu, não só quem lidera','Isolar os 2 indicadores mais críticos da regional']},
   {t:'Ofensores e causas',min:20,q:'É problema de processo, de pessoa ou de estoque?',guia:['Cada supervisor traz a causa raiz da própria loja','Buscar padrão comum entre as lojas','Separar o que depende da matriz do que é local']},
@@ -1138,6 +1313,10 @@ var cond = 'blocos';   /* 'blocos' = guiado etapa por etapa · 'corrido' = grava
 var tickTotal=null, tickBloco=null, blocoIni=null, dirty=false;
 
 /* ============ HELPERS ============ */
+/* Ícone vetorial. Só serve para conteúdo escrito com innerHTML — em
+   textContent o SVG viraria texto cru, e em mensagem de WhatsApp, e-mail
+   ou ata o certo continua sendo emoji, porque o destino não é a tela. */
+function ICO(n){ return '<svg class="ic" aria-hidden="true"><use href="#i-'+n+'"/></svg>'; }
 function $(id){return document.getElementById(id);}
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function fmt(sec){var m=Math.floor(sec/60),s=sec%60;return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;}
@@ -1224,7 +1403,7 @@ function renderModels(){
   var h='';
   Object.keys(TPL).forEach(function(k){
     var t=TPL[k], tot=t.blocos.reduce(function(a,b){return a+b.min;},0);
-    h+='<button class="model'+(k===sel?' sel':'')+'" data-k="'+k+'"><div class="mi">'+t.icone+'</div>'+
+    h+='<button class="model'+(k===sel?' sel':'')+'" data-k="'+k+'"><div class="mi">'+ICO(t.icone)+'</div>'+
        '<div class="mn">'+t.nome+'</div><div class="md">'+t.desc+'</div>'+
        '<div class="mt">'+t.blocos.length+' blocos · '+tot+' min</div></button>';
   });
@@ -1303,7 +1482,7 @@ function renderConvites(){
   var com=PARTS.filter(function(p){ return foneWa(p.f) && p.n.trim(); });
   if(modo!=='agendar' || !com.length){ $('convitesInd').classList.add('hidden'); return; }
   var h='';
-  com.forEach(function(p,i){ h+='<button class="btn btn-navy btn-sm" data-wa="'+i+'">💬 '+esc(p.n)+'</button>'; });
+  com.forEach(function(p,i){ h+='<button class="btn btn-navy btn-sm" data-wa="'+i+'">'+ICO('chat')+' '+esc(p.n)+'</button>'; });
   $('convitesBtns').innerHTML=h;
   $('convitesInd').classList.remove('hidden');
   Array.prototype.forEach.call(document.querySelectorAll('[data-wa]'),function(b){
@@ -1342,7 +1521,7 @@ function setModo(m){
   $('proximas').classList.toggle('hidden', telaCheia || !temHoje());
   if(m==='historico'){ carregarHistorico(); return; }
   if(m==='agenda'){ carregarAgendaUnificada(); return; }
-  if(m==='rotina'){ carregarRotina(); return; }
+  if(m==='rotina'){ if(ROT_ABA==='pend') carregarPainelPend(); else carregarRotina(); return; }
   if(m==='despesas'){ iniciarDespesas(); return; }
   $('wrapDuracao').classList.toggle('hidden', m!=='agendar');
 
@@ -1512,18 +1691,18 @@ function renderAgendaCompleta(){
   var itens=[];
   PROX.forEach(function(a){
     itens.push({k:'reuniao', data:a.data, hora:a.hora||'', titulo:a.titulo, sub:(a.modelo||'')+(a.duracao?' · '+a.duracao+' min':'')+(a.local?' · '+a.local:''),
-      extra:a.participantes?'👥 '+a.participantes:'', linha:a.linha});
+      extra:a.participantes?a.participantes:'', linha:a.linha});
   });
   VISITAS.forEach(function(v){
     var t=ehTarefa(v);
     itens.push({k:t?'tarefa':'visita', data:v.data, hora:v.hora||'', titulo:(v.loja||(t?'Tarefa extra':'Visita')),
-      sub:'👤 '+(v.supervisor||'')+' · '+(v.status||''), extra:v.trabalho||'', linha:v.linha, status:v.status,
+      sub:(v.supervisor||'')+' · '+(v.status||''), extra:v.trabalho||'', linha:v.linha, status:v.status,
       pessoa:v.supervisor||'', obj:v});
   });
   if(quem) itens=itens.filter(function(a){ return a.k==='reuniao' || a.pessoa===quem; });
   AGENDA_ITENS=itens;
   if(!itens.length){
-    box.innerHTML='<p class="sub">Nada marcado neste filtro. Use <b>📅 Agendar</b> para criar reunião, visita ou tarefa.</p>';
+    box.innerHTML='<p class="sub">Nada marcado neste filtro. Use <b>Agendar</b> para criar reunião, visita ou tarefa.</p>';
     return;
   }
   itens.sort(function(a,b){ return (a.data+a.hora) < (b.data+b.hora) ? -1 : 1; });
@@ -1531,9 +1710,9 @@ function renderAgendaCompleta(){
   var hoje=hojeISO();
   var amanha=new Date(Date.now()+86400000).toISOString().slice(0,10);
   var DIAS=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
-  var ICO={reuniao:'📋', visita:'🚗', tarefa:'✅'};
+  var TIPOICO={reuniao:ICO('clipboard'), visita:ICO('car'), tarefa:ICO('check-square')};
   var COR={reuniao:'var(--navy)', visita:'#B7791F', tarefa:'var(--ok)'};
-  var h='<div class="hint" style="margin-bottom:6px">📋 reunião · 🚗 visita · ✅ tarefa extra</div>', diaAtual='';
+  var h='<div class="hint" style="margin-bottom:6px">'+ICO('clipboard')+' reunião · '+ICO('car')+' visita · '+ICO('check-square')+' tarefa extra</div>', diaAtual='';
 
   itens.forEach(function(a){
     if(a.data!==diaAtual){
@@ -1551,7 +1730,7 @@ function renderAgendaCompleta(){
       : botoesVisita(a.obj);
     h+='<div class="ag'+(a.data===hoje?' hoje':'')+'" style="border-left-color:'+cor+';align-items:flex-start">'+
        '<div class="agd" style="background:'+cor+'"><b>'+(a.hora||'--').slice(0,2)+'</b><span>'+(a.hora||'--:--').slice(3)+'</span></div>'+
-       '<div class="agi"><div class="agt">'+ICO[a.k]+' '+esc(a.titulo||'')+(a.status?' '+badgeStatus(a.status):'')+'</div>'+
+       '<div class="agi"><div class="agt">'+TIPOICO[a.k]+' '+esc(a.titulo||'')+(a.status?' '+badgeStatus(a.status):'')+'</div>'+
        '<div class="ags">'+esc(a.sub)+'</div>'+
        (a.extra?'<div style="font-size:13px;color:var(--ink);margin-top:5px;white-space:pre-wrap">'+esc(a.extra)+'</div>':'')+
        '</div><div class="agb">'+acoes+'</div></div><div style="height:2px"></div>';
@@ -1569,7 +1748,8 @@ function textoAgenda(){
   if(!AGENDA_ITENS.length){ L.push('Nada marcado no período.'); return L.join('\n'); }
   var DIAS=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
   var hoje=hojeISO(), amanha=isoMais(1), dia='';
-  var ICO={reuniao:'📋', visita:'🚗', tarefa:'✅'};
+  /* texto de WhatsApp: emoji, não ícone — o destino não é a tela do app */
+  var TIPOICO={reuniao:'📋', visita:'🚗', tarefa:'✅'};
   AGENDA_ITENS.forEach(function(a){
     if(a.data!==dia){
       dia=a.data;
@@ -1577,7 +1757,7 @@ function textoAgenda(){
       var rot = a.data===hoje?'HOJE':(a.data===amanha?'AMANHÃ':DIAS[dt.getDay()].toUpperCase());
       L.push('*'+rot+' · '+dataBr(a.data)+'*');
     }
-    L.push(ICO[a.k]+' '+(a.hora||'')+' — '+a.titulo+(a.pessoa?' ('+a.pessoa+')':''));
+    L.push(TIPOICO[a.k]+' '+(a.hora||'')+' — '+a.titulo+(a.pessoa?' ('+a.pessoa+')':''));
     if(a.k!=='reuniao' && a.extra) L.push('   '+a.extra);
     if(a.k==='reuniao' && a.sub) L.push('   '+a.sub);
   });
@@ -1669,7 +1849,7 @@ function badgeStatus(s){
 function renderRotina(){
   var box=$('rotinaKpis');
   if(!VISITAS.length){
-    box.innerHTML='<p class="sub">Nada registrado neste período. Marque visitas e tarefas em <b>📅 Agendar</b>.</p>';
+    box.innerHTML='<p class="sub">Nada registrado neste período. Marque visitas e tarefas em <b>Agendar</b>.</p>';
     $('rotinaAtencao').innerHTML='';
     return;
   }
@@ -1723,7 +1903,7 @@ function renderAtencao(vis, nao){
       h+='<div class="ag" style="border-left-color:#B7791F"><div class="agd" style="background:#B7791F"><b>'+
          (v.data||'').slice(8)+'</b><span>'+mesCurto((v.data||'').slice(5,7))+'</span></div>'+
          '<div class="agi"><div class="agt">'+esc(v.loja||'')+' '+badgeStatus(v.status)+'</div>'+
-         '<div class="ags">👤 '+esc(v.supervisor||'')+' · '+dataBr(v.data)+'</div></div></div><div style="height:2px"></div>';
+         '<div class="ags">'+ICO('user')+' '+esc(v.supervisor||'')+' · '+dataBr(v.data)+'</div></div></div><div style="height:2px"></div>';
     });
   }
   if(nao.length){
@@ -1732,8 +1912,8 @@ function renderAtencao(vis, nao){
       h+='<div class="ag" style="border-left-color:var(--red)"><div class="agd" style="background:var(--red)"><b>'+
          (v.data||'').slice(8)+'</b><span>'+mesCurto((v.data||'').slice(5,7))+'</span></div>'+
          '<div class="agi"><div class="agt">'+esc(v.loja||'')+'</div>'+
-         '<div class="ags">👤 '+esc(v.supervisor||'')+'</div>'+
-         '<div style="font-size:13px;color:var(--red);margin-top:4px">⚠ '+esc(v.obs||'sem motivo informado')+'</div></div></div><div style="height:2px"></div>';
+         '<div class="ags">'+ICO('user')+' '+esc(v.supervisor||'')+'</div>'+
+         '<div style="font-size:13px;color:var(--red);margin-top:4px">'+ICO('alert')+' '+esc(v.obs||'sem motivo informado')+'</div></div></div><div style="height:2px"></div>';
     });
   }
   $('rotinaAtencao').innerHTML=h;
@@ -1742,11 +1922,11 @@ function ehTarefa(v){ return (v.tipo||'Visita')==='Tarefa'; }
 function botoesVisita(v){
   var t=ehTarefa(v);
   if(v.status==='Planejada'){
-    return '<button class="btn btn-primary btn-sm" data-cin="'+v.linha+'">'+(t?'▶ Comecei':'🚩 Cheguei')+'</button>'+
+    return '<button class="btn btn-primary btn-sm" data-cin="'+v.linha+'">'+(t?ICO('play')+' Comecei':ICO('flag')+' Cheguei')+'</button>'+
            '<button class="btn btn-ghost btn-sm" data-nfui="'+v.linha+'" style="color:var(--red);border-color:#f3c6c8">'+(t?'Não fiz':'Não fui')+'</button>';
   }
   if(v.status==='Em andamento'){
-    return '<button class="btn btn-navy btn-sm" data-cout="'+v.linha+'">'+(t?'✅ Concluí':'🏁 Saí da loja')+'</button>';
+    return '<button class="btn btn-navy btn-sm" data-cout="'+v.linha+'">'+(t?ICO('check-square')+' Concluí':ICO('check')+' Saí da loja')+'</button>';
   }
   return '';
 }
@@ -1976,7 +2156,7 @@ function atualizaTextoCancel(){
   try{ lista=JSON.parse(CANCEL_ALVO.participantesJson||'[]')||[]; }catch(e){ lista=[]; }
   var com=lista.filter(function(p){ return foneWa(p.f) && (p.n||'').trim(); });
   var h='';
-  com.forEach(function(p,i){ h+='<button class="btn btn-navy btn-sm" data-cwa="'+i+'">💬 '+esc(p.n)+'</button>'; });
+  com.forEach(function(p,i){ h+='<button class="btn btn-navy btn-sm" data-cwa="'+i+'">'+ICO('chat')+' '+esc(p.n)+'</button>'; });
   $('cancelZaps').innerHTML=h;
   Array.prototype.forEach.call(document.querySelectorAll('[data-cwa]'),function(b){
     b.onclick=function(){
@@ -2159,6 +2339,7 @@ function renderBloco(){
   $('btnNext').textContent = S.cur===S.blocos.length-1 ? 'Ir para a ata →' : 'Próximo bloco →';
   if(typeof syncNav==='function') syncNav();
   if(typeof carregarPendencias==='function') carregarPendencias(false);
+  if(typeof marcarGavetas==='function') marcarGavetas();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 /* ============ MODO CORRIDO ============ */
@@ -2270,12 +2451,12 @@ function initMic(){
 }
 function ligarMic(){
   try{ rec.start(); }catch(e){}
-  recOn=true; travarTela();
+  recOn=true; travarTela(); marcarGavetas();
   $('capMic').classList.add('on');
   $('liveBox').classList.remove('hidden'); $('liveBox').innerHTML='<b>ouvindo…</b>';
 }
 function pararMic(){
-  recOn=false; try{rec.stop();}catch(e){}
+  recOn=false; try{rec.stop();}catch(e){} marcarGavetas();
   soltarTela();
   $('capMic').classList.remove('on'); $('liveBox').classList.add('hidden');
 }
@@ -2289,8 +2470,8 @@ document.addEventListener('visibilitychange', function(){
 
 /* rótulos dos botões de captura, com versão curta para o celular */
 var LBL={
-  audio:'<span class="dot"></span>⏺<span class="lf"> Gravar áudio</span><span class="lc"> Áudio</span>',
-  video:'<span class="dot"></span>🎥<span class="lf"> Gravar vídeo</span><span class="lc"> Vídeo</span>'
+  audio:'<span class="dot"></span>'+ICO('record')+'<span class="lf"> Gravar áudio</span><span class="lc"> Áudio</span>',
+  video:'<span class="dot"></span>'+ICO('video')+'<span class="lf"> Gravar vídeo</span><span class="lc"> Vídeo</span>'
 };
 
 /* ============ TRAVA DE TELA (WAKE LOCK) ============
@@ -2362,7 +2543,7 @@ function gravar(tipo){
       $('recInfo').innerHTML='✅ Gravação salva como <b>'+esc(nome)+'</b> (pasta de downloads). Envie esse arquivo no chat do Claude para gerar a transcrição completa da ata.';
       $('recInfo').classList.remove('hidden');
       clearInterval(recTick);
-      soltarTela();
+      soltarTela(); marcarGavetas();
       $('capAudio').classList.remove('on'); $('capVideo').classList.remove('on');
       $('capAudio').innerHTML=LBL.audio; $('capVideo').innerHTML=LBL.video;
       if(recInterrompida){
@@ -2375,12 +2556,12 @@ function gravar(tipo){
        arquivo no fim, o navegador entrega o áudio de 5 em 5 segundos. Se o
        aparelho cortar a captura, o que já chegou está salvo. Sem isso, uma
        reunião de 40 minutos interrompida no minuto 39 vira arquivo vazio. */
-    mr.start(5000); recT0=Date.now();
+    mr.start(5000); recT0=Date.now(); marcarGavetas();
     var btn = tipo==='video' ? $('capVideo') : $('capAudio');
     btn.classList.add('on');
     recTick=setInterval(function(){
       var s=Math.floor((Date.now()-recT0)/1000);
-      btn.innerHTML='<span class="dot"></span>■ Parar ('+fmt(s)+')';
+      btn.innerHTML='<span class="dot"></span>'+ICO('stop')+' Parar ('+fmt(s)+')';
     },1000);
     var travou = ('wakeLock' in navigator);
     avisoRec('🔴 Gravando… o arquivo é baixado sozinho quando você parar.<br>'+
@@ -2904,7 +3085,7 @@ function recolherDicas(){
 
     var d = document.createElement('details');
     d.className = 'dica';
-    d.innerHTML = '<summary>💡 <span>'+esc(etiqueta)+'</span> <span class="cv">▾</span></summary>'+
+    d.innerHTML = '<summary>'+ICO('bulb')+' <span>'+esc(etiqueta)+'</span> <span class="cv">▾</span></summary>'+
                   '<div class="dcorpo">'+corpo+'</div>';
     el.innerHTML='';
     el.appendChild(d);
@@ -2920,7 +3101,7 @@ function aplicarDicas(){
   try{ off = localStorage.getItem(LS_DICAS)==='off'; }catch(e){}
   document.body.classList.toggle('semDicas', off);
   var b=$('btnDicas');
-  if(b){ b.textContent = off ? '💡 Dicas off' : '💡 Dicas'; }
+  if(b){ b.innerHTML = ICO('bulb') + '<span class="ct">' + (off ? ' Dicas off' : ' Dicas') + '</span>'; }
 }
 $('btnDicas').onclick=function(){
   var off = !document.body.classList.contains('semDicas');
@@ -2932,7 +3113,297 @@ $('btnDicas').onclick=function(){
 /* Telas montadas por JavaScript ganham dicas depois — por isso a função é
    chamada de novo a cada troca de aba, e é idempotente. */
 var _setModoOriginal = setModo;
-setModo = function(m){ _setModoOriginal(m); recolherDicas(); };
+var _modoAnterior = null;
+setModo = function(m){
+  var mudou = (m !== _modoAnterior);
+  _modoAnterior = m;
+  _setModoOriginal(m);
+  recolherDicas();
+  if(mudou) animarTroca();
+};
+
+/* Transição de 160ms na troca de aba.
+   Não é enfeite: sem ela a tela troca de conteúdo sem o olho perceber que
+   houve mudança — como virar a página de um livro com o dedo tapando a
+   numeração. O movimento curto para cima diz "isto é novo".
+   Só anima o contêiner da vez, nunca a página inteira, e não anima nada
+   para quem desligou animação no sistema. */
+function animarTroca(){
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var alvos = ['viewAgendarEscolha','viewChecklist','viewAgenda','viewRotina','viewDespesas','viewHistorico','blocoSetup'];
+  for(var i=0;i<alvos.length;i++){
+    var el=$(alvos[i]);
+    if(el && !el.classList.contains('hidden')){
+      el.classList.remove('entrando');
+      void el.offsetWidth;          /* força o navegador a reiniciar a animação */
+      el.classList.add('entrando');
+    }
+  }
+}
+
+
+
+
+/* etiqueta das gavetas: quantos itens do roteiro faltam, e se algo está
+   gravando. Gaveta fechada só funciona se disser o que tem dentro. */
+function marcarGavetas(){
+  var g=$('gvGuia'), c=$('gvCap');
+  if(g && S && S.blocos[S.cur]){
+    var itens=S.blocos[S.cur].guia||[];
+    var feitos=itens.filter(function(x){return x.ok;}).length;
+    var el=g.querySelector('.gvc');
+    if(el) el.textContent = itens.length ? feitos+' de '+itens.length : '';
+    /* no celular a gaveta do roteiro começa fechada a partir do 2º bloco:
+       na abertura ele orienta, depois já foi lido */
+    if(window.innerWidth<=640 && S.cur>0 && !g.dataset.mexido) g.open=false;
+    g.addEventListener('toggle', function(){ g.dataset.mexido='1'; }, {once:true});
+  }
+  if(c){
+    var gravando = recOn || (mr && mr.state==='recording');
+    c.classList.toggle('ativa', !!gravando);
+    var e2=c.querySelector('.gvc');
+    if(e2) e2.textContent = gravando ? 'gravando…' : '';
+    if(gravando) c.open=true;
+  }
+}
+/* ============ PAINEL DE PENDÊNCIAS ============
+   O endpoint existe desde a v14; faltava a leitura. Aqui a pergunta muda:
+   não é "o que ficou combinado nesta reunião", é "onde a coisa trava".
+   Se uma loja aparece com 5 ações abertas há 3 semanas, o problema não é a
+   pessoa esquecer — é um gargalo que nenhuma reunião está atacando.      */
+var ROT_ABA='rotina';
+delegar('viewRotina', {'data-rot': function(v){ trocarSubRotina(v); }});
+function trocarSubRotina(v){
+  ROT_ABA=v;
+  Array.prototype.forEach.call(document.querySelectorAll('[data-rot]'),function(b){
+    b.className='tab2'+(b.getAttribute('data-rot')===v?' sel':'');
+  });
+  $('rotPainel').classList.toggle('hidden', v!=='rotina');
+  $('rotPend').classList.toggle('hidden', v!=='pend');
+  if(v==='pend') carregarPainelPend();
+}
+$('pnRecarregar').onclick=function(){ carregarPainelPend(true); };
+$('pnAgrupar').onchange=function(){ if(PN_DADOS) renderPainelPend(PN_DADOS); };
+
+var PN_DADOS=null;
+function carregarPainelPend(forcar){
+  var box=$('pnBox');
+  if(!ENVIO_URL){ box.innerHTML='<p class="sub">Indisponível: envio para o Google não configurado.</p>'; return; }
+  if(PN_DADOS && !forcar){ renderPainelPend(PN_DADOS); return; }
+  box.innerHTML='<p class="sub">Carregando…</p>';
+  var url=ENVIO_URL+'?acao=pendencias';
+  var trava=travaEscopo();
+  if(trava) url+='&responsavel='+encodeURIComponent(trava);
+  fetch(url).then(function(r){ return r.json(); })
+    .then(function(res){
+      if(!res || !res.ok){
+        box.innerHTML='<p class="sub">Não consegui carregar'+(res&&res.erro?': '+esc(res.erro):'')+
+          '. Confira se o Apps Script está na versão nova.</p>';
+        return;
+      }
+      PN_DADOS=res; renderPainelPend(res);
+    })
+    .catch(function(){ box.innerHTML='<p class="sub">Sem conexão para carregar as pendências.</p>'; });
+}
+
+function renderPainelPend(r){
+  var box=$('pnBox'), itens=r.itens||[];
+  if(!itens.length){
+    box.innerHTML='<p class="sub">Nenhuma ação em aberto. Ou o time fechou tudo, ou as reuniões '+
+      'não estão registrando ação — nos dois casos vale conferir.</p>';
+    return;
+  }
+  var campo = $('pnAgrupar').value;   /* 'loja' | 'responsavel' */
+  var grupos={};
+  itens.forEach(function(i){
+    var k = (campo==='loja' ? i.local : i.responsavel) || 'sem informação';
+    (grupos[k] = grupos[k] || []).push(i);
+  });
+
+  /* ordena pelo que dói: mais vencidas primeiro, depois mais antigas */
+  var chaves=Object.keys(grupos).sort(function(a,b){
+    var va=grupos[a].filter(function(x){return x.vencida;}).length;
+    var vb=grupos[b].filter(function(x){return x.vencida;}).length;
+    return vb-va || grupos[b].length-grupos[a].length;
+  });
+
+  var venc=itens.filter(function(i){return i.vencida;}).length;
+  var h='<div class="kpis" style="margin-bottom:18px">'+
+    '<div class="kpi"><div class="kv">'+itens.length+'</div><div class="kl">ações em aberto</div></div>'+
+    '<div class="kpi '+(venc?'ru':'ok')+'"><div class="kv">'+venc+'</div><div class="kl">vencidas</div></div>'+
+    '<div class="kpi"><div class="kv">'+chaves.length+'</div><div class="kl">'+
+      (campo==='loja'?'lojas envolvidas':'pessoas envolvidas')+'</div></div>'+
+    '</div>';
+
+  chaves.forEach(function(k){
+    var lista=grupos[k];
+    var v=lista.filter(function(x){return x.vencida;}).length;
+    var maisAntiga=Math.max.apply(null, lista.map(function(x){ return x.diasParada||0; }));
+    h+='<div class="grp"><div class="gh"><span class="gn">'+esc(k)+'</span>'+
+       '<span class="gc">'+lista.length+' em aberto'+(v?' · <span class="gv">'+v+' vencida'+(v>1?'s':'')+'</span>':'')+
+       (maisAntiga>0?' · mais antiga há '+maisAntiga+' dia'+(maisAntiga>1?'s':''):'')+'</span></div>';
+    lista.forEach(function(i){
+      h+='<div class="ag" style="border-left-color:'+(i.vencida?'var(--red)':'var(--navy)')+'">'+
+         '<div class="agi"><div class="agt" style="font-weight:normal;color:var(--ink)">'+esc(i.acao)+'</div>'+
+         '<div class="ags">'+esc(campo==='loja' ? (i.responsavel||'sem dono') : (i.local||'sem loja'))+
+         (i.prazo?' · prazo '+brData(i.prazo):' · sem prazo')+
+         (i.vencida&&i.prazo?' · <b style="color:var(--red)">'+diasDe(i.prazo)+' dia(s) de atraso</b>':'')+
+         (i.reuniao?' · de "'+esc(i.reuniao)+'"':'')+'</div></div>'+
+         (i.pdf&&i.pdf.indexOf('http')===0
+           ? '<a class="btn btn-ghost btn-sm" href="'+i.pdf+'" target="_blank" rel="noopener noreferrer">Ata</a>'
+           : '')+
+         '</div>';
+    });
+    h+='</div>';
+  });
+
+  h+='<div class="hint">Uma loja que acumula ação vencida não é falta de memória de quem ficou '+
+     'responsável — é um assunto que volta toda reunião e nunca é resolvido. Vale atacar a causa, '+
+     'não repetir a cobrança.</div>';
+  box.innerHTML=h;
+  recolherDicas();
+}
+
+/* ============ QUEM ESTÁ USANDO ============
+   O PIN mora no servidor (aba USUARIOS), não neste arquivo — se estivesse
+   aqui, bastaria "ver código-fonte". Ainda assim não é segurança de banco:
+   é a fechadura do vestiário. Não impede quem quer invadir; impede o olhar
+   casual e deixa registro de quem lançou o quê.                          */
+var LS_SESSAO='sotintas_sessao_v1';
+var SESSAO=null;
+
+function ehCoordenador(){ return !!(SESSAO && SESSAO.escopo==='todos'); }
+function euSou(){ return (SESSAO && SESSAO.nome) || GESTOR; }
+/* Devolve o nome a forçar no filtro, ou '' quando a pessoa pode ver todos. */
+function travaEscopo(){ return ehCoordenador() ? '' : euSou(); }
+
+function montarLogin(){
+  var h='';
+  Object.keys(EQUIPE).forEach(function(n){
+    h+='<option value="'+esc(n)+'">'+esc(n)+' · '+esc(EQUIPE[n].papel)+'</option>';
+  });
+  $('lgNome').innerHTML=h;
+  try{
+    var salvo=JSON.parse(localStorage.getItem(LS_SESSAO)||'null');
+    if(salvo && salvo.nome){ $('lgNome').value=salvo.nome; }
+  }catch(e){}
+}
+
+function abrirApp(sessao){
+  SESSAO=sessao;
+  try{ localStorage.setItem(LS_SESSAO, JSON.stringify(sessao)); }catch(e){}
+  $('telaLogin').classList.add('pronto');
+  document.body.classList.remove('travado');
+  $('btnUser').innerHTML = ICO('user')+'<span class="ct"> '+esc(sessao.nome.split(' ')[0])+'</span>';
+  aplicarEscopo();
+  if(sessao.pinPadrao && ehCoordenador()){
+    setTimeout(function(){ toast('Seu PIN ainda é 1234. Troque na aba USUARIOS da planilha.'); }, 1200);
+  }
+}
+
+/* Aplica a regra que você escolheu: cada um vê o seu; o coordenador vê tudo. */
+function aplicarEscopo(){
+  var travado = travaEscopo();
+  if(!travado) return;
+  /* Despesas */
+  var f=$('dpFiltro');
+  if(f){
+    f.innerHTML='<option value="'+esc(travado)+'">'+esc(travado)+'</option>';
+    f.value=travado; f.disabled=true;
+  }
+  if($('dpQuem')){ $('dpQuem').value=travado; $('dpQuem').readOnly=true; }
+  /* Rotina */
+  if($('fSou')){ $('fSou').value=travado; $('fSou').readOnly=true; }
+  var fq=$('fQuem');
+  if(fq){ fq.value=travado; fq.disabled=true; }
+  /* Agenda */
+  var fa=$('agFiltro');
+  if(fa){
+    Array.prototype.forEach.call(fa.options,function(o){
+      if(o.value && norml(o.value)!==norml(travado)) o.disabled=true;
+    });
+    fa.value=travado;
+  }
+}
+
+$('lgEntrar').onclick=function(){
+  var nome=$('lgNome').value, pin=$('lgPin').value.trim();
+  if(!pin){ lgErro('Digite o PIN.'); return; }
+  if(!ENVIO_URL){ lgErro('Envio para o Google não configurado neste arquivo.'); return; }
+  $('lgEntrar').disabled=true; $('lgEntrar').textContent='Entrando…';
+  fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({tipo:'login', nome:nome, pin:pin})})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      $('lgEntrar').disabled=false; $('lgEntrar').textContent='Entrar';
+      if(!res || !res.ok){ lgErro((res&&res.erro)||'Não consegui entrar.'); return; }
+      $('lgPin').value='';
+      abrirApp({nome:res.nome, papel:res.papel, escopo:res.escopo, pinPadrao:res.pinPadrao});
+    })
+    .catch(function(){
+      $('lgEntrar').disabled=false; $('lgEntrar').textContent='Entrar';
+      /* Sem sinal, quem já entrou antes continua entrando: o app é para a
+         estrada, não para a mesa. O que ficar pendente sobe depois. */
+      var salvo=null; try{ salvo=JSON.parse(localStorage.getItem(LS_SESSAO)||'null'); }catch(e){}
+      if(salvo && norml(salvo.nome)===norml(nome)){
+        abrirApp(salvo);
+        toast('Sem conexão — entrei com o acesso da última vez.');
+      } else {
+        lgErro('Sem conexão com o Google. Só consigo validar o PIN online na primeira vez.');
+      }
+    });
+};
+$('lgPin').addEventListener('keydown',function(e){ if(e.key==='Enter') $('lgEntrar').click(); });
+function lgErro(m){ var b=$('lgErro'); b.textContent=m; b.classList.remove('hidden'); }
+
+$('btnUser').onclick=function(){
+  if(!confirm('Sair e entrar com outro nome?')) return;
+  try{ localStorage.removeItem(LS_SESSAO); }catch(e){}
+  location.reload();
+};
+
+/* ============ FILA OFFLINE ============
+   Depósito Alto, estrada de Macaé: a foto é tirada onde não tem sinal. Sem
+   fila, o lançamento falha e a pessoa "lança em casa, de cabeça" — e o dado
+   vira ficção. Com fila, ele sai do aparelho quando a rede volta.         */
+var LS_FILA='sotintas_fila_v1';
+function filaLer(){ try{ return JSON.parse(localStorage.getItem(LS_FILA)||'[]'); }catch(e){ return []; } }
+function filaGravar(f){
+  try{ localStorage.setItem(LS_FILA, JSON.stringify(f)); }
+  catch(e){ toast('Sem espaço no aparelho para guardar o lançamento. Tente com menos anexos.'); }
+  filaMostrar();
+}
+function filaAdicionar(item){ var f=filaLer(); f.push(item); filaGravar(f); }
+function filaMostrar(){
+  var f=filaLer(), box=$('filaBox');
+  if(!f.length){ box.classList.add('hidden'); return; }
+  $('filaTxt').innerHTML=ICO('alert')+' <b>'+f.length+'</b> lançamento(s) esperando sinal.';
+  box.classList.remove('hidden');
+}
+var filaRodando=false;
+function filaEnviar(silencioso){
+  if(filaRodando) return;
+  var f=filaLer();
+  if(!f.length || !ENVIO_URL) return;
+  filaRodando=true;
+  var item=f[0];
+  fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify(item.dados)})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      filaRodando=false;
+      if(res && res.ok){
+        var g=filaLer(); g.shift(); filaGravar(g);
+        if(!silencioso) toast('Lançamento enviado.');
+        if(g.length) filaEnviar(silencioso); else if(modo==='despesas') carregarDespesas();
+      } else if(!silencioso){
+        toast('O Google recusou: '+((res&&res.erro)||'erro'));
+      }
+    })
+    .catch(function(){ filaRodando=false; if(!silencioso) toast('Ainda sem sinal.'); });
+}
+$('filaEnviar').onclick=function(){ filaEnviar(false); };
+window.addEventListener('online', function(){ toast('Sinal de volta — enviando o que ficou.'); filaEnviar(true); });
 
 /* ============ DESPESAS ============
    Lançamento manual + foto, com relatório que se atualiza no mesmo toque.
@@ -2958,36 +3429,172 @@ function iniciarDespesas(){
     Object.keys(EQUIPE).forEach(function(n){ h+='<option value="'+esc(n)+'">'+esc(n)+'</option>'; });
     $('dpFiltro').innerHTML=h;
   }
+  /* reaplica depois de montar o filtro — senão a lista completa volta e a
+     trava de escopo vira enfeite */
+  aplicarEscopo();
   carregarDespesas();
 }
 
-/* A foto sai do celular com 4 MB. Reduzida para 1000px de largura e JPEG 70%
-   ela fica com ~150 KB e continua perfeitamente legível — comprovante é para
-   ler valor e data, não para ampliar textura do papel. */
-$('dpFoto').onchange=function(){
-  var f=this.files && this.files[0];
-  if(!f){ DP_FOTO=''; $('dpPrev').classList.add('hidden'); return; }
-  var fr=new FileReader();
-  fr.onload=function(){
-    var img=new Image();
-    img.onload=function(){
-      var max=1000, w=img.width, h=img.height;
-      if(w>max || h>max){ var r=Math.min(max/w,max/h); w=Math.round(w*r); h=Math.round(h*r); }
-      var c=document.createElement('canvas'); c.width=w; c.height=h;
-      c.getContext('2d').drawImage(img,0,0,w,h);
-      DP_FOTO = c.toDataURL('image/jpeg',0.7);
-      $('dpPrevImg').src = DP_FOTO;
-      $('dpPrev').classList.remove('hidden');
-      var kb = Math.round(DP_FOTO.length*0.75/1024);
-      $('dpFotoInfo').innerHTML = '✓ Foto pronta ('+kb+' KB depois da redução). Vai para a pasta '+
-        '<b>Comprovantes de Despesa</b> no Drive; a planilha guarda o link.';
+/* ---------- ANEXOS: fotos e PDFs ----------
+   Foto sai do celular com 4 MB. Reduzida para 1000px e JPEG 70% fica com
+   ~150 KB e continua legível — comprovante é para ler valor e data, não para
+   ampliar a textura do papel. PDF vai como está: comprimir PDF no navegador
+   estragaria justamente o texto que a leitura precisa enxergar.          */
+var DP_ANEXOS = [];      /* [{nome, mime, dados(dataURL), kb}] */
+var MAX_ANEXO_MB = 8, MAX_TOTAL_MB = 20;
+
+$('dpCam').onclick=function(){ $('dpFoto').click(); };
+$('dpArq').onclick=function(){ $('dpFile').click(); };
+$('dpFoto').onchange=function(){ receberArquivos(this.files); this.value=''; };
+$('dpFile').onchange=function(){ receberArquivos(this.files); this.value=''; };
+
+function receberArquivos(lista){
+  var arr = Array.prototype.slice.call(lista||[]);
+  if(!arr.length) return;
+  var pendentes = arr.length;
+  arr.forEach(function(f){
+    if(f.size > MAX_ANEXO_MB*1024*1024){
+      dpBox('erro','"'+esc(f.name)+'" tem mais de '+MAX_ANEXO_MB+' MB e não cabe no envio. '+
+        'Se for PDF, mande só a página do comprovante.');
+      if(--pendentes===0) renderAnexos();
+      return;
+    }
+    var ehPdf = /pdf/i.test(f.type) || /\.pdf$/i.test(f.name);
+    var fr=new FileReader();
+    fr.onload=function(){
+      if(ehPdf){
+        DP_ANEXOS.push({nome:f.name, mime:'application/pdf', dados:fr.result,
+                        kb:Math.round(fr.result.length*0.75/1024)});
+        if(--pendentes===0) renderAnexos();
+        return;
+      }
+      var img=new Image();
+      img.onload=function(){
+        var max=1000, w=img.width, h=img.height;
+        if(w>max||h>max){ var r=Math.min(max/w,max/h); w=Math.round(w*r); h=Math.round(h*r); }
+        var c=document.createElement('canvas'); c.width=w; c.height=h;
+        c.getContext('2d').drawImage(img,0,0,w,h);
+        var url=c.toDataURL('image/jpeg',0.7);
+        DP_ANEXOS.push({nome:f.name||'foto.jpg', mime:'image/jpeg', dados:url,
+                        kb:Math.round(url.length*0.75/1024)});
+        if(--pendentes===0) renderAnexos();
+      };
+      img.onerror=function(){
+        /* HEIC do iPhone antigo não abre no canvas: sobe o original sem reduzir */
+        DP_ANEXOS.push({nome:f.name, mime:f.type||'image/jpeg', dados:fr.result,
+                        kb:Math.round(fr.result.length*0.75/1024)});
+        if(--pendentes===0) renderAnexos();
+      };
+      img.src=fr.result;
     };
-    img.onerror=function(){ DP_FOTO=''; dpBox('erro','Não consegui ler esta imagem. Tente tirar a foto de novo.'); };
-    img.src=fr.result;
-  };
-  fr.onerror=function(){ DP_FOTO=''; dpBox('erro','Não consegui ler o arquivo.'); };
-  fr.readAsDataURL(f);
+    fr.onerror=function(){ dpBox('erro','Não consegui ler "'+esc(f.name)+'".');
+      if(--pendentes===0) renderAnexos(); };
+    fr.readAsDataURL(f);
+  });
+}
+
+function renderAnexos(){
+  var box=$('dpPrev');
+  if(!DP_ANEXOS.length){
+    box.classList.add('hidden'); box.innerHTML='';
+    $('dpLer').classList.add('hidden');
+    $('dpFotoInfo').innerHTML='Fotos são reduzidas no aparelho antes de subir; PDF vai como está. '+
+      'Tudo vai para a pasta <b>Comprovantes de Despesa</b> no Drive e a planilha guarda o link.';
+    return;
+  }
+  var h='', total=0;
+  DP_ANEXOS.forEach(function(a,i){
+    total+=a.kb;
+    h+='<div class="anx">'+
+       (a.mime==='application/pdf'
+         ? '<div class="pdfico">'+ICO('file','ic-lg')+'</div>'
+         : '<img src="'+a.dados+'" alt="comprovante '+(i+1)+'">')+
+       '<div class="anm" title="'+esc(a.nome)+'">'+esc(a.nome)+'</div>'+
+       '<button class="anx-x" data-anx="'+i+'" title="Remover">×</button></div>';
+  });
+  box.innerHTML=h; box.classList.remove('hidden');
+  $('dpLer').classList.remove('hidden');
+  $('dpFotoInfo').innerHTML=ICO('check')+' '+DP_ANEXOS.length+' anexo(s) · '+
+    (total>1024 ? (total/1024).toFixed(1)+' MB' : total+' KB')+
+    (total > MAX_TOTAL_MB*1024 ? ' — <b style="color:var(--red)">acima do limite de '+MAX_TOTAL_MB+' MB</b>' : '')+
+    '. Toque em <b>Ler o comprovante</b> para o app preencher os campos sozinho.';
+}
+delegar('dpPrev', {'data-anx': function(i){ DP_ANEXOS.splice(+i,1); renderAnexos(); $('dpLeitura').classList.add('hidden'); }});
+
+/* ---------- LEITURA AUTOMÁTICA ----------
+   O robô preenche o formulário; a assinatura continua sendo de quem lança.
+   É de propósito: leitura automática acerta a maioria e erra uma minoria, e
+   despesa com valor errado gravada sem ninguém olhar é pior que despesa
+   digitada na mão.                                                        */
+var DP_LIDO = false;
+$('dpLer').onclick=function(){
+  if(!DP_ANEXOS.length){ dpBox('erro','Anexe a foto ou o PDF primeiro.'); return; }
+  if(!ENVIO_URL){ dpBox('erro','Envio para o Google não configurado neste arquivo.'); return; }
+  var a=DP_ANEXOS[0];
+  $('dpLer').disabled=true;
+  $('dpLeitura').classList.remove('hidden');
+  $('dpLeitura').innerHTML='<div class="leitura"><div class="lh">'+ICO('search')+' Lendo "'+esc(a.nome)+'"…</div>'+
+    '<div class="lg">Costuma levar de 3 a 8 segundos.</div></div>';
+  fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({tipo:'lerComprovante', arquivo:a.dados})})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      $('dpLer').disabled=false;
+      if(!res || !res.ok){
+        $('dpLeitura').innerHTML='<div class="leitura" style="border-color:#f3c2c4;background:#fffafa">'+
+          '<div class="lh" style="color:var(--red)">Não consegui ler</div><div class="lg">'+
+          esc((res&&res.erro)||'erro desconhecido')+
+          (res&&res.semChave ? '<br><br>Para ligar a leitura: <b>aistudio.google.com → Get API key</b>, '+
+            'e cole a chave no Apps Script na linha <code>var GEMINI_API_KEY</code>.' : '')+
+          '<br><br>Preencha os campos na mão — o anexo já está pronto para subir.</div></div>';
+        return;
+      }
+      aplicarLeitura(res.dados||{});
+    })
+    .catch(function(){
+      $('dpLer').disabled=false;
+      $('dpLeitura').innerHTML='<div class="leitura" style="border-color:#f3c2c4;background:#fffafa">'+
+        '<div class="lh" style="color:var(--red)">Sem conexão</div>'+
+        '<div class="lg">Preencha na mão; o anexo continua aqui.</div></div>';
+    });
 };
+
+function aplicarLeitura(d){
+  var achou=[], faltou=[];
+  if(d.valor){ $('dpValor').value=String(d.valor).replace('.',','); achou.push('valor'); } else faltou.push('valor');
+  if(d.data && /^\d{4}-\d{2}-\d{2}$/.test(d.data)){ $('dpData').value=d.data; achou.push('data'); } else faltou.push('data');
+  if(d.tipo){
+    var ok=false;
+    Array.prototype.forEach.call($('dpTipo').options,function(o){
+      if(norml(o.value)===norml(d.tipo)){ $('dpTipo').value=o.value; ok=true; }
+    });
+    if(ok) achou.push('tipo'); else faltou.push('tipo');
+  } else faltou.push('tipo');
+  if(d.estabelecimento && !$('dpRef').value.trim()){ $('dpRef').value=d.estabelecimento; achou.push('estabelecimento'); }
+  if(d.observacao && !$('dpObs').value.trim()) $('dpObs').value=d.observacao;
+  DP_LIDO=true; DP_EXTRA={estabelecimento:d.estabelecimento||'', cnpj:d.cnpj||''};
+
+  var conf=(d.confianca||'media').toLowerCase();
+  var rotulo={alta:'confiança alta',media:'confiança média',baixa:'confiança baixa'}[conf]||'confiança média';
+  $('dpLeitura').innerHTML='<div class="leitura">'+
+    '<div class="lh">'+ICO('search')+' Lido do comprovante <span class="conf '+esc(conf)+'">'+esc(rotulo)+'</span></div>'+
+    '<div class="lg">'+
+      '<b>Valor:</b> '+(d.valor?brl(d.valor):'não encontrei')+'<br>'+
+      '<b>Data:</b> '+(d.data?dataBr(d.data):'não encontrei')+'<br>'+
+      '<b>Tipo:</b> '+esc(d.tipo||'não encontrei')+'<br>'+
+      (d.estabelecimento?'<b>Estabelecimento:</b> '+esc(d.estabelecimento)+'<br>':'')+
+      (d.cnpj?'<b>CNPJ:</b> '+esc(d.cnpj)+'<br>':'')+
+      (d.observacao?'<b>Obs.:</b> '+esc(d.observacao)+'<br>':'')+
+    '</div>'+
+    '<div class="hint" style="margin-top:8px">'+
+      (conf==='baixa'
+        ? ICO('alert')+' <b>Leitura duvidosa</b> — a imagem pode estar borrada ou cortada. Confira valor e data antes de lançar.'
+        : 'Os campos acima já foram preenchidos. <b>Confira antes de lançar</b> — a leitura acerta a maioria, não todas.')+
+      (faltou.length?' Não achei: '+faltou.join(', ')+'.':'')+
+    '</div></div>';
+  toast('Campos preenchidos pela leitura. Confira antes de lançar.');
+}
+var DP_EXTRA = {estabelecimento:'', cnpj:''};
 
 function dpBox(cor,html){
   var b=$('dpStatus');
@@ -2997,10 +3604,11 @@ function dpBox(cor,html){
 }
 
 function dpLimparForm(){
-  DP_FOTO=''; $('dpFoto').value=''; $('dpValor').value=''; $('dpRef').value=''; $('dpObs').value='';
-  $('dpPrev').classList.add('hidden'); $('dpStatus').classList.add('hidden');
-  $('dpFotoInfo').innerHTML='A foto é reduzida no aparelho antes de subir, para não gastar seus dados. Ela vai '+
-    'para a pasta <b>Comprovantes de Despesa</b> no Drive e a planilha guarda só o link.';
+  DP_ANEXOS=[]; DP_LIDO=false; DP_EXTRA={estabelecimento:'',cnpj:''};
+  $('dpValor').value=''; $('dpRef').value=''; $('dpObs').value='';
+  $('dpStatus').classList.add('hidden');
+  $('dpLeitura').classList.add('hidden'); $('dpLeitura').innerHTML='';
+  renderAnexos();
 }
 $('dpLimpar').onclick=dpLimparForm;
 
@@ -3009,31 +3617,50 @@ $('dpSalvar').onclick=function(){
   if(!valor){ dpBox('erro','Informe o valor da despesa.'); return; }
   if(!$('dpQuem').value.trim()){ dpBox('erro','Informe quem gastou.'); return; }
   if(!ENVIO_URL){ dpBox('erro','Envio para o Google não configurado neste arquivo.'); return; }
-  if(!DP_FOTO){
+  if(!DP_ANEXOS.length){
     /* Comprovante não é obrigatório de propósito: pedágio sem nota existe.
        Mas o lançamento sai marcado, e o relatório mostra o percentual — é o
        que permite cobrar sem transformar cada gasto em burocracia. */
-    if(!confirm('Lançar sem foto do comprovante? Ele vai entrar marcado como "sem comprovante" no relatório.')) return;
+    if(!confirm('Lançar sem comprovante? Ele vai entrar marcado como "sem comprovante" no relatório.')) return;
+  }
+  var totalKb = DP_ANEXOS.reduce(function(a,x){ return a+x.kb; },0);
+  if(totalKb > MAX_TOTAL_MB*1024){
+    dpBox('erro','Os anexos somam mais de '+MAX_TOTAL_MB+' MB. Remova algum e lance em dois registros.');
+    return;
   }
   $('dpSalvar').disabled=true;
   dpBox('info','Enviando'+(DP_FOTO?' com a foto':'')+'…');
-  fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify({
-      tipo:'despesa', data:$('dpData').value, responsavel:$('dpQuem').value.trim(),
+  var corpo = {
+      tipo:'despesa', data:$('dpData').value,
+      responsavel: travaEscopo() || $('dpQuem').value.trim(),
       tipoDespesa:$('dpTipo').value, valor:valor, referencia:$('dpRef').value.trim(),
-      obs:$('dpObs').value.trim(), fotoBase64:DP_FOTO, lancadoPor:GESTOR })})
+      obs:$('dpObs').value.trim(), lancadoPor:euSou(),
+      anexos: DP_ANEXOS.map(function(a){ return {nome:a.nome, dados:a.dados}; }),
+      estabelecimento: DP_EXTRA.estabelecimento, cnpj: DP_EXTRA.cnpj, lidoPorIA: DP_LIDO };
+  fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify(corpo)})
     .then(function(r){ return r.json(); })
     .then(function(res){
       $('dpSalvar').disabled=false;
       if(!res || !res.ok){ dpBox('erro','Não consegui lançar: '+((res&&res.erro)||'erro desconhecido')); return; }
-      dpBox('ok','✓ Despesa lançada'+(res.comprovante&&res.comprovante.indexOf('http')===0
-        ? ' com comprovante <a href="'+res.comprovante+'" target="_blank" rel="noopener noreferrer">(abrir a foto)</a>'
-        : ' <b>sem comprovante</b>')+'.');
+      var n=(res.comprovantes||[]).length;
       var v=$('dpValor').value;
-      dpLimparForm(); dpBox('ok','✓ '+brl(v.replace(/\./g,'').replace(',','.'))+' lançado. Relatório atualizado.');
+      var lido=DP_LIDO;
+      dpLimparForm();
+      dpBox('ok',ICO('check')+' '+brl(v.replace(/\./g,'').replace(',','.'))+' lançado com '+
+        (n ? n+' comprovante'+(n>1?'s':'') : '<b>nenhum comprovante</b>')+
+        (lido?' · dados lidos do comprovante':'')+'. Relatório atualizado.');
       carregarDespesas();
     })
-    .catch(function(){ $('dpSalvar').disabled=false; dpBox('erro','Sem conexão. O lançamento não foi gravado — tente de novo com sinal.'); });
+    .catch(function(){
+      /* sem sinal: guarda no aparelho em vez de perder */
+      $('dpSalvar').disabled=false;
+      filaAdicionar({tipo:'despesa', dados:corpo});
+      var v=$('dpValor').value;
+      dpLimparForm();
+      dpBox('info',ICO('alert')+' <b>Sem sinal.</b> '+brl(v.replace(/\./g,'').replace(',','.'))+
+        ' ficou guardado no aparelho e sobe sozinho quando a rede voltar. Não precisa lançar de novo.');
+    });
 };
 
 $('dpAtualizar').onclick=carregarDespesas;
@@ -3044,7 +3671,10 @@ function carregarDespesas(){
   if(!ENVIO_URL){ box.innerHTML='<p class="sub">Relatório indisponível: o envio para o Google não está configurado.</p>'; return; }
   box.innerHTML='<p class="sub">Carregando…</p>';
   var url=ENVIO_URL+'?acao=despesas&de='+($('dpDe').value||'')+'&ate='+($('dpAte').value||'');
-  if($('dpFiltro').value) url+='&responsavel='+encodeURIComponent($('dpFiltro').value);
+  /* o escopo vence o filtro da tela: mexer no <select> pelo inspetor não
+     deve destravar a despesa dos outros */
+  var quem = travaEscopo() || $('dpFiltro').value;
+  if(quem) url+='&responsavel='+encodeURIComponent(quem);
   fetch(url).then(function(r){ return r.json(); })
     .then(function(res){
       if(!res || !res.ok){
@@ -3072,6 +3702,12 @@ function renderDespesas(r){
       '<div class="kx">por lançamento</div></div>'+
     '<div class="kpi '+(pctFoto>=90?'ok':(pctFoto>=70?'al':'ru'))+'"><div class="kv">'+pctFoto+'%</div>'+
       '<div class="kl">com comprovante</div><div class="kx">'+r.comComprovante+' de '+r.lancamentos+'</div></div>'+
+    (r.pendentesDecisao
+      ? '<div class="kpi al"><div class="kv">'+r.pendentesDecisao+'</div><div class="kl">'+
+        (ehCoordenador()?'esperando seu de acordo':'aguardando aprovação')+'</div>'+
+        '<div class="kx">'+(r.aprovadas||0)+' aprovada(s)'+((r.questionadas||0)?' · '+r.questionadas+' questionada(s)':'')+'</div></div>'
+      : '<div class="kpi ok"><div class="kv">'+ICO('check')+'</div><div class="kl">tudo decidido</div>'+
+        '<div class="kx">'+(r.aprovadas||0)+' aprovada(s)'+((r.questionadas||0)?' · '+r.questionadas+' questionada(s)':'')+'</div></div>')+
     '</div>';
 
   /* ---- por pessoa, com o custo por visita ---- */
@@ -3112,14 +3748,51 @@ function renderDespesas(r){
        '<b>'+(i.data.split('-')[2]||'--')+'</b><span>'+mesCurto(i.data.split('-')[1])+'</span></div>'+
        '<div class="agi"><div class="agt">'+brl(i.valor)+' · '+esc(i.tipo)+'</div>'+
        '<div class="ags">'+esc(i.responsavel)+(i.referencia?' · '+esc(i.referencia):'')+
-       (i.obs?' · '+esc(i.obs):'')+'</div></div>'+
+       (i.estabelecimento&&i.estabelecimento!==i.referencia?' · '+esc(i.estabelecimento):'')+
+       (i.obs?' · '+esc(i.obs):'')+(i.lidoIA?' · <b>lido do comprovante</b>':'')+'</div></div>'+
        (temFoto
-         ? '<a class="btn btn-ghost btn-sm" href="'+i.comprovante+'" target="_blank" rel="noopener noreferrer">📷 Comprovante</a>'
+         ? '<a class="btn btn-ghost btn-sm" href="'+i.comprovante.split(' | ')[0]+'" target="_blank" rel="noopener noreferrer">'+ICO('clip')+' Ver'+
+           ((i.anexos||1)>1?' ('+i.anexos+')':'')+'</a>'
          : '<span class="badge b-nao">sem comprovante</span>')+
+       selo(i)+
+       (ehCoordenador() && !i.aprovacao
+         ? '<div class="agb" style="width:100%">'+
+           '<button class="btn btn-ghost btn-sm" data-apr="'+i.linha+'">'+ICO('check')+' Aprovar</button>'+
+           '<button class="btn btn-ghost btn-sm" data-que="'+i.linha+'">'+ICO('help')+' Questionar</button></div>'
+         : '')+
        '</div>';
   });
 
   box.innerHTML=h;
+}
+
+function selo(i){
+  if(i.aprovacao==='Aprovada')    return '<span class="badge b-ok">aprovada</span>';
+  if(i.aprovacao==='Questionada') return '<span class="badge b-nao" title="'+esc(i.motivoDecisao||'')+'">questionada</span>';
+  return '<span class="badge b-and">aguardando de acordo</span>';
+}
+
+/* O "de acordo" só aparece para o Coordenador. Sem ele, toda despesa nasce
+   fato consumado e a conversa acontece fora do app — ou não acontece. */
+delegar('dpRel', {
+  'data-apr': function(linha){ decidir(linha,'aprovada',''); },
+  'data-que': function(linha){
+    var m=prompt('O que precisa ser esclarecido nesta despesa?');
+    if(m===null) return;
+    decidir(linha,'questionada',m);
+  }
+});
+function decidir(linha, decisao, motivo){
+  if(!ENVIO_URL) return;
+  toast(decisao==='aprovada'?'Aprovando…':'Registrando a dúvida…');
+  fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({tipo:'decidirDespesa', linha:linha, decisao:decisao, motivo:motivo, quem:euSou()})})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if(res && res.ok){ toast(decisao==='aprovada'?'Aprovada.':'Questionada — o motivo ficou registrado.'); carregarDespesas(); }
+      else toast('Não consegui gravar: '+((res&&res.erro)||'erro'));
+    })
+    .catch(function(){ toast('Sem sinal — a decisão não foi gravada.'); });
 }
 
 $('dpZap').onclick=function(){
@@ -3180,7 +3853,7 @@ function carregarPendencias(forcar){
   box.classList.remove('hidden');
 
   if(!ENVIO_URL){
-    box.innerHTML='<div class="pend"><div class="ph">📌 Ações da última reunião</div>'+
+    box.innerHTML='<div class="pend"><div class="ph">'+ICO('pin')+' Ações da última reunião</div>'+
       '<div class="pe">Indisponível: o envio para o Google não está configurado neste arquivo.</div></div>';
     return;
   }
@@ -3189,7 +3862,7 @@ function carregarPendencias(forcar){
   if(!forcar && PEND.chave===chave && !PEND.carregando){ renderPend(); return; }
 
   PEND.chave=chave; PEND.carregando=true;
-  box.innerHTML='<div class="pend"><div class="ph">📌 Ações da última reunião</div>'+
+  box.innerHTML='<div class="pend"><div class="ph">'+ICO('pin')+' Ações da última reunião</div>'+
     '<div class="pe">Buscando o que ficou combinado…</div></div>';
 
   var url = ENVIO_URL+'?acao=pendencias';
@@ -3207,7 +3880,7 @@ function carregarPendencias(forcar){
 }
 
 function pendErro(msg){
-  $('pendBox').innerHTML='<div class="pend"><div class="ph">📌 Ações da última reunião</div>'+
+  $('pendBox').innerHTML='<div class="pend"><div class="ph">'+ICO('pin')+' Ações da última reunião</div>'+
     '<div class="pe">Não consegui buscar as ações em aberto'+(msg?': '+esc(msg):'')+
     '. Confira se o Apps Script está na versão nova (a que tem <code>acao=pendencias</code>).</div>'+
     '<button class="btn btn-ghost btn-sm" data-pend="recarregar">↻ Tentar de novo</button></div>';
@@ -3224,16 +3897,16 @@ function renderPend(){
   /* nada em aberto não merece um painel inteiro: vira uma linha */
   if(!itens.length){
     box.innerHTML='<div class="pend vazio" title="Nenhuma ação em aberto para '+alvo+'">'+
-      '<span class="pv">📌 Nada em aberto</span>'+
+      '<span class="pv">'+ICO('pin')+' Nada em aberto</span>'+
       '<span class="pvb">'+
       '<button class="btn btn-ghost btn-sm" data-pend="alternar">'+
-      (PEND.soLoja?'🔎 Todas as lojas':'📍 Só esta loja')+'</button>'+
+      (PEND.soLoja?ICO('search')+' Todas as lojas':ICO('pin')+' Só esta loja')+'</button>'+
       '<button class="btn btn-ghost btn-sm" data-pend="recarregar">↻</button>'+
       '</span></div>';
     return;
   }
 
-  var h='<div class="pend"><div class="ph">📌 Ações da última reunião'+
+  var h='<div class="pend"><div class="ph">'+ICO('pin')+' Ações da última reunião'+
         '<span class="cnt'+(venc?' venc':'')+'">'+abertas.length+' em aberto'+
         (venc?' · '+venc+' vencida'+(venc>1?'s':''):'')+'</span></div>';
 
@@ -3253,8 +3926,8 @@ function renderPend(){
         h+='<div class="pm" style="color:var(--ok);font-weight:bold;margin-top:6px">'+esc(i.resolvida)+'</div>';
       } else {
         h+='<div class="pb">'+
-           '<button class="btn btn-ghost btn-sm" data-pfeito="'+ix+'">✅ Concluída</button>'+
-           '<button class="btn btn-ghost btn-sm" data-psegue="'+ix+'">🔁 Continua aberta</button>'+
+           '<button class="btn btn-ghost btn-sm" data-pfeito="'+ix+'">'+ICO('check-square')+' Concluída</button>'+
+           '<button class="btn btn-ghost btn-sm" data-psegue="'+ix+'">'+ICO('repeat')+' Continua aberta</button>'+
            '</div>';
       }
       h+='</div>';
@@ -3263,7 +3936,7 @@ function renderPend(){
 
   h+='<div class="pb" style="margin-top:12px">'+
      '<button class="btn btn-ghost btn-sm" data-pend="alternar">'+
-     (PEND.soLoja?'🔎 Ver de todas as lojas':'📍 Só '+(esc(S.local)||'esta loja'))+'</button>'+
+     (PEND.soLoja?ICO('search')+' Ver de todas as lojas':ICO('pin')+' Só '+(esc(S.local)||'esta loja'))+'</button>'+
      '<button class="btn btn-ghost btn-sm" data-pend="recarregar">↻ Atualizar</button>'+
      '</div></div>';
 
@@ -3365,9 +4038,27 @@ $('btnNextM').onclick=function(){ $('btnNext').click(); window.scrollTo(0,0); };
   });
 })();
 
+/* ============ INSTALAR NO APARELHO (PWA) ============
+   Com o service worker, o app abre sem sinal e pode ser instalado na tela
+   inicial como aplicativo. Só funciona em https — no GitHub Pages funciona,
+   abrindo o arquivo direto do computador não. */
+if('serviceWorker' in navigator && location.protocol==='https:'){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('./sw.js').catch(function(){ /* segue sem offline */ });
+  });
+}
+
 checkStart();
 recolherDicas();
 aplicarDicas();
+montarLogin();
+document.body.classList.add('travado');
+filaMostrar();
+/* quem já entrou neste aparelho não precisa digitar o PIN toda vez */
+(function(){
+  var salvo=null; try{ salvo=JSON.parse(localStorage.getItem(LS_SESSAO)||'null'); }catch(e){}
+  if(salvo && salvo.nome){ abrirApp(salvo); filaEnviar(true); }
+})();
 /* o app abre em Agendar: no dia a dia se planeja mais do que se começa reunião na hora */
 setModo('agendar');
 syncNav();
