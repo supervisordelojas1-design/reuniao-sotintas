@@ -1,0 +1,16 @@
+{
+  "name": "Assistente ST — Só Tintas",
+  "short_name": "Assistente ST",
+  "description": "Reuniões, rotina, agenda e despesas da supervisão Só Tintas.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1C3F8F",
+  "theme_color": "#1C3F8F",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "./icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "./icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
