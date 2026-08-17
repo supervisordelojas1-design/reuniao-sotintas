@@ -849,7 +849,84 @@ tr.incompleto input{background:transparent}
           <div class="mn">Checklist pessoal</div>
           <div class="md">Sua lista de conferência: o que olhar numa loja, o que levar numa reunião. Fica no seu aparelho e pode virar o trabalho de uma visita.</div>
         </button>
+        <button class="model" data-agtipo="contatos">
+          <div class="mi"><svg class="ic" aria-hidden="true"><use href="#i-user"/></svg></div>
+          <div class="mn">Contatos</div>
+          <div class="md">A agenda da equipe. Ao convidar, o telefone e o e-mail vêm junto com o nome.</div>
+        </button>
       </div>
+    </div>
+
+    <div id="viewContatos" class="hidden">
+      <button class="btn btn-ghost btn-sm" id="btnVoltarContatos" style="margin-bottom:14px"><svg class="ic" aria-hidden="true"><use href="#i-arrow-left"/></svg> Voltar</button>
+      <h1>Contatos</h1>
+      <p class="sub">A agenda fica na planilha, não no aparelho — quem trocar de celular não perde, e a equipe inteira usa a mesma.</p>
+
+      <details class="gaveta" id="ctImportar">
+        <summary><svg class="ic" aria-hidden="true"><use href="#i-cloud-up"/></svg> <span>Importar em lote</span> <span class="gvc">planilha ou contatos do celular</span></summary>
+        <div style="padding:0 var(--s3) var(--s3)">
+          <div class="upbar">
+            <button type="button" class="btn btn-ghost btn-sm" id="ctArq"><svg class="ic" aria-hidden="true"><use href="#i-clip"/></svg> Escolher arquivo</button>
+          </div>
+          <input type="file" id="ctFile" accept=".vcf,.csv,text/csv,text/vcard,text/x-vcard,text/plain" multiple class="hidden">
+          <div class="hint">Aceita <b>.csv</b> (planilha) e <b>.vcf</b> (contatos do celular). Pode mandar o mesmo arquivo
+          de novo quantas vezes quiser: quem já existe é atualizado pelo telefone, não duplicado.</div>
+
+          <details class="dica"><summary><svg class="ic" aria-hidden="true"><use href="#i-bulb"/></svg> <span>Como exportar de cada lugar</span> <span class="cv">▾</span></summary>
+            <div class="dcorpo">
+              <b>Do Excel ou Google Planilhas:</b> deixe a primeira linha com os títulos
+              <code>Nome</code>, <code>Telefone</code>, <code>E-mail</code>, <code>Cargo</code>, <code>Loja</code> —
+              em qualquer ordem, e só <b>Nome</b> é obrigatório. Salve como <b>CSV</b>.<br><br>
+              <b>Do iPhone:</b> Contatos → <b>Listas</b> → segure um contato e vá marcando os outros →
+              <b>Compartilhar</b> → <b>Salvar em Arquivos</b>.<br><br>
+              <b>Do Android:</b> Contatos → menu → <b>Exportar</b> → salvar em .vcf.
+            </div>
+          </details>
+
+          <div id="ctPrevia" style="margin-top:12px"></div>
+        </div>
+      </details>
+
+      <details class="gaveta" id="ctPlanilha">
+        <summary><svg class="ic" aria-hidden="true"><use href="#i-clipboard"/></svg> <span>Manter pela planilha</span> <span class="gvc">sem passar pelo app</span></summary>
+        <div class="dcorpo" style="border:none;background:#fff;border-radius:0">
+          A agenda é a aba <b>CONTATOS</b> da sua planilha. Dá para colar linhas direto lá, de qualquer
+          planilha que você já tenha, e o app enxerga na hora seguinte.<br><br>
+          A ordem das colunas é: <b>Carimbo · Nome · Telefone · E-mail · Cargo · Loja/Empresa · Observação ·
+          Cadastrado por · Ativo</b>. Deixe <b>Ativo</b> como <code>Sim</code>; escrevendo <code>Não</code>,
+          o contato some das sugestões sem apagar o histórico.<br><br>
+          É o caminho para atualização periódica: mantenha sua lista mestre onde ela já está e cole aqui
+          quando mudar.
+        </div>
+      </details>
+
+      <details class="gaveta" id="ctNovo">
+        <summary><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg> <span>Adicionar um contato</span></summary>
+        <div style="padding:0 var(--s3) var(--s3)">
+          <div class="grid2">
+            <div><label>Nome</label><input type="text" id="ctNome" placeholder="Ana Paula"></div>
+            <div><label>WhatsApp</label><input type="text" id="ctFone" inputmode="tel" placeholder="(21) 99999-8888"></div>
+          </div>
+          <div class="grid2">
+            <div><label>E-mail</label><input type="text" id="ctEmail" placeholder="ana@sotintas.com.br"></div>
+            <div><label>Cargo</label><input type="text" id="ctCargo" placeholder="Gerente"></div>
+          </div>
+          <label>Loja ou empresa</label>
+          <input list="listaLojas" type="text" id="ctEmpresa" placeholder="07 - Matriz">
+          <div class="btnrow">
+            <button class="btn btn-primary btn-sm" id="ctSalvar"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg> Salvar contato</button>
+          </div>
+        </div>
+      </details>
+
+      <div class="grid2" style="margin-top:var(--s4)">
+        <div><label>Buscar</label><input type="text" id="ctBusca" placeholder="Nome, loja ou telefone"></div>
+        <div style="display:flex;align-items:flex-end">
+          <button class="btn btn-ghost" id="ctAtualizar" style="width:100%"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg> Atualizar</button>
+        </div>
+      </div>
+      <div id="ctStatus" class="hidden" style="margin-top:12px;padding:11px 14px;border-radius:10px;font-size:14px"></div>
+      <div id="ctLista" style="margin-top:14px"></div>
     </div>
 
     <div id="viewChecklist" class="hidden">
@@ -1477,7 +1554,19 @@ function renderParts(){
       };
       return;
     }
-    inp.oninput=function(){ PARTS[+inp.dataset.pi][inp.dataset.pf]=inp.value; renderConvites(); atualizaListaParts(); };
+    inp.oninput=function(){
+      var i=+inp.dataset.pi;
+      PARTS[i][inp.dataset.pf]=inp.value;
+      /* só no campo de nome, e só se o resto ainda estiver vazio: nunca
+         sobrescreve um número que a pessoa digitou na mão */
+      if(inp.dataset.pf==='n' && completarParticipante(i)){
+        renderParts();
+        var novo=document.querySelector('#partsBody [data-pi="'+i+'"][data-pf="n"]');
+        if(novo){ novo.focus(); try{ novo.setSelectionRange(novo.value.length,novo.value.length); }catch(e){} }
+        toast('Telefone e e-mail vieram da agenda de contatos.');
+      }
+      renderConvites(); atualizaListaParts();
+    };
   });
   Array.prototype.forEach.call(document.querySelectorAll('#partsBody [data-pd]'),function(b){
     b.onclick=function(){ PARTS.splice(+b.dataset.pd,1); if(!PARTS.length)PARTS=[{n:'',e:'',f:'',p:true}]; renderParts(); renderConvites(); };
@@ -1486,9 +1575,37 @@ function renderParts(){
 }
 /* alimenta a lista de sugestões do campo "Responsável" na tabela de ações */
 function atualizaListaParts(){
-  var h='';
-  PARTS.forEach(function(p){ if(p.n.trim()) h+='<option value="'+esc(p.n.trim())+'">'; });
+  var h='', vistos={};
+  /* a agenda da equipe vem primeiro; quem já está na reunião completa a lista */
+  (window.CONTATOS||[]).forEach(function(c){
+    var k=norml(c.nome); if(!c.nome || vistos[k]) return; vistos[k]=1;
+    h+='<option value="'+esc(c.nome)+'">'+esc([c.cargo,c.empresa].filter(Boolean).join(' · '))+'</option>';
+  });
+  PARTS.forEach(function(p){
+    var k=norml(p.n); if(!p.n.trim() || vistos[k]) return; vistos[k]=1;
+    h+='<option value="'+esc(p.n.trim())+'">';
+  });
   var dl=$('listaParts'); if(dl) dl.innerHTML=h;
+}
+
+/* Ao escolher um nome que está na agenda, telefone e e-mail vêm junto.
+   Digitar o número do gerente da loja toda vez é o tipo de atrito que faz
+   a pessoa parar de convidar por WhatsApp e mandar "no grupo mesmo". */
+function contatoPorNome(nome){
+  var alvo=norml(nome);
+  if(!alvo) return null;
+  var lista=window.CONTATOS||[];
+  for(var i=0;i<lista.length;i++) if(norml(lista[i].nome)===alvo) return lista[i];
+  return null;
+}
+function completarParticipante(i){
+  var p=PARTS[i]; if(!p) return false;
+  var c=contatoPorNome(p.n);
+  if(!c) return false;
+  var mudou=false;
+  if(!p.f.trim() && c.fone){  p.f=c.fone;  mudou=true; }
+  if(!p.e.trim() && c.email){ p.e=c.email; mudou=true; }
+  return mudou;
 }
 function partsNomes(){ return PARTS.map(function(p){return p.n.trim();}).filter(Boolean).join(', '); }
 function partsPresentes(){ return PARTS.filter(function(p){return p.n.trim() && p.p!==false;}).map(function(p){return p.n.trim();}).join(', '); }
@@ -1537,10 +1654,12 @@ function setModo(m){
   /* na aba Agendar o formulário só aparece depois de escolher "Reunião" */
   var escolhendo = (m==='agendar' && !agendarTipo);
   var noChecklist = (m==='agendar' && agendarTipo==='checklist');
+  var noContatos  = (m==='agendar' && agendarTipo==='contatos');
   $('viewAgendarEscolha').classList.toggle('hidden', !escolhendo);
   $('viewChecklist').classList.toggle('hidden', !noChecklist);
+  $('viewContatos').classList.toggle('hidden', !noContatos);
   $('btnVoltarEscolha').classList.toggle('hidden', !(m==='agendar' && agendarTipo==='reuniao'));
-  var telaCheia = (m==='historico' || m==='agenda' || m==='rotina' || m==='despesas' || escolhendo || noChecklist);
+  var telaCheia = (m==='historico' || m==='agenda' || m==='rotina' || m==='despesas' || escolhendo || noChecklist || noContatos);
   $('blocoSetup').classList.toggle('hidden', telaCheia);
   /* o bloco "hoje" acompanha as telas de reunião; a agenda completa tem aba própria */
   $('proximas').classList.toggle('hidden', telaCheia || !temHoje());
@@ -1578,7 +1697,10 @@ function setModo(m){
   /* nas duas telas os dois grupos existem, mas só na de agendar viram gaveta */
   $('wrapParts').classList.toggle('hidden', false);
   $('wrapParts').open = !agendando;
-  if(agendando){ sincronizarTipoSel(); tituloAutomatico(); resumoGavetasAgenda(); }
+  if(agendando){
+    sincronizarTipoSel(); tituloAutomatico(); resumoGavetasAgenda();
+    if(agendarTipo==='reuniao' && !CONTATOS.length) carregarContatos();
+  }
 
   $('btnStart').classList.toggle('hidden', m!=='agora');
   $('btnAgendar').classList.toggle('hidden', m==='agora');
@@ -2945,11 +3067,13 @@ Array.prototype.forEach.call(document.querySelectorAll('[data-agtipo]'),function
     var t=b.dataset.agtipo;
     if(t==='reuniao'){ agendarTipo='reuniao'; setModo('agendar'); return; }
     if(t==='checklist'){ agendarTipo='checklist'; setModo('agendar'); return; }
+    if(t==='contatos'){ agendarTipo='contatos'; setModo('agendar'); carregarContatos(); return; }
     abrirNovaVisita(t==='tarefa'?'Tarefa':'Visita');
   };
 });
 $('btnVoltarEscolha').onclick=function(){ agendarTipo=''; setModo('agendar'); };
 $('btnVoltarChecklist').onclick=function(){ agendarTipo=''; setModo('agendar'); };
+$('btnVoltarContatos').onclick=function(){ agendarTipo=''; setModo('agendar'); };
 $('clSelect').onchange=function(){ clCarregar(parseInt($('clSelect').value,10)); };
 $('clNome').oninput=function(){ CL_EDIT.nome=$('clNome').value; };
 $('clAddItem').onclick=function(){ CL_EDIT.itens.push({t:'',ok:false}); clRenderItens(); };
@@ -3247,7 +3371,7 @@ setModo = function(m){
    para quem desligou animação no sistema. */
 function animarTroca(){
   if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  var alvos = ['viewAgendarEscolha','viewChecklist','viewAgenda','viewRotina','viewDespesas','viewHistorico','blocoSetup'];
+  var alvos = ['viewAgendarEscolha','viewChecklist','viewContatos','viewAgenda','viewRotina','viewDespesas','viewHistorico','blocoSetup'];
   for(var i=0;i<alvos.length;i++){
     var el=$(alvos[i]);
     if(el && !el.classList.contains('hidden')){
@@ -3388,7 +3512,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v24';
+var VERSAO_APP='v25';
 
 var LS_SESSAO='sotintas_sessao_v1';
 var SESSAO=null;
@@ -3533,6 +3657,275 @@ function filaEnviar(silencioso){
 }
 $('filaEnviar').onclick=function(){ filaEnviar(false); };
 window.addEventListener('online', function(){ toast('Sinal de volta — enviando o que ficou.'); filaEnviar(true); });
+
+
+/* ============ AGENDA DE CONTATOS ============
+   Contato de trabalho guardado só no celular some quando a pessoa troca de
+   aparelho — e some junto com quem sai da empresa. Aqui ele fica na planilha,
+   e a equipe inteira usa a mesma lista.                                    */
+var CONTATOS=[], CT_IMPORTAR=[];
+
+function ctBox(cor,html){
+  var b=$('ctStatus');
+  var e={info:['#eef3ff','#1C3F8F'],ok:['#e9f7ef','#177a4d'],erro:['#fdeaea','#D32027']}[cor];
+  b.style.background=e[0]; b.style.color=e[1]; b.style.border='1px solid '+e[1];
+  b.innerHTML=html; b.classList.remove('hidden');
+}
+
+function carregarContatos(forcar){
+  var box=$('ctLista');
+  if(!ENVIO_URL){ box.innerHTML='<p class="sub">Indisponível: envio para o Google não configurado.</p>'; return; }
+  if(CONTATOS.length && !forcar){ renderContatos(); return; }
+  box.innerHTML='<p class="sub">Carregando…</p>';
+  fetch(ENVIO_URL+'?acao=contatos').then(function(r){ return r.json(); })
+    .then(function(res){
+      if(!res || !res.ok){
+        box.innerHTML='<p class="sub">Não consegui carregar'+(res&&res.erro?': '+esc(res.erro):'')+
+          '. Confira se o Apps Script está na versão nova.</p>';
+        return;
+      }
+      CONTATOS=res.itens||[];
+      renderContatos();
+      atualizaListaParts();
+    })
+    .catch(function(){ box.innerHTML='<p class="sub">Sem conexão para carregar os contatos.</p>'; });
+}
+$('ctAtualizar').onclick=function(){ carregarContatos(true); };
+$('ctBusca').oninput=renderContatos;
+
+function renderContatos(){
+  var box=$('ctLista'), termo=semAcento($('ctBusca').value);
+  var lista=CONTATOS.filter(function(c){
+    if(!termo) return true;
+    return semAcento(c.nome+' '+c.empresa+' '+c.cargo).indexOf(termo)>=0 ||
+           String(c.fone||'').replace(/\D/g,'').indexOf(termo.replace(/\D/g,''))>=0;
+  });
+  if(!CONTATOS.length){
+    box.innerHTML='<p class="sub">Nenhum contato ainda. Importe do celular acima — é o caminho mais rápido '+
+      'de sair do zero.</p>';
+    return;
+  }
+  if(!lista.length){ box.innerHTML='<p class="sub">Nada encontrado para "'+esc($('ctBusca').value)+'".</p>'; return; }
+  var h='<div class="hint" style="margin-top:0">'+lista.length+' de '+CONTATOS.length+' contato(s).</div>';
+  lista.forEach(function(c){
+    h+='<div class="ag">'+
+       '<div class="agi"><div class="agt">'+esc(c.nome)+'</div>'+
+       '<div class="ags">'+[c.cargo,c.empresa,c.fone,c.email].filter(Boolean).map(esc).join(' · ')+'</div></div>'+
+       (c.fone?'<a class="btn btn-ghost btn-sm" href="https://wa.me/'+foneWa(c.fone)+'" target="_blank" rel="noopener noreferrer">'+ICO('chat')+'</a>':'')+
+       '<button class="btn btn-ghost btn-sm" data-ctdel="'+c.linha+'" title="Remover da agenda">'+ICO('x')+'</button>'+
+       '</div>';
+  });
+  box.innerHTML=h;
+}
+delegar('ctLista', {'data-ctdel': function(linha){
+  var c=CONTATOS.filter(function(x){ return String(x.linha)===String(linha); })[0];
+  if(!c || !confirm('Remover "'+c.nome+'" da agenda?\n\nEle sai da lista, mas continua nas reuniões antigas.')) return;
+  fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({tipo:'excluirContato', linha:linha})})
+    .then(function(r){ return r.json(); })
+    .then(function(res){ if(res&&res.ok){ toast('Removido.'); carregarContatos(true); } else toast('Não consegui remover.'); })
+    .catch(function(){ toast('Sem sinal.'); });
+}});
+
+$('ctSalvar').onclick=function(){
+  var c={nome:$('ctNome').value.trim(), fone:$('ctFone').value.trim(), email:$('ctEmail').value.trim(),
+         cargo:$('ctCargo').value.trim(), empresa:$('ctEmpresa').value.trim()};
+  if(!c.nome){ ctBox('erro','Informe o nome.'); return; }
+  if(!c.fone && !c.email){ ctBox('erro','Informe pelo menos o WhatsApp ou o e-mail — sem um dos dois o contato não serve para convidar.'); return; }
+  enviarContatos([c], function(){
+    $('ctNome').value=''; $('ctFone').value=''; $('ctEmail').value=''; $('ctCargo').value=''; $('ctEmpresa').value='';
+  });
+};
+
+function enviarContatos(lista, aoTerminar){
+  if(!ENVIO_URL){ ctBox('erro','Envio para o Google não configurado.'); return; }
+  ctBox('info','Salvando '+lista.length+' contato(s)…');
+  fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({tipo:'contatos', contatos:lista, quem:euSou()})})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if(!res || !res.ok){ ctBox('erro','Não consegui salvar: '+((res&&res.erro)||'erro')); return; }
+      ctBox('ok', ICO('check')+' <b>'+res.criados+' novo(s)</b>'+
+        (res.atualizados?' e '+res.atualizados+' atualizado(s)':'')+' na agenda.');
+      if(aoTerminar) aoTerminar();
+      carregarContatos(true);
+    })
+    .catch(function(){ ctBox('erro','Sem conexão. Nada foi salvo — tente de novo com sinal.'); });
+}
+
+/* ---------- IMPORTAR .vcf ----------
+   O vCard é um formato antigo e cheio de dialetos: linhas dobradas, acentos
+   codificados, telefone com e sem tipo. O que interessa aqui é sempre o
+   mesmo: nome, telefone, e-mail, empresa e cargo.                        */
+$('ctArq').onclick=function(){ $('ctFile').click(); };
+$('ctFile').onchange=function(){
+  var arquivos=Array.prototype.slice.call(this.files||[]);
+  this.value='';
+  if(!arquivos.length) return;
+  var lidos=[], pendentes=arquivos.length;
+  arquivos.forEach(function(f){
+    var fr=new FileReader();
+    fr.onload=function(){
+      lidos.push({nome:f.name||'', texto:String(fr.result||'')});
+      if(--pendentes===0) processarImportacao(lidos);
+    };
+    fr.onerror=function(){ if(--pendentes===0) processarImportacao(lidos); };
+    fr.readAsText(f,'utf-8');
+  });
+};
+
+/* O formato é reconhecido pelo conteúdo, não pela extensão: gente renomeia
+   arquivo, e o Windows esconde a extensão de qualquer jeito. */
+function processarImportacao(arquivos){
+  var achados=[];
+  arquivos.forEach(function(a){
+    if(/BEGIN:VCARD/i.test(a.texto)) achados=achados.concat(lerVcf(a.texto));
+    else achados=achados.concat(lerCsv(a.texto));
+  });
+  mostrarPrevia(achados);
+}
+
+/* ---------- IMPORTAR PLANILHA (.csv) ----------
+   Aceita ponto e vírgula (padrão do Excel em português) ou vírgula, e acha as
+   colunas pelo título, em qualquer ordem, com ou sem acento. Planilha de
+   verdade nunca vem no formato que o programa espera. */
+function lerCsv(texto){
+  var linhas=String(texto).replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n')
+    .filter(function(l){ return l.trim(); });
+  if(linhas.length<2) return [];
+  var sep = (linhas[0].split(';').length > linhas[0].split(',').length) ? ';' : ',';
+
+  function celulas(linha){
+    var out=[], atual='', aspas=false;
+    for(var i=0;i<linha.length;i++){
+      var c=linha[i];
+      if(c==='"'){ if(aspas && linha[i+1]==='"'){ atual+='"'; i++; } else aspas=!aspas; }
+      else if(c===sep && !aspas){ out.push(atual); atual=''; }
+      else atual+=c;
+    }
+    out.push(atual);
+    return out.map(function(x){ return x.trim(); });
+  }
+
+  var cab=celulas(linhas[0]).map(semAcento);
+  function coluna(){
+    for(var a=0;a<arguments.length;a++){
+      var alvo=arguments[a];
+      for(var i=0;i<cab.length;i++) if(cab[i].indexOf(alvo)>=0) return i;
+    }
+    return -1;
+  }
+  var iNome  = coluna('nome','contato');
+  var iFone  = coluna('whatsapp','telefone','celular','fone','tel');
+  var iMail  = coluna('e-mail','email','mail');
+  var iCargo = coluna('cargo','funcao','função');
+  var iEmp   = coluna('loja','empresa','unidade','filial');
+  var iObs   = coluna('observacao','obs','nota');
+
+  /* sem coluna de nome não dá para importar: o resto é opcional */
+  if(iNome<0) return [];
+
+  var saida=[];
+  for(var l=1;l<linhas.length;l++){
+    var c=celulas(linhas[l]);
+    var nome=(c[iNome]||'').trim();
+    if(!nome) continue;
+    var item={
+      nome:nome,
+      fone: iFone>=0 ? (c[iFone]||'').trim() : '',
+      email:iMail>=0 ? (c[iMail]||'').trim() : '',
+      cargo:iCargo>=0? (c[iCargo]||'').trim(): '',
+      empresa:iEmp>=0? (c[iEmp]||'').trim() : '',
+      obs:  iObs>=0  ? (c[iObs]||'').trim()  : ''
+    };
+    if(item.fone || item.email) saida.push(item);
+  }
+  return saida;
+}
+
+function desdobrar(texto){
+  /* o vCard quebra linhas longas e continua na seguinte começando com espaço */
+  return texto.replace(/\r\n/g,'\n').replace(/\r/g,'\n').replace(/\n[ \t]/g,'');
+}
+function decodificarValor(chave, valor){
+  if(/ENCODING=QUOTED-PRINTABLE/i.test(chave)){
+    try{
+      var bytes=[], i=0;
+      while(i<valor.length){
+        if(valor[i]==='='){ bytes.push(parseInt(valor.substr(i+1,2),16)); i+=3; }
+        else { bytes.push(valor.charCodeAt(i)); i++; }
+      }
+      return new TextDecoder('utf-8').decode(new Uint8Array(bytes));
+    }catch(e){ return valor; }
+  }
+  return valor.replace(/\\,/g,',').replace(/\;/g,';').replace(/\\n/gi,' ').trim();
+}
+
+function lerVcf(texto){
+  var cartoes = desdobrar(texto).split(/BEGIN:VCARD/i).slice(1);
+  var saida=[];
+  cartoes.forEach(function(bruto){
+    var linhas=bruto.split('\n');
+    var c={nome:'',fone:'',email:'',cargo:'',empresa:''};
+    var nEstruturado='';
+    linhas.forEach(function(l){
+      var pos=l.indexOf(':'); if(pos<0) return;
+      var chave=l.slice(0,pos).toUpperCase(), valor=decodificarValor(l.slice(0,pos), l.slice(pos+1));
+      if(!valor) return;
+      var campo=chave.split(';')[0];
+      if(campo==='FN' && !c.nome) c.nome=valor;
+      else if(campo==='N' && !nEstruturado){
+        var p=valor.split(';');   // Sobrenome;Nome;Meio;Prefixo;Sufixo
+        nEstruturado=[p[1],p[0]].filter(Boolean).join(' ').trim();
+      }
+      else if(campo==='TEL'){
+        var d=valor.replace(/\D/g,'');
+        /* celular ganha do fixo: o convite vai para o WhatsApp */
+        var ehCel = /CELL|MOBILE/i.test(chave) || d.length===11;
+        if(d && (!c.fone || ehCel)) c.fone=valor;
+      }
+      else if(campo==='EMAIL' && !c.email) c.email=valor;
+      else if(campo==='ORG' && !c.empresa) c.empresa=valor.split(';').filter(Boolean).join(' · ');
+      else if(campo==='TITLE' && !c.cargo) c.cargo=valor;
+    });
+    if(!c.nome) c.nome=nEstruturado;
+    if(c.nome && (c.fone || c.email)) saida.push(c);
+  });
+  return saida;
+}
+
+function mostrarPrevia(lidos){
+  if(!lidos.length){
+    $('ctPrevia').innerHTML='<div class="hint" style="color:var(--red)">'+ICO('alert')+
+      ' <b>Não encontrei contatos neste arquivo.</b><br>'+
+      'Se for planilha: precisa ser <b>.csv</b> e ter uma coluna chamada <b>Nome</b>, '+
+      'mais telefone ou e-mail — contato sem nenhum dos dois não serve para convidar.<br>'+
+      'Se for do celular: precisa ser o arquivo <b>.vcf</b> exportado, não um print da tela.</div>';
+    return;
+  }
+  /* já na tela: quem entra, quem atualiza e quem foi descartado por não ter
+     como ser convidado. Importação sem prévia é aposta. */
+  var jaTem={};
+  CONTATOS.forEach(function(c){ jaTem[(c.fone||'').replace(/\D/g,'').slice(-11)]=true; });
+  var novos=lidos.filter(function(c){ return !jaTem[(c.fone||'').replace(/\D/g,'').slice(-11)]; });
+
+  CT_IMPORTAR=lidos;
+  var h='<div class="hint" style="margin-top:0"><b>'+lidos.length+' contato(s) no arquivo</b> · '+
+        novos.length+' novo(s) · '+(lidos.length-novos.length)+' já na agenda (serão atualizados).</div>';
+  lidos.slice(0,12).forEach(function(c){
+    h+='<div class="ag" style="padding:9px 12px"><div class="agi"><div class="agt" style="font-size:14px">'+esc(c.nome)+'</div>'+
+       '<div class="ags">'+[c.cargo,c.empresa,c.fone,c.email].filter(Boolean).map(esc).join(' · ')+'</div></div></div>';
+  });
+  if(lidos.length>12) h+='<div class="hint">…e mais '+(lidos.length-12)+'.</div>';
+  h+='<div class="btnrow"><button class="btn btn-primary btn-sm" id="ctConfirmar">'+ICO('cloud-up')+
+     ' Importar os '+lidos.length+'</button>'+
+     '<button class="btn btn-ghost btn-sm" id="ctCancelar">Cancelar</button></div>';
+  $('ctPrevia').innerHTML=h;
+  $('ctConfirmar').onclick=function(){
+    enviarContatos(CT_IMPORTAR, function(){ $('ctPrevia').innerHTML=''; CT_IMPORTAR=[]; });
+  };
+  $('ctCancelar').onclick=function(){ $('ctPrevia').innerHTML=''; CT_IMPORTAR=[]; };
+}
 
 /* ============ DESPESAS ============
    Lançamento manual + foto, com relatório que se atualiza no mesmo toque.
