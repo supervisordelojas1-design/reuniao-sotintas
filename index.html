@@ -183,6 +183,8 @@ textarea{resize:vertical;line-height:1.5}
   overflow:hidden;text-overflow:ellipsis}
 .pend.vazio .pvb{display:flex;gap:6px;flex:0 0 auto}
 .pend.vazio .btn{padding:5px 9px;font-size:11.5px;white-space:nowrap}
+/* modo Agendar: a coluna "Presente" não faz sentido antes da reunião */
+#tabParts.semPresenca th:first-child, #tabParts.semPresenca td:first-child{display:none}
 
 /* ---------- captura ---------- */
 .capbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
@@ -402,6 +404,21 @@ tr.incompleto input{background:transparent}
   .kpi{padding:11px}
   .kpi .kl{font-size:10px}
 
+  /* tabela "por pessoa" vira cartão: cinco colunas não cabem em 390px,
+     e rolar tabela de lado para achar o número que importa é atrito puro */
+  table.pnl.emp thead{display:none}
+  table.pnl.emp, table.pnl.emp tbody, table.pnl.emp tr, table.pnl.emp td{display:block;width:100%}
+  table.pnl.emp tr{border:1.5px solid var(--line);border-radius:10px;margin-bottom:9px;
+    padding:4px 0;background:#fff}
+  table.pnl.emp tr:nth-child(even) td{background:transparent}
+  table.pnl.emp td{border:none;border-bottom:1px solid var(--line);padding:7px 12px;
+    display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13px}
+  table.pnl.emp tr td:last-child{border-bottom:none}
+  table.pnl.emp td:before{content:attr(data-l);font-size:10.5px;font-weight:bold;
+    color:var(--muted);text-transform:uppercase;letter-spacing:.3px;flex:0 0 auto}
+  table.pnl.emp tr td:first-child{background:#f8faff;border-radius:8px 8px 0 0;font-size:14.5px}
+  .rolar{margin:0}
+
   /* escolha de modelo: cartão mais raso, o texto explicativo cabe */
   .model{padding:11px 12px}
   .model .mn{font-size:14.5px;margin:4px 0 3px}
@@ -464,23 +481,65 @@ tr.incompleto input{background:transparent}
 
     <div id="viewDespesas" class="hidden">
       <h1>Despesas</h1>
-      <p class="sub">Em desenvolvimento — a estrutura abaixo é a proposta. Me diga o que muda antes de eu construir.</p>
-      <div class="objbox" style="margin-bottom:16px">
-        <div class="oh">O que faz sentido registrar</div>
-        <div class="ot" style="margin-top:6px">
-          <b>Por lançamento:</b> data, quem gastou, tipo (combustível, pedágio, alimentação, hospedagem, material, outros),
-          valor, loja ou motivo relacionado e a foto do comprovante.<br><br>
-          <b>Para você acompanhar:</b> total do mês por pessoa, custo médio por visita realizada e comparação entre
-          as três carteiras — lembrando que a sua vai de Angra a Friburgo e a do Ramom é toda na Baixada.
-          Comparar reais absolutos entre carteiras assim seria injusto; custo por visita, não.
+      <p class="sub">Lance a despesa com a foto do comprovante. O relatório abaixo se atualiza no mesmo instante.</p>
+
+      <div class="card" style="margin:0 0 16px;background:#f8faff">
+        <h3 style="margin-top:0">Novo lançamento</h3>
+        <div class="grid3">
+          <div><label>Data</label><input type="date" id="dpData"></div>
+          <div><label>Quem gastou</label><input list="listaSup" id="dpQuem" placeholder="Seu nome"></div>
+          <div><label>Tipo</label>
+            <select id="dpTipo">
+              <option>Combustível</option>
+              <option>Pedágio</option>
+              <option>Estacionamento</option>
+              <option>Alimentação</option>
+              <option>Hospedagem</option>
+              <option>Material de loja</option>
+              <option>Manutenção do veículo</option>
+              <option>Outros</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid2">
+          <div><label>Valor (R$)</label><input type="text" id="dpValor" inputmode="decimal" placeholder="0,00"></div>
+          <div><label>Loja ou motivo</label><input list="listaLojas" id="dpRef" placeholder="Ex.: 33 - Macaé 2 ou Campanha de Setembro"></div>
+        </div>
+        <label>Observação <span style="text-transform:none;font-weight:normal">(opcional)</span></label>
+        <input type="text" id="dpObs" placeholder="Ex.: ida e volta Macaé, 210 km">
+
+        <label>Foto do comprovante</label>
+        <!-- capture=environment abre a câmera de trás direto no celular -->
+        <input type="file" id="dpFoto" accept="image/*" capture="environment"
+               style="width:100%;padding:11px 12px;border:1.5px dashed var(--line);border-radius:9px;background:#fff;font-size:14px">
+        <div class="hint" id="dpFotoInfo">A foto é reduzida no aparelho antes de subir, para não gastar seus dados. Ela vai
+        para a pasta <b>Comprovantes de Despesa</b> no Drive e a planilha guarda só o link.</div>
+        <div id="dpPrev" class="hidden" style="margin-top:10px">
+          <img id="dpPrevImg" alt="prévia do comprovante"
+               style="max-width:100%;max-height:200px;border-radius:10px;border:1px solid var(--line)">
+        </div>
+
+        <div class="btnrow">
+          <button class="btn btn-primary" id="dpSalvar">＋ Lançar despesa</button>
+          <button class="btn btn-ghost" id="dpLimpar">Limpar</button>
+        </div>
+        <div id="dpStatus" class="hidden" style="margin-top:12px;padding:11px 14px;border-radius:10px;font-size:14px"></div>
+      </div>
+
+      <h3>Relatório</h3>
+      <div class="grid3">
+        <div><label>De</label><input type="date" id="dpDe"></div>
+        <div><label>Até</label><input type="date" id="dpAte"></div>
+        <div><label>Ver</label>
+          <select id="dpFiltro"><option value="">Toda a equipe</option></select>
         </div>
       </div>
-      <div class="ag" style="border-left-color:#B7791F">
-        <div class="agd" style="background:#B7791F"><b>⚙</b><span>em breve</span></div>
-        <div class="agi"><div class="agt">Aguardando sua definição</div>
-        <div class="ags">Me diga quais tipos de despesa existem hoje, se há limite por pessoa, se precisa de aprovação
-        e se o comprovante é obrigatório. Com isso eu construo na próxima rodada.</div></div>
+      <div class="btnrow" style="margin-top:10px">
+        <button class="btn btn-ghost btn-sm" id="dpAtualizar">↻ Atualizar relatório</button>
+        <button class="btn btn-navy btn-sm" id="dpZap">💬 Resumo para WhatsApp</button>
+        <button class="btn btn-ghost btn-sm" id="dpCsv">⤓ Baixar planilha (.csv)</button>
       </div>
+      <div id="dpRel" style="margin-top:16px"></div>
     </div>
 
     <div id="viewRotina" class="hidden">
@@ -580,10 +639,15 @@ tr.incompleto input{background:transparent}
     <h1 id="setupTitulo">Preparar a reunião</h1>
     <p class="sub" id="setupSub">Leva 40 segundos. Sem objetivo escrito, o botão de iniciar não libera — é de propósito.</p>
 
-    <h3 style="margin-top:0">1. Que tipo de reunião é essa?</h3>
+    <h3 style="margin-top:0" id="hTipo">1. Que tipo de reunião é essa?</h3>
+    <!-- no modo Agendar o tipo é só uma seleção: a descrição de cada roteiro
+         importa na hora de conduzir, não na hora de marcar -->
+    <div id="wrapTipoSel" class="hidden">
+      <select id="fTipoSel"></select>
+    </div>
     <div class="models" id="models"></div>
 
-    <h3>2. Como você quer conduzir?</h3>
+    <h3 id="hCond">2. Como você quer conduzir?</h3>
     <div class="models" id="modosCond">
       <button class="model sel" data-mc="blocos">
         <div class="mi">🧭</div>
@@ -597,10 +661,10 @@ tr.incompleto input{background:transparent}
       </button>
     </div>
 
-    <h3>3. Dados da reunião</h3>
-    <div class="grid2">
+    <h3 id="hDados">3. Dados da reunião</h3>
+    <div class="grid2" id="wrapTitulo">
       <div><label>Título</label><input type="text" id="fTitulo" placeholder="Ex.: Alinhamento semanal – Loja Centro"></div>
-      <div><label>Condutor</label><input type="text" id="fCondutor" placeholder="Bruno – Supervisor Comercial"></div>
+      <div><label>Condutor</label><input type="text" id="fCondutor" placeholder="Bruno – Coordenador"></div>
     </div>
     <div class="grid3">
       <div><label>Data</label><input type="date" id="fData"></div>
@@ -618,7 +682,7 @@ tr.incompleto input{background:transparent}
         </select>
       </div>
     </div>
-    <label>Participantes</label>
+    <label id="labParts">Participantes</label>
     <table class="acts" id="tabParts">
       <thead><tr><th style="width:9%">Presente</th><th style="width:28%">Nome</th><th style="width:30%">E-mail</th><th style="width:25%">WhatsApp</th><th style="width:8%"></th></tr></thead>
       <tbody id="partsBody"></tbody>
@@ -627,7 +691,7 @@ tr.incompleto input{background:transparent}
     <div class="hint" id="labEmails">O e-mail recebe a ata. O WhatsApp gera o botão de convite individual — pode deixar em branco quem você não for avisar por lá.</div>
     <button class="btn btn-ghost btn-sm" id="btnAddPart" style="margin-top:10px">+ Adicionar participante</button>
 
-    <h3>4. Objetivo da reunião <span style="color:var(--red)">*</span></h3>
+    <h3 id="hObj">4. Objetivo da reunião <span style="color:var(--red)">*</span></h3>
     <div class="objbox">
       <div class="oh">Escreva em UMA frase o que precisa estar resolvido ao final</div>
       <textarea id="fObjetivo" rows="2" placeholder="Ex.: Definir o plano de ação para recuperar a meta de tinta imobiliária da Loja Centro até o dia 30."></textarea>
@@ -896,7 +960,7 @@ var ENVIO_URL = 'https://script.google.com/macros/s/AKfycbxC916U8rNw_-HFTW7vtFZz
    GESTOR é quem enxerga o painel de todos.
    ========================================================================== */
 var EQUIPE = {
-  'Bruno': { papel:'Supervisor Comercial', lojas:[
+  'Bruno': { papel:'Coordenador', lojas:[
     '02 - Mais Tintas', '04 - Petrópolis 2', '06 - Itaipava', '07 - Matriz',
     '08 - Friburgo', '09 - Magé', '10 - Petrópolis 1', '12 - Piabetá',
     '13 - Saracuruna', '15 - Três Rios', '17 - Santa Cruz', '22 - Dep Alto',
@@ -1201,8 +1265,27 @@ function setModo(m){
   if(m==='historico'){ carregarHistorico(); return; }
   if(m==='agenda'){ carregarAgendaUnificada(); return; }
   if(m==='rotina'){ carregarRotina(); return; }
-  if(m==='despesas'){ return; }
+  if(m==='despesas'){ iniciarDespesas(); return; }
   $('wrapDuracao').classList.toggle('hidden', m!=='agendar');
+
+  /* ---- Agendar mostra só o essencial ----
+     Marcar e conduzir são momentos diferentes. Na hora de marcar você decide
+     TIPO, OBJETIVO, QUANDO e ONDE. Como conduzir (guiado ou corrido) e o
+     título bonito são decisões da hora da reunião — pedir isso agora é como
+     escolher o caminho antes de saber para onde vai. */
+  var agendando = (m==='agendar');
+  $('wrapTipoSel').classList.toggle('hidden', !agendando);
+  $('models').classList.toggle('hidden', agendando);
+  $('hCond').classList.toggle('hidden', agendando);
+  $('modosCond').classList.toggle('hidden', agendando);
+  $('wrapTitulo').classList.toggle('hidden', agendando);
+  $('tabParts').classList.toggle('semPresenca', agendando);
+  $('hTipo').textContent  = agendando ? '1. Tipo da reunião' : '1. Que tipo de reunião é essa?';
+  $('hDados').textContent = agendando ? '2. Quando e onde' : '3. Dados da reunião';
+  $('hObj').innerHTML     = (agendando ? '3.' : '4.') + ' Objetivo da reunião <span style="color:var(--red)">*</span>';
+  $('labParts').textContent = agendando ? 'Quem convidar' : 'Participantes';
+  if(agendando){ sincronizarTipoSel(); tituloAutomatico(); }
+
   $('btnStart').classList.toggle('hidden', m!=='agora');
   $('btnAgendar').classList.toggle('hidden', m==='agora');
   $('btnConviteZap').classList.toggle('hidden', m==='agora');
@@ -1218,6 +1301,29 @@ function setModo(m){
   renderConvites();
   checkStart();
 }
+/* O select do tipo espelha exatamente os mesmos roteiros dos cartões:
+   uma fonte de verdade só, para não existir tipo que exista num lugar e
+   não no outro. */
+function montarTipoSel(){
+  var h='';
+  Object.keys(TPL).forEach(function(k){
+    var t=TPL[k], tot=t.blocos.reduce(function(a,b){return a+b.min;},0);
+    h+='<option value="'+k+'">'+esc(t.nome)+' · '+tot+' min</option>';
+  });
+  $('fTipoSel').innerHTML=h;
+  $('fTipoSel').value=sel;
+}
+function sincronizarTipoSel(){ if($('fTipoSel').value!==sel) $('fTipoSel').value=sel; }
+
+/* Sem campo de título, o título vem do tipo + local. "Alinhamento — 07 Matriz"
+   diz mais numa lista de agenda que qualquer nome inventado na hora. */
+function tituloAutomatico(){
+  var loc=$('fLocal').value.trim();
+  $('fTitulo').value = TPL[sel].nome + (loc ? ' — ' + loc : '');
+  if(!$('fCondutor').value.trim()) $('fCondutor').value = GESTOR + ' – ' + (EQUIPE[GESTOR] ? EQUIPE[GESTOR].papel : '');
+  checkStart();
+}
+
 function agBox(cor,html){
   var b=$('agStatus');
   var e={info:['#eef3ff','#1C3F8F'],ok:['#e9f7ef','#1a8f5a'],erro:['#fdeaea','#D32027']}[cor];
@@ -2074,6 +2180,7 @@ function initMic(){
       ta.value += (ta.value && !/\n$/.test(ta.value) ? '\n' : '') + marca + fin.trim();
       ta.scrollTop=ta.scrollHeight;
       S.blocos[S.cur].notas=ta.value;
+      agendarSalvar();   /* grava no aparelho a cada trecho: se a página morrer, o texto fica */
     }
     $('liveBox').innerHTML = fin ? '<b>ouvindo…</b> <span class="int">'+esc(int)+'</span>' : '<b>ouvindo…</b> <span class="int">'+esc(int)+'</span>';
   };
@@ -2083,19 +2190,87 @@ function initMic(){
   };
   rec.onend=function(){ if(recOn){ try{rec.start();}catch(err){} } };
 }
-function ligarMic(){ try{ rec.start(); }catch(e){} recOn=true; $('capMic').classList.add('on'); $('liveBox').classList.remove('hidden'); $('liveBox').innerHTML='<b>ouvindo…</b>'; }
-function pararMic(){ recOn=false; try{rec.stop();}catch(e){} $('capMic').classList.remove('on'); $('liveBox').classList.add('hidden'); }
+function ligarMic(){
+  try{ rec.start(); }catch(e){}
+  recOn=true; travarTela();
+  $('capMic').classList.add('on');
+  $('liveBox').classList.remove('hidden'); $('liveBox').innerHTML='<b>ouvindo…</b>';
+}
+function pararMic(){
+  recOn=false; try{rec.stop();}catch(e){}
+  soltarTela();
+  $('capMic').classList.remove('on'); $('liveBox').classList.add('hidden');
+}
+/* Ao voltar para o app, o reconhecimento de voz costuma ter morrido calado.
+   Religamos e avisamos, porque o trecho falado com a tela apagada não volta. */
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState!=='visible' || !recOn) return;
+  try{ rec.start(); }catch(e){}
+  $('liveBox').innerHTML='<b>ouvindo…</b> <span class="int">(religado — o que foi dito com a tela apagada não foi transcrito)</span>';
+});
+
+/* rótulos dos botões de captura, com versão curta para o celular */
+var LBL={
+  audio:'<span class="dot"></span>⏺<span class="lf"> Gravar áudio</span><span class="lc"> Áudio</span>',
+  video:'<span class="dot"></span>🎥<span class="lf"> Gravar vídeo</span><span class="lc"> Vídeo</span>'
+};
+
+/* ============ TRAVA DE TELA (WAKE LOCK) ============
+   Celular em espera suspende a página, e página suspensa não grava.
+   É o equivalente a deixar o gravador na mesa e alguém desligar a tomada:
+   o aparelho continua ali, mas não registra mais nada. A trava de tela
+   impede o aparelho de dormir enquanto a gravação está ligada.          */
+var wakeLock=null;
+function travarTela(){
+  if(!('wakeLock' in navigator)) return Promise.resolve(false);
+  if(wakeLock) return Promise.resolve(true);
+  return navigator.wakeLock.request('screen').then(function(w){
+    wakeLock=w;
+    w.addEventListener('release', function(){ wakeLock=null; });
+    return true;
+  }).catch(function(){ return false; });
+}
+function soltarTela(){
+  if(wakeLock){ try{ wakeLock.release(); }catch(e){} wakeLock=null; }
+}
+function capturando(){ return recOn || (mr && mr.state==='recording'); }
+
+/* Se o sistema soltar a trava (o usuário voltou para o app depois de
+   trocar de tela), pedimos de novo assim que a página fica visível. */
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState==='visible' && capturando()) travarTela();
+});
 
 /* ============ CAPTURA: GRAVAÇÃO ============ */
 var mr=null, chunks=[], mediaStream=null, recTipo='', recT0=0, recTick=null;
+var recInterrompida=false;
+
+function avisoRec(html, cor){
+  var el=$('recInfo');
+  el.classList.remove('hidden');
+  el.innerHTML=html;
+  el.style.color = cor||'';
+  el.style.fontWeight = cor?'bold':'';
+}
+
 function gravar(tipo){
   if(mr && mr.state==='recording'){ pararGravacao(); return; }
   var cons = tipo==='video' ? {audio:true,video:{width:{ideal:1280}}} : {audio:true};
   navigator.mediaDevices.getUserMedia(cons).then(function(st){
-    mediaStream=st; chunks=[]; recTipo=tipo;
+    mediaStream=st; chunks=[]; recTipo=tipo; recInterrompida=false;
+    travarTela();
     var mime = tipo==='video' ? 'video/webm' : 'audio/webm';
     try{ mr=new MediaRecorder(st,{mimeType:mime}); }catch(e){ mr=new MediaRecorder(st); }
     mr.ondataavailable=function(e){ if(e.data.size) chunks.push(e.data); };
+
+    /* O sistema pode cortar a captura sem avisar (tela travada, ligação
+       recebida, outro app pedindo o microfone). Aqui a gente descobre e
+       fecha o arquivo com o que já foi gravado, em vez de perder tudo. */
+    mr.onerror=function(){ recInterrompida=true; pararGravacao(); };
+    st.getTracks().forEach(function(t){
+      t.onmute  = function(){ if(mr && mr.state==='recording'){ recInterrompida=true; pararGravacao(); } };
+      t.onended = function(){ if(mr && mr.state==='recording'){ recInterrompida=true; pararGravacao(); } };
+    });
     mr.onstop=function(){
       var tipoReal = mr.mimeType||mime;
       var blob=new Blob(chunks,{type:tipoReal});
@@ -2109,19 +2284,33 @@ function gravar(tipo){
       $('recInfo').innerHTML='✅ Gravação salva como <b>'+esc(nome)+'</b> (pasta de downloads). Envie esse arquivo no chat do Claude para gerar a transcrição completa da ata.';
       $('recInfo').classList.remove('hidden');
       clearInterval(recTick);
+      soltarTela();
       $('capAudio').classList.remove('on'); $('capVideo').classList.remove('on');
-      $('capAudio').innerHTML='<span class="dot"></span>⏺ Gravar áudio'; $('capVideo').innerHTML='<span class="dot"></span>🎥 Gravar vídeo';
+      $('capAudio').innerHTML=LBL.audio; $('capVideo').innerHTML=LBL.video;
+      if(recInterrompida){
+        avisoRec('⚠ <b>A gravação foi interrompida pelo sistema</b> — provavelmente a tela travou, '+
+          'entrou uma ligação ou outro app pediu o microfone. O arquivo <b>'+esc(nome)+'</b> foi salvo '+
+          'com o que deu tempo de gravar. Reabra a gravação e mantenha a tela acesa.', 'var(--red)');
+      }
     };
-    mr.start(); recT0=Date.now();
+    /* Fatia de 5 segundos: em vez de guardar tudo na memória e só fechar o
+       arquivo no fim, o navegador entrega o áudio de 5 em 5 segundos. Se o
+       aparelho cortar a captura, o que já chegou está salvo. Sem isso, uma
+       reunião de 40 minutos interrompida no minuto 39 vira arquivo vazio. */
+    mr.start(5000); recT0=Date.now();
     var btn = tipo==='video' ? $('capVideo') : $('capAudio');
     btn.classList.add('on');
     recTick=setInterval(function(){
       var s=Math.floor((Date.now()-recT0)/1000);
       btn.innerHTML='<span class="dot"></span>■ Parar ('+fmt(s)+')';
     },1000);
-    $('recInfo').classList.remove('hidden');
-    $('recInfo').innerHTML='🔴 Gravando… o arquivo é baixado sozinho quando você parar.'+
-      (tipo==='video'?' <b>Para reunião longa prefira só o áudio</b> — vídeo de mais de ~20 min pesa muito no navegador.':'');
+    var travou = ('wakeLock' in navigator);
+    avisoRec('🔴 Gravando… o arquivo é baixado sozinho quando você parar.<br>'+
+      (travou
+        ? '🔒 <b>Tela travada acesa</b> enquanto grava — não aperte o botão de bloquear o aparelho.'
+        : '⚠ <b>Este navegador não deixa manter a tela acesa.</b> Se a tela apagar, a gravação para. '+
+          'Mantenha o aparelho desbloqueado e nesta aba.')+
+      (tipo==='video'?'<br><b>Para reunião longa prefira só o áudio</b> — vídeo de mais de ~20 min pesa muito no navegador.':''));
   }).catch(function(){ toast('Não consegui acessar o microfone/câmera. Verifique a permissão do navegador.'); });
 }
 function pararGravacao(){ if(mr && mr.state==='recording') mr.stop(); }
@@ -2532,6 +2721,15 @@ $('cancelCopiar').onclick=function(){
   else { try{document.execCommand('copy');toast('Copiado!');}catch(e){} }
 };
 $('btnAgendar').onclick=agendar;
+montarTipoSel();
+$('fTipoSel').onchange=function(){
+  sel=$('fTipoSel').value;
+  renderModels(); renderAgenda();
+  $('fDuracao').value = TPL[sel].blocos.reduce(function(a,b){return a+b.min;},0);
+  tituloAutomatico();
+};
+$('fLocal').addEventListener('input', function(){ if(modo==='agendar') tituloAutomatico(); });
+
 $('btnConviteZap').onclick=function(){
   var t=textoConvite(); $('zapText').value=t; $('modalZap').classList.add('show');
   if(navigator.clipboard) navigator.clipboard.writeText(t).then(function(){toast('Convite copiado!');},function(){});
@@ -2593,6 +2791,233 @@ $('btnNew').onclick=function(){
   if(confirm('Começar uma nova reunião? Salve o backup antes se ainda precisar destes dados.')){ limparLocal(); dirty=false; location.reload(); }
 };
 window.onbeforeunload=function(){ if(dirty) return 'A reunião em andamento será perdida.'; };
+
+
+/* ============ DESPESAS ============
+   Lançamento manual + foto, com relatório que se atualiza no mesmo toque.
+   A régua do relatório é o CUSTO POR VISITA REALIZADA, não o total em reais:
+   a carteira do Bruno vai de Angra a Friburgo, a do Ramom é toda na Baixada.
+   Comparar reais absolutos seria comparar o consumo de um caminhão com o de
+   uma moto sem olhar a distância percorrida.                              */
+var DP_FOTO = '', DP_DADOS = null, DP_PRONTO = false;
+
+function brl(v){
+  return 'R$ ' + (Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function primeiroDoMes(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-01'; }
+
+function iniciarDespesas(){
+  if(!DP_PRONTO){
+    DP_PRONTO = true;
+    $('dpData').value = hojeISO();
+    $('dpDe').value   = primeiroDoMes();
+    $('dpAte').value  = hojeISO();
+    if(!$('dpQuem').value) $('dpQuem').value = GESTOR;
+    var h='<option value="">Toda a equipe</option>';
+    Object.keys(EQUIPE).forEach(function(n){ h+='<option value="'+esc(n)+'">'+esc(n)+'</option>'; });
+    $('dpFiltro').innerHTML=h;
+  }
+  carregarDespesas();
+}
+
+/* A foto sai do celular com 4 MB. Reduzida para 1000px de largura e JPEG 70%
+   ela fica com ~150 KB e continua perfeitamente legível — comprovante é para
+   ler valor e data, não para ampliar textura do papel. */
+$('dpFoto').onchange=function(){
+  var f=this.files && this.files[0];
+  if(!f){ DP_FOTO=''; $('dpPrev').classList.add('hidden'); return; }
+  var fr=new FileReader();
+  fr.onload=function(){
+    var img=new Image();
+    img.onload=function(){
+      var max=1000, w=img.width, h=img.height;
+      if(w>max || h>max){ var r=Math.min(max/w,max/h); w=Math.round(w*r); h=Math.round(h*r); }
+      var c=document.createElement('canvas'); c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      DP_FOTO = c.toDataURL('image/jpeg',0.7);
+      $('dpPrevImg').src = DP_FOTO;
+      $('dpPrev').classList.remove('hidden');
+      var kb = Math.round(DP_FOTO.length*0.75/1024);
+      $('dpFotoInfo').innerHTML = '✓ Foto pronta ('+kb+' KB depois da redução). Vai para a pasta '+
+        '<b>Comprovantes de Despesa</b> no Drive; a planilha guarda o link.';
+    };
+    img.onerror=function(){ DP_FOTO=''; dpBox('erro','Não consegui ler esta imagem. Tente tirar a foto de novo.'); };
+    img.src=fr.result;
+  };
+  fr.onerror=function(){ DP_FOTO=''; dpBox('erro','Não consegui ler o arquivo.'); };
+  fr.readAsDataURL(f);
+};
+
+function dpBox(cor,html){
+  var b=$('dpStatus');
+  var e={info:['#eef3ff','#1C3F8F'],ok:['#e9f7ef','#1a8f5a'],erro:['#fdeaea','#D32027']}[cor];
+  b.style.background=e[0]; b.style.color=e[1]; b.style.border='1.5px solid '+e[1];
+  b.innerHTML=html; b.classList.remove('hidden');
+}
+
+function dpLimparForm(){
+  DP_FOTO=''; $('dpFoto').value=''; $('dpValor').value=''; $('dpRef').value=''; $('dpObs').value='';
+  $('dpPrev').classList.add('hidden'); $('dpStatus').classList.add('hidden');
+  $('dpFotoInfo').innerHTML='A foto é reduzida no aparelho antes de subir, para não gastar seus dados. Ela vai '+
+    'para a pasta <b>Comprovantes de Despesa</b> no Drive e a planilha guarda só o link.';
+}
+$('dpLimpar').onclick=dpLimparForm;
+
+$('dpSalvar').onclick=function(){
+  var valor=$('dpValor').value.trim();
+  if(!valor){ dpBox('erro','Informe o valor da despesa.'); return; }
+  if(!$('dpQuem').value.trim()){ dpBox('erro','Informe quem gastou.'); return; }
+  if(!ENVIO_URL){ dpBox('erro','Envio para o Google não configurado neste arquivo.'); return; }
+  if(!DP_FOTO){
+    /* Comprovante não é obrigatório de propósito: pedágio sem nota existe.
+       Mas o lançamento sai marcado, e o relatório mostra o percentual — é o
+       que permite cobrar sem transformar cada gasto em burocracia. */
+    if(!confirm('Lançar sem foto do comprovante? Ele vai entrar marcado como "sem comprovante" no relatório.')) return;
+  }
+  $('dpSalvar').disabled=true;
+  dpBox('info','Enviando'+(DP_FOTO?' com a foto':'')+'…');
+  fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({
+      tipo:'despesa', data:$('dpData').value, responsavel:$('dpQuem').value.trim(),
+      tipoDespesa:$('dpTipo').value, valor:valor, referencia:$('dpRef').value.trim(),
+      obs:$('dpObs').value.trim(), fotoBase64:DP_FOTO, lancadoPor:GESTOR })})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      $('dpSalvar').disabled=false;
+      if(!res || !res.ok){ dpBox('erro','Não consegui lançar: '+((res&&res.erro)||'erro desconhecido')); return; }
+      dpBox('ok','✓ Despesa lançada'+(res.comprovante&&res.comprovante.indexOf('http')===0
+        ? ' com comprovante <a href="'+res.comprovante+'" target="_blank" rel="noopener noreferrer">(abrir a foto)</a>'
+        : ' <b>sem comprovante</b>')+'.');
+      var v=$('dpValor').value;
+      dpLimparForm(); dpBox('ok','✓ '+brl(v.replace(/\./g,'').replace(',','.'))+' lançado. Relatório atualizado.');
+      carregarDespesas();
+    })
+    .catch(function(){ $('dpSalvar').disabled=false; dpBox('erro','Sem conexão. O lançamento não foi gravado — tente de novo com sinal.'); });
+};
+
+$('dpAtualizar').onclick=carregarDespesas;
+$('dpFiltro').onchange=carregarDespesas;
+
+function carregarDespesas(){
+  var box=$('dpRel');
+  if(!ENVIO_URL){ box.innerHTML='<p class="sub">Relatório indisponível: o envio para o Google não está configurado.</p>'; return; }
+  box.innerHTML='<p class="sub">Carregando…</p>';
+  var url=ENVIO_URL+'?acao=despesas&de='+($('dpDe').value||'')+'&ate='+($('dpAte').value||'');
+  if($('dpFiltro').value) url+='&responsavel='+encodeURIComponent($('dpFiltro').value);
+  fetch(url).then(function(r){ return r.json(); })
+    .then(function(res){
+      if(!res || !res.ok){
+        box.innerHTML='<p class="sub">Não consegui carregar o relatório'+(res&&res.erro?': '+esc(res.erro):'')+
+          '. Confira se o Apps Script está na versão nova (a que tem <code>acao=despesas</code>).</p>';
+        return;
+      }
+      DP_DADOS=res; renderDespesas(res);
+    })
+    .catch(function(){ box.innerHTML='<p class="sub">Não consegui carregar o relatório. Verifique a conexão e a versão do Apps Script.</p>'; });
+}
+
+function renderDespesas(r){
+  var box=$('dpRel');
+  if(!r.lancamentos){
+    box.innerHTML='<p class="sub">Nenhuma despesa lançada neste período. Use o formulário acima — o relatório aparece na hora.</p>';
+    return;
+  }
+  var pctFoto = Math.round(r.comComprovante/r.lancamentos*100);
+
+  var h='<div class="kpis">'+
+    '<div class="kpi"><div class="kv">'+brl(r.total)+'</div><div class="kl">total do período</div>'+
+      '<div class="kx">'+r.lancamentos+' lançamento(s)</div></div>'+
+    '<div class="kpi"><div class="kv">'+brl(r.ticket)+'</div><div class="kl">valor médio</div>'+
+      '<div class="kx">por lançamento</div></div>'+
+    '<div class="kpi '+(pctFoto>=90?'ok':(pctFoto>=70?'al':'ru'))+'"><div class="kv">'+pctFoto+'%</div>'+
+      '<div class="kl">com comprovante</div><div class="kx">'+r.comComprovante+' de '+r.lancamentos+'</div></div>'+
+    '</div>';
+
+  /* ---- por pessoa, com o custo por visita ---- */
+  h+='<h3>Por pessoa</h3>'+
+     '<div class="rolar"><table class="pnl emp"><thead><tr><th>Quem</th><th>Total</th><th>Lançamentos</th>'+
+     '<th>Visitas realizadas</th><th>Custo por visita</th></tr></thead><tbody>';
+  r.pessoas.forEach(function(p){
+    /* data-l alimenta o rótulo quando a tabela vira cartão no celular */
+    h+='<tr><td data-l="Quem"><b>'+esc(p.nome)+'</b></td>'+
+       '<td data-l="Total">'+brl(p.total)+'</td>'+
+       '<td data-l="Lançamentos">'+p.lancamentos+'</td>'+
+       '<td data-l="Visitas realizadas">'+p.visitas+'</td>'+
+       '<td data-l="Custo por visita">'+(p.porVisita==null
+         ? '<span style="color:var(--muted)">sem visita registrada</span>'
+         : '<b style="color:var(--navy)">'+brl(p.porVisita)+'</b>')+'</td></tr>';
+  });
+  h+='</tbody></table></div>'+
+     '<div class="hint">O total em reais compara mal: quem atende de Angra a Friburgo gasta mais que quem atende a '+
+     'Baixada inteira sem sair de 40 km. O <b>custo por visita</b> é a coluna que dá para cobrar.</div>';
+
+  /* ---- por tipo ---- */
+  var maior = r.tipos.length ? r.tipos[0].total : 1;
+  h+='<h3>Por tipo</h3>';
+  r.tipos.forEach(function(t){
+    var pct=Math.round(t.total/r.total*100);
+    h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;font-size:13px">'+
+       '<span style="flex:0 0 130px">'+esc(t.tipo)+'</span>'+
+       '<span class="barra" style="flex:1"><div style="width:'+Math.round(t.total/maior*100)+'%;background:var(--navy)"></div></span>'+
+       '<span style="flex:0 0 130px;text-align:right"><b>'+brl(t.total)+'</b> · '+pct+'%</span></div>';
+  });
+
+  /* ---- lançamentos ---- */
+  h+='<h3>Lançamentos</h3>';
+  r.itens.forEach(function(i){
+    var temFoto = i.comprovante && i.comprovante.indexOf('http')===0;
+    h+='<div class="ag" style="border-left-color:'+(temFoto?'var(--ok)':'var(--red)')+'">'+
+       '<div class="agd" style="background:'+(temFoto?'var(--ok)':'var(--red)')+'">'+
+       '<b>'+(i.data.split('-')[2]||'--')+'</b><span>'+mesCurto(i.data.split('-')[1])+'</span></div>'+
+       '<div class="agi"><div class="agt">'+brl(i.valor)+' · '+esc(i.tipo)+'</div>'+
+       '<div class="ags">'+esc(i.responsavel)+(i.referencia?' · '+esc(i.referencia):'')+
+       (i.obs?' · '+esc(i.obs):'')+'</div></div>'+
+       (temFoto
+         ? '<a class="btn btn-ghost btn-sm" href="'+i.comprovante+'" target="_blank" rel="noopener noreferrer">📷 Comprovante</a>'
+         : '<span class="badge b-nao">sem comprovante</span>')+
+       '</div>';
+  });
+
+  box.innerHTML=h;
+}
+
+$('dpZap').onclick=function(){
+  if(!DP_DADOS || !DP_DADOS.lancamentos){ toast('Nada para resumir neste período.'); return; }
+  var r=DP_DADOS, L=[];
+  L.push('*DESPESAS · Só Tintas*');
+  L.push(dataBr(r.de)+' a '+dataBr(r.ate));
+  L.push('');
+  L.push('Total: *'+brl(r.total)+'* em '+r.lancamentos+' lançamento(s)');
+  L.push('Com comprovante: '+Math.round(r.comComprovante/r.lancamentos*100)+'%');
+  L.push('');
+  L.push('*Por pessoa*');
+  r.pessoas.forEach(function(p){
+    L.push('• '+p.nome+': '+brl(p.total)+(p.porVisita!=null?' · '+brl(p.porVisita)+'/visita':' · sem visita registrada'));
+  });
+  L.push('');
+  L.push('*Por tipo*');
+  r.tipos.forEach(function(t){ L.push('• '+t.tipo+': '+brl(t.total)); });
+  L.push('');
+  L.push('_Assistente ST_');
+  var txt=L.join('\n');
+  $('zapText').value=txt;
+  try{ navigator.clipboard.writeText(txt); }catch(e){}
+  $('modalZap').classList.add('show');
+};
+
+$('dpCsv').onclick=function(){
+  if(!DP_DADOS || !DP_DADOS.itens.length){ toast('Nada para baixar neste período.'); return; }
+  var L=['Data;Responsavel;Tipo;Valor;Loja ou motivo;Observacao;Comprovante'];
+  DP_DADOS.itens.forEach(function(i){
+    L.push([i.data,i.responsavel,i.tipo,String(i.valor).replace('.',','),i.referencia,i.obs,i.comprovante]
+      .map(function(c){ return String(c||'').replace(/;/g,','); }).join(';'));
+  });
+  var blob=new Blob(['﻿'+L.join('\n')],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='despesas_'+($('dpDe').value||'')+'_a_'+($('dpAte').value||'')+'.csv';
+  a.click();
+};
 
 /* ============ AÇÕES ABERTAS DA ÚLTIMA REUNIÃO ============
    Sem isto o app é um caderno com memória de uma página: registra o
