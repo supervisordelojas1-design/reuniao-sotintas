@@ -1965,7 +1965,16 @@ function carregarProximas(){
     })
     .catch(function(){ /* sem internet ou script antigo: simplesmente não mostra */ });
 }
-function hojeISO(){ return new Date().toISOString().slice(0,10); }
+/* Data no fuso do aparelho, nunca em UTC.
+   toISOString() converte para o horário de Greenwich — e como o Brasil está
+   3 horas atrás, às 21h daqui já é o dia seguinte lá. Era por isso que o app
+   "virava o dia" antes da meia-noite: a visita marcada para hoje sumia da
+   agenda às 21h e aparecia como se fosse de ontem. */
+function dataLocal(d){
+  d = d || new Date();
+  return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+}
+function hojeISO(){ return dataLocal(); }
 function temHoje(){ return PROX.some(function(a){ return a.data===hojeISO(); }); }
 
 /* Bloco compacto na tela inicial: só as reuniões de hoje. */
@@ -2016,7 +2025,7 @@ function renderAgendaCompleta(){
   itens.sort(function(a,b){ return (a.data+a.hora) < (b.data+b.hora) ? -1 : 1; });
 
   var hoje=hojeISO();
-  var amanha=new Date(Date.now()+86400000).toISOString().slice(0,10);
+  var amanha=dataLocal(new Date(Date.now()+86400000));
   var DIAS=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
   var TIPOICO={reuniao:ICO('clipboard'), visita:ICO('car'), tarefa:ICO('check-square')};
   var COR={reuniao:'var(--navy)', visita:'#B7791F', tarefa:'var(--ok)'};
@@ -2182,7 +2191,7 @@ function recuperarSou(){
     if(v && $('fVerPessoa')) $('fVerPessoa').value=v;
   }catch(e){}
 }
-function isoMais(dias){ return new Date(Date.now()+dias*86400000).toISOString().slice(0,10); }
+function isoMais(dias){ return dataLocal(new Date(Date.now()+dias*86400000)); }
 
 function carregarRotina(){
   var box=$('rotinaKpis');
@@ -2409,7 +2418,7 @@ function renderSemana(){
   var hoje=new Date();
   var seg=new Date(hoje); seg.setDate(hoje.getDate() - ((hoje.getDay()+6)%7));
   var dias=[], rot=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
-  for(var i=0;i<7;i++){ var d=new Date(seg); d.setDate(seg.getDate()+i); dias.push(d.toISOString().slice(0,10)); }
+  for(var i=0;i<7;i++){ var d=new Date(seg); d.setDate(seg.getDate()+i); dias.push(dataLocal(d)); }
   var sups={};
   VISITAS.forEach(function(v){ if(dias.indexOf(v.data)>=0) sups[v.supervisor||'—']=true; });
   var nomes=Object.keys(sups).sort();
@@ -2756,7 +2765,7 @@ function usarAgendada(a){
   PARTS = lista.length ? lista : [{n:'',e:'',f:''}];
   renderParts();
   if(a.hora) $('fHora').value=a.hora;
-  $('fData').value=new Date().toISOString().slice(0,10);
+  $('fData').value=hojeISO();
   setModo('agora'); checkStart();
   toast('Dados carregados. Confira e inicie.');
   $('btnStart').scrollIntoView({behavior:'smooth',block:'center'});
@@ -3323,7 +3332,7 @@ function carregarJson(f){
 
 /* ============ EVENTOS ============ */
 renderModels(); renderAgenda(); renderParts(); initMic(); checarInterrompida(); carregarProximas();
-(function(){ var d=new Date(); $('fData').value=d.toISOString().slice(0,10); $('fHora').value=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); })();
+(function(){ var d=new Date(); $('fData').value=dataLocal(d); $('fHora').value=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); })();
 $('fObjetivo').oninput=checkStart; $('fTitulo').oninput=checkStart;
 $('fData').onchange=checkStart; $('fHora').onchange=checkStart;
 $('btnAddPart').onclick=function(){ PARTS.push({n:'',e:'',f:''}); renderParts(); };
@@ -3830,7 +3839,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v28';
+var VERSAO_APP='v29';
 
 var LS_SESSAO='sotintas_sessao_v1';
 var SESSAO=null;
