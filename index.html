@@ -132,6 +132,25 @@ textarea{resize:vertical;line-height:1.5}
 /* gravando: a gaveta fica destacada mesmo fechada, para ninguém esquecer */
 .gaveta.ativa>summary{background:#fff2f2;color:var(--red)}
 
+/* ---------- navegação por mês ---------- */
+.mesnav{display:flex;align-items:center;gap:var(--s2);margin-bottom:var(--s3);flex-wrap:wrap}
+.mesnav span{font-weight:700;color:var(--navy);font-size:var(--fs-lg);min-width:130px;text-align:center}
+.mesnav .btn{padding:7px 11px}
+.mesnav.hidden{display:none}
+
+/* ---------- progresso do dia ---------- */
+.prog{background:#fff;border:1px solid var(--line);border-left:4px solid var(--navy);
+  border-radius:var(--r-md);padding:12px 14px;margin-bottom:var(--s3);box-shadow:var(--e1)}
+.prog.completo{border-left-color:var(--ok);background:#f4fbf7}
+.prog .pt{font-size:var(--fs-md);font-weight:700;color:var(--navy)}
+.prog.completo .pt{color:var(--ok)}
+.prog .ps{font-size:var(--fs-sm);color:var(--muted);margin-top:3px}
+.prog .barra{margin-top:9px;height:7px}
+
+/* ---------- compromisso vindo do Google ---------- */
+.ag.gcal{border-left-style:dashed;background:#fbfcff}
+.ag.gcal .agd{background:#67728c}
+
 /* ---------- seletor de visão ---------- */
 .verbar{display:flex;gap:var(--s1);background:var(--navy-05);border:1px solid var(--navy-10);
   border-radius:var(--r-pill);padding:3px;margin-bottom:var(--s3);width:fit-content;max-width:100%}
@@ -973,14 +992,35 @@ tr.incompleto input{background:transparent}
     </div>
 
     <div id="viewAgenda" class="hidden">
-      <h1>Agenda</h1>
-      <p class="sub">Reuniões, visitas e tarefas de toda a equipe, daqui para a frente.</p>
+      <h1 id="agTitulo">Agenda</h1>
+      <p class="sub" id="agSub"></p>
+
+      <!-- a primeira pergunta do dia é "quando", não "de quem" -->
+      <div class="verbar" id="agFaixa">
+        <button data-per="hoje" class="sel">Hoje</button>
+        <button data-per="semana">Semana</button>
+        <button data-per="mes">Mês</button>
+      </div>
+
+      <div class="mesnav hidden" id="agMesNav">
+        <button class="btn btn-ghost btn-sm" id="agMesAnt"><svg class="ic" aria-hidden="true"><use href="#i-arrow-left"/></svg></button>
+        <span id="agMesRotulo"></span>
+        <button class="btn btn-ghost btn-sm" id="agMesProx"><svg class="ic" aria-hidden="true"><use href="#i-arrow-right"/></svg></button>
+        <button class="btn btn-ghost btn-sm" id="agMesHoje">Voltar para hoje</button>
+      </div>
+
+      <div id="agProgresso"></div>
+
       <div class="grid2">
         <div><label>Mostrar de</label><select id="fAgendaQuem"></select></div>
         <div style="display:flex;align-items:flex-end">
-          <button class="btn btn-navy" id="btnCompartilharAgenda" style="width:100%"><svg class="ic" aria-hidden="true"><use href="#i-share"/></svg> Compartilhar agenda</button>
+          <button class="btn btn-navy" id="btnCompartilharAgenda" style="width:100%"><svg class="ic" aria-hidden="true"><use href="#i-share"/></svg> Compartilhar</button>
         </div>
       </div>
+      <label class="cli" style="margin-top:12px;text-transform:none;font-size:13px;font-weight:normal;color:var(--ink)">
+        <input type="checkbox" id="agGoogle" checked>
+        <span>Mostrar também os compromissos da minha Agenda Google</span>
+      </label>
       <div id="agendaLista" style="margin-top:14px"></div>
     </div>
     <div id="viewHistorico" class="hidden">
@@ -1025,6 +1065,7 @@ tr.incompleto input{background:transparent}
       <div><label>Hora de início</label><input type="time" id="fHora"></div>
       <div><label>Local / plataforma</label><input type="text" id="fLocal" placeholder="Loja Centro / Google Meet"></div>
     </div>
+    <div class="upbar" id="fAtalhos"></div>
     <details class="gaveta hidden" id="wrapDuracao">
       <summary><svg class="ic" aria-hidden="true"><use href="#i-timer"/></svg> <span>Duração e lembrete</span> <span class="gvc" id="durResumo"></span></summary>
       <div class="grid2" style="padding:0 var(--s3) var(--s3)">
@@ -1247,6 +1288,7 @@ tr.incompleto input{background:transparent}
       <div><label>Data</label><input type="date" id="vData"></div>
       <div><label>Hora prevista</label><input type="time" id="vHora" value="09:00"></div>
     </div>
+    <div class="upbar" id="vAtalhos"></div>
     <div class="grid2">
       <div><label id="labLoja">Loja</label><input list="listaLojas" id="vLoja" placeholder="Ex.: 07 - Matriz"></div>
       <div><label>Responsável</label><input list="listaSup" id="vSup" placeholder="Quem executa"></div>
@@ -2016,8 +2058,17 @@ function renderAgendaCompleta(){
       sub:(v.supervisor||'')+' · '+(v.status||''), extra:v.trabalho||'', linha:v.linha, status:v.status,
       pessoa:v.supervisor||'', obj:v});
   });
-  if(quem) itens=itens.filter(function(a){ return a.k==='reuniao' || a.pessoa===quem; });
+  /* o que já está na Agenda Google entra junto, marcado como tal: sem isto
+     o app mostra metade do seu dia e você continua conferindo dois lugares */
+  GCAL.forEach(function(e){
+    itens.push({k:'google', data:e.data, hora:e.hora||'', titulo:e.titulo||'(sem título)',
+      sub:(e.diaTodo?'dia todo':(e.hora+(e.fim?' às '+e.fim:'')))+
+          (e.local?' · '+e.local:'')+(e.convidados?' · '+e.convidados+' convidado(s)':''),
+      extra:'', linha:'', gid:e.id});
+  });
+  if(quem) itens=itens.filter(function(a){ return a.k==='reuniao' || a.k==='google' || a.pessoa===quem; });
   AGENDA_ITENS=itens;
+  renderProgressoDia(itens);
   if(!itens.length){
     box.innerHTML='<p class="sub">Nada marcado neste filtro. Use <b>Agendar</b> para criar reunião, visita ou tarefa.</p>';
     return;
@@ -2027,9 +2078,10 @@ function renderAgendaCompleta(){
   var hoje=hojeISO();
   var amanha=dataLocal(new Date(Date.now()+86400000));
   var DIAS=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
-  var TIPOICO={reuniao:ICO('clipboard'), visita:ICO('car'), tarefa:ICO('check-square')};
-  var COR={reuniao:'var(--navy)', visita:'#B7791F', tarefa:'var(--ok)'};
-  var h='<div class="hint" style="margin-bottom:6px">'+ICO('clipboard')+' reunião · '+ICO('car')+' visita · '+ICO('check-square')+' tarefa extra</div>', diaAtual='';
+  var TIPOICO={reuniao:ICO('clipboard'), visita:ICO('car'), tarefa:ICO('check-square'), google:ICO('calendar-days')};
+  var COR={reuniao:'var(--navy)', visita:'#B7791F', tarefa:'var(--ok)', google:'#67728c'};
+  var h='<div class="hint" style="margin-bottom:6px">'+ICO('clipboard')+' reunião · '+ICO('car')+' visita · '+
+        ICO('check-square')+' tarefa'+(GCAL.length?' · '+ICO('calendar-days')+' Agenda Google':'')+'</div>', diaAtual='';
 
   itens.forEach(function(a){
     if(a.data!==diaAtual){
@@ -2040,15 +2092,20 @@ function renderAgendaCompleta(){
       h+='<div style="margin:20px 0 8px;font-size:13px;font-weight:bold;color:'+(a.data===hoje?'var(--red)':'var(--navy)')+
          ';text-transform:uppercase;letter-spacing:.5px">'+rotulo+' · '+dataBr(a.data)+'</div>';
     }
-    var cor = a.k==='reuniao' ? COR.reuniao : (a.status==='Concluída'?'var(--ok)':(a.status==='Não realizada'?'var(--red)':COR[a.k]));
-    var acoes = a.k==='reuniao'
+    var cor = (a.k==='reuniao'||a.k==='google') ? COR[a.k] : (a.status==='Concluída'?'var(--ok)':(a.status==='Não realizada'?'var(--red)':COR[a.k]));
+    /* compromisso do Google é espelho, não registro do app: dá para ver,
+       não dá para dar Cheguei nem editar por aqui */
+    var acoes = a.k==='google'
+      ? '<a class="btn btn-ghost btn-sm" href="https://calendar.google.com/calendar/r/day/'+
+        (a.data||'').split('-').join('/')+'" target="_blank" rel="noopener noreferrer">Abrir no Google</a>'
+      : a.k==='reuniao'
       ? '<button class="btn btn-primary btn-sm" data-usar="'+a.linha+'">Usar</button>'+
         '<button class="btn btn-ghost btn-sm" data-edreuniao="'+a.linha+'">'+ICO('pencil')+' Editar</button>'+
         '<button class="btn btn-ghost btn-sm" data-desmarcar="'+a.linha+'" style="color:var(--red);border-color:#f3c6c8">Desmarcar</button>'
       : botoesVisita(a.obj) +
         (a.status==='Realizada' ? ''
           : '<button class="btn btn-ghost btn-sm" data-edvisita="'+a.linha+'">'+ICO('pencil')+' Editar</button>');
-    h+='<div class="ag'+(a.data===hoje?' hoje':'')+'" style="border-left-color:'+cor+';align-items:flex-start">'+
+    h+='<div class="ag'+(a.data===hoje?' hoje':'')+(a.k==='google'?' gcal':'')+'" style="border-left-color:'+cor+';align-items:flex-start">'+
        '<div class="agd" style="background:'+cor+'"><b>'+(a.hora||'--').slice(0,2)+'</b><span>'+(a.hora||'--:--').slice(3)+'</span></div>'+
        '<div class="agi"><div class="agt">'+TIPOICO[a.k]+' '+esc(a.titulo||'')+(a.status?' '+badgeStatus(a.status):'')+'</div>'+
        '<div class="ags">'+esc(a.sub)+'</div>'+
@@ -2087,15 +2144,132 @@ function textoAgenda(){
 }
 
 /* A agenda precisa das duas fontes: reuniões (AGENDAMENTOS) e atividades (VISITAS). */
+
+/* ---------- PROGRESSO DO DIA ----------
+   O app sabia que você tinha 4 visitas e concluiu 2, e não dizia em lugar
+   nenhum. É a diferença entre lista de tarefas e painel: uma cobra, o outro
+   deixa fechar o dia. */
+function renderProgressoDia(itens){
+  var box=$('agProgresso');
+  var hoje=hojeISO();
+  var doDia=itens.filter(function(a){ return a.data===hoje && (a.k==='visita'||a.k==='tarefa'); });
+  var reunioes=itens.filter(function(a){ return a.data===hoje && a.k==='reuniao'; }).length;
+  if(!doDia.length && !reunioes){ box.innerHTML=''; return; }
+
+  var feitas=doDia.filter(function(a){ return a.status==='Realizada'||a.status==='Concluída'; }).length;
+  var naoFeitas=doDia.filter(function(a){ return a.status==='Não realizada'; }).length;
+  var andando=doDia.filter(function(a){ return a.status==='Em andamento'; }).length;
+  var pct = doDia.length ? Math.round(feitas/doDia.length*100) : 100;
+  var completo = doDia.length && feitas===doDia.length;
+
+  box.innerHTML='<div class="prog'+(completo?' completo':'')+'">'+
+    '<div class="pt">'+(completo?ICO('check')+' Dia fechado':(doDia.length?feitas+' de '+doDia.length+' concluída(s)':'Nada de campo hoje'))+'</div>'+
+    '<div class="ps">'+
+      (reunioes?reunioes+' reunião(ões) · ':'')+
+      (andando?andando+' em andamento · ':'')+
+      (naoFeitas?'<b style="color:var(--red)">'+naoFeitas+' não realizada(s)</b> · ':'')+
+      (completo?'tudo que estava marcado para hoje foi registrado.':'atualize dando Cheguei e Saí em cada uma.')+
+    '</div>'+
+    (doDia.length?'<div class="barra"><div style="width:'+pct+'%;background:'+(completo?'var(--ok)':'var(--navy)')+'"></div></div>':'')+
+    '</div>';
+}
+
+
+/* ---------- ATALHOS DE DATA ----------
+   Marcar para amanhã exigia abrir o seletor nativo e navegar. Três toques a
+   menos por agendamento, várias vezes por semana. */
+function proximaSegunda(){
+  var d=new Date();
+  d.setDate(d.getDate() + ((8 - d.getDay()) % 7 || 7));
+  return dataLocal(d);
+}
+function ligarAtalhosData(idCampo, idBarra){
+  var barra=$(idBarra); if(!barra) return;
+  barra.innerHTML =
+    '<button type="button" class="btn btn-ghost btn-sm" data-quando="hoje">Hoje</button>'+
+    '<button type="button" class="btn btn-ghost btn-sm" data-quando="amanha">Amanhã</button>'+
+    '<button type="button" class="btn btn-ghost btn-sm" data-quando="segunda">Próx. segunda</button>';
+  delegar(idBarra, {'data-quando': function(v){
+    var campo=$(idCampo);
+    campo.value = v==='hoje' ? hojeISO() : (v==='amanha' ? isoMais(1) : proximaSegunda());
+    marcarAtalho(idBarra, campo.value);
+    if(campo.onchange) campo.onchange();
+    if(campo.oninput) campo.oninput();
+  }});
+  $(idCampo).addEventListener('input', function(){ marcarAtalho(idBarra, $(idCampo).value); });
+}
+function marcarAtalho(idBarra, valor){
+  var b=$(idBarra); if(!b) return;
+  var mapa={};
+  mapa[hojeISO()]='hoje'; mapa[isoMais(1)]='amanha'; mapa[proximaSegunda()]='segunda';
+  var qual=mapa[valor]||'';
+  Array.prototype.forEach.call(b.querySelectorAll('[data-quando]'),function(x){
+    var ativo = x.getAttribute('data-quando')===qual;
+    x.className='btn btn-sm '+(ativo?'btn-navy':'btn-ghost');
+  });
+}
+
+/* ============ JANELA DA AGENDA ============
+   Hoje, Semana, Mês — e a possibilidade de andar para trás e para a frente.
+   Antes a agenda carregava 45 dias numa lista só: o compromisso de hoje
+   ficava no meio de dezenas, e o supervisor rolava a tela de pé no balcão
+   para achar a própria visita. */
+var AG_PER='hoje';      /* 'hoje' | 'semana' | 'mes' */
+var AG_MES=0;           /* deslocamento em meses, 0 = mês atual */
+var GCAL=[];            /* compromissos vindos da Agenda Google */
+
+function janelaAgenda(){
+  var hoje=new Date();
+  if(AG_PER==='hoje')   return {de:hojeISO(), ate:hojeISO(), rotulo:'Hoje'};
+  if(AG_PER==='semana') return {de:hojeISO(), ate:isoMais(6), rotulo:'Próximos 7 dias'};
+  var base=new Date(hoje.getFullYear(), hoje.getMonth()+AG_MES, 1);
+  var fim =new Date(base.getFullYear(), base.getMonth()+1, 0);
+  var MES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  return {de:dataLocal(base), ate:dataLocal(fim), rotulo:MES[base.getMonth()]+' '+base.getFullYear()};
+}
+
+delegar('agFaixa', {'data-per': function(v){
+  if(AG_PER===v) return;
+  AG_PER=v; if(v!=='mes') AG_MES=0;
+  carregarAgendaUnificada();
+}});
+$('agMesAnt').onclick =function(){ AG_MES--; carregarAgendaUnificada(); };
+$('agMesProx').onclick=function(){ AG_MES++; carregarAgendaUnificada(); };
+$('agMesHoje').onclick=function(){ AG_MES=0; AG_PER='hoje'; carregarAgendaUnificada(); };
+$('agGoogle').onchange=function(){ carregarAgendaUnificada(); };
+
 function carregarAgendaUnificada(){
+  var j=janelaAgenda();
+  Array.prototype.forEach.call(document.querySelectorAll('[data-per]'),function(b){
+    b.className = b.getAttribute('data-per')===AG_PER ? 'sel' : '';
+  });
+  $('agMesNav').classList.toggle('hidden', AG_PER!=='mes');
+  $('agMesRotulo').textContent=j.rotulo;
+  $('agSub').textContent = AG_PER==='hoje'
+    ? 'Reuniões, visitas e tarefas de hoje.'
+    : (AG_PER==='semana' ? 'Os próximos sete dias.' : j.rotulo+' — use as setas para outros meses.');
+
   $('agendaLista').innerHTML='<p class="sub">Carregando…</p>';
   carregarProximas();
   if(!ENVIO_URL){ renderAgendaCompleta(); return; }
-  var url=ENVIO_URL+'?acao=visitas&de='+hojeISO()+'&ate='+isoMais(45);
-  if(!ehGestor() && souQuem()) url+='&supervisor='+encodeURIComponent(souQuem());
-  fetch(url).then(function(r){ return r.json(); })
-    .then(function(res){ VISITAS=(res && res.itens)||[]; renderAgendaCompleta(); })
-    .catch(function(){ renderAgendaCompleta(); });
+
+  var sup = (!ehGestor() && souQuem()) ? '&supervisor='+encodeURIComponent(souQuem()) : '';
+  var pedidos = [
+    fetch(ENVIO_URL+'?acao=visitas&de='+j.de+'&ate='+j.ate+sup).then(function(r){return r.json();}).catch(function(){return null;}),
+    fetch(ENVIO_URL+'?acao=agendamentos&de='+j.de+'&ate='+j.ate).then(function(r){return r.json();}).catch(function(){return null;})
+  ];
+  /* A Agenda Google é do coordenador (a conta que publicou o script). Puxar
+     para o supervisor mostraria compromissos que não são dele. */
+  pedidos.push(($('agGoogle').checked && ehCoordenador())
+    ? fetch(ENVIO_URL+'?acao=calendario&de='+j.de+'&ate='+j.ate).then(function(r){return r.json();}).catch(function(){return null;})
+    : Promise.resolve(null));
+
+  Promise.all(pedidos).then(function(res){
+    VISITAS = (res[0] && res[0].itens) || [];
+    if(res[1] && res[1].ok) PROX = res[1].itens || PROX;
+    GCAL = (res[2] && res[2].itens) || [];
+    renderAgendaCompleta();
+  });
 }
 function acharPorLinha(l){
   for(var i=0;i<PROX.length;i++){ if(String(PROX[i].linha)===String(l)) return PROX[i]; }
@@ -2466,6 +2640,7 @@ function abrirNovaVisita(tipo){
     ? 'Ex.: Fechar a arte da campanha de setembro com a agência e enviar para aprovação da diretoria.'
     : 'Ex.: Revisar a exposição da linha premium, conferir o estoque de imobiliária e treinar a Ana na abordagem de fechamento.';
   $('vData').value=hojeISO();
+  marcarAtalho('vAtalhos', $('vData').value);
   $('vHora').value= t ? '08:00' : '09:00';
   $('vLoja').value='';
   $('vSup').value=souQuem();
@@ -2571,6 +2746,7 @@ function abrirEditarVisita(linha){
   $('labLoja').innerHTML = t ? 'Referência <span style="text-transform:none;font-weight:normal">(opcional)</span>' : 'Loja';
   $('labTrabalho').innerHTML = (t?'O que precisa ser feito':'Trabalho a ser executado')+' <span style="color:var(--red)">*</span>';
   $('vData').value=v.data;
+  marcarAtalho('vAtalhos', v.data);
   $('vHora').value=(v.hora||'09:00').slice(0,5);
   $('vLoja').value=v.loja||'';
   $('vSup').value=v.supervisor||'';
@@ -3645,6 +3821,7 @@ $('btnDicas').onclick=function(){
 var _setModoOriginal = setModo;
 var _modoAnterior = null;
 setModo = function(m){
+  try{ if(typeof LS_ABA!=='undefined') localStorage.setItem(LS_ABA, m); }catch(e){}
   var mudou = (m !== _modoAnterior);
   _modoAnterior = m;
   _setModoOriginal(m);
@@ -3839,7 +4016,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v29';
+var VERSAO_APP='v30';
 
 var LS_SESSAO='sotintas_sessao_v1';
 var SESSAO=null;
@@ -5240,6 +5417,8 @@ if('serviceWorker' in navigator && location.protocol==='https:'){
 checkStart();
 recolherDicas();
 aplicarDicas();
+ligarAtalhosData('vData','vAtalhos');
+ligarAtalhosData('fData','fAtalhos');
 montarLogin();
 carregarNomes();
 document.body.classList.add('travado');
@@ -5249,8 +5428,18 @@ filaMostrar();
   var salvo=null; try{ salvo=JSON.parse(localStorage.getItem(LS_SESSAO)||'null'); }catch(e){}
   if(salvo && salvo.nome){ abrirApp(salvo); filaEnviar(true); }
 })();
-/* o app abre em Agendar: no dia a dia se planeja mais do que se começa reunião na hora */
-setModo('agendar');
+/* O dia começa em "o que eu tenho hoje", não em marcar. E o app volta onde
+   você parou: numa ferramenta aberta cinco vezes por dia, recomeçar do zero
+   a cada vez é atrito que ninguém percebe somando. */
+var LS_ABA='sotintas_aba_v1';
+(function(){
+  var alvo='agenda';
+  try{
+    var a=localStorage.getItem(LS_ABA);
+    if(a && ['agendar','agenda','rotina','agora','despesas','historico'].indexOf(a)>=0) alvo=a;
+  }catch(e){}
+  setModo(alvo);
+})();
 syncNav();
 </script>
 </body>
