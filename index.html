@@ -132,6 +132,17 @@ textarea{resize:vertical;line-height:1.5}
 /* gravando: a gaveta fica destacada mesmo fechada, para ninguém esquecer */
 .gaveta.ativa>summary{background:#fff2f2;color:var(--red)}
 
+/* ---------- ata revisada ---------- */
+.rvb{border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px;margin-bottom:10px}
+.rvb h4{margin:0 0 6px;color:var(--navy);font-size:var(--fs-md)}
+.rvb .antes{font-size:var(--fs-sm);color:var(--muted);white-space:pre-wrap;
+  border-left:3px solid var(--line);padding-left:10px;margin-bottom:8px;max-height:110px;overflow:auto}
+.rvb .depois{font-size:var(--fs-md);white-space:pre-wrap;line-height:1.6}
+.rvb .rot{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+  color:var(--muted);margin-bottom:4px}
+.rvduv{background:var(--warn-bg);border:1px solid #f0d48a;border-radius:var(--r-md);
+  padding:11px 13px;font-size:var(--fs-sm);color:#8a6100;margin-bottom:10px}
+
 /* ---------- navegação por mês ---------- */
 .mesnav{display:flex;align-items:center;gap:var(--s2);margin-bottom:var(--s3);flex-wrap:wrap}
 .mesnav span{font-weight:700;color:var(--navy);font-size:var(--fs-lg);min-width:130px;text-align:center}
@@ -844,10 +855,12 @@ tr.incompleto input{background:transparent}
         </div>
         <div><label>Período</label>
           <select id="fPeriodo">
-            <option value="7">Próximos 7 dias</option>
-            <option value="14" selected>Próximos 14 dias</option>
-            <option value="30">Próximos 30 dias</option>
-            <option value="-7">Últimos 7 dias</option>
+            <option value="ontem7" selected>Últimos 7 dias</option>
+            <option value="semana">Esta semana (seg a dom)</option>
+            <option value="mes">Este mês</option>
+            <option value="ontem30">Últimos 30 dias</option>
+            <option value="hoje">Só hoje</option>
+            <option value="frente14">Próximos 14 dias (planejado)</option>
           </select>
         </div>
       </div>
@@ -899,7 +912,10 @@ tr.incompleto input{background:transparent}
     <div id="viewContatos" class="hidden">
       <button class="btn btn-ghost btn-sm" id="btnVoltarContatos" style="margin-bottom:14px"><svg class="ic" aria-hidden="true"><use href="#i-arrow-left"/></svg> Voltar</button>
       <h1>Contatos</h1>
-      <p class="sub">A agenda fica na planilha, não no aparelho — quem trocar de celular não perde, e a equipe inteira usa a mesma.</p>
+      <p class="sub" id="ctSub">A agenda fica na planilha, não no aparelho — quem trocar de celular não perde, e a equipe inteira usa a mesma.</p>
+
+      <div id="ctAviso" class="hidden" style="background:var(--navy-05);border:1px solid var(--navy-10);
+        border-radius:var(--r-md);padding:12px 14px;font-size:13px;color:var(--navy);margin-bottom:14px"></div>
 
       <details class="gaveta" id="ctImportar">
         <summary><svg class="ic" aria-hidden="true"><use href="#i-cloud-up"/></svg> <span>Importar em lote</span> <span class="gvc">planilha ou contatos do celular</span></summary>
@@ -1234,6 +1250,7 @@ tr.incompleto input{background:transparent}
     <h2 style="margin:0 0 4px">Ata gerada</h2>
     <p class="sub" style="margin:0">Tudo abaixo é editável — clique e ajuste antes de enviar. Depois escolha a saída.</p>
     <div class="btnrow" style="margin-top:14px">
+      <button class="btn btn-navy" id="btnRevisar"><svg class="ic" aria-hidden="true"><use href="#i-bulb"/></svg> Revisar a transcrição</button>
       <button class="btn btn-primary" id="btnPdf"><svg class="ic" aria-hidden="true"><use href="#i-file"/></svg> Salvar em PDF</button>
       <button class="btn btn-navy" id="btnGoogle"><svg class="ic" aria-hidden="true"><use href="#i-cloud-up"/></svg> Enviar para o Google</button>
       <button class="btn btn-navy" id="btnZap"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg> Copiar para WhatsApp</button>
@@ -1316,6 +1333,20 @@ tr.incompleto input{background:transparent}
       <button class="btn btn-primary" id="naoFuiConfirmar">Registrar</button>
       <button class="btn btn-ghost" id="naoFuiCancelar">Voltar</button>
     </div>
+  </div>
+</div>
+
+<!-- modal ata revisada pela IA -->
+<div class="modal" id="modalRevisao">
+  <div class="mbox">
+    <h2>Ata revisada</h2>
+    <p class="sub" id="rvSub"></p>
+    <div id="rvCorpo"></div>
+    <div class="btnrow">
+      <button class="btn btn-primary" id="rvAplicar">Aplicar na ata</button>
+      <button class="btn btn-ghost" id="rvFechar">Descartar</button>
+    </div>
+    <div id="rvStatus" class="hidden" style="margin-top:12px;padding:11px 14px;border-radius:10px;font-size:14px"></div>
   </div>
 </div>
 
@@ -2367,12 +2398,40 @@ function recuperarSou(){
 }
 function isoMais(dias){ return dataLocal(new Date(Date.now()+dias*86400000)); }
 
+
+/* Janelas do painel de rotina. A régua é o trabalho realizado; planejamento
+   virou uma opção, não o padrão. */
+function periodoRotina(){
+  var v=$('fPeriodo').value, hoje=new Date();
+  if(v==='hoje')     return {de:hojeISO(), ate:hojeISO(), rotulo:'hoje'};
+  if(v==='ontem30')  return {de:isoMais(-29), ate:hojeISO(), rotulo:'últimos 30 dias'};
+  if(v==='frente14') return {de:hojeISO(), ate:isoMais(14), rotulo:'próximos 14 dias'};
+  if(v==='mes'){
+    var ini=new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    var fim=new Date(hoje.getFullYear(), hoje.getMonth()+1, 0);
+    return {de:dataLocal(ini), ate:dataLocal(fim), rotulo:'este mês'};
+  }
+  if(v==='semana'){
+    var seg=new Date(hoje); seg.setDate(hoje.getDate() - ((hoje.getDay()+6)%7));
+    var dom=new Date(seg);  dom.setDate(seg.getDate()+6);
+    return {de:dataLocal(seg), ate:dataLocal(dom), rotulo:'esta semana'};
+  }
+  /* padrão: janela corrida de 7 dias terminando hoje. Sempre contém ONTEM —
+     de segunda a segunda, sem buraco. A semana seg–dom continua disponível
+     para quem fecha o número por semana civil, mas na segunda-feira ela
+     começa hoje e a visita de domingo ficaria de fora. */
+  return {de:isoMais(-6), ate:hojeISO(), rotulo:'últimos 7 dias'};
+}
+
 function carregarRotina(){
   var box=$('rotinaKpis');
   if(!ENVIO_URL){ box.innerHTML='<p class="sub">Painel indisponível: o envio para o Google não está configurado.</p>'; return; }
-  var per=parseInt($('fPeriodo').value,10)||14;
-  var de  = per<0 ? isoMais(per) : hojeISO();
-  var ate = per<0 ? hojeISO()    : isoMais(per);
+  /* O painel mede o que FOI FEITO, mas a janela padrão só olhava para a
+     frente — e visita concluída ontem ficava fora da consulta: não contava,
+     não ficava verde, não aparecia na semana. É como conferir o caixa
+     olhando só as vendas de amanhã. */
+  var j=periodoRotina();
+  var de=j.de, ate=j.ate;
   box.innerHTML='<p class="sub">Carregando…</p>';
   SOU_CARREGADO=souQuem();
   var url=ENVIO_URL+'?acao=visitas&de='+de+'&ate='+ate;
@@ -2530,9 +2589,22 @@ function renderPainel(){
     else if(v.status==='Não realizada') o.nao++;
   });
   var nomes=Object.keys(porSup);
-  if(!nomes.length){ box.classList.add('hidden'); return; }
+  /* Período sem nenhuma visita não é motivo para sumir com o painel: é justamente
+     quando a carteira inteira cinza é a informação. Antes o quadro desaparecia e
+     sobrava a impressão de que o filtro tinha quebrado, não de que ninguém rodou. */
+  if(!nomes.length){
+    var vazio=cobertura();
+    box.innerHTML='<h3 style="margin:26px 0 6px">Planejado × realizado</h3>'+
+      '<p class="sub" style="margin-bottom:8px">Nenhuma visita registrada em <b>'+
+      esc(periodoRotina().rotulo)+'</b> ('+dataBr(periodoRotina().de)+' a '+
+      dataBr(periodoRotina().ate)+').</p>'+vazio;
+    box.classList.remove('hidden');
+    return;
+  }
   var h='<h3 style="margin:26px 0 6px">Planejado × realizado</h3>'+
-    '<p class="sub" style="margin-bottom:8px">Período selecionado acima. Cumprimento = visitas concluídas ÷ planejadas.</p>'+
+    '<p class="sub" style="margin-bottom:8px">Considerando <b>'+esc(periodoRotina().rotulo)+
+    '</b> ('+dataBr(periodoRotina().de)+' a '+dataBr(periodoRotina().ate)+'). '+
+    'Cumprimento = visitas concluídas ÷ planejadas.</p>'+
     '<div class="rolar"><table class="pnl"><tr><th>Pessoa</th><th>Visitas plan.</th><th>Feitas</th><th>Não fez</th>'+
     '<th style="min-width:130px">Cumprimento</th><th>Tempo médio</th><th>Tarefas extras</th></tr>';
   nomes.sort().forEach(function(n){
@@ -3210,12 +3282,31 @@ function avisoRec(html, cor){
   el.style.fontWeight = cor?'bold':'';
 }
 
+var recIniciando=false;
+
 function gravar(tipo){
-  if(mr && mr.state==='recording'){ pararGravacao(); return; }
+  /* Tocar num tipo diferente parava a gravação em silêncio: você apertava
+     "Vídeo" esperando começar vídeo e, na verdade, encerrava o áudio. Agora
+     o mesmo botão para; um botão diferente troca de fato. */
+  if(mr && mr.state==='recording'){
+    var mesmo = (recTipo===tipo);
+    pararGravacao();
+    if(mesmo) return;
+    setTimeout(function(){ gravar(tipo); }, 400);   /* espera fechar o arquivo */
+    return;
+  }
+  if(recIniciando) return;                          /* dois toques rápidos */
+  recIniciando=true;
   var cons = tipo==='video' ? {audio:true,video:{width:{ideal:1280}}} : {audio:true};
   navigator.mediaDevices.getUserMedia(cons).then(function(st){
+    recIniciando=false;
     mediaStream=st; chunks=[]; recTipo=tipo; recInterrompida=false;
     travarTela();
+    /* microfone é um só: transcrição ao vivo e gravação disputam o aparelho
+       em vários celulares, e o resultado é áudio picotado */
+    if(recOn && tipo!=='video'){
+      toast('A transcrição ao vivo continua ligada — se o áudio sair picotado, desligue uma das duas.');
+    }
     var mime = tipo==='video' ? 'video/webm' : 'audio/webm';
     try{ mr=new MediaRecorder(st,{mimeType:mime}); }catch(e){ mr=new MediaRecorder(st); }
     mr.ondataavailable=function(e){ if(e.data.size) chunks.push(e.data); };
@@ -3268,12 +3359,141 @@ function gravar(tipo){
         : '⚠ <b>Este navegador não deixa manter a tela acesa.</b> Se a tela apagar, a gravação para. '+
           'Mantenha o aparelho desbloqueado e nesta aba.')+
       (tipo==='video'?'<br><b>Para reunião longa prefira só o áudio</b> — vídeo de mais de ~20 min pesa muito no navegador.':''));
-  }).catch(function(){ toast('Não consegui acessar o microfone/câmera. Verifique a permissão do navegador.'); });
+  }).catch(function(err){
+    recIniciando=false;
+    var m=String(err&&err.name||'');
+    toast(m==='NotAllowedError'
+      ? 'Permissão negada. Libere microfone/câmera nas configurações do navegador.'
+      : (m==='NotFoundError' ? 'Não encontrei microfone/câmera neste aparelho.'
+      : 'Não consegui acessar o microfone/câmera. Verifique a permissão do navegador.'));
+  });
 }
-function pararGravacao(){ if(mr && mr.state==='recording') mr.stop(); }
+function pararGravacao(){
+  try{ if(mr && mr.state==='recording'){ mr.stop(); return; } }catch(e){}
+  /* recorder já morto e botão preso em "Parar": devolve a tela ao normal */
+  clearInterval(recTick);
+  soltarTela();
+  $('capAudio').classList.remove('on'); $('capVideo').classList.remove('on');
+  $('capAudio').innerHTML=LBL.audio; $('capVideo').innerHTML=LBL.video;
+  if(typeof marcarGavetas==='function') marcarGavetas();
+}
+
+
+/* ============ ATA REVISADA PELA IA ============
+   Transcrição automática é matéria-prima, não documento: vem sem pontuação,
+   com nome trocado e com o assunto pulando de um lado para o outro. A IA
+   organiza o que foi dito — nunca inventa o que deveria ter sido dito.
+   Por isso a revisão aparece lado a lado com o original, e só entra na ata
+   depois que você aplica.                                                */
+var REVISAO=null;
+
+$('btnRevisar').onclick=function(){
+  if(!ENVIO_URL){ boxStatus('erro','Envio para o Google não configurado neste arquivo.'); return; }
+  var blocos=(S.blocos||[]).map(function(b){ return {titulo:b.t, notas:b.notas||''}; });
+  var total=blocos.reduce(function(a,b){ return a+(b.notas||'').length; },0);
+  if(total<80){ toast('Há pouco texto para revisar. Grave, transcreva ou digite mais antes.'); return; }
+
+  $('btnRevisar').disabled=true;
+  boxStatus('info','Lendo a transcrição e reescrevendo… costuma levar de 10 a 30 segundos.');
+  fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({tipo:'revisarAta', blocos:blocos,
+      objetivo:S.objetivo||'', participantes:S.part||''})})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      $('btnRevisar').disabled=false;
+      if(!res || !res.ok){
+        boxStatus('erro','Não consegui revisar: '+((res&&res.erro)||'erro')+
+          (res&&res.semChave?' Cole a chave do Gemini na linha 19 do Apps Script.':''));
+        return;
+      }
+      $('googleStatus').classList.add('hidden');
+      REVISAO=res.revisao||{};
+      mostrarRevisao();
+    })
+    .catch(function(){ $('btnRevisar').disabled=false; boxStatus('erro','Sem conexão para revisar.'); });
+};
+
+function mostrarRevisao(){
+  var r=REVISAO, conf=(r.confianca||'media').toLowerCase();
+  var rot={alta:'confiança alta',media:'confiança média',baixa:'confiança baixa'}[conf]||'confiança média';
+  $('rvSub').innerHTML='Compare antes de aplicar. <span class="conf '+esc(conf)+'">'+esc(rot)+'</span>';
+
+  var h='';
+  if(conf==='baixa'){
+    h+='<div class="rvduv">'+ICO('alert')+' <b>A transcrição estava truncada ou confusa.</b> '+
+       'Leia com atenção — parte do que está aqui pode ter ficado incompleta.</div>';
+  }
+  if(r.duvidas && r.duvidas.length){
+    h+='<div class="rvduv"><b>Pontos que não ficaram claros:</b><br>'+
+       r.duvidas.map(function(d){ return '• '+esc(d); }).join('<br>')+'</div>';
+  }
+  (r.blocos||[]).forEach(function(b,i){
+    var orig=(S.blocos[i]&&S.blocos[i].notas)||'';
+    h+='<div class="rvb"><h4>'+esc(b.titulo||('Bloco '+(i+1)))+'</h4>'+
+       (orig?'<div class="rot">como foi transcrito</div><div class="antes">'+esc(orig)+'</div>':'')+
+       '<div class="rot">revisado</div><div class="depois">'+esc(b.texto||'(vazio)')+'</div></div>';
+  });
+  if((r.acoes||[]).length){
+    h+='<div class="rvb"><h4>Ações encontradas na conversa</h4>';
+    r.acoes.forEach(function(a){
+      var falta=!a.responsavel||!a.prazo;
+      h+='<div style="font-size:14px;margin-bottom:6px">• '+esc(a.acao||'')+
+         '<span style="color:'+(falta?'var(--red)':'var(--muted)')+';font-size:12.5px"> — '+
+         esc(a.responsavel||'sem dono')+' · '+esc(a.prazo||'sem prazo')+'</span></div>';
+    });
+    h+='<div class="hint">Entram na tabela de ações da reunião. As que estão em vermelho '+
+       'não tiveram dono ou prazo ditos em voz alta — a IA não deduz isso, e você precisa fechar.</div></div>';
+  }
+  if(r.resumo){
+    h+='<div class="rvb"><h4>Resumo para quem não participou</h4><div class="depois">'+esc(r.resumo)+'</div></div>';
+  }
+  if(r.pendencias){
+    h+='<div class="rvb"><h4>Ficou pendente</h4><div class="depois">'+esc(r.pendencias)+'</div></div>';
+  }
+  $('rvCorpo').innerHTML=h;
+  $('rvStatus').classList.add('hidden');
+  $('modalRevisao').classList.add('show');
+}
+
+$('rvFechar').onclick=function(){ $('modalRevisao').classList.remove('show'); };
+
+$('rvAplicar').onclick=function(){
+  if(!REVISAO) return;
+  /* guarda o original: revisão de IA é sugestão, e desfazer precisa existir */
+  if(!S.brutoOriginal) S.brutoOriginal=S.blocos.map(function(b){ return b.notas||''; });
+
+  (REVISAO.blocos||[]).forEach(function(b,i){
+    if(S.blocos[i] && b.texto) S.blocos[i].notas=b.texto;
+  });
+  (REVISAO.acoes||[]).forEach(function(a){
+    if(!a.acao) return;
+    var repetida=S.acoes.some(function(x){ return norml(x.a)===norml(a.acao); });
+    if(repetida) return;
+    var vazia = S.acoes.length===1 && !S.acoes[0].a.trim();
+    var nova={a:a.acao, r:a.responsavel||'', p:/^\d{4}-\d{2}-\d{2}$/.test(a.prazo||'')?a.prazo:''};
+    if(vazia) S.acoes[0]=nova; else S.acoes.push(nova);
+  });
+  if(REVISAO.pendencias && !S.pend) S.pend=REVISAO.pendencias;
+  S.resumoIA=REVISAO.resumo||'';
+  S.revisada=true;
+  /* gerarAta() relê a caixa de anotações e grava no bloco atual. Sem
+     sincronizar antes, o texto revisado do bloco em foco era sobrescrito
+     pelo que ficou na tela — a revisão sumia justamente de um bloco. */
+  if($('bNotas') && S.blocos[S.cur]) $('bNotas').value = S.blocos[S.cur].notas||'';
+  salvarLocal();
+  $('modalRevisao').classList.remove('show');
+  gerarAta();
+  boxStatus('ok', ICO('check')+' <b>Ata revisada aplicada.</b> O texto original ficou guardado — '+
+    'use <b>Voltar e ajustar</b> se quiser conferir alguma coisa antes de enviar.');
+  toast('Revisão aplicada. Confira antes de enviar.');
+};
 
 /* ============ ATA ============ */
 function gerarAta(){
+  /* Encerrar pelo botão "Ir para a ata" não passava pelo btnFinish, e o
+     microfone continuava ligado depois da reunião acabar. */
+  if(recOn) pararMic();
+  pararGravacao();
   salvarBloco(); clearInterval(tickTotal); S.fim=new Date().toISOString();
   var prev=S.blocos.reduce(function(a,b){return a+b.min;},0);
   var real=Math.round(S.totalSeg/60);
@@ -4016,7 +4236,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v30';
+var VERSAO_APP='v32';
 
 var LS_SESSAO='sotintas_sessao_v1';
 var SESSAO=null;
@@ -4097,6 +4317,7 @@ function aplicarEscopo(){
   /* a visão da rotina precisa ser remontada em qualquer caso: para o
      coordenador, para liberar o seletor; para o supervisor, para travá-lo */
   if(typeof montarVisaoRotina==='function') montarVisaoRotina();
+  if(typeof aplicarPermissaoContatos==='function') aplicarPermissaoContatos();
   if(!travado) return;
   /* Despesas */
   var f=$('dpFiltro');
@@ -4276,7 +4497,28 @@ function ctBox(cor,html){
   b.innerHTML=html; b.classList.remove('hidden');
 }
 
+/* A agenda é um cadastro da empresa, não de cada um. Se todo mundo puder
+   apagar, basta um toque errado para o contato de um gerente sumir para os
+   quatro — e ninguém sabe quem tirou. Ver, todos; mexer, só a coordenação. */
+function aplicarPermissaoContatos(){
+  var manda = ehCoordenador();
+  ['ctImportar','ctNovo','ctPlanilha'].forEach(function(id){
+    var el=$(id); if(el) el.classList.toggle('hidden', !manda);
+  });
+  /* quem não importa não precisa saber onde a agenda mora; o aviso abaixo já
+     diz o que interessa a ele. Dois textos dizendo quase a mesma coisa é ruído. */
+  var sub=$('ctSub'); if(sub) sub.classList.toggle('hidden', !manda);
+  var aviso=$('ctAviso');
+  if(aviso){
+    aviso.classList.toggle('hidden', manda);
+    if(!manda) aviso.innerHTML=ICO('lock')+' A agenda é mantida pela coordenação. '+
+      'Você usa os contatos ao convidar, mas não adiciona nem remove. '+
+      'Achou algo desatualizado? Fale com o Bruno.';
+  }
+}
+
 function carregarContatos(forcar){
+  aplicarPermissaoContatos();
   var box=$('ctLista');
   if(!ENVIO_URL){ box.innerHTML='<p class="sub">Indisponível: envio para o Google não configurado.</p>'; return; }
   if(CONTATOS.length && !forcar){ renderContatos(); return; }
@@ -4316,7 +4558,9 @@ function renderContatos(){
        '<div class="agi"><div class="agt">'+esc(c.nome)+'</div>'+
        '<div class="ags">'+[c.cargo,c.empresa,c.fone,c.email].filter(Boolean).map(esc).join(' · ')+'</div></div>'+
        (c.fone?'<a class="btn btn-ghost btn-sm" href="https://wa.me/'+foneWa(c.fone)+'" target="_blank" rel="noopener noreferrer">'+ICO('chat')+'</a>':'')+
-       '<button class="btn btn-ghost btn-sm" data-ctdel="'+c.linha+'" title="Remover da agenda">'+ICO('x')+'</button>'+
+       (ehCoordenador()
+         ? '<button class="btn btn-ghost btn-sm" data-ctdel="'+c.linha+'" title="Remover da agenda">'+ICO('x')+'</button>'
+         : '')+
        '</div>';
   });
   box.innerHTML=h;
@@ -4325,7 +4569,8 @@ delegar('ctLista', {'data-ctdel': function(linha){
   var c=CONTATOS.filter(function(x){ return String(x.linha)===String(linha); })[0];
   if(!c || !confirm('Remover "'+c.nome+'" da agenda?\n\nEle sai da lista, mas continua nas reuniões antigas.')) return;
   fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify({tipo:'excluirContato', linha:linha})})
+    body:JSON.stringify({tipo:'excluirContato', linha:linha, quem:euSou(),
+                         escopo:(SESSAO&&SESSAO.escopo)||'proprio'})})
     .then(function(r){ return r.json(); })
     .then(function(res){ if(res&&res.ok){ toast('Removido.'); carregarContatos(true); } else toast('Não consegui remover.'); })
     .catch(function(){ toast('Sem sinal.'); });
@@ -4345,7 +4590,8 @@ function enviarContatos(lista, aoTerminar){
   if(!ENVIO_URL){ ctBox('erro','Envio para o Google não configurado.'); return; }
   ctBox('info','Salvando '+lista.length+' contato(s)…');
   fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify({tipo:'contatos', contatos:lista, quem:euSou()})})
+    body:JSON.stringify({tipo:'contatos', contatos:lista, quem:euSou(),
+                         escopo:(SESSAO&&SESSAO.escopo)||'proprio'})})
     .then(function(r){ return r.json(); })
     .then(function(res){
       if(!res || !res.ok){ ctBox('erro','Não consegui salvar: '+((res&&res.erro)||'erro')); return; }
