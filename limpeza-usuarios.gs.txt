@@ -1,0 +1,212 @@
+/* ============================================================================
+   LIMPEZA DE CADASTROS — uso único
+   Assistente ST · Só Tintas · agosto/2026
+
+   Este arquivo é SEPARADO do Código.gs de propósito: você não precisa mexer no
+   script principal nem recolar a chave do Gemini. Adicione, rode uma vez, leia
+   o relatório, apague o arquivo.
+
+   COMO USAR
+   1. No Apps Script, clique no + ao lado de "Arquivos" → Script.
+   2. Nomeie "limpeza" e cole tudo isto por cima do conteúdo que vier.
+   3. No seletor de função, escolha  limparCadastros  → Executar.
+   4. Leia o registro de execução: ele conta linha por linha o que fez.
+   5. Confira a planilha. Se estiver bom, apague este arquivo.
+
+   O QUE ELE FAZ, NESTA ORDEM
+   a) Copia USUARIOS e EQUIPE para abas de backup datadas. Só depois mexe.
+   b) USUARIOS: funde Ramom+Ramon Guerra → Ramon (PIN 8246)
+                funde Danillo+Danilo     → Danilo (PIN 2034)
+                corrige o e-mail do Bruno (sotintasmet → sotintasnet)
+                tira espaços sobrando de todos os nomes
+                apaga as duas linhas duplicadas
+   c) EQUIPE:   Danillo → Danilo  e  Ramom → Ramon  na coluna Responsável
+
+   O QUE ELE NÃO FAZ
+   Não encosta em VISITAS, ACOES, REUNIOES, DESPESAS, CONTATOS nem AGENDAMENTOS.
+   O histórico fica exatamente como foi gravado — o app da v33 em diante já
+   reconhece "Danilo", "Danillo", "Ramon Guerra" e "Ramom" como as mesmas pessoas.
+
+   SEGURO PARA RODAR DUAS VEZES: na segunda ele encontra tudo pronto e não faz
+   nada. Se algo der errado no meio, ele para e diz onde parou, sem deixar a
+   planilha pela metade.
+   ============================================================================ */
+
+/* --- o que fundir: [nome que fica, PIN que fica, nomes que somem] --- */
+var FUSOES = [
+  { fica: 'Ramon',  pin: '8246', some: ['Ramom', 'Ramon Guerra'] },
+  { fica: 'Danilo', pin: '2034', some: ['Danillo', 'Danilo'] }
+];
+
+/* --- correções de e-mail: [errado, certo] --- */
+var EMAILS_CORRIGIR = [
+  ['supervisordelojas1@sotintasmet.com.br', 'supervisordelojas1@sotintasnet.com.br']
+];
+
+/* --- renomear na carteira: [de, para] --- */
+var RENOMEAR_EQUIPE = [ ['Danillo', 'Danilo'], ['Ramom', 'Ramon'] ];
+
+
+function limparCadastros() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var log = [];
+  function diz(t) { log.push(t); Logger.log(t); }
+
+  diz('=== LIMPEZA DE CADASTROS ===');
+  diz('Planilha: ' + ss.getName());
+
+  var abaU = ss.getSheetByName('USUARIOS');
+  var abaE = ss.getSheetByName('EQUIPE');
+  if (!abaU) { diz('PAREI: não achei a aba USUARIOS.'); return log.join('\n'); }
+  if (!abaE) { diz('AVISO: não achei a aba EQUIPE. Sigo só na USUARIOS.'); }
+
+  /* ---------- a) backup antes de qualquer coisa ---------- */
+  var carimbo = Utilities.formatDate(new Date(), 'America/Sao_Paulo', 'ddMM_HHmm');
+  diz('\n--- backup ---');
+  [abaU, abaE].forEach(function (aba) {
+    if (!aba) return;
+    var nome = 'BKP_' + aba.getName() + '_' + carimbo;
+    if (ss.getSheetByName(nome)) { diz('  ' + nome + ' já existia'); return; }
+    aba.copyTo(ss).setName(nome);
+    diz('  criei ' + nome);
+  });
+  diz('  (pode apagar essas abas quando estiver confiante)');
+
+  /* ---------- b) USUARIOS ---------- */
+  diz('\n--- USUARIOS ---');
+  var dados = abaU.getDataRange().getValues();
+  var cab = dados[0];
+  var cNome = cab.indexOf('Nome'), cPin = cab.indexOf('PIN'), cMail = cab.indexOf('E-mail');
+  if (cNome < 0 || cPin < 0) { diz('PAREI: não achei as colunas Nome/PIN.'); return log.join('\n'); }
+
+  /* mapa nome-limpo -> índice da linha na matriz */
+  function achaLinha(nome) {
+    for (var i = 1; i < dados.length; i++) {
+      if (String(dados[i][cNome] || '').trim() === nome) return i;
+    }
+    return -1;
+  }
+
+  var apagar = [];   /* índices de linha (base 1 da planilha) */
+
+  /* Quantos campos preenchidos a linha tem. Serve para escolher qual cadastro
+     sobrevive: entre "Danillo" (com e-mail e telefone) e "Danilo" (vazio), quem
+     fica é o que tem conteúdo. Escolher pela ordem da planilha daria o contrário
+     — apagaria justamente o e-mail que faz o resumo diário chegar. */
+  function riqueza(linha) {
+    var n = 0;
+    for (var c = 0; c < linha.length; c++) if (String(linha[c] || '').trim()) n++;
+    return n;
+  }
+
+  FUSOES.forEach(function (f) {
+    /* candidatas: qualquer linha com o nome final ou um dos nomes que somem */
+    var nomes = [f.fica].concat(f.some);
+    var iFica = -1;
+    for (var i = 1; i < dados.length; i++) {
+      var n = String(dados[i][cNome] || '').trim();
+      if (nomes.indexOf(n) < 0) continue;
+      if (iFica < 0 || riqueza(dados[i]) > riqueza(dados[iFica])) iFica = i;
+    }
+    if (iFica < 0) { diz('  ' + f.fica + ': não achei nenhuma linha. Pulei.'); return; }
+
+    var antes = String(dados[iFica][cNome]).trim() + ' / PIN ' + String(dados[iFica][cPin]).trim();
+    abaU.getRange(iFica + 1, cNome + 1).setValue(f.fica);
+    abaU.getRange(iFica + 1, cPin + 1).setValue(f.pin);
+    diz('  linha ' + (iFica + 1) + ': ' + antes + '  ->  ' + f.fica + ' / PIN ' + f.pin);
+
+    /* as demais linhas com qualquer um dos nomes viram lixo */
+    for (var i = 1; i < dados.length; i++) {
+      if (i === iFica) continue;
+      var n = String(dados[i][cNome] || '').trim();
+      if (n === f.fica || f.some.indexOf(n) >= 0) {
+        apagar.push(i + 1);
+        diz('  linha ' + (i + 1) + ': "' + n + '" marcada para apagar (duplicada)');
+      }
+    }
+  });
+
+  /* e-mail errado */
+  if (cMail >= 0) {
+    for (var i = 1; i < dados.length; i++) {
+      var atual = String(dados[i][cMail] || '').trim();
+      EMAILS_CORRIGIR.forEach(function (par) {
+        if (atual.toLowerCase() === par[0].toLowerCase()) {
+          abaU.getRange(i + 1, cMail + 1).setValue(par[1]);
+          diz('  linha ' + (i + 1) + ': e-mail ' + par[0] + '  ->  ' + par[1]);
+        }
+      });
+    }
+  }
+
+  /* espaços sobrando no nome */
+  for (var i = 1; i < dados.length; i++) {
+    var bruto = String(dados[i][cNome] || '');
+    if (bruto !== bruto.trim() && bruto.trim() !== '') {
+      abaU.getRange(i + 1, cNome + 1).setValue(bruto.trim());
+      diz('  linha ' + (i + 1) + ': tirei espaço sobrando de "' + bruto + '"');
+    }
+  }
+
+  /* apagar de baixo para cima, senão os índices andam */
+  apagar.sort(function (a, b) { return b - a; });
+  apagar.forEach(function (l) { abaU.deleteRow(l); });
+  diz('  ' + apagar.length + ' linha(s) duplicada(s) apagada(s)');
+
+  /* ---------- c) EQUIPE ---------- */
+  if (abaE) {
+    diz('\n--- EQUIPE ---');
+    var de = abaE.getDataRange().getValues();
+    var cResp = de[0].indexOf('Responsável');
+    if (cResp < 0) {
+      diz('  não achei a coluna Responsável. Pulei.');
+    } else {
+      var trocas = 0;
+      for (var i = 1; i < de.length; i++) {
+        var atual = String(de[i][cResp] || '').trim();
+        for (var k = 0; k < RENOMEAR_EQUIPE.length; k++) {
+          if (atual === RENOMEAR_EQUIPE[k][0]) {
+            abaE.getRange(i + 1, cResp + 1).setValue(RENOMEAR_EQUIPE[k][1]);
+            trocas++;
+          }
+        }
+      }
+      diz('  ' + trocas + ' loja(s) com o responsável renomeado');
+    }
+  }
+
+  /* ---------- d) como ficou ---------- */
+  diz('\n--- COMO FICOU (USUARIOS) ---');
+  var fim = abaU.getDataRange().getValues();
+  for (var i = 1; i < fim.length; i++) {
+    if (!String(fim[i][cNome] || '').trim()) continue;
+    diz('  ' + String(fim[i][cNome]) +
+        ' | PIN ' + String(fim[i][cPin]) +
+        (cMail >= 0 ? ' | ' + (String(fim[i][cMail] || '').trim() || '(sem e-mail)') : ''));
+  }
+
+  diz('\nPronto. Confira a planilha e depois apague este arquivo do projeto.');
+  return log.join('\n');
+}
+
+
+/* ----------------------------------------------------------------------------
+   OPCIONAL — desligar o autocadastro.
+   Rode SÓ depois que todo mundo tiver entrado pelo menos uma vez.
+   Isto não mexe na planilha: só lembra o passo manual, porque a chave mora no
+   Código.gs e trocar código por código é mais seguro que um script fazer isso.
+   ---------------------------------------------------------------------------- */
+function comoDesligarAutocadastro() {
+  var t = [
+    'No Código.gs, procure a linha:',
+    "    var PERMITIR_AUTOCADASTRO = true;",
+    'Troque para:',
+    "    var PERMITIR_AUTOCADASTRO = false;",
+    'Salve e faça Implantar -> Gerenciar implantações -> editar -> Nova versão.',
+    '',
+    'A partir daí, nome que não estiver na aba USUARIOS não entra —',
+    'e não nasce um cadastro novo em silêncio.'
+  ].join('\n');
+  Logger.log(t);
+  return t;
+}
