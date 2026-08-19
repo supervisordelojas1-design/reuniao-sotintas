@@ -1501,11 +1501,11 @@ var EQUIPE = {
     '13 - Saracuruna', '15 - Três Rios', '17 - Santa Cruz', '22 - Dep Alto',
     '23 - Dep Várzea', '28 - Angra', '38 - Itaguaí'
   ]},
-  'Ramon': { papel:'Supervisor', lojas:[
+  'Ramom': { papel:'Supervisor', lojas:[
     '19 - Nilópolis', '25 - Belford Roxo', '21 - Queimados', '18 - Nova Iguaçu 1',
     '24 - Nova Iguaçu 2', '36 - São João', '26 - São Cristóvão', '35 - Taquara'
   ]},
-  'Danilo': { papel:'Supervisor', lojas:[
+  'Danillo': { papel:'Supervisor', lojas:[
     '16 - Maricá', '27 - Araruama', '29 - Itaipu', '30 - Barão',
     '32 - Paraíso', '33 - Macaé 2', '34 - Cabo Frio', '37 - Macaé 3'
   ]},
@@ -1527,7 +1527,7 @@ function carregarEquipe(){
       var n=Object.keys(res.equipe).length;
       if(!n) return;                       /* planilha vazia: mantém a semente */
       EQUIPE=res.equipe;
-      recalcularEquipe();                  /* <- sem isto, CARTEIRA e LOJAS ficam na semente */
+      SUPERVISORES=Object.keys(EQUIPE);
       preencherListas();
       montarVisaoRotina();
       montarLogin();
@@ -1538,28 +1538,15 @@ function carregarEquipe(){
     .catch(function(){ /* offline: segue com a semente */ });
 }
 
-var SUPERVISORES = [], CARTEIRA = {}, LOJAS = [];
-
-/* Tudo que deriva da EQUIPE é recalculado AQUI, num lugar só.
-   Antes, SUPERVISORES era atualizado quando a planilha chegava, mas CARTEIRA e
-   LOJAS continuavam com a lista de partida do código. Enquanto os dois falassem
-   o mesmo, ninguém percebia. No dia em que a planilha dizia "Danillo" e o código
-   dizia "Danilo", CARTEIRA['Danillo'] virou indefinido e o supervisor sumiu do
-   painel levando as oito lojas junto.
-   É o mapa da loja atualizado só na parede e não no sistema: enquanto ninguém
-   muda nada de lugar, os dois concordam — e no dia da mudança um dos dois mente. */
-function recalcularEquipe(){
-  SUPERVISORES = Object.keys(EQUIPE);
-  CARTEIRA = {};
-  LOJAS = [];
-  SUPERVISORES.forEach(function(s){
-    var l = (EQUIPE[s] && EQUIPE[s].lojas) || [];
-    if(l.length) CARTEIRA[s] = l;
-    LOJAS = LOJAS.concat(l);
-  });
-  LOJAS.sort();
-}
-recalcularEquipe();
+var SUPERVISORES = Object.keys(EQUIPE);
+var CARTEIRA = (function(){
+  var c={}; SUPERVISORES.forEach(function(s){ if(EQUIPE[s].lojas.length) c[s]=EQUIPE[s].lojas; });
+  return c;
+})();
+var LOJAS = (function(){
+  var t=[]; SUPERVISORES.forEach(function(s){ t=t.concat(EQUIPE[s].lojas); });
+  return t.sort();
+})();
 function lojasDe(sup){
   var e=EQUIPE[sup];
   return (e && e.lojas.length) ? e.lojas : LOJAS;
@@ -2489,15 +2476,16 @@ function renderRotina(){
   var med=comT.length?Math.round(comT.reduce(function(a,v){return a+(+v.permanencia);},0)/comT.length):0;
   var tarOk=tar.filter(function(v){ return v.status==='Concluída'; }).length;
 
-  /* lojas da carteira sem nenhuma visita no período — mesma comparação
-     tolerante da Cobertura, senão o número do topo briga com os chips de baixo */
-  var visitadas=lojasVisitadas();
+  /* lojas da carteira sem nenhuma visita no período */
+  var visitadas={};
+  feitas.concat(vis.filter(function(v){return v.status==='Em andamento';}))
+        .forEach(function(v){ visitadas[(v.supervisor||'')+'|'+(v.loja||'')]=true; });
   var quem = ehGestor() ? SUPERVISORES : [souQuem()];
   var totalCart=0, semVisita=0;
   quem.forEach(function(s){
     var l=CARTEIRA[s]; if(!l) return;
     totalCart+=l.length;
-    l.forEach(function(x){ if(!visitadas.hasOwnProperty(chaveLoja(x))) semVisita++; });
+    l.forEach(function(x){ if(!visitadas[s+'|'+x]) semVisita++; });
   });
 
   var cls = pct>=80?'ok':(pct>=50?'al':'ru');
@@ -2635,76 +2623,24 @@ function renderPainel(){
   box.classList.remove('hidden');
 }
 
-/* A planilha é preenchida por gente, não por máquina. "Friburgo", "08 - Friburgo"
-   e "08 – FRIBURGO " são a mesma loja para qualquer pessoa — e eram três lojas
-   diferentes para o app, porque ele comparava a string crua. Foi exatamente isso
-   que deixou Friburgo cinza depois da visita de 18/08: o check-in e o check-out
-   estavam certos, o nome é que tinha sido digitado curto.
-   Reconhecer a loja pelo nome, e não pela grafia, é o mesmo que aceitar
-   "Nova Iguaçu 1" e "NOVA IGUACU 1" como o mesmo lugar — porque são. */
-function chaveLoja(l){
-  return semAcento(l)
-    .replace(/^\d+\s*[-–—]\s*/, '')   /* tira o "08 - " da frente */
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
-}
-
-/* Primeiro nome, sem acento. "Ramon Guerra" e "Ramom" viram "ramon"/"ramom". */
-function chavePessoa(n){ return semAcento(n).split(' ')[0]; }
-
-/* Uma letra de diferença no primeiro nome é a mesma pessoa escrita de dois
-   jeitos — "Danilo"/"Danillo", "Ramon"/"Ramom" —, não duas pessoas. Com quatro
-   supervisores o risco de confundir é nulo; o de contar errado era diário. */
-function mesmaPessoa(a, b){
-  a = chavePessoa(a); b = chavePessoa(b);
-  if(a === b) return true;
-  if(!a || !b || Math.abs(a.length - b.length) > 1) return false;
-  var i = 0, j = 0, dif = 0;
-  while(i < a.length && j < b.length){
-    if(a.charAt(i) === b.charAt(j)){ i++; j++; continue; }
-    if(++dif > 1) return false;
-    if(a.length > b.length) i++;
-    else if(b.length > a.length) j++;
-    else { i++; j++; }
-  }
-  return dif + (a.length - i) + (b.length - j) <= 1;
-}
-
-/* Índice da carteira: chave normalizada -> nome oficial e dono da loja. */
-function indiceCarteira(){
-  var idx = {};
-  Object.keys(CARTEIRA).forEach(function(s){
-    (CARTEIRA[s] || []).forEach(function(l){ idx[chaveLoja(l)] = { loja: l, dono: s }; });
-  });
-  return idx;
-}
-
-/* Quais lojas da carteira foram visitadas no período. Chave normalizada -> quem foi. */
-function lojasVisitadas(){
-  var m = {};
-  VISITAS.forEach(function(v){
-    if(ehTarefa(v)) return;
-    if(v.status !== 'Concluída' && v.status !== 'Em andamento') return;
-    var k = chaveLoja(v.loja);
-    if(k && !m.hasOwnProperty(k)) m[k] = v.supervisor || '';
-  });
-  return m;
-}
-
 /* Cobertura da carteira: quais lojas foram visitadas no período e quais ficaram de fora.
    Com 15 lojas numa carteira, é isso que ninguém consegue guardar de cabeça. */
 function cobertura(){
-  var visitadas = lojasVisitadas();
+  var visitadas={};
+  VISITAS.forEach(function(v){
+    if(!ehTarefa(v) && (v.status==='Concluída' || v.status==='Em andamento')){
+      visitadas[(v.supervisor||'')+'|'+(v.loja||'')]=true;
+    }
+  });
   var quem = ehGestor() ? SUPERVISORES : [souQuem()];
   var h='<h3 style="margin:26px 0 6px">Cobertura da carteira</h3>'+
-        '<p class="sub" style="margin-bottom:10px">Verde = visitada no período. Cinza = ainda sem visita. '+
-        'Azul = coberta por outra pessoa.</p>';
+        '<p class="sub" style="margin-bottom:10px">Verde = visitada no período. Cinza = ainda sem visita.</p>';
   var algum=false;
   quem.forEach(function(s){
     var lojas=CARTEIRA[s];
     if(!lojas) return;
     algum=true;
-    var feitas=lojas.filter(function(l){ return visitadas.hasOwnProperty(chaveLoja(l)); });
+    var feitas=lojas.filter(function(l){ return visitadas[s+'|'+l]; });
     var faltam=lojas.length-feitas.length;
     h+='<div style="margin-bottom:16px">'+
        '<div style="font-weight:bold;color:var(--navy);font-size:14px;margin-bottom:6px">'+esc(s)+
@@ -2712,17 +2648,10 @@ function cobertura(){
        (faltam?' · <b style="color:var(--red)">'+faltam+' sem visita</b>':' · <b style="color:var(--ok)">carteira completa</b>')+
        '</span></div><div style="display:flex;flex-wrap:wrap;gap:6px">';
     lojas.forEach(function(l){
-      var k=chaveLoja(l);
-      var ok=visitadas.hasOwnProperty(k);
-      /* loja coberta por outra pessoa continua coberta — mas você precisa saber
-         que não foi o dono da carteira que foi lá */
-      var outro = ok && visitadas[k] && !mesmaPessoa(visitadas[k], s);
-      var estilo = !ok ? 'background:#f1f3f8;color:var(--muted)'
-                 : outro ? 'background:var(--navy-10);color:var(--navy);font-weight:bold'
-                 : 'background:#e3f6ec;color:var(--ok);font-weight:bold';
-      h+='<span style="font-size:12px;padding:4px 9px;border-radius:20px;'+estilo+'"'+
-         (outro?' title="Visitada por '+esc(visitadas[k])+'"':'')+'>'+
-         (ok?'✓ ':'')+esc(l)+(outro?' <span style="font-weight:normal">· '+esc(chavePessoa(visitadas[k]))+'</span>':'')+'</span>';
+      var ok=!!visitadas[s+'|'+l];
+      h+='<span style="font-size:12px;padding:4px 9px;border-radius:20px;'+
+         (ok?'background:#e3f6ec;color:var(--ok);font-weight:bold':'background:#f1f3f8;color:var(--muted)')+
+         '">'+(ok?'✓ ':'')+esc(l)+'</span>';
     });
     h+='</div></div>';
   });
@@ -2931,30 +2860,17 @@ function validaVisita(){
            (!precisaLoja || $('vLoja').value.trim());
   $('vSalvar').disabled=!ok;
 }
-/* Grava a loja sempre com o nome oficial da carteira. Digitou "friburgo",
-   "08-Friburgo" ou "FRIBURGO"? Vai para a planilha como "08 - Friburgo".
-   Corrigir na entrada é mais barato que corrigir depois: é a diferença entre
-   conferir a nota fiscal no balcão e descobrir o erro no fechamento do mês.
-   O que não é loja da carteira ("Escritório", "Home office") passa como está —
-   o campo continua livre de propósito. */
-function nomeOficialLoja(txt){
-  var bruto=String(txt||'').trim();
-  var achou=indiceCarteira()[chaveLoja(bruto)];
-  return achou ? achou.loja : bruto;
-}
-
 function salvarVisita(){
   if(!ENVIO_URL) return;
   $('vSalvar').disabled=true;
   var b=$('vStatus');
   b.style.background='#eef3ff'; b.style.color='var(--navy)'; b.style.border='1.5px solid var(--navy)';
   b.textContent='⏳ Salvando…'; b.classList.remove('hidden');
-  var loja = nomeOficialLoja($('vLoja').value);
   var corpo = VISITA_EDIT
     ? {tipo:'editarVisita', linha:VISITA_EDIT.linha, data:$('vData').value, hora:$('vHora').value,
-       loja:loja, responsavel:$('vSup').value.trim(), trabalho:$('vTrabalho').value.trim()}
+       loja:$('vLoja').value.trim(), responsavel:$('vSup').value.trim(), trabalho:$('vTrabalho').value.trim()}
     : {tipo:'visita', atividade:TIPO_NOVO, data:$('vData').value, hora:$('vHora').value,
-       loja:loja, supervisor:$('vSup').value.trim(), trabalho:$('vTrabalho').value.trim()};
+       loja:$('vLoja').value.trim(), supervisor:$('vSup').value.trim(), trabalho:$('vTrabalho').value.trim()};
   fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
     body:JSON.stringify(corpo)})
     .then(function(r){ return r.json(); })
@@ -4320,7 +4236,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v35';
+var VERSAO_APP='v32';
 
 var LS_SESSAO='sotintas_sessao_v1';
 var SESSAO=null;
