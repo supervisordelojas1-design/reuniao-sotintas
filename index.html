@@ -1527,7 +1527,7 @@ function carregarEquipe(){
       var n=Object.keys(res.equipe).length;
       if(!n) return;                       /* planilha vazia: mantém a semente */
       EQUIPE=res.equipe;
-      SUPERVISORES=Object.keys(EQUIPE);
+      recalcularEquipe();                  /* <- sem isto, CARTEIRA e LOJAS ficam na semente */
       preencherListas();
       montarVisaoRotina();
       montarLogin();
@@ -1538,15 +1538,28 @@ function carregarEquipe(){
     .catch(function(){ /* offline: segue com a semente */ });
 }
 
-var SUPERVISORES = Object.keys(EQUIPE);
-var CARTEIRA = (function(){
-  var c={}; SUPERVISORES.forEach(function(s){ if(EQUIPE[s].lojas.length) c[s]=EQUIPE[s].lojas; });
-  return c;
-})();
-var LOJAS = (function(){
-  var t=[]; SUPERVISORES.forEach(function(s){ t=t.concat(EQUIPE[s].lojas); });
-  return t.sort();
-})();
+var SUPERVISORES = [], CARTEIRA = {}, LOJAS = [];
+
+/* Tudo que deriva da EQUIPE é recalculado AQUI, num lugar só.
+   Antes, SUPERVISORES era atualizado quando a planilha chegava, mas CARTEIRA e
+   LOJAS continuavam com a lista de partida do código. Enquanto os dois falassem
+   o mesmo, ninguém percebia. No dia em que a planilha dizia "Danillo" e o código
+   dizia "Danilo", CARTEIRA['Danillo'] virou indefinido e o supervisor sumiu do
+   painel levando as oito lojas junto.
+   É o mapa da loja atualizado só na parede e não no sistema: enquanto ninguém
+   muda nada de lugar, os dois concordam — e no dia da mudança um dos dois mente. */
+function recalcularEquipe(){
+  SUPERVISORES = Object.keys(EQUIPE);
+  CARTEIRA = {};
+  LOJAS = [];
+  SUPERVISORES.forEach(function(s){
+    var l = (EQUIPE[s] && EQUIPE[s].lojas) || [];
+    if(l.length) CARTEIRA[s] = l;
+    LOJAS = LOJAS.concat(l);
+  });
+  LOJAS.sort();
+}
+recalcularEquipe();
 function lojasDe(sup){
   var e=EQUIPE[sup];
   return (e && e.lojas.length) ? e.lojas : LOJAS;
@@ -4307,7 +4320,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v34';
+var VERSAO_APP='v35';
 
 var LS_SESSAO='sotintas_sessao_v1';
 var SESSAO=null;
