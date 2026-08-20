@@ -774,10 +774,12 @@ tr.incompleto input{background:transparent}
               <option>Combustível</option>
               <option>Pedágio</option>
               <option>Estacionamento</option>
+              <option>Transporte</option>
               <option>Alimentação</option>
               <option>Hospedagem</option>
               <option>Material de loja</option>
               <option>Manutenção do veículo</option>
+              <option>Ação de Marketing</option>
               <option>Outros</option>
             </select>
           </div>
@@ -4296,7 +4298,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v36';
+var VERSAO_APP='v37.1';
 
 var LS_SESSAO='sotintas_sessao_v1';
 var SESSAO=null;
@@ -5257,6 +5259,12 @@ function carregarDespesas(){
     .catch(function(){ box.innerHTML='<p class="sub">Não consegui carregar o relatório. Verifique a conexão e a versão do Apps Script.</p>'; });
 }
 
+/* Em aberto × acertado. A despesa reembolsada não some — muda de lista.
+   Sai da mesa de trabalho e vai para o resumo do que já foi pago, que é
+   exatamente o que se faz com o comprovante depois do acerto: ele não vai
+   para o lixo, vai para a pasta do mês. */
+var DP_VISAO='aberto';
+
 function renderDespesas(r){
   var box=$('dpRel');
   if(!r.lancamentos){
@@ -5264,13 +5272,18 @@ function renderDespesas(r){
     return;
   }
   var pctFoto = Math.round(r.comComprovante/r.lancamentos*100);
+  var aberto=r.totalAberto||0, acertado=r.totalAcertado||0, aPagar=r.aPagar||0;
+  var semDeAcordo = aberto-aPagar;
 
   var ant=r.anterior;
   var h='<div class="kpis">'+
     '<div class="kpi"><div class="kv">'+brl(r.total)+'</div><div class="kl">total do período</div>'+
       '<div class="kx">'+r.lancamentos+' lançamento(s)'+(ant?'<br>'+seta(r.total, ant.total, true):'')+'</div></div>'+
-    '<div class="kpi"><div class="kv">'+brl(r.ticket)+'</div><div class="kl">valor médio</div>'+
-      '<div class="kx">por lançamento</div></div>'+
+    '<div class="kpi '+(aPagar>0?'al':'ok')+'"><div class="kv">'+brl(aPagar)+'</div><div class="kl">a reembolsar</div>'+
+      '<div class="kx">aprovadas e ainda não pagas'+
+      (semDeAcordo>0.009?'<br><span style="color:var(--muted)">+ '+brl(semDeAcordo)+' sem de acordo</span>':'')+'</div></div>'+
+    '<div class="kpi ok"><div class="kv">'+brl(acertado)+'</div><div class="kl">já acertado</div>'+
+      '<div class="kx">'+(r.nAcertado||0)+' despesa(s) reembolsada(s)</div></div>'+
     '<div class="kpi '+(pctFoto>=90?'ok':(pctFoto>=70?'al':'ru'))+'"><div class="kv">'+pctFoto+'%</div>'+
       '<div class="kl">com comprovante</div><div class="kx">'+r.comComprovante+' de '+r.lancamentos+'</div></div>'+
     (r.pendentesDecisao
@@ -5281,21 +5294,39 @@ function renderDespesas(r){
         '<div class="kx">'+(r.aprovadas||0)+' aprovada(s)'+((r.questionadas||0)?' · '+r.questionadas+' questionada(s)':'')+'</div></div>')+
     '</div>';
 
-  /* ---- por pessoa, com o custo por visita ---- */
+  /* ---- por pessoa: o que ainda devo, o que já paguei, e o custo por visita ---- */
   h+='<h3>Por pessoa</h3>'+
-     '<div class="rolar"><table class="pnl emp"><thead><tr><th>Quem</th><th>Total</th><th>Lançamentos</th>'+
-     '<th>Visitas realizadas</th><th>Custo por visita</th></tr></thead><tbody>';
+     '<div class="rolar"><table class="pnl emp"><thead><tr><th>Quem</th><th>Gasto no período</th>'+
+     '<th>A reembolsar</th><th>Já acertado</th><th>Custo por visita</th>'+
+     (ehCoordenador()?'<th>Acerto</th>':'')+'</tr></thead><tbody>';
   r.pessoas.forEach(function(p){
     /* data-l alimenta o rótulo quando a tabela vira cartão no celular */
-    h+='<tr><td data-l="Quem"><b>'+esc(p.nome)+'</b></td>'+
-       '<td data-l="Total">'+brl(p.total)+'</td>'+
-       '<td data-l="Lançamentos">'+p.lancamentos+'</td>'+
-       '<td data-l="Visitas realizadas">'+p.visitas+'</td>'+
+    h+='<tr><td data-l="Quem"><b>'+esc(p.nome)+'</b>'+
+       '<div style="font-size:11px;color:var(--muted)">'+p.lancamentos+' lançamento(s) · '+p.visitas+' visita(s)</div></td>'+
+       '<td data-l="Gasto no período">'+brl(p.total)+'</td>'+
+       '<td data-l="A reembolsar">'+((p.aPagar||0)>0
+         ? '<b style="color:var(--red)">'+brl(p.aPagar)+'</b>'
+         : '<span style="color:var(--muted)">—</span>')+
+         (((p.aberto||0)-(p.aPagar||0))>0.009
+           ? '<div style="font-size:11px;color:var(--muted)">'+brl((p.aberto||0)-(p.aPagar||0))+' sem de acordo</div>' : '')+'</td>'+
+       '<td data-l="Já acertado">'+((p.acertado||0)>0
+         ? '<b style="color:var(--ok)">'+brl(p.acertado)+'</b>'
+         : '<span style="color:var(--muted)">—</span>')+'</td>'+
        '<td data-l="Custo por visita">'+(p.porVisita==null
          ? '<span style="color:var(--muted)">sem visita registrada</span>'
-         : '<b style="color:var(--navy)">'+brl(p.porVisita)+'</b>')+'</td></tr>';
+         : '<b style="color:var(--navy)">'+brl(p.porVisita)+'</b>')+'</td>'+
+       (ehCoordenador()
+         ? '<td data-l="Acerto">'+((p.aPagar||0)>0
+             ? '<button class="btn btn-navy btn-sm" data-dpall="'+esc(p.nome)+'">'+ICO('check')+' Acertar tudo</button>'
+             : '<span style="color:var(--muted)">em dia</span>')+'</td>'
+         : '')+
+       '</tr>';
   });
   h+='</tbody></table></div>';
+  if(ehCoordenador()){
+    h+='<div class="hint">Um PIX costuma fechar oito cupons. <b>Acertar tudo</b> marca de uma vez todas as '+
+       'despesas aprovadas daquela pessoa no período — as que ainda estão sem o seu de acordo ficam de fora.</div>';
+  }
   if(ant && ant.porVisita){
     var visitasAgora=r.pessoas.reduce(function(a,p){ return a+(p.visitas||0); },0);
     var porVisitaAgora=visitasAgora ? r.total/visitasAgora : null;
@@ -5321,28 +5352,56 @@ function renderDespesas(r){
        '<span style="flex:0 0 130px;text-align:right"><b>'+brl(t.total)+'</b> · '+pct+'%</span></div>';
   });
 
-  /* ---- lançamentos ---- */
-  h+='<h3>Lançamentos</h3>';
-  r.itens.forEach(function(i){
+  /* ---- lançamentos: em aberto × já acertado ---- */
+  var emAberto=r.itens||[], jaAcertadas=r.acertados||[];
+  if(DP_VISAO==='acertado' && !jaAcertadas.length) DP_VISAO='aberto';
+
+  h+='<h3>Lançamentos</h3>'+
+     '<div class="tabs2">'+
+       '<button class="tab2'+(DP_VISAO==='aberto'?' sel':'')+'" data-dpv="aberto">Em aberto ('+emAberto.length+')</button>'+
+       '<button class="tab2'+(DP_VISAO==='acertado'?' sel':'')+'" data-dpv="acertado">Acertado ('+jaAcertadas.length+')</button>'+
+     '</div>';
+
+  var lista = DP_VISAO==='acertado' ? jaAcertadas : emAberto;
+  if(!lista.length){
+    h+='<p class="sub">'+(DP_VISAO==='acertado'
+      ? 'Nada acertado neste período. Depois de pagar, marque a despesa como <b>Reembolsada</b> — ela sai da lista em aberto e aparece aqui, com o comprovante.'
+      : 'Tudo deste período já foi acertado.')+'</p>';
+  }
+
+  lista.forEach(function(i){
     var temFoto = i.comprovante && i.comprovante.indexOf('http')===0;
-    h+='<div class="ag" style="border-left-color:'+(temFoto?'var(--ok)':'var(--red)')+'">'+
-       '<div class="agd" style="background:'+(temFoto?'var(--ok)':'var(--red)')+'">'+
+    var cor = i.reembolsada ? 'var(--navy)' : (temFoto?'var(--ok)':'var(--red)');
+    h+='<div class="ag" style="border-left-color:'+cor+'">'+
+       '<div class="agd" style="background:'+cor+'">'+
        '<b>'+(i.data.split('-')[2]||'--')+'</b><span>'+mesCurto(i.data.split('-')[1])+'</span></div>'+
        '<div class="agi"><div class="agt">'+brl(i.valor)+' · '+esc(i.tipo)+'</div>'+
        '<div class="ags">'+esc(i.responsavel)+(i.referencia?' · '+esc(i.referencia):'')+
        (i.estabelecimento&&i.estabelecimento!==i.referencia?' · '+esc(i.estabelecimento):'')+
-       (i.obs?' · '+esc(i.obs):'')+(i.lidoIA?' · <b>lido do comprovante</b>':'')+'</div></div>'+
+       (i.obs?' · '+esc(i.obs):'')+(i.lidoIA?' · <b>lido do comprovante</b>':'')+
+       /* quem deu a baixa e quando: discreto, mas registrado */
+       (i.reembolsada?'<br><span style="color:var(--navy);font-weight:700">reembolsada</span>'+
+         (i.dataReembolso?' em '+esc(i.dataReembolso):'')+
+         (i.quemAcertou?' por '+esc(i.quemAcertou):''):'')+
+       '</div></div>'+
        (temFoto
          ? '<a class="btn btn-ghost btn-sm" href="'+i.comprovante.split(' | ')[0]+'" target="_blank" rel="noopener noreferrer">'+ICO('clip')+' Ver'+
            ((i.anexos||1)>1?' ('+i.anexos+')':'')+'</a>'
          : '<span class="badge b-nao">sem comprovante</span>')+
-       selo(i)+
+       (i.reembolsada?'<span class="badge b-ok">acertada</span>':selo(i))+
        '<div class="agb" style="width:100%">'+
-         (ehCoordenador() && !i.aprovacao
+         (ehCoordenador() && !i.aprovacao && !i.reembolsada
            ? '<button class="btn btn-ghost btn-sm" data-apr="'+i.linha+'">'+ICO('check')+' Aprovar</button>'+
              '<button class="btn btn-ghost btn-sm" data-que="'+i.linha+'">'+ICO('help')+' Questionar</button>'
            : '')+
-         (podeCorrigir(i)
+         /* o botão do acerto só existe para quem paga, e só depois do de acordo */
+         (ehCoordenador() && !i.reembolsada && i.aprovacao==='Aprovada'
+           ? '<button class="btn btn-navy btn-sm" data-dpreemb="'+i.linha+'">'+ICO('check')+' Reembolsado</button>'
+           : '')+
+         (ehCoordenador() && i.reembolsada
+           ? '<button class="btn btn-ghost btn-sm" data-dpdesf="'+i.linha+'">Desfazer acerto</button>'
+           : '')+
+         (!i.reembolsada && podeCorrigir(i)
            ? '<button class="btn btn-ghost btn-sm" data-dpedit="'+i.linha+'">'+ICO('pencil')+' Corrigir</button>'
            : '')+
        '</div>'+
@@ -5350,6 +5409,51 @@ function renderDespesas(r){
   });
 
   box.innerHTML=h;
+}
+
+/* ---------- ACERTO DO REEMBOLSO ----------
+   Quem gastou não declara que recebeu: o botão é só de quem paga. E só
+   aparece depois do "de acordo" — aprovar e pagar são dois atos, e juntá-los
+   num clique só é o caminho mais curto para pagar o que você não conferiu. */
+delegar('dpRel', {
+  'data-dpv': function(v){ DP_VISAO=v; if(DP_DADOS) renderDespesas(DP_DADOS); },
+  'data-dpreemb': function(l){ reembolsar([l], false); },
+  'data-dpdesf': function(l){
+    if(!confirm('Desfazer o acerto desta despesa?\n\nEla volta para a lista em aberto e entra de novo no que você tem a pagar.')) return;
+    reembolsar([l], true);
+  },
+  'data-dpall': function(nome){ acertarTudo(nome); }
+});
+
+function reembolsar(linhas, desfazer){
+  if(!ehCoordenador()){ toast('Só o coordenador dá baixa de reembolso.'); return; }
+  if(!ENVIO_URL) return;
+  toast(desfazer?'Desfazendo o acerto…':'Marcando como reembolsada…');
+  fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({tipo:'reembolso', linhas:linhas, desfazer:!!desfazer,
+      quem:euSou(), escopo:(SESSAO&&SESSAO.escopo)||'proprio'})})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if(res && res.ok){
+        toast(desfazer
+          ? 'Acerto desfeito — voltou para a lista em aberto.'
+          : res.feitas+' despesa(s) · '+brl(res.valor)+' foram para o resumo do que já foi acertado.');
+        carregarDespesas();
+      } else toast('Não consegui: '+((res&&res.erro)||'erro'));
+    })
+    .catch(function(){ toast('Sem sinal — nada foi alterado.'); });
+}
+
+function acertarTudo(nome){
+  var p=(DP_DADOS&&DP_DADOS.pessoas||[]).filter(function(x){ return x.nome===nome; })[0];
+  if(!p){ toast('Não encontrei essa pessoa no relatório.'); return; }
+  var linhas=(DP_DADOS.itens||[]).filter(function(i){
+      return mesmaPessoa(i.responsavel, nome) && i.aprovacao==='Aprovada';
+    }).map(function(i){ return i.linha; });
+  if(!linhas.length){ toast('Nada aprovado e em aberto para '+nome+'.'); return; }
+  if(!confirm('Marcar como reembolsadas '+linhas.length+' despesa(s) de '+nome+
+      ', no total de '+brl(p.aPagar||0)+'?\n\nElas saem da lista em aberto e vão para o resumo do que já foi acertado.')) return;
+  reembolsar(linhas, false);
 }
 
 
@@ -5474,11 +5578,17 @@ $('dpZap').onclick=function(){
   L.push(dataBr(r.de)+' a '+dataBr(r.ate));
   L.push('');
   L.push('Total: *'+brl(r.total)+'* em '+r.lancamentos+' lançamento(s)');
+  L.push('Já acertado: *'+brl(r.totalAcertado||0)+'* ('+(r.nAcertado||0)+')');
+  L.push('A reembolsar: *'+brl(r.aPagar||0)+'* (aprovadas)');
+  var _semOk=(r.totalAberto||0)-(r.aPagar||0);
+  if(_semOk>0.009) L.push('Ainda sem de acordo: '+brl(_semOk));
   L.push('Com comprovante: '+Math.round(r.comComprovante/r.lancamentos*100)+'%');
   L.push('');
   L.push('*Por pessoa*');
   r.pessoas.forEach(function(p){
-    L.push('• '+p.nome+': '+brl(p.total)+(p.porVisita!=null?' · '+brl(p.porVisita)+'/visita':' · sem visita registrada'));
+    L.push('• '+p.nome+': '+brl(p.total)+
+      ' | a pagar '+brl(p.aPagar||0)+' | acertado '+brl(p.acertado||0)+
+      (p.porVisita!=null?' · '+brl(p.porVisita)+'/visita':' · sem visita registrada'));
   });
   L.push('');
   L.push('*Por tipo*');
@@ -5492,10 +5602,15 @@ $('dpZap').onclick=function(){
 };
 
 $('dpCsv').onclick=function(){
-  if(!DP_DADOS || !DP_DADOS.itens.length){ toast('Nada para baixar neste período.'); return; }
-  var L=['Data;Responsavel;Tipo;Valor;Loja ou motivo;Observacao;Comprovante'];
-  DP_DADOS.itens.forEach(function(i){
-    L.push([i.data,i.responsavel,i.tipo,String(i.valor).replace('.',','),i.referencia,i.obs,i.comprovante]
+  var _todas=(DP_DADOS?(DP_DADOS.itens||[]).concat(DP_DADOS.acertados||[]):[]);
+  if(!_todas.length){ toast('Nada para baixar neste período.'); return; }
+  /* a planilha do mês leva as duas pilhas: quem confere precisa ver o que já
+     foi pago ao lado do que ainda está aberto */
+  var L=['Data;Responsavel;Tipo;Valor;Loja ou motivo;Observacao;Aprovacao;Situacao;Data do reembolso;Quem acertou;Comprovante'];
+  _todas.sort(function(a,b){ return a.data<b.data?1:-1; }).forEach(function(i){
+    L.push([i.data,i.responsavel,i.tipo,String(i.valor).replace('.',','),i.referencia,i.obs,
+      i.aprovacao||'aguardando', i.reembolsada?'Acertada':'Em aberto',
+      i.dataReembolso||'', i.quemAcertou||'', i.comprovante]
       .map(function(c){ return String(c||'').replace(/;/g,','); }).join(';'));
   });
   var blob=new Blob(['﻿'+L.join('\n')],{type:'text/csv;charset=utf-8'});
