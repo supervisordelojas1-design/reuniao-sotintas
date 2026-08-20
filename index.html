@@ -1152,6 +1152,7 @@ tr.incompleto input{background:transparent}
       <button class="btn btn-primary" id="btnStart" disabled><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg> Iniciar reunião</button>
       <button class="btn btn-primary hidden" id="btnAgendar" disabled><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg> Agendar e convidar</button>
       <button class="btn btn-navy hidden" id="btnConviteZap"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg> Convite para WhatsApp</button>
+      <button class="btn btn-navy" id="btnAudioAta" disabled><svg class="ic" aria-hidden="true"><use href="#i-mic"/></svg> Já aconteceu — tenho o áudio</button>
       <span class="hint" id="startHint" style="align-self:center"></span>
       <button class="btn btn-ghost btn-sm" id="btnLoad"><svg class="ic" aria-hidden="true"><use href="#i-folder"/></svg> Retomar reunião salva (.json)</button>
       <input type="file" id="fileLoad" accept=".json" class="hidden">
@@ -1367,14 +1368,48 @@ tr.incompleto input{background:transparent}
 <!-- modal ata revisada pela IA -->
 <div class="modal" id="modalRevisao">
   <div class="mbox">
-    <h2>Ata revisada</h2>
+    <h2 id="rvTitulo">Ata revisada</h2>
     <p class="sub" id="rvSub"></p>
     <div id="rvCorpo"></div>
     <div class="btnrow">
       <button class="btn btn-primary" id="rvAplicar">Aplicar na ata</button>
+      <button class="btn btn-navy hidden" id="rvTranscrever">Anexar a transcrição completa</button>
       <button class="btn btn-ghost" id="rvFechar">Descartar</button>
     </div>
     <div id="rvStatus" class="hidden" style="margin-top:12px;padding:11px 14px;border-radius:10px;font-size:14px"></div>
+  </div>
+</div>
+
+<!-- ATA A PARTIR DO ÁUDIO GRAVADO -->
+<div class="modal" id="modalAudio">
+  <div class="mbox">
+    <h2>Ata a partir do áudio</h2>
+    <p class="sub">A reunião já aconteceu e você tem a gravação. A IA ouve, organiza por bloco do
+    roteiro e propõe as decisões — <b>em rascunho</b>. Nada entra na ata sem você aplicar.</p>
+
+    <div class="upbar">
+      <button type="button" class="btn btn-ghost btn-sm" id="auEscolher"><svg class="ic" aria-hidden="true"><use href="#i-clip"/></svg> Escolher o áudio</button>
+    </div>
+    <input type="file" id="auFile" accept="audio/*,video/mp4,video/webm,.m4a,.opus,.ogg,.mp3,.wav" class="hidden">
+    <div id="auArq" class="hint">Aceita <b>mp3, wav, ogg/opus (áudio do WhatsApp), m4a e webm</b> —
+    o que sai do gravador do celular, do Meet ou da gravação do próprio app. Até 90 minutos.</div>
+
+    <div id="auQuem" style="margin-top:12px">
+      <label>Quem estava na reunião <span style="text-transform:none;font-weight:normal">(ajuda a IA a dizer quem falou)</span></label>
+      <input type="text" id="auPart" placeholder="Ex.: Bruno, Ana, Marcos">
+      <div class="hint">Vem preenchido com os participantes que você já cadastrou. A IA separa as vozes
+      e só coloca nome quando o contexto deixa claro — na dúvida, escreve "Falante 2 (provável Ana)".</div>
+    </div>
+
+    <div id="auStatus" class="hidden" style="margin-top:12px;padding:11px 14px;border-radius:10px;font-size:14px;line-height:1.5"></div>
+    <div id="auBarra" class="hidden" style="margin-top:10px"><div class="barra" style="min-width:100%"><div id="auBarraFill" style="width:0%;background:var(--navy)"></div></div></div>
+
+    <div class="btnrow">
+      <button class="btn btn-primary" id="auEnviar" disabled><svg class="ic" aria-hidden="true"><use href="#i-cloud-up"/></svg> Gerar a ata deste áudio</button>
+      <button class="btn btn-ghost" id="auFechar">Fechar</button>
+    </div>
+    <div class="hint" style="margin-top:10px">O áudio é usado para escrever a ata e <b>não fica guardado</b>:
+    sai do Google em algumas horas e não entra na sua planilha nem no Drive.</div>
   </div>
 </div>
 
@@ -1624,6 +1659,17 @@ var EQUIPE = {
 };
 var GESTOR = 'Bruno';
 
+/* O escritório é local de trabalho de todo mundo, mas NÃO é loja.
+   Fica disponível na lista de qualquer pessoa sem precisar de linha na aba
+   EQUIPE — inclusive para quem entrar na equipe amanhã. E, de propósito, fica
+   fora do cumprimento de visitas e da cobertura da carteira: dia de escritório
+   contado como visita é termômetro medindo a temperatura do próprio bolso. */
+var ESCRITORIO = 'Escritório';
+function ehEscritorio(v){
+  var l = typeof v==='string' ? v : (v && v.loja) || '';
+  return chaveLoja(l) === chaveLoja(ESCRITORIO);
+}
+
 /* A lista acima é só a semente: quem manda é a aba EQUIPE da planilha.
    Antes disto, mudar quem atende Itaguaí exigia editar dois arquivos e
    republicar — mapa da operação preso na sala de máquinas. */
@@ -1671,7 +1717,8 @@ function recalcularEquipe(){
 recalcularEquipe();
 function lojasDe(sup){
   var e=EQUIPE[sup];
-  return (e && e.lojas.length) ? e.lojas : LOJAS;
+  var l=(e && e.lojas.length) ? e.lojas : LOJAS;
+  return [ESCRITORIO].concat(l);
 }
 function papelDe(sup){ return (EQUIPE[sup]||{}).papel || ''; }
 
@@ -1747,6 +1794,16 @@ function ICO(n){ return '<svg class="ic" aria-hidden="true"><use href="#i-'+n+'"
 function $(id){return document.getElementById(id);}
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function fmt(sec){var m=Math.floor(sec/60),s=sec%60;return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;}
+/* Tempo de permanência do jeito que se fala: "45 min", "1h20", "2h".
+   Ninguém diz que ficou 135 minutos na loja — diz que ficou duas horas e pouco.
+   Número que precisa de conta de cabeça para virar informação não informa. */
+function hm(min){
+  var m=Math.round(+min||0);
+  if(!isFinite(m) || m<=0) return '0 min';
+  if(m<60) return m+' min';
+  var h=Math.floor(m/60), r=m%60;
+  return r ? h+'h'+(r<10?'0':'')+r : h+'h';
+}
 function toast(msg){var t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2600);}
 function dataBr(d){if(!d)return '';var p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
 /* o prazo passou a ser um seletor de data (yyyy-mm-dd), mas atas antigas podem ter texto livre */
@@ -1854,6 +1911,9 @@ function checkStart(){
   if(modo==='agendar' && !temData) falta.push('a data e a hora');
   $('btnStart').disabled=!(temTit&&temObj);
   $('btnAgendar').disabled=!(temTit&&temObj&&temData);
+  /* a ata por áudio precisa do título e da data para virar documento;
+     o objetivo a IA não inventa, então ele continua sendo seu */
+  if($('btnAudioAta')) $('btnAudioAta').disabled=!(temTit&&temObj);
   $('startHint').textContent = falta.length ? 'Falta preencher '+falta.join(', ')+'.' : '';
 }
 
@@ -2033,6 +2093,7 @@ function setModo(m){
   }
 
   $('btnStart').classList.toggle('hidden', m!=='agora');
+  if($('btnAudioAta')) $('btnAudioAta').classList.toggle('hidden', m!=='agora');
   $('btnAgendar').classList.toggle('hidden', m==='agora');
   $('btnConviteZap').classList.toggle('hidden', m==='agora');
   $('setupTitulo').textContent = m==='agora' ? 'Preparar a reunião' : 'Agendar reunião';
@@ -2568,7 +2629,10 @@ function renderRotina(){
     $('rotinaAtencao').innerHTML='';
     return;
   }
-  var vis=VISITAS.filter(function(v){ return !ehTarefa(v); });
+  /* Escritório sai da conta de visitas ANTES de qualquer número ser calculado:
+     ele tem quadro próprio logo abaixo. */
+  var vis=VISITAS.filter(function(v){ return !ehTarefa(v) && !ehEscritorio(v); });
+  var esct=VISITAS.filter(function(v){ return !ehTarefa(v) && ehEscritorio(v); });
   var tar=VISITAS.filter(ehTarefa);
   var feitas=vis.filter(function(v){ return v.status==='Concluída'; });
   var nao=vis.filter(function(v){ return v.status==='Não realizada'; });
@@ -2576,6 +2640,8 @@ function renderRotina(){
   var comT=feitas.filter(function(v){ return v.permanencia; });
   var med=comT.length?Math.round(comT.reduce(function(a,v){return a+(+v.permanencia);},0)/comT.length):0;
   var tarOk=tar.filter(function(v){ return v.status==='Concluída'; }).length;
+  var escOk=esct.filter(function(v){ return v.status==='Concluída'; });
+  var escMin=escOk.reduce(function(a,v){ return a+(+v.permanencia||0); },0);
 
   /* lojas da carteira sem nenhuma visita no período — mesma comparação
      tolerante da Cobertura, senão o número do topo briga com os chips de baixo */
@@ -2594,15 +2660,22 @@ function renderRotina(){
       '<div class="kx">'+feitas.length+' de '+vis.length+' visitas</div></div>'+
     '<div class="kpi'+(nao.length?' ru':'')+'"><div class="kv">'+nao.length+'</div><div class="kl">Não realizadas</div>'+
       '<div class="kx">'+(nao.length?'com motivo registrado':'nenhuma no período')+'</div></div>'+
-    '<div class="kpi"><div class="kv">'+(med||'—')+'</div><div class="kl">Min. médios em loja</div>'+
+    '<div class="kpi"><div class="kv">'+(med?hm(med):'—')+'</div><div class="kl">Tempo médio em loja</div>'+
       '<div class="kx">'+comT.length+' visita(s) cronometrada(s)</div></div>'+
     '<div class="kpi'+(semVisita?' al':' ok')+'"><div class="kv">'+semVisita+'</div><div class="kl">Lojas sem visita</div>'+
       '<div class="kx">de '+totalCart+' na carteira</div></div>'+
     '<div class="kpi"><div class="kv">'+tarOk+'/'+tar.length+'</div><div class="kl">Tarefas extras</div>'+
       '<div class="kx">concluídas no período</div></div>'+
+    (esct.length
+      ? '<div class="kpi"><div class="kv">'+escOk.length+'</div><div class="kl">No escritório</div>'+
+        '<div class="kx">'+(escMin?hm(escMin)+' no período':'de '+esct.length+' programado(s)')+'</div></div>'
+      : '')+
     '</div>';
   box.innerHTML=h;
-  renderAtencao(vis, nao);
+  /* fora dos números, mas não fora das vistas: dia de escritório esquecido em
+     aberto continua sendo pendência de registro */
+  renderAtencao(vis.concat(esct),
+    nao.concat(esct.filter(function(v){ return v.status==='Não realizada'; })));
 }
 
 /* O que o gestor precisa olhar: atrasadas e não realizadas. */
@@ -2664,7 +2737,9 @@ function marcarVisita(tipo, linha, motivo){
     .then(function(r){ return r.json(); })
     .then(function(res){
       if(res && res.ok){
-        toast(tipo==='checkin'?'Chegada registrada. Bom trabalho!':(tipo==='checkout'?'Saída registrada'+(res.permanencia?': '+res.permanencia+' min em loja.':'.'):'Registrado.'));
+        var alvo=acharVisita(linha);
+        var ondeFoi = alvo && ehEscritorio(alvo) ? ' no escritório.' : ' em loja.';
+        toast(tipo==='checkin'?'Chegada registrada. Bom trabalho!':(tipo==='checkout'?'Saída registrada'+(res.permanencia?': '+hm(res.permanencia)+ondeFoi:'.'):'Registrado.'));
         carregarRotina();
       } else toast('Não consegui registrar. Tente de novo.');
     })
@@ -2677,11 +2752,15 @@ function renderPainel(){
   var porSup={};
   VISITAS.forEach(function(v){
     var s=v.supervisor||'—';
-    if(!porSup[s]) porSup[s]={plan:0,feitas:0,nao:0,min:0,comTempo:0,tPlan:0,tFeitas:0};
+    if(!porSup[s]) porSup[s]={plan:0,feitas:0,nao:0,min:0,comTempo:0,tPlan:0,tFeitas:0,eDias:0,eMin:0};
     var o=porSup[s];
     if(ehTarefa(v)){
       o.tPlan++;
       if(v.status==='Concluída') o.tFeitas++;
+      return;
+    }
+    if(ehEscritorio(v)){
+      if(v.status==='Concluída'){ o.eDias++; o.eMin+=(+v.permanencia||0); }
       return;
     }
     o.plan++;
@@ -2706,7 +2785,7 @@ function renderPainel(){
     '</b> ('+dataBr(periodoRotina().de)+' a '+dataBr(periodoRotina().ate)+'). '+
     'Cumprimento = visitas concluídas ÷ planejadas.</p>'+
     '<div class="rolar"><table class="pnl"><tr><th>Pessoa</th><th>Visitas plan.</th><th>Feitas</th><th>Não fez</th>'+
-    '<th style="min-width:130px">Cumprimento</th><th>Tempo médio</th><th>Tarefas extras</th></tr>';
+    '<th style="min-width:130px">Cumprimento</th><th>Tempo médio</th><th>Tarefas extras</th><th>Escritório</th></tr>';
   nomes.sort().forEach(function(n){
     var o=porSup[n];
     var pct = o.plan ? Math.round(o.feitas/o.plan*100) : 0;
@@ -2716,8 +2795,9 @@ function renderPainel(){
        '<td>'+o.plan+'</td><td>'+o.feitas+'</td>'+
        '<td'+(o.nao?' style="color:var(--red);font-weight:bold"':'')+'>'+o.nao+'</td>'+
        '<td>'+(o.plan?'<div style="display:flex;align-items:center;gap:8px"><div class="barra"><div style="width:'+pct+'%;background:'+cor+'"></div></div><b style="color:'+cor+'">'+pct+'%</b></div>':'—')+'</td>'+
-       '<td>'+(med?med+' min':'—')+'</td>'+
-       '<td>'+(o.tPlan? o.tFeitas+' de '+o.tPlan : '—')+'</td></tr>';
+       '<td>'+(med?hm(med):'—')+'</td>'+
+       '<td>'+(o.tPlan? o.tFeitas+' de '+o.tPlan : '—')+'</td>'+
+       '<td>'+(o.eDias? o.eDias+(o.eDias>1?' dias':' dia')+(o.eMin?' · '+hm(o.eMin):'') : '—')+'</td></tr>';
   });
   box.innerHTML=h+'</table></div>'+cobertura();
   box.classList.remove('hidden');
@@ -2864,9 +2944,9 @@ function abrirNovaVisita(tipo){
   $('visitaSub').textContent = t
     ? 'Tudo que não é visita de loja: relatório, campanha, treinamento, reunião externa, resolução de problema.'
     : 'Descreva o trabalho a ser executado. Visita sem trabalho definido vira passagem pela loja.';
-  $('labLoja').innerHTML = t ? 'Referência <span style="text-transform:none;font-weight:normal">(loja, projeto ou área — opcional)</span>' : 'Loja';
+  $('labLoja').innerHTML = t ? 'Referência <span style="text-transform:none;font-weight:normal">(loja, projeto ou área — opcional)</span>' : 'Loja <span style="text-transform:none;font-weight:normal">(ou Escritório)</span>';
   $('labTrabalho').innerHTML = (t?'O que precisa ser feito':'Trabalho a ser executado')+' <span style="color:var(--red)">*</span>';
-  $('vLoja').placeholder = t ? 'Ex.: Campanha de Natal' : 'Ex.: 07 - Matriz';
+  $('vLoja').placeholder = t ? 'Ex.: Campanha de Natal' : 'Ex.: 07 - Matriz ou Escritório';
   $('vTrabalho').placeholder = t
     ? 'Ex.: Fechar a arte da campanha de setembro com a agência e enviar para aprovação da diretoria.'
     : 'Ex.: Revisar a exposição da linha premium, conferir o estoque de imobiliária e treinar a Ana na abordagem de fechamento.';
@@ -2973,7 +3053,7 @@ function abrirEditarVisita(linha){
   $('visitaTitulo').textContent = t ? 'Editar tarefa' : 'Editar visita';
   $('visitaSub').textContent = 'Alterando o que já está marcado para '+dataBr(v.data)+
     (v.hora?' às '+v.hora:'')+'.';
-  $('labLoja').innerHTML = t ? 'Referência <span style="text-transform:none;font-weight:normal">(opcional)</span>' : 'Loja';
+  $('labLoja').innerHTML = t ? 'Referência <span style="text-transform:none;font-weight:normal">(opcional)</span>' : 'Loja <span style="text-transform:none;font-weight:normal">(ou Escritório)</span>';
   $('labTrabalho').innerHTML = (t?'O que precisa ser feito':'Trabalho a ser executado')+' <span style="color:var(--red)">*</span>';
   $('vData').value=v.data;
   $('vHora').value=(v.hora||'09:00').slice(0,5);
@@ -3499,8 +3579,18 @@ function gravar(tipo){
       var a=document.createElement('a'); a.href=url; a.download=nome; a.click();
       S.gravacoes.push({bloco:S.blocos[S.cur].t, tipo:recTipo, arquivo:nome, dur:Math.floor((Date.now()-recT0)/1000)});
       mediaStream.getTracks().forEach(function(t){t.stop();});
-      $('recInfo').innerHTML='✅ Gravação salva como <b>'+esc(nome)+'</b> (pasta de downloads). Envie esse arquivo no chat do Claude para gerar a transcrição completa da ata.';
+      /* o arquivo continua indo para os downloads (backup na mão de quem gravou),
+         mas agora ele também pode virar ata aqui mesmo, sem sair do app */
+      $('recInfo').innerHTML='✅ Gravação salva como <b>'+esc(nome)+'</b> (pasta de downloads).'+
+        (recTipo==='audio'
+          ? '<div style="margin-top:8px"><button type="button" class="btn btn-navy btn-sm" id="btnAudioIA">'+
+            ICO('mic')+' Gerar a ata deste áudio</button></div>'
+          : ' Para gerar a ata por IA, grave só o áudio (o vídeo não é lido).');
       $('recInfo').classList.remove('hidden');
+      if(recTipo==='audio'){
+        var btnIA=$('btnAudioIA');
+        if(btnIA) btnIA.onclick=function(){ abrirAudio(blob, nome); };
+      }
       clearInterval(recTick);
       soltarTela(); marcarGavetas();
       $('capAudio').classList.remove('on'); $('capVideo').classList.remove('on');
@@ -3586,12 +3676,26 @@ $('btnRevisar').onclick=function(){
 function mostrarRevisao(){
   var r=REVISAO, conf=(r.confianca||'media').toLowerCase();
   var rot={alta:'confiança alta',media:'confiança média',baixa:'confiança baixa'}[conf]||'confiança média';
-  $('rvSub').innerHTML='Compare antes de aplicar. <span class="conf '+esc(conf)+'">'+esc(rot)+'</span>';
+  var doAudio = r.origem==='audio';
+  $('rvTitulo').textContent = doAudio ? 'Rascunho da ata — feito do áudio' : 'Ata revisada';
+  $('rvTranscrever').classList.toggle('hidden', !(doAudio && AU_REF));
+  if(doAudio && AU_REF){ $('rvTranscrever').innerHTML='Anexar a transcrição completa'; $('rvTranscrever').disabled=false; }
+  $('rvSub').innerHTML=(doAudio
+      ? 'Rascunho feito a partir do áudio. <b>Confira antes de aplicar.</b> '
+      : 'Compare antes de aplicar. ')+
+    '<span class="conf '+esc(conf)+'">'+esc(rot)+'</span>';
 
   var h='';
   if(conf==='baixa'){
-    h+='<div class="rvduv">'+ICO('alert')+' <b>A transcrição estava truncada ou confusa.</b> '+
+    h+='<div class="rvduv">'+ICO('alert')+' <b>'+(doAudio?'O áudio estava difícil de entender em partes.'
+       :'A transcrição estava truncada ou confusa.')+'</b> '+
        'Leia com atenção — parte do que está aqui pode ter ficado incompleta.</div>';
+  }
+  if(doAudio && r.falantes && r.falantes.length){
+    h+='<div class="rvb"><h4>Quem falou</h4>'+
+       r.falantes.map(function(f){ return '<div style="font-size:14px;margin-bottom:4px">• '+esc(f)+'</div>'; }).join('')+
+       '<div class="hint">A IA separa as vozes pelo som e só arrisca o nome quando alguém foi '+
+       'chamado pelo nome na conversa. Onde estiver "provável", confira antes de assinar.</div></div>';
   }
   if(r.duvidas && r.duvidas.length){
     h+='<div class="rvduv"><b>Pontos que não ficaram claros:</b><br>'+
@@ -3600,8 +3704,8 @@ function mostrarRevisao(){
   (r.blocos||[]).forEach(function(b,i){
     var orig=(S.blocos[i]&&S.blocos[i].notas)||'';
     h+='<div class="rvb"><h4>'+esc(b.titulo||('Bloco '+(i+1)))+'</h4>'+
-       (orig?'<div class="rot">como foi transcrito</div><div class="antes">'+esc(orig)+'</div>':'')+
-       '<div class="rot">revisado</div><div class="depois">'+esc(b.texto||'(vazio)')+'</div></div>';
+       (orig?'<div class="rot">'+(doAudio?'o que já estava escrito':'como foi transcrito')+'</div><div class="antes">'+esc(orig)+'</div>':'')+
+       '<div class="rot">'+(doAudio?'o que a IA ouviu':'revisado')+'</div><div class="depois">'+esc(b.texto||'(vazio)')+'</div></div>';
   });
   if((r.acoes||[]).length){
     h+='<div class="rvb"><h4>Ações encontradas na conversa</h4>';
@@ -3620,12 +3724,17 @@ function mostrarRevisao(){
   if(r.pendencias){
     h+='<div class="rvb"><h4>Ficou pendente</h4><div class="depois">'+esc(r.pendencias)+'</div></div>';
   }
+  if(doAudio && r.status){
+    h+='<div class="rvb"><h4>Objetivo atingido?</h4><div class="depois">'+esc(r.status)+
+       '</div><div class="hint">Proposta da IA a partir do que foi dito. Você troca na tela de fechamento se discordar.</div></div>';
+  }
   $('rvCorpo').innerHTML=h;
   $('rvStatus').classList.add('hidden');
   $('modalRevisao').classList.add('show');
 }
 
 $('rvFechar').onclick=function(){ $('modalRevisao').classList.remove('show'); };
+$('rvTranscrever').onclick=function(){ auTranscrever(); };
 
 $('rvAplicar').onclick=function(){
   if(!REVISAO) return;
@@ -3644,6 +3753,12 @@ $('rvAplicar').onclick=function(){
     if(vazia) S.acoes[0]=nova; else S.acoes.push(nova);
   });
   if(REVISAO.pendencias && !S.pend) S.pend=REVISAO.pendencias;
+  /* só a ata vinda do áudio propõe o status: na revisão de texto quem decidiu
+     se o objetivo foi atingido já foi você, na tela de fechamento */
+  if(REVISAO.origem==='audio' && ['Sim','Parcialmente','Não'].indexOf(REVISAO.status)>=0){
+    S.status=REVISAO.status;
+    if($('fStatus')) $('fStatus').value=S.status;
+  }
   S.resumoIA=REVISAO.resumo||'';
   S.revisada=true;
   /* gerarAta() relê a caixa de anotações e grava no bloco atual. Sem
@@ -3653,10 +3768,228 @@ $('rvAplicar').onclick=function(){
   salvarLocal();
   $('modalRevisao').classList.remove('show');
   gerarAta();
-  boxStatus('ok', ICO('check')+' <b>Ata revisada aplicada.</b> O texto original ficou guardado — '+
-    'use <b>Voltar e ajustar</b> se quiser conferir alguma coisa antes de enviar.');
-  toast('Revisão aplicada. Confira antes de enviar.');
+  boxStatus('ok', ICO('check')+(S.porAudio
+    ? ' <b>Rascunho do áudio aplicado.</b> Leia como se fosse a ata de outra pessoa: '+
+      'o que a IA não entendeu, ela escreveu como dúvida — e o que ela não ouviu, não está aqui.'
+    : ' <b>Ata revisada aplicada.</b> O texto original ficou guardado — '+
+      'use <b>Voltar e ajustar</b> se quiser conferir alguma coisa antes de enviar.'));
+  toast(S.porAudio?'Rascunho aplicado. Confira antes de enviar.':'Revisão aplicada. Confira antes de enviar.');
 };
+
+/* ============ ATA A PARTIR DO ÁUDIO GRAVADO ============
+   A reunião aconteceu e ficou gravada — no gravador do celular, no áudio do
+   Meet ou na gravação do próprio app. Aqui o arquivo vira RASCUNHO de ata.
+
+   Três decisões que valem mais que o recurso em si:
+   1) o áudio sobe EM PARTES. Reunião de 50 minutos não cabe numa tacada só, e
+      envio único que falha no minuto 9 obriga a recomeçar do zero;
+   2) o app fala com o SEU Apps Script, nunca direto com o Gemini — a chave da
+      IA ficaria à mostra no código-fonte, que é público;
+   3) o resultado entra pela MESMA porta da revisão: você compara e aplica.
+      Áudio vira rascunho; a ata continua assinada por quem conduziu.        */
+var AU_ARQ=null, AU_DUR=0, AU_ENVIANDO=false, AU_REF=null;
+var AU_PARTE  = 3*1024*1024;     /* 3 MB por parte — múltiplo de 256 KB, exigência do envio em partes */
+var AU_MAX    = 300*1024*1024;   /* teto de bom senso: ~5 h de gravação de celular */
+
+function auBox(cor,html){
+  var b=$('auStatus');
+  b.style.background = cor==='erro'?'#fdeaea':(cor==='ok'?'#eaf7f0':'var(--navy-05)');
+  b.style.color      = cor==='erro'?'#8a1b21':(cor==='ok'?'#14603f':'var(--navy)');
+  b.innerHTML=html; b.classList.remove('hidden');
+}
+function auBarra(p){
+  $('auBarra').classList.toggle('hidden', p===null);
+  if(p!==null) $('auBarraFill').style.width=Math.max(2,Math.min(100,p))+'%';
+}
+/* formatos que o Google simplesmente não lê: melhor avisar aqui do que
+   depois de subir 30 MB pelo 4G da estrada */
+function auFormatoRuim(nome){
+  var ext=((String(nome).match(/\.([a-z0-9]+)$/i)||[])[1]||'').toLowerCase();
+  return {amr:1,wma:1,'3gp':1,'3gpp':1,aab:1}[ext] ? ext : '';
+}
+function auMostrarArquivo(){
+  var el=$('auArq');
+  if(!AU_ARQ){
+    el.innerHTML='Aceita <b>mp3, wav, ogg/opus (áudio do WhatsApp), m4a e webm</b> — '+
+      'o que sai do gravador do celular, do Meet ou da gravação do próprio app. Até 90 minutos.';
+    return;
+  }
+  var mb=AU_ARQ.dados.size/1048576;
+  el.innerHTML='🎧 <b>'+esc(AU_ARQ.nome)+'</b> · '+mb.toFixed(1)+' MB'+
+    (AU_DUR>0?' · '+hm(Math.round(AU_DUR/60))+' de gravação':'');
+}
+function auLerDuracao(){
+  try{
+    var a=document.createElement('audio');
+    a.preload='metadata';
+    a.onloadedmetadata=function(){
+      AU_DUR=(isFinite(a.duration)?a.duration:0)||0;
+      try{ URL.revokeObjectURL(a.src); }catch(e){}
+      auMostrarArquivo();
+    };
+    a.src=URL.createObjectURL(AU_ARQ.dados);
+  }catch(e){}
+}
+function abrirAudio(blob, nome){
+  AU_ARQ = blob ? {dados:blob, nome:nome||'gravacao'} : null;
+  AU_DUR = 0; AU_REF=null;
+  $('auPart').value = partsNomes() || (S&&S.part) || '';
+  $('auStatus').classList.add('hidden');
+  auBarra(null);
+  $('auEnviar').disabled = !AU_ARQ;
+  auMostrarArquivo();
+  if(AU_ARQ) auLerDuracao();
+  $('modalAudio').classList.add('show');
+}
+function auPost(corpo){
+  return fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify(corpo)})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if(!res || !res.ok) throw new Error((res&&res.erro)||'O Google não respondeu como esperado.');
+      return res;
+    });
+}
+function auB64(blob){
+  return new Promise(function(ok,falhou){
+    var fr=new FileReader();
+    fr.onload=function(){ ok(String(fr.result).replace(/^data:[^;]*;base64,/,'')); };
+    fr.onerror=function(){ falhou(new Error('Não consegui ler o arquivo neste aparelho.')); };
+    fr.readAsDataURL(blob);
+  });
+}
+function auSubir(){
+  var arq=AU_ARQ.dados, total=arq.size;
+  return auPost({tipo:'audioIniciar', nome:AU_ARQ.nome, mime:arq.type||'', tamanho:total})
+    .then(function(res){
+      var sessao=res.sessao;
+      function parte(offset){
+        var fim=Math.min(offset+AU_PARTE, total), ultimo=fim>=total;
+        return auB64(arq.slice(offset,fim))
+          .then(function(b64){
+            return auPost({tipo:'audioParte', sessao:sessao, offset:offset, b64:b64, fim:ultimo});
+          })
+          .then(function(r){
+            var p=Math.round(fim/total*100);
+            auBarra(p);
+            auBox('info', ICO('cloud-up')+' Enviando o áudio… <b>'+p+'%</b>'+
+              (total>AU_PARTE?'<br>Pode demorar alguns minutos no 4G. Deixe esta tela aberta.':''));
+            return ultimo ? {fileUri:r.fileUri, mime:r.mime} : parte(fim);
+          });
+      }
+      return parte(0);
+    });
+}
+function auGerar(){
+  if(!AU_ARQ || AU_ENVIANDO) return;
+  if(!ENVIO_URL){ auBox('erro','Envio para o Google não configurado neste arquivo.'); return; }
+  if(!S){ auBox('erro','Preencha o título e o objetivo antes.'); return; }
+  var ruim=auFormatoRuim(AU_ARQ.nome);
+  if(ruim){
+    auBox('erro','O formato <b>.'+esc(ruim)+'</b> não é lido pela IA. No gravador do celular, '+
+      'troque a qualidade para <b>m4a</b> ou <b>mp3</b> e grave de novo.');
+    return;
+  }
+  if(AU_ARQ.dados.size>AU_MAX){
+    auBox('erro','Este arquivo tem '+(AU_ARQ.dados.size/1048576).toFixed(0)+' MB — grande demais. '+
+      'Divida a gravação ou use um formato mais leve (m4a/mp3).');
+    return;
+  }
+  AU_ENVIANDO=true; $('auEnviar').disabled=true;
+  auBarra(2);
+  auBox('info', ICO('cloud-up')+' Preparando o envio…');
+  auSubir()
+    .then(function(ref){
+      AU_REF=ref;
+      auBarra(100);
+      var min=Math.round(AU_DUR/60);
+      auBox('info','✅ Áudio enviado. <b>A IA está ouvindo.</b> '+
+        (min? 'Gravação de '+hm(min)+' costuma levar de 1 a 2 minutos.' :
+              'Costuma levar de 1 a 2 minutos.'));
+      return auPost({
+        tipo:'ataAudio', fileUri:ref.fileUri, mime:ref.mime,
+        titulo:S.titulo||'', objetivo:S.objetivo||'', modelo:TPL[S.tpl].nome,
+        participantes:$('auPart').value.trim(),
+        duracao: Math.round(AU_DUR/60),
+        blocos:S.blocos.map(function(b){
+          return {titulo:b.t, pergunta:b.q||'', notas:b.notas||'',
+                  guia:(b.guia||[]).map(function(g){return g.txt;}).join(' | ')};
+        })
+      });
+    })
+    .then(function(res){
+      AU_ENVIANDO=false; $('auEnviar').disabled=false;
+      auBarra(null);
+      $('modalAudio').classList.remove('show');
+      /* a duração da reunião passa a ser a do áudio, e o cronômetro por bloco
+         perde o sentido: ninguém conduziu bloco nenhum aqui */
+      if(AU_DUR>0){ S.totalSeg=Math.round(AU_DUR); S.blocos.forEach(function(b){ b.seg=0; }); }
+      blocoIni=Date.now();
+      S.porAudio=true;
+      REVISAO=res.ata||{};
+      REVISAO.origem='audio';
+      AU_ARQ=null;
+      mostrarRevisao();
+    })
+    .catch(function(err){
+      AU_ENVIANDO=false; $('auEnviar').disabled=false; auBarra(null);
+      auBox('erro','<b>Não consegui gerar a ata.</b><br>'+esc(String(err&&err.message||err)));
+    });
+}
+$('auEscolher').onclick=function(){ $('auFile').click(); };
+$('auFile').onchange=function(e){
+  var f=e.target.files&&e.target.files[0];
+  if(!f) return;
+  AU_ARQ={dados:f, nome:f.name}; AU_DUR=0;
+  auMostrarArquivo(); auLerDuracao();
+  $('auStatus').classList.add('hidden');
+  $('auEnviar').disabled=false;
+  e.target.value='';
+};
+$('auEnviar').onclick=auGerar;
+$('auFechar').onclick=function(){
+  if(AU_ENVIANDO && !confirm('O áudio ainda está subindo. Fechar cancela o envio?')) return;
+  AU_ENVIANDO=false;
+  $('modalAudio').classList.remove('show');
+};
+$('btnAudioAta').onclick=function(){
+  if(modo!=='agora') return;
+  iniciar();                     /* mesma preparação da reunião ao vivo… */
+  clearInterval(tickTotal);      /* …só que sem relógio: ela já aconteceu */
+  tickTotal=null;
+  $('chipTimer').classList.add('hidden');   /* cronômetro parado em 00:00 confunde */
+  S.porAudio=true;
+  abrirAudio(null,'');
+};
+
+/* Transcrição completa: pedida em trechos de 15 minutos. Uma chamada só para
+   uma hora de áudio estoura o tempo de resposta do Apps Script — e ficar sem
+   nada por causa do último minuto é o pior dos mundos. */
+function auTranscrever(){
+  if(!AU_REF){ toast('O áudio desta ata não está mais disponível.'); return; }
+  var btn=$('rvTranscrever');
+  var minutos=Math.max(1, Math.round(AU_DUR/60)||60);
+  var trechos=[], passo=15;
+  for(var i=0;i<minutos;i+=passo) trechos.push({de:i, ate:Math.min(i+passo, minutos)});
+  btn.disabled=true;
+  var partes=[];
+  function proximo(k){
+    if(k>=trechos.length) return Promise.resolve();
+    btn.innerHTML='Transcrevendo… '+(k+1)+' de '+trechos.length;
+    return auPost({tipo:'transcreverAudio', fileUri:AU_REF.fileUri, mime:AU_REF.mime,
+      de:trechos[k].de, ate:trechos[k].ate, participantes:$('auPart').value.trim()})
+      .then(function(r){ partes.push(r.texto||''); return proximo(k+1); });
+  }
+  proximo(0).then(function(){
+    S.transcricao=partes.join('\n').trim();
+    btn.disabled=false; btn.innerHTML='Transcrição anexada ✅';
+    toast('Transcrição anexada à ata.');
+    salvarLocal();
+  }).catch(function(err){
+    btn.disabled=false; btn.innerHTML='Tentar a transcrição de novo';
+    toast('Não consegui transcrever: '+String(err&&err.message||err));
+  });
+}
 
 /* ============ ATA ============ */
 function gerarAta(){
@@ -3675,7 +4008,9 @@ function gerarAta(){
         '<div class="s">'+esc(TPL[S.tpl].nome)+(S.modoCond==='corrido'?' · gravação contínua':'')+' · '+dataBr(S.data)+(S.hora?' às '+S.hora:'')+(S.local?' · '+esc(S.local):'')+'</div></div>';
 
   h+='<div class="meta"><div><b>Condutor:</b> <span contenteditable>'+esc(S.condutor||'—')+'</span></div>'+
-     '<div><b>Duração real:</b> '+real+' min <span style="color:var(--muted)">(previsto '+prev+' min)</span></div>'+
+     '<div><b>'+(S.porAudio?'Duração do áudio:':'Duração real:')+'</b> '+
+       (S.porAudio && !real ? 'não informada' : hm(real))+
+       ' <span style="color:var(--muted)">(previsto '+hm(prev)+')</span></div>'+
      '<div style="grid-column:1/-1"><b>Presentes:</b> <span contenteditable>'+esc(S.presentes||S.part||'—')+'</span></div>'+
      (S.ausentes ? '<div style="grid-column:1/-1;color:var(--red)"><b style="color:var(--red)">Ausentes:</b> '+esc(S.ausentes)+'</div>' : '')+
      '</div>';
@@ -3698,8 +4033,10 @@ function gerarAta(){
     if(b.tipo==='acoes' && !b.notas.trim()) return;
     var txt=b.notas.trim();
     if(S.modoCond!=='corrido'){
+      /* ata feita do áudio não teve bloco cronometrado: mostrar 00:00 de 15 min
+         seria informação falsa com cara de precisão */
       h+='<p style="margin-top:12px"><b style="color:var(--navy)">'+(i+1)+'. '+esc(b.t)+'</b> '+
-         '<span style="color:var(--muted);font-size:12px">('+fmt(b.seg)+' de '+b.min+' min)</span></p>';
+         (S.porAudio?'':'<span style="color:var(--muted);font-size:12px">('+fmt(b.seg)+' de '+b.min+' min)</span>')+'</p>';
     }
     h+='<p contenteditable>'+(txt?esc(txt):'<span style="color:#b6bdcd">— sem registro —</span>')+'</p>';
   });
@@ -3725,6 +4062,16 @@ function gerarAta(){
   if(S.gravacoes.length){
     h+='<h4>Registros de mídia</h4>';
     S.gravacoes.forEach(function(g){ h+='<p style="font-size:13px">🎧 '+esc(g.arquivo)+' — bloco "'+esc(g.bloco)+'" ('+fmt(g.dur)+')</p>'; });
+  }
+
+  /* transcrição vai no fim, como anexo: ata é o que ficou decidido;
+     transcrição é a prova, e prova não abre documento */
+  if(S.transcricao && S.transcricao.trim()){
+    h+='<h4>Anexo — transcrição do áudio</h4>'+
+       '<p style="font-size:12.5px;color:#6b7690">Texto automático, sem revisão. Serve de consulta; '+
+       'o que vale é o registro por bloco acima.</p>'+
+       '<div style="white-space:pre-wrap;font-size:13px;line-height:1.6" contenteditable>'+
+       esc(S.transcricao.trim())+'</div>';
   }
 
   h+='<div class="foot">Só Tintas – Documento interno · Gerado no <b>Assistente ST</b> em '+new Date().toLocaleString('pt-BR')+'<br><b>Só Tintas – Colorindo vidas e realizando sonhos</b></div>';
@@ -4691,7 +5038,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v39';
+var VERSAO_APP='v40';
 
 var LS_SESSAO='sotintas_sessao_v1';
 var SESSAO=null;
