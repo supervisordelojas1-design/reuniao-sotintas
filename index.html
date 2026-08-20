@@ -340,6 +340,9 @@ body.semDicas .chip-dica{opacity:.6}
 .semana .chip{display:block;background:#fff;border-left:3px solid var(--navy);border-radius:4px;padding:3px 5px;margin-bottom:3px;color:var(--ink)}
 .semana .chip.ok{border-left-color:var(--ok)}
 .semana .chip.nao{border-left-color:var(--red);text-decoration:line-through;color:var(--muted)}
+/* reunião não é visita: ocupa o dia, mas não cobre loja — por isso cor própria */
+.semana .chip.reu{border-left-color:#7A5AF8;background:#f6f4ff}
+.semana .chip.esc{border-left-color:#8a94a6;background:#f4f6f9}
 .rolar{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px}
 /* ---------- cartões de indicador ---------- */
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
@@ -2477,6 +2480,15 @@ function ligarBotoesAgenda(){ /* mantido por compatibilidade — a delegação f
 var LS_SOU='sotintas_meet_sou';
 var SOU_CARREGADO='';
 var VISITAS=[], VISITA_ALVO=null;
+/* O quadro da semana tem dados próprios: ele mostra segunda a domingo mesmo
+   quando os números do topo estão olhando outro período. */
+var SEMANA=[], SEMANA_REU=[];
+function semanaAtual(){
+  var hoje=new Date();
+  var seg=new Date(hoje); seg.setDate(hoje.getDate() - ((hoje.getDay()+6)%7));
+  var dom=new Date(seg);  dom.setDate(seg.getDate()+6);
+  return {de:dataLocal(seg), ate:dataLocal(dom)};
+}
 
 /* ---------- VISÃO DO PAINEL DE ROTINA ----------
    Duas perguntas diferentes, que estavam misturadas num campo só:
@@ -2593,15 +2605,32 @@ function carregarRotina(){
      não ficava verde, não aparecia na semana. É como conferir o caixa
      olhando só as vendas de amanhã. */
   var j=periodoRotina();
-  var de=j.de, ate=j.ate;
+  /* O quadro "Semana da equipe" mostra segunda a domingo, mas os dados vinham
+     só do período escolhido lá em cima — e o padrão é "últimos 7 dias", que
+     termina HOJE. Resultado: você marcava uma tarefa para amanhã e a coluna de
+     amanhã continuava vazia. O quadro prometia a semana e entregava o passado.
+     Agora a consulta cobre os dois: o período (para os números) e a semana
+     inteira (para o quadro). */
+  var sem=semanaAtual();
+  var de  = j.de  < sem.de  ? j.de  : sem.de;
+  var ate = j.ate > sem.ate ? j.ate : sem.ate;
   box.innerHTML='<p class="sub">Carregando…</p>';
   SOU_CARREGADO=souQuem();
   var url=ENVIO_URL+'?acao=visitas&de='+de+'&ate='+ate;
   /* o gestor puxa todo mundo; o supervisor puxa só o que é dele */
   if(!ehGestor() && souQuem()) url+='&supervisor='+encodeURIComponent(souQuem());
-  fetch(url).then(function(r){ return r.json(); })
-    .then(function(res){
-      VISITAS=(res && res.itens)||[];
+  var pedeReunioes = ehGestor()
+    ? fetch(ENVIO_URL+'?acao=agendamentos&de='+sem.de+'&ate='+sem.ate)
+        .then(function(r){ return r.json(); }).catch(function(){ return null; })
+    : Promise.resolve(null);
+  Promise.all([fetch(url).then(function(r){ return r.json(); }), pedeReunioes])
+    .then(function(resp){
+      var res=resp[0];
+      var todas=(res && res.itens)||[];
+      /* os números seguem o período escolhido; o quadro segue a semana */
+      VISITAS = todas.filter(function(v){ return v.data>=j.de && v.data<=j.ate; });
+      SEMANA  = todas.filter(function(v){ return v.data>=sem.de && v.data<=sem.ate; });
+      SEMANA_REU = (resp[1] && resp[1].itens) || [];
       renderRotina();
       if(ehGestor()){ renderPainel(); renderSemana(); }
       else {
@@ -2898,38 +2927,86 @@ function cobertura(){
 }
 
 /* ---------- agenda visual da semana ---------- */
+/* De quem é a reunião, para saber em que linha do quadro ela entra:
+   quem conduz manda; sem condutor reconhecido, procura um nome da equipe
+   entre os participantes. Comparação tolerante — "Danilo"/"Danillo". */
+function donoReuniao(a){
+  var i, j2, parts;
+  for(i=0;i<SUPERVISORES.length;i++){
+    if(a.condutor && mesmaPessoa(a.condutor, SUPERVISORES[i])) return SUPERVISORES[i];
+  }
+  parts=String(a.participantes||'').split(/[,;\/]+/);
+  for(j2=0;j2<parts.length;j2++){
+    if(!parts[j2].trim()) continue;
+    for(i=0;i<SUPERVISORES.length;i++){
+      if(mesmaPessoa(parts[j2], SUPERVISORES[i])) return SUPERVISORES[i];
+    }
+  }
+  return (a.condutor||'').trim() || '—';
+}
 function renderSemana(){
   var box=$('semanaEquipe');
   var hoje=new Date();
   var seg=new Date(hoje); seg.setDate(hoje.getDate() - ((hoje.getDay()+6)%7));
   var dias=[], rot=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
   for(var i=0;i<7;i++){ var d=new Date(seg); d.setDate(seg.getDate()+i); dias.push(dataLocal(d)); }
+
+  /* reunião ocupa o dia igual visita ocupa: entra no quadro com marca própria,
+     sem virar visita nos números de cobertura */
+  var reunioes=(SEMANA_REU||[]).filter(function(a){ return dias.indexOf(a.data)>=0; })
+    .map(function(a){ return {data:a.data, hora:a.hora, titulo:a.titulo, quem:donoReuniao(a), status:a.status||''}; });
+
   var sups={};
-  VISITAS.forEach(function(v){ if(dias.indexOf(v.data)>=0) sups[v.supervisor||'—']=true; });
+  SEMANA.forEach(function(v){ if(dias.indexOf(v.data)>=0) sups[v.supervisor||'—']=true; });
+  reunioes.forEach(function(a){ sups[a.quem]=true; });
   var nomes=Object.keys(sups).sort();
   if(!nomes.length){ box.classList.add('hidden'); return; }
   var hojeI=hojeISO();
   var h='<h3 style="margin:26px 0 6px">Semana da equipe</h3>'+
-    '<p class="sub" style="margin-bottom:8px">Onde cada supervisor está esta semana. Coluna vazia é loja sem cobertura.</p>'+
+    '<p class="sub" style="margin-bottom:8px">Onde cada supervisor está <b>esta semana</b> — segunda a domingo, '+
+    'independente do período escolhido acima. '+
+    '<span style="color:#7A5AF8;font-weight:bold">Roxo</span> é reunião, ✅ é tarefa, o resto é visita.</p>'+
     '<div class="rolar"><div class="semana"><div></div>';
   dias.forEach(function(d,i){
     var p=d.split('-');
-    h+='<div class="sh"'+(d===hojeI?' style="color:var(--red)"':'')+'>'+rot[i]+'<br>'+p[2]+'/'+p[1]+'</div>';
+    h+='<div class="sh'+(d===hojeI?' semhoje" style="color:var(--red)':'')+'">'+rot[i]+'<br>'+p[2]+'/'+p[1]+'</div>';
   });
   nomes.forEach(function(n){
     h+='<div class="sn">'+esc(n)+'</div>';
     dias.forEach(function(d){
-      var doDia=VISITAS.filter(function(v){ return v.data===d && (v.supervisor||'—')===n; });
+      var doDia=SEMANA.filter(function(v){ return v.data===d && (v.supervisor||'—')===n; });
+      var reuDia=reunioes.filter(function(a){ return a.data===d && a.quem===n; });
       h+='<div class="sc">';
       doDia.forEach(function(v){
-        var cls = v.status==='Concluída'?' ok':(v.status==='Não realizada'?' nao':'');
-        h+='<span class="chip'+cls+'">'+(ehTarefa(v)?'✅ ':'')+esc((v.hora||'').slice(0,5))+' '+esc(v.loja||(ehTarefa(v)?'tarefa':''))+'</span>';
+        var cls = v.status==='Concluída'?' ok':(v.status==='Não realizada'?' nao':(ehEscritorio(v)?' esc':''));
+        /* tarefa sem referência mostrava só a palavra "tarefa": o quadro dizia
+           que o dia estava ocupado sem dizer com o quê. Agora mostra o começo
+           do trabalho combinado. */
+        var rotulo = v.loja || (ehTarefa(v) ? (String(v.trabalho||'').slice(0,30) || 'tarefa') : '');
+        h+='<span class="chip'+cls+'" title="'+esc(v.trabalho||v.loja||'')+'">'+
+           (ehTarefa(v)?'✅ ':(ehEscritorio(v)?'🏢 ':''))+
+           esc((v.hora||'').slice(0,5))+' '+esc(rotulo)+'</span>';
+      });
+      reuDia.forEach(function(a){
+        h+='<span class="chip reu" title="'+esc(a.titulo||'')+'">💬 '+
+           esc((a.hora||'').slice(0,5))+' '+esc(a.titulo||'reunião')+'</span>';
       });
       h+='</div>';
     });
   });
   box.innerHTML=h+'</div></div>';
   box.classList.remove('hidden');
+  /* No celular cabem três colunas: quem abria na quinta via segunda, terça e
+     quarta — e concluía que a semana estava vazia. O quadro passa a abrir no
+     dia de hoje, com o dia anterior à vista. */
+  setTimeout(function(){
+    try{
+      var rolar=box.querySelector('.rolar'), alvo=box.querySelector('.semhoje');
+      if(!rolar || !alvo) return;
+      var dx=alvo.getBoundingClientRect().left - rolar.getBoundingClientRect().left;
+      rolar.scrollLeft += Math.max(0, dx - 120);
+    }catch(e){}
+  }, 0);
 }
 
 /* ---------- criar visita ---------- */
@@ -3788,7 +3865,13 @@ $('rvAplicar').onclick=function(){
    3) o resultado entra pela MESMA porta da revisão: você compara e aplica.
       Áudio vira rascunho; a ata continua assinada por quem conduziu.        */
 var AU_ARQ=null, AU_DUR=0, AU_ENVIANDO=false, AU_REF=null;
-var AU_PARTE  = 3*1024*1024;     /* 3 MB por parte — múltiplo de 256 KB, exigência do envio em partes */
+/* Tamanho da parte: o Google NÃO aceita qualquer valor. Ele declara uma
+   "granularidade" no início do envio (hoje 8 MB) e toda parte que não for a
+   última precisa ser múltiplo exato dela — parte de 3 MB é recusada com erro
+   400. É a caixa de tinta fechada: só sai do estoque em caixa inteira; sobra
+   se ajusta na última. O servidor manda o número em `parte`; 8 MB é o padrão
+   de segurança quando ele não manda. */
+var AU_PARTE  = 8*1024*1024;
 var AU_MAX    = 300*1024*1024;   /* teto de bom senso: ~5 h de gravação de celular */
 
 function auBox(cor,html){
@@ -3863,8 +3946,11 @@ function auSubir(){
   return auPost({tipo:'audioIniciar', nome:AU_ARQ.nome, mime:arq.type||'', tamanho:total})
     .then(function(res){
       var sessao=res.sessao;
+      /* usa a granularidade que o próprio Google declarou; sem ela, 8 MB */
+      var passo=+res.parte>0 ? +res.parte : AU_PARTE;
+      passo=Math.max(262144, Math.round(passo/262144)*262144);
       function parte(offset){
-        var fim=Math.min(offset+AU_PARTE, total), ultimo=fim>=total;
+        var fim=Math.min(offset+passo, total), ultimo=fim>=total;
         return auB64(arq.slice(offset,fim))
           .then(function(b64){
             return auPost({tipo:'audioParte', sessao:sessao, offset:offset, b64:b64, fim:ultimo});
@@ -3873,7 +3959,7 @@ function auSubir(){
             var p=Math.round(fim/total*100);
             auBarra(p);
             auBox('info', ICO('cloud-up')+' Enviando o áudio… <b>'+p+'%</b>'+
-              (total>AU_PARTE?'<br>Pode demorar alguns minutos no 4G. Deixe esta tela aberta.':''));
+              (total>passo?'<br>Pode demorar alguns minutos no 4G. Deixe esta tela aberta.':''));
             return ultimo ? {fileUri:r.fileUri, mime:r.mime} : parte(fim);
           });
       }
@@ -5038,7 +5124,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v40';
+var VERSAO_APP='v40.2';
 
 var LS_SESSAO='sotintas_sessao_v1';
 var SESSAO=null;
