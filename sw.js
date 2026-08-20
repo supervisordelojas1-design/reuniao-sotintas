@@ -7,8 +7,8 @@
  * Troque o número da versão sempre que subir um index.html novo — é o que
  * faz o aparelho baixar a versão nova em vez de servir a antiga.
  */
-var VERSAO = 'ast-v38';
-var CASCA  = ['./', './index.html', './manifest.json'];
+var VERSAO = 'ast-v39';
+var CASCA  = ['./', './index.html', './agenda.html', './manifest.json'];
 
 self.addEventListener('install', function (e) {
   self.skipWaiting();
@@ -40,7 +40,11 @@ self.addEventListener('fetch', function (e) {
       return resp;
     }).catch(function () {
       return caches.match(req).then(function (r) {
-        return r || caches.match('./index.html');
+        if (r) return r;
+        /* offline numa navegação: devolve a casca certa. Sem isto, abrir o
+           link de agendamento sem sinal servia o app inteiro no lugar dele. */
+        var ehAgenda = url.pathname.indexOf('agenda') >= 0;
+        return caches.match(ehAgenda ? './agenda.html' : './index.html');
       });
     })
   );

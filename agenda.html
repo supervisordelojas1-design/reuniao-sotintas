@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agendar — Só Tintas</title>
+<style>
+:root{
+  --navy:#1C3F8F; --navy-d:#152F69; --red:#D32027; --yellow:#FFD100;
+  --ink:#16233d; --muted:#67728c; --line:#e4e9f3; --bg:#f5f7fb;
+  --ok:#177a4d; --ok-bg:#e9f7ef; --warn:#B7791F; --warn-bg:#FFF7E0;
+  --navy-05:#f2f5fc; --navy-10:#e6ecf9; --navy-20:#c9d6f0;
+  --red-bg:#fdeaea;
+  --r-sm:8px; --r-md:12px; --r-lg:16px; --r-pill:999px;
+  --e1:0 1px 2px rgba(20,35,70,.05); --e2:0 2px 8px rgba(20,35,70,.07);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  font-size:14px;line-height:1.5}
+button{font-family:inherit;cursor:pointer}
+input,textarea,select{font-family:inherit;font-size:15px;color:var(--ink);width:100%;
+  padding:11px 12px;border:1px solid var(--line);border-radius:var(--r-sm);background:#fff}
+input:focus,textarea:focus{outline:2px solid var(--navy-20);border-color:var(--navy)}
+label{display:block;font-size:11.5px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.6px;margin:16px 0 4px}
+
+/* ---------- cabeçalho ---------- */
+.topo{background:var(--navy);color:#fff;padding:18px 0 22px}
+.wrap{max-width:640px;margin:0 auto;padding:0 16px}
+.marca{display:flex;align-items:center;gap:10px;font-size:12px;opacity:.85;
+  letter-spacing:.6px;text-transform:uppercase;font-weight:700}
+.logo{width:26px;height:26px;border-radius:6px;background:var(--yellow);color:var(--navy);
+  display:grid;place-items:center;font-weight:900;font-size:13px;letter-spacing:-.5px}
+.dono{display:flex;align-items:center;gap:14px;margin-top:14px}
+.foto{width:52px;height:52px;border-radius:50%;background:#fff;color:var(--navy);
+  display:grid;place-items:center;font-weight:800;font-size:19px;flex:0 0 auto}
+.dono h1{margin:0;font-size:21px;letter-spacing:-.3px}
+.dono p{margin:2px 0 0;font-size:13px;opacity:.85}
+
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);
+  padding:20px;margin:-14px auto 16px;box-shadow:var(--e2)}
+h2{font-size:17px;margin:0 0 4px;color:var(--navy);letter-spacing:-.2px}
+.sub{color:var(--muted);font-size:13px;margin:0 0 16px}
+
+/* ---------- calendário ---------- */
+.mesnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.mesnav b{font-size:15px;color:var(--navy)}
+.seta{background:var(--navy-05);border:1px solid var(--navy-10);color:var(--navy);
+  width:34px;height:34px;border-radius:var(--r-sm);font-size:16px;font-weight:700}
+.seta:disabled{opacity:.35;cursor:default}
+.grade{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.sh{font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;
+  text-align:center;letter-spacing:.4px;padding:4px 0}
+.dia{aspect-ratio:1/1;border:1px solid var(--line);border-radius:10px;background:#fff;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  font-size:15px;font-weight:700;color:var(--ink);position:relative;padding:0}
+.dia .pt{width:6px;height:6px;border-radius:50%}
+.dia.livre{background:var(--ok-bg);border-color:#bfe6d1;color:var(--ok)}
+.dia.livre .pt{background:var(--ok)}
+.dia.cheio{background:var(--red-bg);border-color:#f3c6c8;color:var(--red)}
+.dia.cheio .pt{background:var(--red)}
+.dia.fora{background:transparent;border-color:transparent;color:#c3cadb;font-weight:600;cursor:default}
+.dia.sel{outline:3px solid var(--navy);outline-offset:-3px;background:var(--navy);color:#fff}
+.dia.sel .pt{background:#fff}
+.legenda{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;font-size:12px;color:var(--muted)}
+.legenda i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+/* ---------- horários ---------- */
+.horas{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:6px}
+.hora{padding:12px 6px;border:1.5px solid var(--navy-10);background:#fff;border-radius:10px;
+  font-size:15px;font-weight:700;color:var(--navy);text-align:center}
+.hora.ocupada{background:#f7f8fb;border-color:var(--line);color:#b3bcd0;
+  text-decoration:line-through;cursor:not-allowed}
+.hora.sel{background:var(--navy);border-color:var(--navy);color:#fff}
+.aviso{background:var(--warn-bg);border:1px solid #f0d48a;color:#8a6100;border-radius:10px;
+  padding:11px 14px;font-size:13px;margin-top:14px}
+
+.btn{border:none;border-radius:10px;padding:14px 20px;font-size:15px;font-weight:700;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary{background:var(--red);color:#fff;width:100%}
+.btn-primary:disabled{background:#e9b6b8;cursor:not-allowed}
+.btn-ghost{background:#fff;border:1px solid var(--line);color:var(--ink)}
+.resumo{background:var(--navy-05);border:1px solid var(--navy-10);border-radius:10px;
+  padding:12px 14px;font-size:14px;margin-top:16px}
+.resumo b{color:var(--navy)}
+.rodape{text-align:center;color:var(--muted);font-size:11.5px;padding:8px 16px 28px}
+.ok-grande{width:64px;height:64px;border-radius:50%;background:var(--ok-bg);color:var(--ok);
+  display:grid;place-items:center;font-size:32px;margin:0 auto 14px}
+.passo{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--muted);margin-top:10px}
+.passo span{flex:0 0 22px;height:22px;border-radius:50%;background:var(--navy-10);color:var(--navy);
+  display:grid;place-items:center;font-size:11.5px;font-weight:800}
+.hidden{display:none}
+@media(max-width:420px){ .card{padding:16px} .dia{font-size:14px} }
+</style>
+</head>
+<body>
+
+<div class="topo">
+  <div class="wrap">
+    <div class="marca"><div class="logo">ST</div> Só Tintas · Agenda</div>
+    <div class="dono">
+      <div class="foto" id="ini">·</div>
+      <div>
+        <h1 id="titulo">Agendar</h1>
+        <p id="papel">carregando…</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- PASSO 1 e 2 -->
+  <div class="card" id="tela1">
+    <h2>Escolha o dia</h2>
+    <p class="sub">Verde = tem horário livre. Vermelho = agenda cheia. Toque no dia para ver os horários.</p>
+
+    <div class="mesnav">
+      <button class="seta" id="ant" disabled>‹</button>
+      <b id="rotulo">carregando…</b>
+      <button class="seta" id="prox">›</button>
+    </div>
+    <div class="grade" id="cabDias"></div>
+    <div class="grade" id="grade" style="margin-top:6px"></div>
+
+    <div class="legenda">
+      <span><i style="background:var(--ok)"></i>Livre</span>
+      <span><i style="background:var(--red)"></i>Ocupado</span>
+      <span><i style="background:#c3cadb"></i>Sem atendimento</span>
+    </div>
+
+    <div id="blocoHoras" class="hidden">
+      <label id="labDia">Horários de quinta, 27 de agosto</label>
+      <div class="horas" id="horas"></div>
+      <div class="aviso" id="avisoHora">Cada reunião reserva 1 hora. Os horários riscados já estão ocupados.</div>
+    </div>
+
+    <div id="blocoForm" class="hidden">
+      <h2 style="margin-top:24px">Seus dados</h2>
+      <p class="sub" id="subDados">Quem recebe confirma o pedido e você é avisado.</p>
+      <label>Seu nome</label>
+      <input type="text" id="fNome" placeholder="Ex.: Marcos - Gerente Itaipava">
+      <label>WhatsApp</label>
+      <input type="text" id="fFone" placeholder="(21) 99999-8888">
+      <label>E-mail (opcional)</label>
+      <input type="text" id="fMail" placeholder="marcos@sotintas.com.br">
+      <label>Assunto da reunião</label>
+      <textarea id="fObj" rows="3" placeholder="Ex.: alinhar o inventário e a meta de setembro da loja 06"></textarea>
+
+      <div class="resumo" id="resumo"></div>
+      <div style="margin-top:14px">
+        <button class="btn btn-primary" id="enviar">Pedir este horário</button>
+      </div>
+      <p class="sub" style="margin:12px 0 0;text-align:center">
+        <span id="avisoReserva">O horário fica segurado por 24 horas até a resposta.</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- PASSO 3: confirmação -->
+  <div class="card hidden" id="tela2" style="text-align:center">
+    <div class="ok-grande">✓</div>
+    <h2 style="text-align:center">Pedido enviado</h2>
+    <p class="sub" id="txtConfirma"></p>
+    <div style="text-align:left;background:var(--navy-05);border:1px solid var(--navy-10);
+      border-radius:10px;padding:14px 16px">
+      <div class="passo"><span>1</span><div id="p1">O pedido chega por e-mail e aparece no app.</div></div>
+      <div class="passo"><span>2</span><div>A pessoa <b>aceita</b> ou <b>recusa</b> — recusando, ela sugere outro horário.</div></div>
+      <div class="passo"><span>3</span><div>Aceito, o convite da Agenda Google chega no seu e-mail e o horário fica bloqueado.</div></div>
+    </div>
+    <div style="margin-top:18px">
+      <button class="btn btn-ghost" id="voltar">Escolher outro horário</button>
+    </div>
+  </div>
+
+  <div class="rodape">
+    Assistente ST · Só Tintas &nbsp;|&nbsp; este link mostra apenas os horários livres, nunca o conteúdo da agenda.
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   AGENDA PÚBLICA — Assistente ST / Só Tintas
+   Esta página é o link que vai para fora: gerente de loja, fornecedor,
+   parceiro. Ela NÃO mostra o que está na agenda — só se o horário está
+   livre ou ocupado. É a recepção do hotel: informa que o quarto está
+   ocupado, não diz quem está dentro.
+   ============================================================ */
+
+/* Mesma URL do app. Trocou a implantação do Apps Script? Troque aqui também. */
+var ENVIO_URL = 'https://script.google.com/macros/s/AKfycbxC916U8rNw_-HFTW7vtFZz4AC_B1bHcTLE3bvMDWji6E5lAqkXgC0EIgQFtjHYTp8I/exec';
+
+var DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
+var DIAS_LONGO=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+var MESES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto',
+           'setembro','outubro','novembro','dezembro'];
+
+function $(id){ return document.getElementById(id); }
+function esc(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+  .replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function param(n){
+  var m=new RegExp('[?&]'+n+'=([^&]*)').exec(location.search);
+  return m ? decodeURIComponent(m[1].replace(/\+/g,' ')) : '';
+}
+
+var SLUG = param('p');
+var MES  = new Date();  MES.setDate(1);
+var DADOS=null, diaSel=null, horaSel=null, enviando=false;
+
+$('cabDias').innerHTML = DIAS.map(function(d){ return '<div class="sh">'+d+'</div>'; }).join('');
+
+/* ---------- carregar o mês ---------- */
+function carregar(){
+  if(!SLUG){ falhar('Link incompleto', 'Peça de novo o link de agendamento — falta a parte final dele.'); return; }
+  $('grade').innerHTML='';
+  $('rotulo').textContent='carregando…';
+  $('blocoHoras').classList.add('hidden');
+  $('blocoForm').classList.add('hidden');
+  var mes = MES.getFullYear()+'-'+('0'+(MES.getMonth()+1)).slice(-2);
+  fetch(ENVIO_URL+'?acao=agendaPublica&p='+encodeURIComponent(SLUG)+'&mes='+mes)
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if(!res || !res.ok){
+        falhar('Link indisponível', (res && res.erro) || 'Não consegui abrir esta agenda.');
+        return;
+      }
+      DADOS=res;
+      var pn=res.pessoa.nome;
+      document.title='Agendar com '+pn+' — Só Tintas';
+      $('titulo').textContent='Agendar com '+pn;
+      $('papel').textContent=res.pessoa.papel;
+      $('ini').textContent=pn.charAt(0).toUpperCase();
+      $('subDados').textContent=pn+' recebe o pedido e confirma. Você é avisado por e-mail.';
+      $('p1').textContent='O pedido chega para '+pn+' por e-mail e aparece no app.';
+      render();
+    })
+    .catch(function(){
+      falhar('Sem conexão', 'Não consegui falar com o servidor. Tente de novo em instantes.');
+    });
+}
+
+function falhar(titulo, texto){
+  $('tela1').innerHTML='<h2>'+esc(titulo)+'</h2><p class="sub">'+esc(texto)+'</p>';
+}
+
+/* ---------- calendário ---------- */
+function render(){
+  $('rotulo').textContent = MESES[MES.getMonth()].charAt(0).toUpperCase()+
+    MESES[MES.getMonth()].slice(1)+' de '+MES.getFullYear();
+  /* não deixa navegar para trás do mês corrente: passado não se agenda */
+  var agora=new Date();
+  $('ant').disabled = (MES.getFullYear()<agora.getFullYear()) ||
+    (MES.getFullYear()===agora.getFullYear() && MES.getMonth()<=agora.getMonth());
+
+  var primeiro=new Date(MES.getFullYear(), MES.getMonth(), 1);
+  var h='';
+  for(var i=0;i<primeiro.getDay();i++) h+='<div></div>';
+  (DADOS.dias||[]).forEach(function(d){
+    var cls='dia', desab=false;
+    if(d.fimDeSemana || d.passado){ cls+=' fora'; desab=true; }
+    else if(!d.livres.length){ cls+=' cheio'; desab=true; }
+    else cls+=' livre';
+    if(diaSel===d.dia) cls+=' sel';
+    h+='<button class="'+cls+'" data-d="'+d.dia+'"'+(desab?' disabled':'')+
+       ' title="'+(d.fimDeSemana?'sem atendimento':(d.passado?'já passou':
+         (d.livres.length?d.livres.length+' horário(s) livre(s)':'agenda cheia')))+'">'+
+       d.dia+(d.fimDeSemana||d.passado?'':'<span class="pt"></span>')+'</button>';
+  });
+  $('grade').innerHTML=h;
+  Array.prototype.forEach.call(document.querySelectorAll('#grade [data-d]'),function(b){
+    if(b.disabled) return;
+    b.onclick=function(){ diaSel=+b.getAttribute('data-d'); horaSel=null; render(); mostrarHoras(); };
+  });
+}
+
+function diaPorNumero(n){
+  var lista=DADOS.dias||[];
+  for(var i=0;i<lista.length;i++) if(lista[i].dia===n) return lista[i];
+  return null;
+}
+
+function mostrarHoras(){
+  var d=diaPorNumero(diaSel);
+  if(!d){ $('blocoHoras').classList.add('hidden'); return; }
+  var data=new Date(d.data+'T12:00:00');
+  $('labDia').textContent='Horários de '+DIAS_LONGO[data.getDay()]+', '+d.dia+' de '+MESES[MES.getMonth()];
+  $('horas').innerHTML=(DADOS.grade||[]).map(function(hh){
+    var ocupada = d.livres.indexOf(hh)<0;
+    return '<button class="hora'+(ocupada?' ocupada':'')+(horaSel===hh?' sel':'')+'" data-h="'+hh+'"'+
+           (ocupada?' disabled':'')+'>'+hh+'</button>';
+  }).join('');
+  Array.prototype.forEach.call(document.querySelectorAll('#horas [data-h]'),function(b){
+    if(b.disabled) return;
+    b.onclick=function(){ horaSel=b.getAttribute('data-h'); mostrarHoras(); mostrarForm(); };
+  });
+  var nOc=(d.ocupadas||[]).length;
+  $('avisoHora').textContent = nOc
+    ? 'Cada reunião reserva '+(DADOS.duracao||60)+' minutos. Os riscados já estão ocupados ('+nOc+' neste dia).'
+    : 'Dia todo livre. Cada reunião reserva '+(DADOS.duracao||60)+' minutos.';
+  $('blocoHoras').classList.remove('hidden');
+  if(!horaSel) $('blocoForm').classList.add('hidden');
+}
+
+function mostrarForm(){
+  var d=diaPorNumero(diaSel);
+  var data=new Date(d.data+'T12:00:00');
+  $('resumo').innerHTML='Você está pedindo <b>'+DIAS_LONGO[data.getDay()]+', '+d.dia+' de '+
+    MESES[MES.getMonth()]+', às '+horaSel+'</b> — '+(DADOS.duracao||60)+' minutos com '+
+    esc(DADOS.pessoa.nome)+'.';
+  $('blocoForm').classList.remove('hidden');
+  $('blocoForm').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+$('prox').onclick=function(){ MES=new Date(MES.getFullYear(), MES.getMonth()+1, 1);
+  diaSel=null; horaSel=null; carregar(); };
+$('ant').onclick=function(){ MES=new Date(MES.getFullYear(), MES.getMonth()-1, 1);
+  diaSel=null; horaSel=null; carregar(); };
+
+/* ---------- enviar o pedido ---------- */
+$('enviar').onclick=function(){
+  if(enviando) return;
+  var nome=$('fNome').value.trim();
+  if(!nome){ $('fNome').focus(); $('fNome').style.borderColor='var(--red)'; return; }
+  var d=diaPorNumero(diaSel);
+  if(!d || !horaSel) return;
+
+  enviando=true;
+  $('enviar').disabled=true;
+  $('enviar').textContent='Enviando…';
+
+  fetch(ENVIO_URL,{ method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({ tipo:'pedirHorario', p:SLUG, data:d.data, hora:horaSel,
+      nome:nome, fone:$('fFone').value.trim(), email:$('fMail').value.trim(),
+      assunto:$('fObj').value.trim() })})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      enviando=false; $('enviar').disabled=false; $('enviar').textContent='Pedir este horário';
+      if(!res || !res.ok){
+        /* o caso real: alguém pegou o horário entre abrir a tela e tocar no botão */
+        $('resumo').innerHTML='<b style="color:var(--red)">'+esc((res&&res.erro)||'Não consegui enviar.')+'</b>';
+        carregar();
+        return;
+      }
+      var data=new Date(d.data+'T12:00:00');
+      $('txtConfirma').innerHTML='Guardamos seu pedido de <b>'+DIAS_LONGO[data.getDay()]+', '+d.dia+
+        ' de '+MESES[MES.getMonth()]+', às '+horaSel+'</b>.<br>'+
+        'O horário fica segurado até <b>'+esc(res.expira||'')+'</b> — depois disso, se não houver '+
+        'resposta, ele volta a aparecer para outras pessoas.';
+      $('tela1').classList.add('hidden');
+      $('tela2').classList.remove('hidden');
+      window.scrollTo({top:0,behavior:'smooth'});
+    })
+    .catch(function(){
+      enviando=false; $('enviar').disabled=false; $('enviar').textContent='Pedir este horário';
+      $('resumo').innerHTML='<b style="color:var(--red)">Sem conexão — o pedido não foi enviado. Tente de novo.</b>';
+    });
+};
+
+$('voltar').onclick=function(){
+  $('tela2').classList.add('hidden'); $('tela1').classList.remove('hidden');
+  diaSel=null; horaSel=null; carregar();
+};
+
+carregar();
+</script>
+
+</body>
+</html>

@@ -1053,6 +1053,16 @@ tr.incompleto input{background:transparent}
         <input type="checkbox" id="agGoogle" checked>
         <span>Mostrar também os compromissos da minha Agenda Google</span>
       </label>
+      <!-- pedidos vindos do link público: ficam ANTES da agenda porque são
+           os únicos itens da tela que esperam uma decisão sua -->
+      <div id="agPedidos" style="margin-top:14px"></div>
+
+      <div class="btnrow" style="margin-top:14px">
+        <button class="btn btn-ghost btn-sm" id="btnBloquear"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg> Bloquear dias (férias, folga, curso)</button>
+        <button class="btn btn-ghost btn-sm" id="btnMeuLink"><svg class="ic" aria-hidden="true"><use href="#i-share"/></svg> Meu link de agendamento</button>
+      </div>
+      <div id="agBloqueios" style="margin-top:10px"></div>
+
       <div id="agendaLista" style="margin-top:14px"></div>
     </div>
     <div id="viewHistorico" class="hidden">
@@ -1369,6 +1379,49 @@ tr.incompleto input{background:transparent}
 </div>
 
 <!-- modal corrigir despesa -->
+<!-- bloquear dias na própria agenda -->
+<div class="modal" id="modalBloqueio">
+  <div class="mbox">
+    <h2>Bloquear dias</h2>
+    <p class="sub">Férias, folga, curso, viagem. O dia inteiro some do seu link de agendamento —
+    sem precisar inventar uma reunião falsa, que suja o histórico.</p>
+    <div class="grid2">
+      <div><label>De</label><input type="date" id="blDe"></div>
+      <div><label>Até</label><input type="date" id="blAte"></div>
+    </div>
+    <label>Motivo (só você vê)</label>
+    <input type="text" id="blMotivo" placeholder="Ex.: férias, curso na matriz, folga">
+    <div class="btnrow">
+      <button class="btn btn-primary" id="blSalvar">Bloquear</button>
+      <button class="btn btn-ghost" id="blFechar">Voltar</button>
+    </div>
+    <div id="blStatus" class="hidden" style="margin-top:12px;padding:11px 14px;border-radius:10px;font-size:14px"></div>
+  </div>
+</div>
+
+<!-- meu link de agendamento -->
+<div class="modal" id="modalMeuLink">
+  <div class="mbox">
+    <h2>Meu link de agendamento</h2>
+    <p class="sub">Mande para quem precisa marcar com você. A pessoa vê só os horários livres —
+    nunca o que está na sua agenda.</p>
+    <input type="text" id="mlUrl" readonly onclick="this.select()">
+    <div class="btnrow">
+      <button class="btn btn-primary" id="mlCopiar">Copiar link</button>
+      <button class="btn btn-navy" id="mlZap"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg> Mandar no WhatsApp</button>
+      <button class="btn btn-ghost" id="mlFechar">Voltar</button>
+    </div>
+    <label class="cli" style="margin-top:16px;text-transform:none;font-size:13px;font-weight:normal;color:var(--ink)">
+      <input type="checkbox" id="mlLigado" checked>
+      <span>Manter meu link ligado</span>
+    </label>
+    <div class="hint" id="mlAviso">Para o link considerar também a sua Agenda Google, compartilhe
+    a sua agenda com <b>supervisordelojas1@sotintasnet.com.br</b> na opção
+    <b>"Ver apenas disponível/ocupado"</b> — ela mostra os horários, nunca os assuntos.
+    Sem isso, o link usa as reuniões do app e os seus bloqueios.</div>
+  </div>
+</div>
+
 <!-- escolher convidados da agenda de contatos -->
 <div class="modal" id="modalConvidados">
   <div class="mbox">
@@ -2327,6 +2380,8 @@ function carregarAgendaUnificada(){
 
   $('agendaLista').innerHTML='<p class="sub">Carregando…</p>';
   carregarProximas();
+  if(typeof carregarPedidos==='function')  carregarPedidos();
+  if(typeof carregarBloqueios==='function') carregarBloqueios();
   if(!ENVIO_URL){ renderAgendaCompleta(); return; }
 
   var sup = (!ehGestor() && souQuem()) ? '&supervisor='+encodeURIComponent(souQuem()) : '';
@@ -3848,6 +3903,168 @@ $('fObjetivo').oninput=checkStart; $('fTitulo').oninput=checkStart;
 $('fData').onchange=checkStart; $('fHora').onchange=checkStart;
 $('btnAddPart').onclick=function(){ PARTS.push({n:'',e:'',f:''}); renderParts(); };
 
+/* ============ AGENDA PÚBLICA: PEDIDOS, BLOQUEIOS E O LINK ============
+   O link é o contrário do resto do app: quem abre não tem login. Por isso
+   ele só sabe dizer "livre" ou "ocupado", e o que chega de lá é PEDIDO —
+   entra na tela esperando um sim ou um não, nunca direto na agenda. */
+var PEDIDOS=[], BLOQUEIOS=[];
+
+function urlAgendaPublica(nome){
+  var base=location.href.split('?')[0].split('#')[0].replace(/[^/]*$/,'');
+  return base+'agenda.html?p='+encodeURIComponent(chavePessoa(nome||euSou()));
+}
+
+function carregarPedidos(){
+  if(!ENVIO_URL || !$('agPedidos')) return;
+  var quem=travaEscopo();
+  fetch(ENVIO_URL+'?acao=pedidos'+(quem?'&quem='+encodeURIComponent(quem):''))
+    .then(function(r){ return r.json(); })
+    .then(function(res){ PEDIDOS=(res&&res.itens)||[]; renderPedidos(); })
+    .catch(function(){ /* offline: a agenda normal continua na tela */ });
+}
+
+function renderPedidos(){
+  var box=$('agPedidos'); if(!box) return;
+  if(!PEDIDOS.length){ box.innerHTML=''; return; }
+  var h='<div class="grp"><div class="gh"><span class="gn">Pedidos de reunião</span>'+
+        '<span class="gc gv">'+PEDIDOS.length+' esperando você</span></div>';
+  PEDIDOS.forEach(function(p){
+    h+='<div class="ag" style="border-left-color:var(--warn)">'+
+       '<div class="agd" style="background:var(--warn)"><b>'+(p.data.split('-')[2]||'--')+'</b>'+
+       '<span>'+mesCurto(p.data.split('-')[1])+'</span></div>'+
+       '<div class="agi"><div class="agt">'+esc(p.hora)+' · '+esc(p.nome)+'</div>'+
+       '<div class="ags">'+(p.assunto?esc(p.assunto):'<i>sem assunto informado</i>')+
+       (p.fone?' · '+esc(p.fone):'')+(p.email?' · '+esc(p.email):'')+
+       (ehCoordenador()?' · agenda de <b>'+esc(p.paraQuem)+'</b>':'')+
+       '<br><span style="color:var(--warn);font-weight:700">segura até '+esc(p.expira)+'</span></div></div>'+
+       (foneWa(p.fone)
+         ? '<a class="btn btn-ghost btn-sm" href="https://wa.me/'+foneWa(p.fone)+'" target="_blank" rel="noopener noreferrer">'+ICO('chat')+' Falar</a>'
+         : '')+
+       '<div class="agb" style="width:100%">'+
+         '<button class="btn btn-primary btn-sm" data-pdok="'+p.linha+'">'+ICO('check')+' Aceitar</button>'+
+         '<button class="btn btn-ghost btn-sm" data-pdno="'+p.linha+'">'+ICO('x')+' Recusar</button>'+
+       '</div></div>';
+  });
+  box.innerHTML=h+'</div>';
+}
+
+delegar('agPedidos', {
+  'data-pdok': function(l){ decidirPedido(l,'aceitar',''); },
+  'data-pdno': function(l){
+    var m=prompt('Por que não dá neste horário?\n\nA pessoa recebe o motivo e escolhe outro horário no mesmo link.\n(Recusa sem motivo é lida como "ele não quis".)');
+    if(m===null) return;
+    decidirPedido(l,'recusar',m);
+  }
+});
+
+function decidirPedido(linha, decisao, motivo){
+  toast(decisao==='aceitar'?'Marcando a reunião…':'Registrando a recusa…');
+  fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({tipo:'decidirPedido', linha:linha, decisao:decisao, motivo:motivo,
+      quem:euSou(), escopo:(SESSAO&&SESSAO.escopo)||'proprio'})})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if(!res || !res.ok){ toast('Não consegui: '+((res&&res.erro)||'erro')); return; }
+      toast(res.aceito ? 'Reunião marcada e convite enviado.' : 'Recusado — a pessoa foi avisada.');
+      /* o WhatsApp continua manual: um toque, sem robô e sem cobrança por mensagem */
+      var fone=foneWa(res.fone);
+      if(fone){
+        var txt = res.aceito
+          ? 'Confirmado! Nossa reunião fica '+dataBr(res.data)+' às '+res.hora+'.'
+          : 'Oi! Não vou conseguir '+dataBr(res.data)+' às '+res.hora+'. '+(motivo||'')+
+            ' Pode escolher outro horário no mesmo link.';
+        window.open('https://wa.me/'+fone+'?text='+encodeURIComponent(txt),'_blank');
+      }
+      carregarPedidos(); carregarAgendaUnificada();
+    })
+    .catch(function(){ toast('Sem sinal — nada foi decidido.'); });
+}
+
+/* ---------- bloqueios ---------- */
+function carregarBloqueios(){
+  if(!ENVIO_URL || !$('agBloqueios')) return;
+  var quem=travaEscopo();
+  fetch(ENVIO_URL+'?acao=bloqueios'+(quem?'&quem='+encodeURIComponent(quem):''))
+    .then(function(r){ return r.json(); })
+    .then(function(res){ BLOQUEIOS=(res&&res.itens)||[]; renderBloqueios(); })
+    .catch(function(){});
+}
+function renderBloqueios(){
+  var box=$('agBloqueios'); if(!box) return;
+  if(!BLOQUEIOS.length){ box.innerHTML=''; return; }
+  box.innerHTML='<div class="hint" style="margin-top:0"><b>Dias bloqueados:</b> '+
+    BLOQUEIOS.map(function(b){
+      return '<span style="white-space:nowrap">'+dataBr(b.de)+(b.ate!==b.de?'–'+dataBr(b.ate):'')+
+        (b.motivo?' ('+esc(b.motivo)+')':'')+(ehCoordenador()?' · '+esc(b.pessoa):'')+
+        ' <a href="#" data-blx="'+b.linha+'" style="color:var(--red);font-weight:700">liberar</a></span>';
+    }).join(' &nbsp;·&nbsp; ')+'</div>';
+}
+delegar('agBloqueios', { 'data-blx': function(l){
+  if(!confirm('Liberar esses dias de volta para agendamento?')) return;
+  fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({tipo:'removerBloqueio', linha:l, quem:euSou(), escopo:(SESSAO&&SESSAO.escopo)||'proprio'})})
+    .then(function(r){ return r.json(); })
+    .then(function(res){ if(res&&res.ok){ toast('Dias liberados.'); carregarBloqueios(); }
+                         else toast('Não consegui: '+((res&&res.erro)||'erro')); })
+    .catch(function(){ toast('Sem sinal.'); });
+}});
+
+$('btnBloquear').onclick=function(){
+  $('blDe').value=hojeISO(); $('blAte').value=hojeISO(); $('blMotivo').value='';
+  $('blStatus').classList.add('hidden');
+  $('modalBloqueio').classList.add('show');
+};
+$('blFechar').onclick=function(){ $('modalBloqueio').classList.remove('show'); };
+$('blSalvar').onclick=function(){
+  var de=$('blDe').value, ate=$('blAte').value||$('blDe').value;
+  if(!de){ blBox('erro','Escolha a data inicial.'); return; }
+  if(ate<de){ blBox('erro','A data final é antes da inicial.'); return; }
+  fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({tipo:'bloqueio', pessoa:euSou(), de:de, ate:ate,
+      motivo:$('blMotivo').value.trim(), quem:euSou(), escopo:(SESSAO&&SESSAO.escopo)||'proprio'})})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if(!res || !res.ok){ blBox('erro',(res&&res.erro)||'Não consegui bloquear.'); return; }
+      $('modalBloqueio').classList.remove('show');
+      toast('Dias bloqueados — saíram do seu link.');
+      carregarBloqueios();
+    })
+    .catch(function(){ blBox('erro','Sem sinal — nada foi bloqueado.'); });
+};
+function blBox(cor,html){
+  var b=$('blStatus');
+  var e={info:['#eef3ff','#1C3F8F'],ok:['#e9f7ef','#177a4d'],erro:['#fdeaea','#D32027']}[cor];
+  b.style.background=e[0]; b.style.color=e[1]; b.style.border='1px solid '+e[1];
+  b.innerHTML=html; b.classList.remove('hidden');
+}
+
+/* ---------- o link ---------- */
+$('btnMeuLink').onclick=function(){
+  $('mlUrl').value=urlAgendaPublica(euSou());
+  $('mlLigado').checked = !(SESSAO && SESSAO.agendaPublica==='Não');
+  $('modalMeuLink').classList.add('show');
+};
+$('mlFechar').onclick=function(){ $('modalMeuLink').classList.remove('show'); };
+$('mlCopiar').onclick=function(){
+  $('mlUrl').select();
+  try{ navigator.clipboard.writeText($('mlUrl').value); }catch(e){ try{ document.execCommand('copy'); }catch(e2){} }
+  toast('Link copiado.');
+};
+$('mlZap').onclick=function(){
+  var txt='Oi! Para marcar comigo, escolha um horário livre aqui: '+$('mlUrl').value;
+  window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
+};
+$('mlLigado').onchange=function(){
+  var ligar=$('mlLigado').checked;
+  if(SESSAO) SESSAO.agendaPublica = ligar?'Sim':'Não';
+  fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({tipo:'agendaPublicaLigar', quem:euSou(), ligar:ligar})})
+    .then(function(r){ return r.json(); })
+    .then(function(res){ toast(res&&res.ok ? (ligar?'Link ligado.':'Link desligado — quem abrir vê "indisponível".')
+                                           : 'Não consegui mudar agora.'); })
+    .catch(function(){ toast('Sem sinal — a mudança não foi gravada.'); });
+};
+
 /* ============ CONVIDADOS ============
    Digitar o nome já funcionava — mas exigia lembrar de cor quem existe.
    Escolher de uma lista é a diferença entre convidar três pessoas e convidar
@@ -4474,7 +4691,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v38';
+var VERSAO_APP='v39';
 
 var LS_SESSAO='sotintas_sessao_v1';
 var SESSAO=null;
