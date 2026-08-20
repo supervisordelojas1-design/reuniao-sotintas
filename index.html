@@ -313,6 +313,10 @@ body.semDicas .chip-dica{opacity:.6}
 .ag .agd b{display:block;font-size:17px}
 .ag .agd span{font-size:10px;text-transform:uppercase;letter-spacing:.5px}
 .ag .agi{flex:1;min-width:170px}
+/* o cartão de convidado é um <label> para o toque valer no cartão inteiro —
+   e por isso precisa anular a regra global de label (bloco, maiúsculas) */
+.cvitem{text-transform:none;letter-spacing:normal;color:inherit;font-size:inherit;
+  font-weight:normal;margin:0 0 10px;cursor:pointer}
 .ag .agt{font-weight:bold;color:var(--navy);font-size:15px}
 .ag .ags{font-size:12px;color:var(--muted);margin-top:2px}
 /* ---------- rotina de visitas ---------- */
@@ -1117,7 +1121,11 @@ tr.incompleto input{background:transparent}
     </table>
     <datalist id="listaParts"></datalist>
     <div class="hint" id="labEmails">O e-mail recebe a ata. O WhatsApp gera o botão de convite individual — pode deixar em branco quem você não for avisar por lá.</div>
-    <button class="btn btn-ghost btn-sm" id="btnAddPart" style="margin-top:10px">+ Adicionar participante</button>
+    <div class="btnrow" style="margin-top:10px">
+      <button class="btn btn-ghost btn-sm" id="btnAddPart">+ Linha em branco</button>
+      <button class="btn btn-navy btn-sm" id="btnDaAgenda">Escolher da agenda</button>
+      <button class="btn btn-ghost btn-sm" id="btnNovoConvidado">+ Novo contato</button>
+    </div>
       </div>
     </details>
 
@@ -1361,6 +1369,44 @@ tr.incompleto input{background:transparent}
 </div>
 
 <!-- modal corrigir despesa -->
+<!-- escolher convidados da agenda de contatos -->
+<div class="modal" id="modalConvidados">
+  <div class="mbox">
+    <h2>Convidar da agenda</h2>
+    <p class="sub">Marque quem participa. Telefone e e-mail vêm junto — é o que faz o convite sair
+    pelo WhatsApp em vez de "aviso no grupo mesmo".</p>
+    <input type="text" id="cvBusca" placeholder="Buscar por nome, loja ou cargo" autocomplete="off">
+    <div id="cvLista" style="max-height:46vh;overflow:auto;margin-top:12px"></div>
+    <div class="btnrow">
+      <button class="btn btn-primary" id="cvAdicionar">Adicionar à reunião</button>
+      <button class="btn btn-ghost" id="cvFechar">Voltar</button>
+    </div>
+  </div>
+</div>
+
+<!-- cadastrar um convidado que ainda não está na agenda -->
+<div class="modal" id="modalNovoConvidado">
+  <div class="mbox">
+    <h2>Novo convidado</h2>
+    <p class="sub" id="ncSub">Quem não está na agenda entra aqui — fornecedor, gerente novo, parceiro.</p>
+    <div class="grid2">
+      <div><label>Nome</label><input type="text" id="ncNome" placeholder="Ex.: Marcos - Gerente Itaipava"></div>
+      <div><label>WhatsApp</label><input type="text" id="ncFone" inputmode="tel" placeholder="(21) 99999-8888"></div>
+    </div>
+    <div class="grid2">
+      <div><label>E-mail</label><input type="text" id="ncEmail" placeholder="marcos@sotintas.com.br"></div>
+      <div><label>Cargo</label><input type="text" id="ncCargo" placeholder="Gerente"></div>
+    </div>
+    <label>Loja / Empresa</label>
+    <input list="listaLojas" type="text" id="ncEmpresa" placeholder="06 - Itaipava">
+    <div class="btnrow">
+      <button class="btn btn-primary" id="ncSalvar">Adicionar à reunião</button>
+      <button class="btn btn-ghost" id="ncFechar">Voltar</button>
+    </div>
+    <div id="ncStatus" class="hidden" style="margin-top:12px;padding:11px 14px;border-radius:10px;font-size:14px"></div>
+  </div>
+</div>
+
 <div class="modal" id="modalDpEdit">
   <div class="mbox">
     <h2>Corrigir despesa</h2>
@@ -1983,7 +2029,9 @@ function resumoGavetasAgenda(){
   var p=$('partsResumo');
   if(p){
     var n=PARTS.filter(function(x){ return x.n.trim(); }).length;
-    p.textContent = n ? n+' pessoa(s)' : 'ninguém ainda';
+    /* a gaveta nasce fechada na tela de agendar: sem esta pista, o botão de
+       escolher da agenda fica escondido justo de quem mais precisa dele */
+    p.textContent = n ? n+' pessoa(s)' : 'ninguém ainda — toque para escolher da agenda';
   }
 }
 function agBox(cor,html){
@@ -2002,6 +2050,8 @@ function dadosAgendamento(){
     duracao: parseInt($('fDuracao').value,10) || t.blocos.reduce(function(a,b){return a+b.min;},0),
     lembrete: parseInt($('fLembrete').value,10) || 30,
     local:$('fLocal').value.trim(), condutor:$('fCondutor').value.trim(),
+    /* dono da reunião: é o que faz a agenda de cada um ser a dele */
+    agendadoPor: euSou(),
     participantes:partsNomes(), emails:partsEmails(), fones:partsFones(),
     participantesJson: JSON.stringify(PARTS.filter(function(p){return p.n.trim()||p.e.trim()||p.f.trim();})),
     objetivo:$('fObjetivo').value.trim(),
@@ -2055,7 +2105,9 @@ function agendar(){
 var PROX=[];
 function carregarProximas(){
   if(!ENVIO_URL) return;
-  fetch(ENVIO_URL+'?acao=proximas')
+  /* a agenda é de quem entrou: coordenador vê tudo, os outros veem o que
+     agendaram, o que conduzem e aquilo para o que foram convidados */
+  fetch(ENVIO_URL+'?acao=proximas'+(travaEscopo()?'&quem='+encodeURIComponent(travaEscopo()):''))
     .then(function(r){ return r.json(); })
     .then(function(res){
       if(!res || !res.ok || !res.itens || !res.itens.length){ PROX=[]; $('proximas').classList.add('hidden'); return; }
@@ -2280,7 +2332,8 @@ function carregarAgendaUnificada(){
   var sup = (!ehGestor() && souQuem()) ? '&supervisor='+encodeURIComponent(souQuem()) : '';
   var pedidos = [
     fetch(ENVIO_URL+'?acao=visitas&de='+j.de+'&ate='+j.ate+sup).then(function(r){return r.json();}).catch(function(){return null;}),
-    fetch(ENVIO_URL+'?acao=agendamentos&de='+j.de+'&ate='+j.ate).then(function(r){return r.json();}).catch(function(){return null;})
+    fetch(ENVIO_URL+'?acao=agendamentos&de='+j.de+'&ate='+j.ate+
+      (travaEscopo()?'&quem='+encodeURIComponent(travaEscopo()):'')).then(function(r){return r.json();}).catch(function(){return null;})
   ];
   /* A Agenda Google é do coordenador (a conta que publicou o script). Puxar
      para o supervisor mostraria compromissos que não são dele. */
@@ -3794,6 +3847,129 @@ renderModels(); renderAgenda(); renderParts(); initMic(); checarInterrompida(); 
 $('fObjetivo').oninput=checkStart; $('fTitulo').oninput=checkStart;
 $('fData').onchange=checkStart; $('fHora').onchange=checkStart;
 $('btnAddPart').onclick=function(){ PARTS.push({n:'',e:'',f:''}); renderParts(); };
+
+/* ============ CONVIDADOS ============
+   Digitar o nome já funcionava — mas exigia lembrar de cor quem existe.
+   Escolher de uma lista é a diferença entre convidar três pessoas e convidar
+   uma: o gerente da loja vizinha só é lembrado quando ele está à vista. */
+var CV_SEL={};
+
+function addConvidado(c){
+  var nome=String(c.nome||'').trim(); if(!nome) return false;
+  for(var i=0;i<PARTS.length;i++) if(norml(PARTS[i].n)===norml(nome)) return false;  /* já está */
+  var da=contatoPorNome(nome)||{};
+  var novo={n:nome, e:String(c.email||da.email||'').trim(), f:String(c.fone||da.fone||'').trim(), p:true};
+  /* reaproveita a primeira linha em branco: senão a tabela nasce com um vazio no topo */
+  for(var j=0;j<PARTS.length;j++){
+    if(!PARTS[j].n.trim() && !PARTS[j].e.trim() && !PARTS[j].f.trim()){ PARTS[j]=novo; return true; }
+  }
+  PARTS.push(novo);
+  return true;
+}
+
+$('btnDaAgenda').onclick=function(){
+  CV_SEL={}; $('cvBusca').value='';
+  $('modalConvidados').classList.add('show');
+  if(!CONTATOS.length){
+    $('cvLista').innerHTML='<p class="sub">Carregando a agenda…</p>';
+    carregarContatos(false, renderConvidados);
+  } else renderConvidados();
+};
+$('cvFechar').onclick=function(){ $('modalConvidados').classList.remove('show'); };
+$('cvBusca').oninput=renderConvidados;
+
+function renderConvidados(){
+  var termo=semAcento($('cvBusca').value||'');
+  var jaTem={};
+  PARTS.forEach(function(p){ if(p.n.trim()) jaTem[norml(p.n)]=1; });
+  if(!(CONTATOS||[]).length){
+    $('cvLista').innerHTML='<p class="sub">A agenda de contatos está vazia. Use <b>+ Novo contato</b> '+
+      'para incluir alguém agora mesmo.</p>';
+    contarCv(); return;
+  }
+  var lista=CONTATOS.filter(function(c){
+    if(!termo) return true;
+    return semAcento(c.nome+' '+(c.empresa||'')+' '+(c.cargo||'')).indexOf(termo)>=0;
+  });
+  if(!lista.length){
+    $('cvLista').innerHTML='<p class="sub">Ninguém encontrado para "'+esc($('cvBusca').value)+'".</p>';
+    contarCv(); return;
+  }
+  var h='';
+  lista.forEach(function(c){
+    var k=norml(c.nome), dentro=!!jaTem[k];
+    h+='<label class="ag cvitem"'+(dentro?' style="opacity:.55"':'')+'>'+
+       '<input type="checkbox" data-cv="'+esc(c.nome)+'"'+(CV_SEL[k]?' checked':'')+(dentro?' disabled':'')+
+       ' style="width:20px;height:20px;accent-color:var(--navy);flex:0 0 auto">'+
+       '<div class="agi"><div class="agt">'+esc(c.nome)+'</div>'+
+       '<div class="ags">'+esc([c.cargo,c.empresa].filter(Boolean).join(' · ')||'sem cargo')+
+       (c.fone?' · '+esc(c.fone):'')+(dentro?' · <b>já está na reunião</b>':'')+'</div></div></label>';
+  });
+  $('cvLista').innerHTML=h;
+  Array.prototype.forEach.call(document.querySelectorAll('#cvLista [data-cv]'),function(cb){
+    cb.onchange=function(){
+      var nome=cb.getAttribute('data-cv'), k=norml(nome);
+      if(cb.checked) CV_SEL[k]=nome; else delete CV_SEL[k];
+      contarCv();
+    };
+  });
+  contarCv();
+}
+function contarCv(){
+  var n=Object.keys(CV_SEL).length, b=$('cvAdicionar');
+  b.textContent = n ? 'Adicionar '+n+' à reunião' : 'Adicionar à reunião';
+  b.disabled = !n;
+}
+$('cvAdicionar').onclick=function(){
+  var nomes=Object.keys(CV_SEL).map(function(k){ return CV_SEL[k]; });
+  if(!nomes.length) return;
+  var n=0;
+  nomes.forEach(function(nome){ if(addConvidado({nome:nome})) n++; });
+  $('modalConvidados').classList.remove('show');
+  renderParts(); renderConvites();
+  toast(n+' convidado(s) na lista — telefone e e-mail vieram da agenda.');
+};
+
+/* ---------- convidado que ainda não está na agenda ----------
+   A agenda é cadastro da empresa: só a coordenação grava nela. Para os
+   demais o contato vale nesta reunião, que é o que resolve o problema de
+   hoje sem abrir a porta do cadastro para todo mundo. */
+$('btnNovoConvidado').onclick=function(){
+  ['ncNome','ncFone','ncEmail','ncCargo','ncEmpresa'].forEach(function(id){ $(id).value=''; });
+  $('ncStatus').classList.add('hidden');
+  $('ncSub').textContent = ehCoordenador()
+    ? 'Quem não está na agenda entra aqui: ele já vira convidado desta reunião e fica salvo na agenda de contatos da equipe.'
+    : 'Ele entra como convidado desta reunião. Guardar na agenda da equipe é com a coordenação — fale com o Bruno se for alguém recorrente.';
+  $('modalNovoConvidado').classList.add('show');
+};
+$('ncFechar').onclick=function(){ $('modalNovoConvidado').classList.remove('show'); };
+function ncBox(cor,html){
+  var b=$('ncStatus');
+  var e={info:['#eef3ff','#1C3F8F'],ok:['#e9f7ef','#177a4d'],erro:['#fdeaea','#D32027']}[cor];
+  b.style.background=e[0]; b.style.color=e[1]; b.style.border='1px solid '+e[1];
+  b.innerHTML=html; b.classList.remove('hidden');
+}
+$('ncSalvar').onclick=function(){
+  var c={ nome:$('ncNome').value.trim(), fone:$('ncFone').value.trim(), email:$('ncEmail').value.trim(),
+          cargo:$('ncCargo').value.trim(), empresa:$('ncEmpresa').value.trim() };
+  if(!c.nome){ ncBox('erro','Informe o nome do convidado.'); return; }
+  if(!addConvidado(c)){ ncBox('erro','Esse nome já está na lista de participantes.'); return; }
+  renderParts(); renderConvites();
+  $('modalNovoConvidado').classList.remove('show');
+  toast(c.nome+' entrou na lista de participantes.');
+  if(!ehCoordenador() || !ENVIO_URL) return;
+  fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({tipo:'contatos', contatos:[c], quem:euSou(), escopo:(SESSAO&&SESSAO.escopo)||'proprio'})})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if(res && res.ok){
+        CONTATOS.push({nome:c.nome, fone:c.fone, email:c.email, cargo:c.cargo, empresa:c.empresa});
+        atualizaListaParts();
+        toast('Salvo também na agenda de contatos.');
+      }
+    })
+    .catch(function(){ toast('Sem sinal: entrou na reunião, mas não foi salvo na agenda.'); });
+};
 Array.prototype.forEach.call(document.querySelectorAll('[data-mc]'),function(b){
   b.onclick=function(){
     cond=b.dataset.mc;
@@ -4298,7 +4474,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v37.1';
+var VERSAO_APP='v38';
 
 var LS_SESSAO='sotintas_sessao_v1';
 var SESSAO=null;
@@ -4579,11 +4755,11 @@ function aplicarPermissaoContatos(){
   }
 }
 
-function carregarContatos(forcar){
+function carregarContatos(forcar, depois){
   aplicarPermissaoContatos();
   var box=$('ctLista');
   if(!ENVIO_URL){ box.innerHTML='<p class="sub">Indisponível: envio para o Google não configurado.</p>'; return; }
-  if(CONTATOS.length && !forcar){ renderContatos(); return; }
+  if(CONTATOS.length && !forcar){ renderContatos(); if(typeof depois==='function') depois(); return; }
   box.innerHTML='<p class="sub">Carregando…</p>';
   fetch(ENVIO_URL+'?acao=contatos').then(function(r){ return r.json(); })
     .then(function(res){
@@ -4595,6 +4771,7 @@ function carregarContatos(forcar){
       CONTATOS=res.itens||[];
       renderContatos();
       atualizaListaParts();
+      if(typeof depois==='function') depois();
     })
     .catch(function(){ box.innerHTML='<p class="sub">Sem conexão para carregar os contatos.</p>'; });
 }
