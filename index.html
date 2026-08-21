@@ -1390,18 +1390,23 @@ tr.incompleto input{background:transparent}
     <div class="hint">O aviso não muda o status da visita: ela continua planejada até você tocar em
     <b>Cheguei</b>. Serve para quem espera na loja saber que você saiu.</div>
 
-    <div class="btnrow">
-      <button class="btn btn-primary" id="rtSalvar">Registrar saída</button>
-      <a class="btn btn-navy" id="rtWaze" target="_blank" rel="noopener noreferrer">Abrir no Waze</a>
-      <a class="btn btn-ghost" id="rtMaps" target="_blank" rel="noopener noreferrer">Google Maps</a>
-      <button class="btn btn-ghost" id="rtFechar">Voltar</button>
+    <!-- O WhatsApp vem ANTES de tudo e já aparece ao abrir: quem está saindo
+         para a estrada quer avisar em um toque, não em dois. Tocar aqui já
+         registra a saída sozinho. -->
+    <div id="rtZap" style="margin-top:16px">
+      <h3 style="margin-bottom:6px">Avisar no WhatsApp</h3>
+      <p class="sub" style="margin-bottom:10px">Abre a conversa com o recado pronto — e a saída
+      fica registrada automaticamente. Você só toca em enviar.</p>
+      <div class="btnrow" id="rtZapBtns" style="margin-top:0"></div>
     </div>
 
     <div id="rtStatus" class="hidden" style="margin-top:12px;padding:11px 14px;border-radius:10px;font-size:14px"></div>
-    <div id="rtZap" class="hidden" style="margin-top:16px">
-      <h3 style="margin-bottom:6px">Avisar no WhatsApp</h3>
-      <p class="sub" style="margin-bottom:10px">Cada botão abre a conversa com o recado pronto. Você só toca em enviar.</p>
-      <div class="btnrow" id="rtZapBtns" style="margin-top:0"></div>
+
+    <div class="btnrow">
+      <button class="btn btn-primary" id="rtSalvar">Só registrar, sem avisar</button>
+      <a class="btn btn-navy" id="rtWaze" target="_blank" rel="noopener noreferrer">Abrir no Waze</a>
+      <a class="btn btn-ghost" id="rtMaps" target="_blank" rel="noopener noreferrer">Google Maps</a>
+      <button class="btn btn-ghost" id="rtFechar">Voltar</button>
     </div>
   </div>
 </div>
@@ -2911,7 +2916,7 @@ function abrirEmRota(linha){
   $('rtHora').value=padrao;
   $('rtObs').value='';
   $('rtStatus').classList.add('hidden');
-  $('rtZap').classList.add('hidden');
+  v.emRotaGravado=false;
   $('rtWaze').href=urlWaze(v);
   $('rtMaps').href=urlMaps(v);
   var c=climaDe(v);
@@ -2920,6 +2925,12 @@ function abrirEmRota(linha){
     $('rtClima').innerHTML=c.icone+' <b>'+esc(c.texto)+'</b> · '+c.min+'–'+c.max+'° · chuva '+c.chuva+'%'+
       (climaRuim(c)?'<br><span style="color:#8a5a00">Estrada molhada muda o tempo de viagem. Vale sair antes e avisar a loja.</span>':'');
   }
+  /* os contatos da loja podem não ter chegado ainda; quando chegarem,
+     os botões se montam sozinhos */
+  if(!CONTATOS.length && typeof carregarContatos==='function'){
+    carregarContatos(false, function(){ if($('modalRota').classList.contains('show')) montarZapRota(); });
+  }
+  montarZapRota();
   $('modalRota').classList.add('show');
 }
 function textoEmRota(v){
@@ -2938,23 +2949,60 @@ function contatosDaLoja(loja){
     return c.fone && k && chaveLoja(c.empresa||'')===k;
   });
 }
+/* Os links são remontados a cada mudança de horário ou recado: link montado
+   uma vez só mandaria a mensagem com a hora velha — o erro mais fácil de não
+   perceber, porque o WhatsApp abre bonito com o texto errado. */
 function montarZapRota(){
   var v=ROTA_ALVO; if(!v) return;
   var msg=encodeURIComponent(textoEmRota(v));
   var lista=contatosDaLoja(v.loja);
   var h=lista.map(function(c){
-    return '<a class="btn btn-navy btn-sm" target="_blank" rel="noopener noreferrer" href="https://wa.me/'+
-      foneWa(c.fone)+'?text='+msg+'">'+ICO('chat')+' '+esc(c.nome.split(' ')[0])+'</a>';
+    return '<a class="btn btn-navy btn-sm" data-rtzap="1" target="_blank" rel="noopener noreferrer" href="https://wa.me/'+
+      foneWa(c.fone)+'?text='+msg+'">'+ICO('chat')+' Avisar '+esc(c.nome.split(' ')[0])+'</a>';
   }).join('');
-  h+='<a class="btn btn-ghost btn-sm" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text='+msg+'">'+
+  h+='<a class="btn btn-ghost btn-sm" data-rtzap="1" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text='+msg+'">'+
      ICO('chat')+' Escolher contato</a>';
   if(!lista.length){
-    h+='<div class="hint" style="width:100%">Nenhum contato cadastrado com a loja <b>'+esc(v.loja||'')+
-       '</b>. Cadastre em <b>Agendar → Contatos</b> preenchendo o campo Loja/Empresa, e da próxima vez '+
-       'o botão já vem com o nome da pessoa.</div>';
+    h+='<div class="hint" style="width:100%">Nenhum contato tem a loja <b>'+esc(v.loja||'')+
+       '</b> no campo Loja/Empresa. Use <b>Escolher contato</b> agora e cadastre depois em '+
+       '<b>Agendar → Contatos</b> — da próxima vez o botão já vem com o nome da pessoa.</div>';
   }
   $('rtZapBtns').innerHTML=h;
   $('rtZap').classList.remove('hidden');
+}
+
+/* Registrar a saída. `silencioso` = veio junto com o toque no WhatsApp, então
+   não trava o botão nem rouba a atenção da tela. */
+function registrarEmRota(silencioso){
+  var v=ROTA_ALVO;
+  if(!v || !ENVIO_URL) return Promise.resolve(false);
+  if(v.emRotaGravado) return Promise.resolve(true);      /* não grava duas vezes */
+  v.emRotaGravado=true;
+  var hora=agora(), previsao=$('rtHora').value;
+  if(!silencioso){ $('rtSalvar').disabled=true; rtBox('info','⏳ Registrando a saída…'); }
+  return fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({tipo:'emRota', linha:v.linha, hora:hora, previsao:previsao})})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      $('rtSalvar').disabled=false;
+      if(!res || !res.ok){
+        v.emRotaGravado=false;
+        rtBox('erro', ((res&&res.erro)||'Não consegui registrar a saída.')+
+          (res&&res.versaoAntiga?'<br><b>O aviso do WhatsApp funciona assim mesmo</b> — só o registro na planilha ficou faltando.':''));
+        return false;
+      }
+      v.emRota=hora; v.chegada=previsao;
+      rtBox('ok', ICO('check')+' <b>Saída registrada</b> — '+esc(v.loja||'')+', chegada prevista '+esc(previsao)+'.');
+      if(modo==='agenda') renderAgendaCompleta();
+      return true;
+    })
+    .catch(function(){
+      v.emRotaGravado=false;
+      rtBox('erro','Sem sinal — a saída não foi registrada.'+
+        (silencioso?' O aviso do WhatsApp continua valendo.':''));
+      $('rtSalvar').disabled=false;
+      return false;
+    });
 }
 function marcarVisita(tipo, linha, motivo){
   if(!ENVIO_URL) return;
@@ -4984,26 +5032,18 @@ delegar('agendaLista', {
   'data-nfui':      function(l){ abrirNaoFui(l); }
 });
 delegar('modalRota', {
-  'data-rtmais': function(min){ $('rtHora').value = somarHora($('rtHora').value||agora(), min); }
+  /* o toque no WhatsApp já registra a saída: um movimento só para quem
+     está com a chave do carro na mão */
+  'data-rtzap': function(){ registrarEmRota(true); },
+  'data-rtmais': function(min){
+    $('rtHora').value = somarHora($('rtHora').value||agora(), min);
+    montarZapRota();
+  }
 });
+$('rtHora').onchange=montarZapRota;
+$('rtObs').oninput=montarZapRota;
 $('rtFechar').onclick=function(){ $('modalRota').classList.remove('show'); };
-$('rtSalvar').onclick=function(){
-  var v=ROTA_ALVO; if(!v || !ENVIO_URL) return;
-  $('rtSalvar').disabled=true;
-  rtBox('info','⏳ Registrando a saída…');
-  fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify({tipo:'emRota', linha:v.linha, hora:agora(), previsao:$('rtHora').value})})
-    .then(function(r){ return r.json(); })
-    .then(function(res){
-      $('rtSalvar').disabled=false;
-      if(!res || !res.ok){ rtBox('erro',(res&&res.erro)||'Não consegui registrar.'); return; }
-      v.emRota=agora(); v.chegada=$('rtHora').value;
-      rtBox('ok', ICO('check')+' <b>Saída registrada.</b> Agora avise quem está esperando.');
-      montarZapRota();
-      if(modo==='agenda') renderAgendaCompleta();
-    })
-    .catch(function(){ $('rtSalvar').disabled=false; rtBox('erro','Sem sinal — nada foi registrado.'); });
-};
+$('rtSalvar').onclick=function(){ registrarEmRota(false); };
 delegar('proximas', { 'data-usar': function(l){ var a=acharPorLinha(l); if(a) usarAgendada(a); } });
 
 $('fVerPessoa').onchange=function(){
@@ -5365,7 +5405,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v41.1';
+var VERSAO_APP='v41.2';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
