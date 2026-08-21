@@ -118,7 +118,8 @@ h2{font-size:17px;margin:0 0 4px;color:var(--navy);letter-spacing:-.2px}
   <!-- PASSO 1 e 2 -->
   <div class="card" id="tela1">
     <h2>Escolha o dia</h2>
-    <p class="sub">Verde = tem horário livre. Vermelho = agenda cheia. Toque no dia para ver os horários.</p>
+    <p class="sub">Verde = tem horário livre. Amarelo = já tem compromissos e depende de análise.
+    Vermelho = agenda cheia. Toque no dia para ver os horários.</p>
 
     <div class="mesnav">
       <button class="seta" id="ant" disabled>‹</button>
@@ -130,6 +131,7 @@ h2{font-size:17px;margin:0 0 4px;color:var(--navy);letter-spacing:-.2px}
 
     <div class="legenda">
       <span><i style="background:var(--ok)"></i>Livre</span>
+      <span><i style="background:#B7791F"></i>Depende de análise</span>
       <span><i style="background:var(--red)"></i>Ocupado</span>
       <span><i style="background:#c3cadb"></i>Sem atendimento</span>
     </div>
@@ -269,7 +271,7 @@ function render(){
     if(diaSel===d.dia) cls+=' sel';
     h+='<button class="'+cls+'" data-d="'+d.dia+'"'+(desab?' disabled':'')+
        ' title="'+(d.fimDeSemana?'sem atendimento':(d.passado?'já passou':
-         (d.emRota?'tem visita a loja neste dia — o pedido será avaliado':
+         (d.emRota?'este dia já contém compromissos em curso — o agendamento depende de análise':
          (d.livres.length?d.livres.length+' horário(s) livre(s)':'agenda cheia'))))+'">'+
        d.dia+(d.fimDeSemana||d.passado?'':'<span class="pt"></span>')+'</button>';
   });
@@ -304,8 +306,8 @@ function mostrarHoras(){
   /* honestidade com quem pede: o dia está aberto, mas tem estrada marcada.
      Melhor saber antes de escolher o horário do que ouvir "não" depois. */
   if(d.emRota){
-    $('avisoHora').innerHTML='<b>Atenção:</b> neste dia já existe visita a loja marcada. '+
-      'Você pode pedir o horário mesmo assim — a confirmação depende da resposta dele.'+
+    $('avisoHora').innerHTML='<b>Este dia já contém compromissos em curso.</b> '+
+      'Você pode pedir o horário normalmente — <b>o agendamento dependerá de análise</b>.'+
       (nOc?' Os riscados já estão ocupados.':'');
   } else {
     $('avisoHora').textContent = nOc
@@ -321,7 +323,11 @@ function mostrarForm(){
   var data=new Date(d.data+'T12:00:00');
   $('resumo').innerHTML='Você está pedindo <b>'+DIAS_LONGO[data.getDay()]+', '+d.dia+' de '+
     MESES[MES.getMonth()]+', às '+horaSel+'</b> — '+(DADOS.duracao||60)+' minutos com '+
-    esc(DADOS.pessoa.nome)+'.';
+    esc(DADOS.pessoa.nome)+'.'+
+    (d.emRota
+      ? '<br><span style="color:#8a5a00">Este dia já contém compromissos em curso: '+
+        'o agendamento dependerá de análise.</span>'
+      : '');
   $('blocoForm').classList.remove('hidden');
   $('blocoForm').scrollIntoView({behavior:'smooth', block:'start'});
 }
@@ -359,6 +365,9 @@ $('enviar').onclick=function(){
       var data=new Date(d.data+'T12:00:00');
       $('txtConfirma').innerHTML='Guardamos seu pedido de <b>'+DIAS_LONGO[data.getDay()]+', '+d.dia+
         ' de '+MESES[MES.getMonth()]+', às '+horaSel+'</b>.<br>'+
+        (d.emRota
+          ? 'Este dia já contém compromissos em curso, então <b>o agendamento dependerá de análise</b>.<br>'
+          : '')+
         'O horário fica segurado até <b>'+esc(res.expira||'')+'</b> — depois disso, se não houver '+
         'resposta, ele volta a aparecer para outras pessoas.';
       $('tela1').classList.add('hidden');
