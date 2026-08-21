@@ -849,6 +849,35 @@ tr.incompleto input{background:transparent}
         <h1>Equipe</h1>
         <p class="sub">Quem é quem, com o contato que cada um cadastrou em Minha conta.</p>
         <div id="eqLista"></div>
+
+        <!-- A régua de acesso: só leitura aqui. Quem edita é a planilha, e é
+             de propósito — mudar quem vê o quê não pode ser um toque na tela. -->
+        <details class="gaveta hidden" id="eqPerm">
+          <summary><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>
+            <span>Direitos de acesso por cargo</span> <span class="gvc" id="eqPermResumo"></span></summary>
+          <div style="padding:0 var(--s3) var(--s3)">
+            <p class="sub">O que cada cargo pode fazer. Edita-se na aba <b>PERMISSOES</b> da planilha —
+            uma linha por cargo, e vale para todo mundo daquele cargo na hora seguinte.</p>
+            <div id="eqPermLista"></div>
+          </div>
+        </details>
+
+        <!-- Mapa loja → gerente. Fica aqui e não na planilha porque escolher
+             de uma lista não erra a grafia; digitar erra. -->
+        <details class="gaveta hidden" id="eqGerentes">
+          <summary><svg class="ic" aria-hidden="true"><use href="#i-user"/></svg>
+            <span>Gerente de cada loja</span> <span class="gvc" id="eqGerResumo"></span></summary>
+          <div style="padding:0 var(--s3) var(--s3)">
+            <p class="sub">Quem responde pela loja no dia a dia. Sai no quadro <b>Por loja</b>, entra
+            no aviso de <b>Em rota</b> e é o que dá acesso ao app para o gerente.</p>
+            <div id="eqGerLista"></div>
+            <div class="btnrow">
+              <button class="btn btn-primary btn-sm" id="eqGerSalvar">Salvar gerentes</button>
+              <button class="btn btn-ghost btn-sm" id="eqGerSugerir">Preencher sugestões</button>
+            </div>
+            <div id="eqGerStatus" class="hidden" style="margin-top:12px;padding:11px 14px;border-radius:10px;font-size:14px"></div>
+          </div>
+        </details>
       </div>
 
       <div id="rotPend" class="hidden">
@@ -2753,7 +2782,14 @@ function carregarRotina(){
       SEMANA_REU = (resp[1] && resp[1].itens) || [];
       renderRotina();
       if(ehGerente()){ /* a tela do gerente já se desenhou inteira em renderRotina */ }
-      else if(ehGestor()){ renderPainel(); renderSemana(); }
+      else if(ehGestor()){
+        renderPainel(); renderSemana();
+        /* o telefone do gerente vem da agenda de contatos; quando ela chegar,
+           o quadro Por loja se redesenha com o botão de WhatsApp */
+        if(!CONTATOS.length && typeof carregarContatos==='function'){
+          carregarContatos(false, function(){ if(modo==='rotina' && ehGestor()) renderPainel(); });
+        }
+      }
       else {
         /* o supervisor não vê o painel dos colegas, mas vê as próprias lojas */
         var c=painelPorLoja()+cobertura();
@@ -2963,7 +2999,7 @@ function urlWaze(v){
 function botoesVisita(v){
   /* Quem gerencia a loja acompanha a visita; quem registra é quem foi até
      lá. Botão de "Cheguei" na mão do gerente falsearia o registro. */
-  if(ehGerente() && !mesmaPessoa(v.supervisor||'', euSou())) return '';
+  if(!podeRegistrarVisita() || (ehGerente() && !mesmaPessoa(v.supervisor||'', euSou()))) return '';
   var t=ehTarefa(v);
   /* visita de loja ganha rota e "em rota"; tarefa e escritório não têm estrada */
   var deCampo = !t && !ehEscritorio(v) && v.loja;
@@ -3055,9 +3091,20 @@ function textoEmRota(v){
 }
 function contatosDaLoja(loja){
   var k=chaveLoja(loja||'');
-  return (CONTATOS||[]).filter(function(c){
+  var lista=(CONTATOS||[]).filter(function(c){
     return c.fone && k && chaveLoja(c.empresa||'')===k;
   });
+  /* O GERENTE da loja entra sempre — e na frente. Sem isto a lista vinha
+     vazia na prática: na agenda de contatos importada, a coluna Loja guarda
+     o setor ("Comercial"), então nenhum contato "bate" com a filial. Quem
+     precisa saber que o supervisor está a caminho é justamente ele. */
+  var g=gerenteDaLoja(loja);
+  if(g){
+    var c=contatoPorNome(g);
+    var jaTem=lista.some(function(x){ return mesmaPessoa(x.nome, g); });
+    if(c && c.fone && !jaTem) lista.unshift(c);
+  }
+  return lista;
 }
 /* Os links são remontados a cada mudança de horário ou recado: link montado
    uma vez só mandaria a mensagem com a hora velha — o erro mais fácil de não
@@ -3327,9 +3374,15 @@ function painelPorLoja(){
     var dias = u ? Math.round((new Date(hoje+'T12:00:00')-new Date(u.data+'T12:00:00'))/86400000) : null;
     var cor = dias===null ? 'var(--red)' : (dias>30 ? 'var(--red)' : (dias>14?'#B7791F':'var(--ok)'));
     var g=gerenteDaLoja(x.loja);
+    var cg=g?contatoPorNome(g):null;
     h+='<tr><td><b>'+esc(x.loja)+'</b></td>'+
        '<td>'+esc(x.dono||'—')+'</td>'+
-       '<td>'+(g?esc(g):'<span style="color:var(--muted)">a definir</span>')+'</td>'+
+       '<td>'+(g
+         ? esc(g)+(cg && cg.fone
+             ? ' <a href="https://wa.me/'+foneWa(cg.fone)+'" target="_blank" rel="noopener noreferrer" '+
+               'title="'+esc(cg.fone)+'" style="text-decoration:none">💬</a>'
+             : '')
+         : '<span style="color:var(--muted)">a definir</span>')+'</td>'+
        '<td>'+(feitas[k]||0)+(planejadas[k]?' de '+planejadas[k]:'')+'</td>'+
        '<td style="color:'+cor+';font-weight:bold">'+
          (u ? dataBr(u.data)+' <span style="font-weight:normal;color:var(--muted)">('+
@@ -5218,6 +5271,36 @@ $('fVerPessoa').onchange=function(){
 };
 $('fPeriodo').onchange=carregarRotina;
 $('btnAtualizarRotina').onclick=carregarRotina;
+$('eqGerSugerir').onclick=function(){
+  var n=0;
+  GER_MAPA.forEach(function(l){
+    if(!l.gerente && l.sugestoes && l.sugestoes.length===1){ l.gerente=l.sugestoes[0]; n++; }
+  });
+  renderGerentes();
+  gerBox(n?'info':'erro', n
+    ? '<b>'+n+' loja(s) preenchida(s) por sugestão.</b> São palpites pela cidade onde a pessoa mora — '+
+      'confira uma a uma antes de salvar.'
+    : 'Nenhuma sugestão segura sobrou: as lojas que faltam têm mais de um gerente morando na cidade, '+
+      'ou nenhum. Escolha na lista.');
+};
+$('eqGerSalvar').onclick=function(){
+  if(!ENVIO_URL) return;
+  $('eqGerSalvar').disabled=true;
+  gerBox('info','⏳ Salvando na aba EQUIPE…');
+  fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({tipo:'salvarGerentes', quem:euSou(), escopo:(SESSAO&&SESSAO.escopo)||'proprio',
+      itens:GER_MAPA.map(function(l){ return {loja:l.loja, gerente:l.gerente||''}; })})})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      $('eqGerSalvar').disabled=false;
+      if(!res || !res.ok){ gerBox('erro',(res&&res.erro)||'Não consegui salvar.'); return; }
+      gerBox('ok', ICO('check')+' <b>'+res.alterados+' loja(s) atualizada(s).</b> '+
+        'O gerente já aparece no quadro Por loja e no aviso de Em rota. '+
+        'Para ele entrar no app, é só usar o próprio nome e criar um PIN.');
+      carregarEquipe();      /* recarrega para o painel já sair com o gerente novo */
+    })
+    .catch(function(){ $('eqGerSalvar').disabled=false; gerBox('erro','Sem sinal — nada foi salvo.'); });
+};
 $('btnNovaVisita').onclick=function(){ abrirNovaVisita('Visita'); };
 $('btnNovaTarefa').onclick=function(){ abrirNovaVisita('Tarefa'); };
 $('vCancelar').onclick=function(){ $('modalVisita').classList.remove('show'); };
@@ -5463,6 +5546,97 @@ function renderEquipe(){
      'Quem aparece sem contato ainda não cadastrou — e não vai receber o resumo da manhã também.</div>';
   box.innerHTML=h;
   recolherDicas();
+  carregarPermissoes();
+  carregarGerentes();
+}
+
+/* ============ GERENTE DE CADA LOJA ============
+   O cruzamento automático loja → gerente não existe nos dados: na agenda de
+   contatos a coluna Loja guarda o SETOR ("Comercial"), não a filial. Então o
+   app faz o que dá para fazer com honestidade: traz a lista de quem é gerente
+   (o cargo está cadastrado), sugere pela cidade onde a pessoa mora, e deixa a
+   confirmação com quem sabe. Escolher de uma lista não erra a grafia — e
+   grafia errada aqui quebra o acesso do gerente ao app. */
+var GER_MAPA=[], GER_CANDS=[];
+function carregarPermissoes(){
+  var cx=$('eqPerm'); if(!cx) return;
+  cx.classList.toggle('hidden', !podeEditarEquipe());
+  if(!podeEditarEquipe() || !ENVIO_URL) return;
+  fetch(ENVIO_URL+'?acao=permissoes').then(function(r){ return r.json(); })
+    .then(function(res){
+      if(!res || !res.ok) return;
+      var itens=res.itens||[];
+      $('eqPermResumo').textContent=itens.length+' cargos';
+      var col=[['entrar','Entra'],['verEquipe','Vê equipe'],['verCumprimento','Vê cumprimento'],
+               ['registrarVisita','Registra visita'],['lancarDespesa','Lança despesa'],
+               ['aprovarDespesa','Aprova despesa'],['conduzirReuniao','Conduz reunião'],
+               ['editarEquipe','Edita equipe']];
+      var esc2=function(b){ return b?'<b style="color:var(--ok)">sim</b>':'<span style="color:var(--muted)">não</span>'; };
+      var h='<div class="rolar"><table class="pnl"><tr><th>Cargo</th><th>Enxerga</th>'+
+        col.map(function(c){ return '<th>'+c[1]+'</th>'; }).join('')+'</tr>';
+      var oQueVe={todos:'a rede inteira', proprio:'só o que é dele', lojas:'as lojas que gerencia'};
+      itens.forEach(function(p){
+        h+='<tr><td><b>'+esc(p.cargo)+'</b></td>'+
+           '<td>'+esc(oQueVe[p.escopo]||p.escopo||'—')+'</td>'+
+           col.map(function(c){ return '<td>'+esc2(p[c[0]])+'</td>'; }).join('')+'</tr>';
+      });
+      $('eqPermLista').innerHTML=h+'</table></div>'+
+        '<div class="hint">Cargo que não estiver nesta lista entra com o mínimo: vê só o que é dele, '+
+        'não vê a equipe e não aprova nada.</div>';
+    })
+    .catch(function(){});
+}
+function carregarGerentes(){
+  var cx=$('eqGerentes'); if(!cx) return;
+  cx.classList.toggle('hidden', !podeEditarEquipe());
+  if(!podeEditarEquipe() || !ENVIO_URL) return;
+  fetch(ENVIO_URL+'?acao=gerentes').then(function(r){ return r.json(); })
+    .then(function(res){
+      if(!res || !res.ok) return;
+      GER_MAPA=res.lojas||[]; GER_CANDS=res.candidatos||[];
+      renderGerentes();
+    })
+    .catch(function(){});
+}
+function renderGerentes(){
+  var box=$('eqGerLista'); if(!box) return;
+  if(!GER_MAPA.length){ box.innerHTML='<p class="sub">Nenhuma loja na aba EQUIPE.</p>'; return; }
+  var preenchidas=GER_MAPA.filter(function(l){ return l.gerente; }).length;
+  $('eqGerResumo').textContent=preenchidas+' de '+GER_MAPA.length+' lojas';
+
+  var opcoes='<option value="">— sem gerente —</option>'+
+    GER_CANDS.map(function(c){
+      return '<option value="'+esc(c.nome)+'">'+esc(c.nome)+(c.cidade?' · mora em '+esc(c.cidade):'')+'</option>';
+    }).join('');
+
+  var h='<div class="rolar"><table class="pnl"><tr><th>Loja</th><th>Supervisor</th>'+
+        '<th style="min-width:260px">Gerente</th></tr>';
+  GER_MAPA.forEach(function(l,i){
+    /* sugestão só quando existe UMA pessoa morando na cidade da loja: duas
+       pessoas na mesma cidade é empate, e empate a máquina não desempata */
+    var sug = (!l.gerente && l.sugestoes && l.sugestoes.length===1) ? l.sugestoes[0] : '';
+    h+='<tr><td><b>'+esc(l.loja)+'</b>'+(l.cidade?'<br><span style="font-size:11px;color:var(--muted)">'+esc(l.cidade)+'</span>':'')+'</td>'+
+       '<td>'+esc(l.supervisor||'—')+'</td>'+
+       '<td><select data-gerloja="'+i+'">'+opcoes+'</select>'+
+       (sug?'<div class="hint" style="margin-top:4px">Sugestão: <b>'+esc(sug)+'</b> mora nesta cidade — confira antes.</div>':'')+
+       (!l.gerente && (!l.sugestoes || l.sugestoes.length!==1) && l.sugestoes && l.sugestoes.length>1
+         ? '<div class="hint" style="margin-top:4px">'+l.sugestoes.length+' gerentes moram nesta cidade: '+
+           esc(l.sugestoes.join(', '))+'. Escolha na lista.</div>' : '')+
+       '</td></tr>';
+  });
+  box.innerHTML=h+'</table></div>';
+  /* os selects nascem depois do innerHTML, então o valor é aplicado agora */
+  Array.prototype.forEach.call(box.querySelectorAll('[data-gerloja]'),function(sel){
+    var i=+sel.getAttribute('data-gerloja');
+    sel.value=GER_MAPA[i].gerente||'';
+    sel.onchange=function(){ GER_MAPA[i].gerente=sel.value; };
+  });
+}
+function gerBox(cor,html){
+  var b=$('eqGerStatus');
+  b.style.background = cor==='erro'?'#fdeaea':(cor==='ok'?'#eaf7f0':'var(--navy-05)');
+  b.style.color      = cor==='erro'?'#8a1b21':(cor==='ok'?'#14603f':'var(--navy)');
+  b.innerHTML=html; b.classList.remove('hidden');
 }
 
 /* ============ PAINEL DE PENDÊNCIAS ============
@@ -5572,7 +5746,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v42';
+var VERSAO_APP='v43';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
@@ -5583,6 +5757,24 @@ var LS_SESSAO='sotintas_sessao_v1';
 var SESSAO=null;
 
 function ehCoordenador(){ return !!(SESSAO && SESSAO.escopo==='todos'); }
+
+/* ---------- DIREITOS POR CARGO ----------
+   A régua vem da aba PERMISSOES (uma linha por cargo) e chega no login.
+   Cada pergunta abaixo tem um padrão de segurança: sem resposta da planilha,
+   o app se comporta como se comportava antes — nunca libera mais do que já
+   liberava. Permissão é o único campo em que errar para menos é o certo. */
+function pode(chave, padrao){
+  var p = SESSAO && SESSAO.perm;
+  if(!p || p[chave]===undefined) return padrao;
+  return !!p[chave];
+}
+function podeVerEquipe(){       return pode('verEquipe', ehCoordenador()); }
+function podeVerCumprimento(){  return pode('verCumprimento', !ehGerente()); }
+function podeRegistrarVisita(){ return pode('registrarVisita', !ehGerente()); }
+function podeLancarDespesa(){   return pode('lancarDespesa', true); }
+function podeAprovarDespesa(){  return pode('aprovarDespesa', ehCoordenador()); }
+function podeConduzirReuniao(){ return pode('conduzirReuniao', true); }
+function podeEditarEquipe(){    return pode('editarEquipe', ehCoordenador()); }
 function euSou(){ return (SESSAO && SESSAO.nome) || GESTOR; }
 /* Devolve o nome a forçar no filtro, ou '' quando a pessoa pode ver todos. */
 function travaEscopo(){
