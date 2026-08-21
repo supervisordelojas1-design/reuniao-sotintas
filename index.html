@@ -2296,7 +2296,7 @@ function montarTipoSel(){
   var h='';
   Object.keys(TPL).forEach(function(k){
     var t=TPL[k], tot=t.blocos.reduce(function(a,b){return a+b.min;},0);
-    h+='<option value="'+k+'">'+esc(t.nome)+' · '+tot+' min</option>';
+    h+='<option value="'+k+'">'+esc(t.nome)+'</option>';
   });
   $('fTipoSel').innerHTML=h;
   $('fTipoSel').value=sel;
@@ -3172,7 +3172,9 @@ function textoEmRota(v){
   var c=climaDe(v);
   var L=['🚗 *A caminho da '+(v.loja||'loja')+'*'];
   L.push('Saída: '+agora()+' · chegada prevista: *'+$('rtHora').value+'*');
-  if(v.trabalho) L.push('Pauta: '+v.trabalho);
+  /* a pauta fica de fora de propósito: o aviso diz QUE você vem e QUANDO —
+     o assunto ("rescisão do Thiago") não é para o grupo da loja saber.
+     Quiser dizer algo, o campo de observação abaixo é seu e vai junto. */
   if($('rtObs').value.trim()) L.push($('rtObs').value.trim());
   if(c && climaRuim(c)) L.push('Tempo por aí: '+c.texto+' ('+c.chuva+'% de chuva) — posso atrasar um pouco.');
   L.push('— '+euSou()+', Só Tintas');
@@ -6056,7 +6058,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v45';
+var VERSAO_APP='v45.1';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
