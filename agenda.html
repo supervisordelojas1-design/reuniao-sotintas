@@ -59,6 +59,10 @@ h2{font-size:17px;margin:0 0 4px;color:var(--navy);letter-spacing:-.2px}
 .dia.livre{background:var(--ok-bg);border-color:#bfe6d1;color:var(--ok)}
 .dia.livre .pt{background:var(--ok)}
 .dia.cheio{background:var(--red-bg);border-color:#f3c6c8;color:var(--red)}
+/* dia com visita marcada: continua clicável de propósito. O supervisor pode
+   estar na estrada e mesmo assim aceitar — quem decide é ele, não a tela. */
+.dia.rota{background:#fff7e6;border-color:#f0d9a8;color:#8a5a00}
+.dia.rota .pt{background:#B7791F}
 .dia.cheio .pt{background:var(--red)}
 .dia.fora{background:transparent;border-color:transparent;color:#c3cadb;font-weight:600;cursor:default}
 .dia.sel{outline:3px solid var(--navy);outline-offset:-3px;background:var(--navy);color:#fff}
@@ -260,11 +264,13 @@ function render(){
     var cls='dia', desab=false;
     if(d.fimDeSemana || d.passado){ cls+=' fora'; desab=true; }
     else if(!d.livres.length){ cls+=' cheio'; desab=true; }
+    else if(d.emRota){ cls+=' rota'; }
     else cls+=' livre';
     if(diaSel===d.dia) cls+=' sel';
     h+='<button class="'+cls+'" data-d="'+d.dia+'"'+(desab?' disabled':'')+
        ' title="'+(d.fimDeSemana?'sem atendimento':(d.passado?'já passou':
-         (d.livres.length?d.livres.length+' horário(s) livre(s)':'agenda cheia')))+'">'+
+         (d.emRota?'tem visita a loja neste dia — o pedido será avaliado':
+         (d.livres.length?d.livres.length+' horário(s) livre(s)':'agenda cheia'))))+'">'+
        d.dia+(d.fimDeSemana||d.passado?'':'<span class="pt"></span>')+'</button>';
   });
   $('grade').innerHTML=h;
@@ -295,9 +301,17 @@ function mostrarHoras(){
     b.onclick=function(){ horaSel=b.getAttribute('data-h'); mostrarHoras(); mostrarForm(); };
   });
   var nOc=(d.ocupadas||[]).length;
-  $('avisoHora').textContent = nOc
-    ? 'Cada reunião reserva '+(DADOS.duracao||60)+' minutos. Os riscados já estão ocupados ('+nOc+' neste dia).'
-    : 'Dia todo livre. Cada reunião reserva '+(DADOS.duracao||60)+' minutos.';
+  /* honestidade com quem pede: o dia está aberto, mas tem estrada marcada.
+     Melhor saber antes de escolher o horário do que ouvir "não" depois. */
+  if(d.emRota){
+    $('avisoHora').innerHTML='<b>Atenção:</b> neste dia já existe visita a loja marcada. '+
+      'Você pode pedir o horário mesmo assim — a confirmação depende da resposta dele.'+
+      (nOc?' Os riscados já estão ocupados.':'');
+  } else {
+    $('avisoHora').textContent = nOc
+      ? 'Cada reunião reserva '+(DADOS.duracao||60)+' minutos. Os riscados já estão ocupados ('+nOc+' neste dia).'
+      : 'Dia todo livre. Cada reunião reserva '+(DADOS.duracao||60)+' minutos.';
+  }
   $('blocoHoras').classList.remove('hidden');
   if(!horaSel) $('blocoForm').classList.add('hidden');
 }
