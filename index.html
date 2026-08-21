@@ -878,6 +878,43 @@ tr.incompleto input{background:transparent}
             <div id="eqGerStatus" class="hidden" style="margin-top:12px;padding:11px 14px;border-radius:10px;font-size:14px"></div>
           </div>
         </details>
+
+        <!-- Lotação: em que loja cada pessoa trabalha. É esse dado que faz a
+             cascata descer do gerente até o vendedor. -->
+        <details class="gaveta hidden" id="eqLotacao">
+          <summary><svg class="ic" aria-hidden="true"><use href="#i-store"/></svg>
+            <span>Em que loja cada um trabalha</span> <span class="gvc" id="eqLotResumo"></span></summary>
+          <div style="padding:0 var(--s3) var(--s3)">
+            <p class="sub">É por aqui que o gerente passa a enxergar o time dele. <b>Supervisor fica em branco</b> —
+            as lojas dele já vêm da carteira. A coluna <i>Enxerga</i> mostra o resultado da cascata.</p>
+            <div id="eqLotLista"></div>
+            <div class="btnrow">
+              <button class="btn btn-primary btn-sm" id="eqLotSalvar">Salvar lotação</button>
+            </div>
+            <div id="eqLotStatus" class="hidden" style="margin-top:12px;padding:11px 14px;border-radius:10px;font-size:14px"></div>
+          </div>
+        </details>
+
+        <!-- Quem vê cada contato. Em branco = liberado para quem chega até ele
+             pela cascata. Marcado = só as pessoas escolhidas. -->
+        <details class="gaveta hidden" id="eqVisiveis">
+          <summary><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg>
+            <span>Quem vê cada contato</span> <span class="gvc" id="eqVisResumo"></span></summary>
+          <div style="padding:0 var(--s3) var(--s3)">
+            <p class="sub">Escolha a pessoa e marque os contatos que ela pode ver. Contato sem ninguém
+            marcado fica <b>livre</b>: aparece para quem já alcança aquela pessoa pela cascata.</p>
+            <div class="grid2">
+              <div><label>Mostrar os contatos de</label><select id="eqVisQuem"></select></div>
+              <div><label>Procurar</label><input id="eqVisBusca" placeholder="nome, cargo, setor…"></div>
+            </div>
+            <div id="eqVisLista" style="max-height:420px;overflow:auto;margin-top:10px"></div>
+            <div class="btnrow">
+              <button class="btn btn-primary btn-sm" id="eqVisSalvar">Salvar quem vê</button>
+              <button class="btn btn-ghost btn-sm" id="eqVisLimpar">Deixar todos livres para esta pessoa</button>
+            </div>
+            <div id="eqVisStatus" class="hidden" style="margin-top:12px;padding:11px 14px;border-radius:10px;font-size:14px"></div>
+          </div>
+        </details>
       </div>
 
       <div id="rotPend" class="hidden">
@@ -1783,6 +1820,7 @@ function carregarEquipe(){
       recalcularEquipe();                  /* <- sem isto, CARTEIRA e LOJAS ficam na semente */
       preencherListas();
       montarVisaoRotina();
+      if(typeof montarFiltroAgenda==='function') montarFiltroAgenda();
       montarLogin();
       if(typeof iniciarDespesas==='function' && DP_PRONTO){
         DP_PRONTO=false; iniciarDespesas();
@@ -2347,7 +2385,7 @@ function carregarProximas(){
   if(!ENVIO_URL) return;
   /* a agenda é de quem entrou: coordenador vê tudo, os outros veem o que
      agendaram, o que conduzem e aquilo para o que foram convidados */
-  fetch(ENVIO_URL+'?acao=proximas'+(travaEscopo()?'&quem='+encodeURIComponent(travaEscopo()):''))
+  fetch(ENVIO_URL+'?acao=proximas'+souEu()+(travaEscopo()?'&quem='+encodeURIComponent(travaEscopo()):''))
     .then(function(r){ return r.json(); })
     .then(function(res){
       if(!res || !res.ok || !res.itens || !res.itens.length){ PROX=[]; $('proximas').classList.add('hidden'); return; }
@@ -2570,12 +2608,14 @@ function carregarAgendaUnificada(){
   carregarProximas();
   if(typeof carregarPedidos==='function')  carregarPedidos();
   if(typeof carregarBloqueios==='function') carregarBloqueios();
-  if(!ENVIO_URL){ renderAgendaCompleta(); return; }
+  /* sem sessão não se pede agenda nenhuma: sem o "eu=" o servidor não tem
+     como recortar, e a tela ainda nem sabe quem entrou. */
+  if(!ENVIO_URL || !SESSAO){ renderAgendaCompleta(); return; }
 
   var sup = (!ehGestor() && !ehGerente() && souQuem()) ? '&supervisor='+encodeURIComponent(souQuem()) : '';
   var pedidos = [
-    fetch(ENVIO_URL+'?acao=visitas&de='+j.de+'&ate='+j.ate+sup+paramEscopo()).then(function(r){return r.json();}).catch(function(){return null;}),
-    fetch(ENVIO_URL+'?acao=agendamentos&de='+j.de+'&ate='+j.ate+
+    fetch(ENVIO_URL+'?acao=visitas&de='+j.de+'&ate='+j.ate+sup+paramEscopo()+souEu()).then(function(r){return r.json();}).catch(function(){return null;}),
+    fetch(ENVIO_URL+'?acao=agendamentos&de='+j.de+'&ate='+j.ate+souEu()+
       (travaEscopo()?'&quem='+encodeURIComponent(travaEscopo()):'')).then(function(r){return r.json();}).catch(function(){return null;})
   ];
   /* A Agenda Google é do coordenador (a conta que publicou o script). Puxar
@@ -2761,12 +2801,16 @@ function carregarRotina(){
   }
   box.innerHTML='<p class="sub">Carregando…</p>';
   SOU_CARREGADO=souQuem();
-  var url=ENVIO_URL+'?acao=visitas&de='+de+'&ate='+ate+paramEscopo();
+  var url=ENVIO_URL+'?acao=visitas&de='+de+'&ate='+ate+paramEscopo()+souEu();
   /* o gestor puxa todo mundo; o supervisor puxa só o que é dele;
      o gerente puxa as lojas dele (recorte feito no servidor) */
   if(!ehGestor() && !ehGerente() && souQuem()) url+='&supervisor='+encodeURIComponent(souQuem());
-  var pedeReunioes = ehGestor()
-    ? fetch(ENVIO_URL+'?acao=agendamentos&de='+sem.de+'&ate='+sem.ate)
+  /* O gerente também precisa das reuniões: a pergunta dele em "Suas lojas" é
+     "o que EU tenho marcado", e reunião é compromisso tanto quanto visita.
+     A janela dele é a mesma da consulta de visitas — alcança o que vem. */
+  var reuDe = ehGerente() ? de : sem.de, reuAte = ehGerente() ? ate : sem.ate;
+  var pedeReunioes = (ehGestor() || ehGerente())
+    ? fetch(ENVIO_URL+'?acao=agendamentos&de='+reuDe+'&ate='+reuAte+souEu())
         .then(function(r){ return r.json(); }).catch(function(){ return null; })
     : Promise.resolve(null);
   Promise.all([fetch(url).then(function(r){ return r.json(); }), pedeReunioes])
@@ -2840,9 +2884,10 @@ function renderRotinaGerente(){
     '</div>';
 
   h+='<h3 style="margin:26px 0 6px">Suas lojas</h3>'+
-     '<p class="sub" style="margin-bottom:8px">Quando cada uma foi visitada pela última vez, quem esteve lá e o que já está marcado.</p>'+
-     '<div class="rolar"><table class="pnl"><tr><th>Loja</th><th>Supervisor</th>'+
-     '<th>Última visita</th><th>Próxima marcada</th></tr>';
+     '<p class="sub" style="margin-bottom:8px">Primeiro o que <b>você</b> tem marcado em cada loja. '+
+     'A visita do supervisor aparece ao lado, como informação.</p>'+
+     '<div class="rolar"><table class="pnl"><tr><th>Loja</th><th>Seus compromissos</th>'+
+     '<th>Última visita do supervisor</th><th>Próxima visita</th></tr>';
   lojas.forEach(function(l){
     var k=chaveLoja(l);
     var u=ultima[k];
@@ -2851,14 +2896,43 @@ function renderRotinaGerente(){
     var prox=previstas.filter(function(v){ return chaveLoja(v.loja)===k; })
                       .sort(function(a,b){ return a.data<b.data?-1:1; })[0];
     var dono=(indiceCarteira()[k]||{}).dono||'';
-    h+='<tr><td><b>'+esc(l)+'</b></td><td>'+esc(dono||'—')+'</td>'+
+    h+='<tr><td><b>'+esc(l)+'</b>'+(dono?'<div class="ts">supervisor: '+esc(dono)+'</div>':'')+'</td>'+
+       '<td>'+meusCompromissosNaLoja(l)+'</td>'+
        '<td style="color:'+cor+';font-weight:bold">'+
        (u?dataBr(u.data)+' <span style="font-weight:normal;color:var(--muted)">('+
           (dias===0?'hoje':dias+' dia'+(dias>1?'s':''))+' · '+esc(String(u.quem||'').split(' ')[0])+')</span>'
          :'sem visita no período')+'</td>'+
-       '<td>'+(prox?dataBr(prox.data)+(prox.hora?' às '+prox.hora:''):'—')+'</td></tr>';
+       '<td>'+(prox?dataBr(prox.data)+(prox.hora?' às '+prox.hora:'')+
+              (prox.supervisor?' <span class="ts">'+esc(String(prox.supervisor).split(' ')[0])+'</span>':'')
+              :'—')+'</td></tr>';
   });
   box.innerHTML=h+'</table></div>';
+}
+
+/* O que EU tenho marcado naquela loja daqui para a frente: visitas e tarefas
+   que eu registrei, mais as reuniões em que eu apareço. A pergunta do gerente
+   não é "quando o supervisor vem", é "o que eu tenho para fazer hoje ali". */
+function meusCompromissosNaLoja(loja){
+  var k=chaveLoja(loja), hoje=hojeISO(), eu=euSou(), meus=[];
+  VISITAS.forEach(function(v){
+    if(chaveLoja(v.loja)!==k) return;
+    if(v.data<hoje || v.status==='Cancelada') return;
+    if(!mesmaPessoaApp(v.supervisor, eu)) return;
+    meus.push({ data:v.data, hora:v.hora||'', texto:v.trabalho||(ehTarefa(v)?'Tarefa':'Visita'),
+                icone: ehTarefa(v)?'☑':'🚗' });
+  });
+  (SEMANA_REU||[]).forEach(function(r){
+    if(r.data<hoje) return;
+    var ondeCasa = chaveLoja(r.local||'')===k || chaveLoja(r.titulo||'')===k;
+    if(!ondeCasa) return;
+    meus.push({ data:r.data, hora:r.hora||'', texto:r.titulo||'Reunião', icone:'🗓' });
+  });
+  if(!meus.length) return '<span class="sub">nada marcado</span>';
+  meus.sort(function(a,b){ return (a.data+a.hora)<(b.data+b.hora)?-1:1; });
+  return meus.slice(0,3).map(function(m){
+    return '<div>'+m.icone+' <b>'+dataBr(m.data)+'</b>'+(m.hora?' '+esc(m.hora):'')+
+           ' <span class="ts">'+esc(m.texto)+'</span></div>';
+  }).join('') + (meus.length>3 ? '<div class="ts">+'+(meus.length-3)+' depois</div>' : '');
 }
 
 function renderRotina(){
@@ -5163,11 +5237,47 @@ $('clUsar').onclick=function(){
 };
 CL=clLer(); clCarregar(-1);
 $('tabAgenda').onclick=function(){ setModo('agenda'); };
-(function(){
+/* "Mostrar de": só quem pode ver a equipe escolhe outra pessoa. Para os
+   demais o campo mostra o próprio nome e fica travado — oferecer uma opção
+   que não vai trazer nada é pior que não oferecer: parece defeito. */
+function montarFiltroAgenda(){
+  var sel=$('fAgendaQuem'); if(!sel) return;
+  var wrap=sel.parentNode;
+  var rot=wrap?wrap.querySelector('label'):null;
+  if(SESSAO && !vejoTodos()){
+    var g=galhoOrdenado();
+    if(g.length<=1){                       /* não há ninguém abaixo: nada a escolher */
+      sel.innerHTML='<option value="">'+esc(euSou())+'</option>';
+      sel.value=''; sel.disabled=true;
+      if(rot) rot.textContent='Agenda de';
+      return;
+    }
+    var atualG=sel.value;
+    var hg='<option value="">Minha equipe ('+g.length+')</option>';
+    g.forEach(function(n){
+      hg+='<option value="'+esc(n)+'">'+esc(n)+(mesmaPessoaApp(n,euSou())?' (eu)':'')+'</option>';
+    });
+    sel.innerHTML=hg; sel.disabled=false;
+    sel.value = casaNoGalho(atualG) ? atualG : '';
+    if(rot) rot.textContent='Mostrar de';
+    return;
+  }
+  sel.disabled=false;
+  if(rot) rot.textContent='Mostrar de';
+  var atual=sel.value;
   var h='<option value="">Equipe toda</option>';
   SUPERVISORES.forEach(function(s){ h+='<option value="'+esc(s)+'">'+esc(s)+'</option>'; });
-  $('fAgendaQuem').innerHTML=h;
-})();
+  sel.innerHTML=h;
+  sel.value=atual||'';
+}
+function casaNoGalho(n){
+  if(!n) return true;
+  var g=meuGalho();
+  if(!g) return true;
+  for(var i=0;i<g.length;i++) if(mesmaPessoaApp(g[i],n)) return true;
+  return false;
+}
+montarFiltroAgenda();
 $('fAgendaQuem').onchange=renderAgendaCompleta;
 $('btnCompartilharAgenda').onclick=function(){
   var t=textoAgenda();
@@ -5548,6 +5658,169 @@ function renderEquipe(){
   recolherDicas();
   carregarPermissoes();
   carregarGerentes();
+  carregarLotacao();
+}
+
+/* ============ LOTAÇÃO E QUEM VÊ CADA CONTATO ============
+   A cascata desce por LOJA. Do supervisor para o gerente já descia sozinha
+   (a aba EQUIPE sabe as duas coisas). Do gerente para o vendedor faltava um
+   dado: onde a pessoa trabalha. É o que estes dois quadros preenchem.
+
+   Analogia: a aba EQUIPE é a planta do prédio — quais andares existem e quem
+   responde por cada um. A lotação é a lista de moradores. Sem ela o síndico
+   do andar sabe que o andar é dele, mas não quem mora ali. */
+var LOT_ITENS=[], LOT_LOJAS=[], LOT_CONTATOS=[];
+
+/* POST simples, com o nome de quem pediu sempre junto: é por ele que o
+   servidor confere na planilha se a pessoa pode mesmo fazer aquilo. */
+function enviar(corpo, aoTerminar){
+  if(!ENVIO_URL){ aoTerminar({ ok:false, erro:'Envio para o Google não configurado.' }); return; }
+  fetch(ENVIO_URL,{ method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify(corpo) })
+    .then(function(r){ return r.json(); })
+    .then(function(res){ aoTerminar(res); })
+    .catch(function(){ aoTerminar({ ok:false, erro:'Sem conexão. Nada foi salvo.' }); });
+}
+
+function carregarLotacao(){
+  var cx=$('eqLotacao'), cv=$('eqVisiveis');
+  if(cx) cx.classList.toggle('hidden', !podeEditarEquipe());
+  if(cv) cv.classList.toggle('hidden', !podeEditarEquipe());
+  if(!podeEditarEquipe() || !ENVIO_URL) return;
+  fetch(ENVIO_URL+'?acao=lotacao'+souEu()).then(function(r){ return r.json(); })
+    .then(function(res){
+      if(!res || !res.ok) return;
+      LOT_ITENS=res.itens||[]; LOT_LOJAS=res.lojas||[]; LOT_CONTATOS=res.contatos||[];
+      renderLotacao(); renderVisiveis();
+    })
+    .catch(function(){});
+}
+
+function renderLotacao(){
+  var box=$('eqLotLista'); if(!box) return;
+  if(!LOT_ITENS.length){ box.innerHTML='<p class="sub">Nenhum usuário cadastrado.</p>'; return; }
+  var comLoja=LOT_ITENS.filter(function(u){ return u.loja; }).length;
+  $('eqLotResumo').textContent=comLoja+' de '+LOT_ITENS.length+' com loja';
+  var opcoes='<option value="">— sem loja (supervisão / escritório) —</option>'+
+    LOT_LOJAS.map(function(l){ return '<option value="'+esc(l)+'">'+esc(l)+'</option>'; }).join('');
+  var h='<div class="rolar"><table class="pnl"><tr><th>Pessoa</th><th>Cargo</th>'+
+        '<th style="min-width:240px">Trabalha em</th><th>Enxerga</th></tr>';
+  LOT_ITENS.forEach(function(u,i){
+    var ve = u.ve===null ? '<b>a rede inteira</b>'
+           : (u.ve.length<=1 ? '<span class="sub">só ele mesmo</span>'
+              : '<b>'+u.ve.length+' pessoas</b><div class="ts">'+esc(u.ve.join(', '))+'</div>');
+    h+='<tr'+(u.ativo?'':' style="opacity:.5"')+'><td><b>'+esc(u.nome)+'</b>'+
+       (u.ativo?'':'<div class="ts">inativo</div>')+'</td>'+
+       '<td>'+esc(u.cargo||'—')+'</td>'+
+       '<td><select data-lot="'+i+'">'+opcoes+'</select></td>'+
+       '<td>'+ve+'</td></tr>';
+  });
+  box.innerHTML=h+'</table></div>'+
+    '<div class="hint">Supervisor fica <b>sem loja</b>: as lojas dele já vêm da carteira. '+
+    'Preencha para gerente, assistente, vendedor e auxiliar.</div>';
+  LOT_ITENS.forEach(function(u,i){
+    var sel=box.querySelector('[data-lot="'+i+'"]');
+    if(sel) sel.value=u.loja||'';
+  });
+}
+
+if($('eqLotSalvar')) $('eqLotSalvar').onclick=function(){
+  var box=$('eqLotLista'), itens=[];
+  LOT_ITENS.forEach(function(u,i){
+    var sel=box.querySelector('[data-lot="'+i+'"]');
+    itens.push({ nome:u.nome, loja: sel ? sel.value : (u.loja||'') });
+  });
+  lotStatus('Salvando…','var(--muted)');
+  enviar({ tipo:'salvarLotacao', quem:euSou(), itens:itens }, function(res){
+    if(res && res.ok){
+      lotStatus('Pronto: '+(res.alterados||0)+' pessoa(s) atualizada(s). Quem mudou precisa sair e entrar de novo.','var(--ok)');
+      carregarLotacao();
+    } else lotStatus((res&&res.erro)||'Não consegui salvar.','var(--red)');
+  });
+};
+function lotStatus(t,cor){
+  var e=$('eqLotStatus'); if(!e) return;
+  e.classList.remove('hidden'); e.textContent=t;
+  e.style.background='var(--bg2)'; e.style.color=cor||'var(--tx)';
+}
+
+/* ---- Quem vê cada contato ---- */
+function renderVisiveis(){
+  var sel=$('eqVisQuem'); if(!sel) return;
+  var atual=sel.value;
+  sel.innerHTML=LOT_ITENS.filter(function(u){ return u.ativo; })
+    .map(function(u){ return '<option value="'+esc(u.nome)+'">'+esc(u.nome)+
+      (u.cargo?' · '+esc(u.cargo):'')+'</option>'; }).join('');
+  if(atual) sel.value=atual;
+  renderVisiveisLista();
+}
+function renderVisiveisLista(){
+  var box=$('eqVisLista'); if(!box) return;
+  var quem=$('eqVisQuem') ? $('eqVisQuem').value : '';
+  var busca=semAcento($('eqVisBusca') ? $('eqVisBusca').value : '').toLowerCase();
+  if(!LOT_CONTATOS.length){ box.innerHTML='<p class="sub">Nenhum contato cadastrado.</p>'; return; }
+  var presos=LOT_CONTATOS.filter(function(c){ return (c.soPara||'').trim(); }).length;
+  $('eqVisResumo').textContent = presos ? presos+' com lista' : 'todos livres';
+  var vis=LOT_CONTATOS.filter(function(c){
+    if(!busca) return true;
+    return semAcento(c.nome+' '+c.cargo+' '+c.empresa).toLowerCase().indexOf(busca)>=0;
+  });
+  var h='<div class="rolar"><table class="pnl"><tr><th style="width:44px">Vê</th><th>Contato</th>'+
+        '<th>Cargo</th><th>Quem já vê</th></tr>';
+  vis.forEach(function(c){
+    var lista=(c.soPara||'').trim();
+    var marcado = lista ? citaPessoaApp(lista, quem) : false;
+    h+='<tr><td style="text-align:center"><input type="checkbox" data-vis="'+c.linha+'"'+
+       (marcado?' checked':'')+'></td>'+
+       '<td><b>'+esc(c.nome)+'</b>'+(c.empresa?'<div class="ts">'+esc(c.empresa)+'</div>':'')+'</td>'+
+       '<td>'+esc(c.cargo||'—')+'</td>'+
+       '<td>'+(lista?esc(lista):'<span class="sub">livre — cascata</span>')+'</td></tr>';
+  });
+  box.innerHTML=h+'</table></div>'+
+    '<div class="hint">Marcar acrescenta a pessoa à lista do contato; desmarcar tira. '+
+    'Contato sem ninguém na lista volta a ser <b>livre</b>.</div>';
+}
+function citaPessoaApp(texto, quem){
+  if(!texto || !quem) return false;
+  var partes=String(texto).split(/[,;\/\n|]+/);
+  for(var i=0;i<partes.length;i++) if(mesmaPessoaApp(partes[i], quem)) return true;
+  return false;
+}
+function listaSem(texto, quem){
+  return String(texto||'').split(/[,;\/\n|]+/)
+    .map(function(t){ return t.trim(); })
+    .filter(function(t){ return t && !mesmaPessoaApp(t, quem); });
+}
+if($('eqVisQuem'))  $('eqVisQuem').onchange=renderVisiveisLista;
+if($('eqVisBusca')) $('eqVisBusca').oninput=renderVisiveisLista;
+if($('eqVisSalvar')) $('eqVisSalvar').onclick=function(){ salvarVisiveis(false); };
+if($('eqVisLimpar')) $('eqVisLimpar').onclick=function(){ salvarVisiveis(true); };
+
+function salvarVisiveis(soltarTodos){
+  var quem=$('eqVisQuem').value;
+  if(!quem){ visStatus('Escolha a pessoa primeiro.','var(--red)'); return; }
+  var box=$('eqVisLista'), itens=[];
+  LOT_CONTATOS.forEach(function(c){
+    var cx=box.querySelector('[data-vis="'+c.linha+'"]');
+    var marcado = soltarTodos ? false : (cx ? cx.checked : citaPessoaApp(c.soPara, quem));
+    var restante=listaSem(c.soPara, quem);
+    if(marcado) restante.push(quem);
+    var novo=restante.join(', ');
+    if(novo !== String(c.soPara||'').trim()) itens.push({ linha:c.linha, soPara:novo });
+  });
+  if(!itens.length){ visStatus('Nada mudou.','var(--muted)'); return; }
+  visStatus('Salvando…','var(--muted)');
+  enviar({ tipo:'salvarVisiveis', quem:euSou(), itens:itens }, function(res){
+    if(res && res.ok){
+      visStatus('Pronto: '+(res.alterados||0)+' contato(s) atualizado(s).','var(--ok)');
+      carregarLotacao();
+    } else visStatus((res&&res.erro)||'Não consegui salvar.','var(--red)');
+  });
+}
+function visStatus(t,cor){
+  var e=$('eqVisStatus'); if(!e) return;
+  e.classList.remove('hidden'); e.textContent=t;
+  e.style.background='var(--bg2)'; e.style.color=cor||'var(--tx)';
 }
 
 /* ============ GERENTE DE CADA LOJA ============
@@ -5746,7 +6019,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v43';
+var VERSAO_APP='v44';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
@@ -5794,6 +6067,37 @@ function minhasLojas(){
 }
 /* Trecho de URL que o servidor usa para aplicar o escopo do gerente.
    A trava real está lá; isto aqui é só o pedido. */
+/* Quem está pedindo. O servidor usa isto para conferir na planilha o que a
+   pessoa pode ver — em vez de acreditar no filtro que a tela mandou. */
+function souEu(){ return SESSAO ? '&eu='+encodeURIComponent(euSou()) : ''; }
+
+/* ---- A CASCATA ----
+   Quem eu alcanço daqui para baixo. O servidor manda pronto no login:
+   null = a rede inteira (coordenação); lista = o meu galho, eu incluído.
+   Aqui isso serve SÓ para montar seletores. O recorte de verdade é feito no
+   servidor — o mesmo motivo de a maçaneta não ser a fechadura. */
+function meuGalho(){
+  if(!SESSAO) return [];
+  if(SESSAO.ve === null) return null;                 /* vê tudo */
+  if(SESSAO.ve && SESSAO.ve.length) return SESSAO.ve;
+  return podeVerEquipe() ? null : [euSou()];          /* Apps Script antigo */
+}
+function vejoTodos(){ return meuGalho() === null; }
+/* Só os nomes do meu galho, na ordem em que a tela gosta: eu primeiro. */
+function galhoOrdenado(){
+  var g = meuGalho();
+  if(!g) return [];
+  var eu = euSou();
+  return g.slice().sort(function(a,b){
+    if(mesmaPessoaApp(a,eu)) return -1;
+    if(mesmaPessoaApp(b,eu)) return 1;
+    return a < b ? -1 : 1;
+  });
+}
+function mesmaPessoaApp(a,b){
+  return typeof mesmaPessoa==='function' ? mesmaPessoa(a,b)
+       : String(a||'').trim().toLowerCase() === String(b||'').trim().toLowerCase();
+}
 function paramEscopo(){
   return ehGerente() ? '&escopo=lojas&quem='+encodeURIComponent(euSou()) : '';
 }
@@ -5868,26 +6172,18 @@ function aplicarEscopo(){
      coordenador, para liberar o seletor; para o supervisor, para travá-lo */
   if(typeof montarVisaoRotina==='function') montarVisaoRotina();
   if(typeof aplicarPermissaoContatos==='function') aplicarPermissaoContatos();
+  if(typeof montarFiltroAgenda==='function') montarFiltroAgenda();
+  if(typeof montarFiltroDespesas==='function') montarFiltroDespesas();
   if(!travado) return;
-  /* Despesas */
-  var f=$('dpFiltro');
-  if(f){
-    f.innerHTML='<option value="'+esc(travado)+'">'+esc(travado)+'</option>';
-    f.value=travado; f.disabled=true;
-  }
+  /* quem lança a despesa é sempre a própria pessoa */
   if($('dpQuem')){ $('dpQuem').value=travado; $('dpQuem').readOnly=true; }
   /* Rotina */
   if(typeof montarVisaoRotina==='function') montarVisaoRotina();
   var fq=$('fQuem');
   if(fq){ fq.value=travado; fq.disabled=true; }
-  /* Agenda */
-  var fa=$('agFiltro');
-  if(fa){
-    Array.prototype.forEach.call(fa.options,function(o){
-      if(o.value && norml(o.value)!==norml(travado)) o.disabled=true;
-    });
-    fa.value=travado;
-  }
+  /* Agenda — o campo se chama fAgendaQuem desde a v20; a trava apontava para
+     um "agFiltro" que não existe mais e não travava nada há versões.
+     Quem monta a lista certa agora é montarFiltroAgenda(). */
 }
 
 $('lgEntrar').onclick=function(){
@@ -6073,7 +6369,7 @@ function carregarContatos(forcar, depois){
   if(!ENVIO_URL){ box.innerHTML='<p class="sub">Indisponível: envio para o Google não configurado.</p>'; return; }
   if(CONTATOS.length && !forcar){ renderContatos(); if(typeof depois==='function') depois(); return; }
   box.innerHTML='<p class="sub">Carregando…</p>';
-  fetch(ENVIO_URL+'?acao=contatos').then(function(r){ return r.json(); })
+  fetch(ENVIO_URL+'?acao=contatos'+souEu()).then(function(r){ return r.json(); })
     .then(function(res){
       if(!res || !res.ok){
         box.innerHTML='<p class="sub">Não consegui carregar'+(res&&res.erro?': '+esc(res.erro):'')+
@@ -6349,6 +6645,30 @@ function brl(v){
 }
 function primeiroDoMes(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-01'; }
 
+/* O seletor de Despesas mostra o galho da pessoa: ela e quem responde a ela.
+   Um supervisor vê "Minha equipe" (ele + os gerentes dele) e pode abrir um por
+   um. Um vendedor vê só o próprio nome, e o campo fica travado — não há o que
+   escolher. */
+function montarFiltroDespesas(){
+  var f=$('dpFiltro'); if(!f) return;
+  if(!SESSAO){ f.disabled=false; return; }
+  var g=galhoOrdenado();
+  if(vejoTodos()){
+    var h='<option value="">Toda a equipe</option>';
+    Object.keys(EQUIPE).forEach(function(n){ h+='<option value="'+esc(n)+'">'+esc(n)+'</option>'; });
+    f.innerHTML=h; f.disabled=false; f.value=''; return;
+  }
+  if(g.length<=1){
+    f.innerHTML='<option value="">'+esc(euSou())+'</option>';
+    f.value=''; f.disabled=true; return;
+  }
+  var h2='<option value="">Minha equipe ('+g.length+')</option>';
+  g.forEach(function(n){
+    h2+='<option value="'+esc(n)+'">'+esc(n)+(mesmaPessoaApp(n,euSou())?' (eu)':'')+'</option>';
+  });
+  f.innerHTML=h2; f.disabled=false; f.value='';
+}
+
 function iniciarDespesas(){
   if(!DP_PRONTO){
     DP_PRONTO = true;
@@ -6356,10 +6676,8 @@ function iniciarDespesas(){
     $('dpDe').value   = primeiroDoMes();
     $('dpAte').value  = hojeISO();
     if(!$('dpQuem').value) $('dpQuem').value = GESTOR;
-    var h='<option value="">Toda a equipe</option>';
-    Object.keys(EQUIPE).forEach(function(n){ h+='<option value="'+esc(n)+'">'+esc(n)+'</option>'; });
-    $('dpFiltro').innerHTML=h;
   }
+  montarFiltroDespesas();
   /* reaplica depois de montar o filtro — senão a lista completa volta e a
      trava de escopo vira enfeite */
   aplicarEscopo();
@@ -6731,10 +7049,11 @@ function carregarDespesas(){
   var box=$('dpRel');
   if(!ENVIO_URL){ box.innerHTML='<p class="sub">Relatório indisponível: o envio para o Google não está configurado.</p>'; return; }
   box.innerHTML='<p class="sub">Carregando…</p>';
-  var url=ENVIO_URL+'?acao=despesas&de='+($('dpDe').value||'')+'&ate='+($('dpAte').value||'');
-  /* o escopo vence o filtro da tela: mexer no <select> pelo inspetor não
-     deve destravar a despesa dos outros */
-  var quem = travaEscopo() || $('dpFiltro').value;
+  var url=ENVIO_URL+'?acao=despesas&de='+($('dpDe').value||'')+'&ate='+($('dpAte').value||'')+souEu();
+  /* Em branco NÃO quer dizer "todo mundo": quer dizer "o meu galho".
+     Quem decide o galho é o servidor, lendo a planilha. Mexer no <select>
+     pelo inspetor não destrava a despesa de quem está fora dele. */
+  var quem = $('dpFiltro').value;
   if(quem) url+='&responsavel='+encodeURIComponent(quem);
   fetch(url).then(function(r){ return r.json(); })
     .then(function(res){
