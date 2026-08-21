@@ -1750,6 +1750,7 @@ function carregarEquipe(){
       var n=Object.keys(res.equipe).length;
       if(!n) return;                       /* planilha vazia: mantém a semente */
       EQUIPE=res.equipe;
+      GERENTES=res.gerentes||{};           /* quem responde por cada loja no dia a dia */
       recalcularEquipe();                  /* <- sem isto, CARTEIRA e LOJAS ficam na semente */
       preencherListas();
       montarVisaoRotina();
@@ -1762,6 +1763,8 @@ function carregarEquipe(){
 }
 
 var SUPERVISORES = [], CARTEIRA = {}, LOJAS = [];
+/* { chaveDaLoja: {loja, gerente} } — vem da coluna Gerente da aba EQUIPE */
+var GERENTES = {};
 
 /* Tudo que deriva da EQUIPE é recalculado AQUI, num lugar só.
    Antes, SUPERVISORES era atualizado quando a planilha chegava, mas CARTEIRA e
@@ -1772,7 +1775,12 @@ var SUPERVISORES = [], CARTEIRA = {}, LOJAS = [];
    É o mapa da loja atualizado só na parede e não no sistema: enquanto ninguém
    muda nada de lugar, os dois concordam — e no dia da mudança um dos dois mente. */
 function recalcularEquipe(){
-  SUPERVISORES = Object.keys(EQUIPE);
+  /* gerente sem carteira de supervisão não entra na lista de "ver pessoa":
+     ele não faz visita, ele recebe visita */
+  SUPERVISORES = Object.keys(EQUIPE).filter(function(n){
+    var e=EQUIPE[n]||{};
+    return (e.lojas && e.lojas.length) || !(e.gerencia && e.gerencia.length);
+  });
   CARTEIRA = {};
   LOJAS = [];
   SUPERVISORES.forEach(function(s){
@@ -1783,12 +1791,33 @@ function recalcularEquipe(){
   LOJAS.sort();
 }
 recalcularEquipe();
+/* O nome que vem da aba VISITAS não é obrigatoriamente igualzinho ao da aba
+   USUARIOS: "Ramon", "Ramom", "Ramon Guerra". Busca por igualdade exata
+   devolvia vazio e o papel sumia embaixo do nome no painel — a informação
+   existia, só não se reconhecia. Aqui a chave é achada pela mesma regra
+   tolerante que o resto do app já usa. */
+function chaveEquipe(nome){
+  if(!nome) return '';
+  if(EQUIPE[nome]) return nome;
+  var achou='';
+  Object.keys(EQUIPE).forEach(function(k){ if(!achou && mesmaPessoa(k, nome)) achou=k; });
+  return achou;
+}
+function dadosDe(nome){ return EQUIPE[chaveEquipe(nome)] || {}; }
 function lojasDe(sup){
-  var e=EQUIPE[sup];
-  var l=(e && e.lojas.length) ? e.lojas : LOJAS;
+  var e=dadosDe(sup);
+  var l=(e.lojas && e.lojas.length) ? e.lojas : LOJAS;
   return [ESCRITORIO].concat(l);
 }
-function papelDe(sup){ return (EQUIPE[sup]||{}).papel || ''; }
+function papelDe(sup){ return dadosDe(sup).papel || ''; }
+/* as lojas que a pessoa GERENCIA — vazio para quem não é gerente */
+function lojasQueGerencia(nome){ return dadosDe(nome).gerencia || []; }
+function gerenteDaLoja(loja){
+  var k=chaveLoja(loja||''), achou='';
+  if(!k) return '';
+  Object.keys(GERENTES||{}).forEach(function(g){ if(g===k) achou=GERENTES[g].gerente; });
+  return achou;
+}
 
 var LOGO = document.querySelector('.topbar img').src;
 
@@ -2514,9 +2543,9 @@ function carregarAgendaUnificada(){
   if(typeof carregarBloqueios==='function') carregarBloqueios();
   if(!ENVIO_URL){ renderAgendaCompleta(); return; }
 
-  var sup = (!ehGestor() && souQuem()) ? '&supervisor='+encodeURIComponent(souQuem()) : '';
+  var sup = (!ehGestor() && !ehGerente() && souQuem()) ? '&supervisor='+encodeURIComponent(souQuem()) : '';
   var pedidos = [
-    fetch(ENVIO_URL+'?acao=visitas&de='+j.de+'&ate='+j.ate+sup).then(function(r){return r.json();}).catch(function(){return null;}),
+    fetch(ENVIO_URL+'?acao=visitas&de='+j.de+'&ate='+j.ate+sup+paramEscopo()).then(function(r){return r.json();}).catch(function(){return null;}),
     fetch(ENVIO_URL+'?acao=agendamentos&de='+j.de+'&ate='+j.ate+
       (travaEscopo()?'&quem='+encodeURIComponent(travaEscopo()):'')).then(function(r){return r.json();}).catch(function(){return null;})
   ];
@@ -2575,6 +2604,19 @@ function ehGestor(){ return ROT_VISAO==='equipe' && ehCoordenador(); }
 function montarVisaoRotina(){
   var barra=$('verBar'), sel=$('fVerPessoa');
   if(!barra || !sel) return;
+
+  /* O gerente não escolhe pessoa nenhuma: o recorte dele é a loja. */
+  if(ehGerente()){
+    barra.classList.add('hidden');
+    $('wrapVerPessoa').classList.add('hidden');
+    ROT_VISAO='pessoa';
+    sel.innerHTML='<option value="'+esc(euSou())+'">'+esc(euSou())+'</option>';
+    sel.value=euSou();
+    $('rotSub').innerHTML='As lojas que você gerencia: quem esteve lá, quando, e o que já está marcado.';
+    if($('btnNovaVisita')) $('btnNovaVisita').classList.add('hidden');
+    if($('btnNovaTarefa')) $('btnNovaTarefa').classList.add('hidden');
+    return;
+  }
   var trava=travaEscopo();
 
   /* quem não é coordenador não escolhe: vê o próprio e pronto */
@@ -2682,11 +2724,18 @@ function carregarRotina(){
   var sem=semanaAtual();
   var de  = j.de  < sem.de  ? j.de  : sem.de;
   var ate = j.ate > sem.ate ? j.ate : sem.ate;
+  /* o gerente pergunta "quem vem?", e isso mora no futuro: a consulta dele
+     alcança os próximos 14 dias mesmo com o período em "últimos 7 dias" */
+  if(ehGerente()){
+    var frente=isoMais(14);
+    if(frente>ate) ate=frente;
+  }
   box.innerHTML='<p class="sub">Carregando…</p>';
   SOU_CARREGADO=souQuem();
-  var url=ENVIO_URL+'?acao=visitas&de='+de+'&ate='+ate;
-  /* o gestor puxa todo mundo; o supervisor puxa só o que é dele */
-  if(!ehGestor() && souQuem()) url+='&supervisor='+encodeURIComponent(souQuem());
+  var url=ENVIO_URL+'?acao=visitas&de='+de+'&ate='+ate+paramEscopo();
+  /* o gestor puxa todo mundo; o supervisor puxa só o que é dele;
+     o gerente puxa as lojas dele (recorte feito no servidor) */
+  if(!ehGestor() && !ehGerente() && souQuem()) url+='&supervisor='+encodeURIComponent(souQuem());
   var pedeReunioes = ehGestor()
     ? fetch(ENVIO_URL+'?acao=agendamentos&de='+sem.de+'&ate='+sem.ate)
         .then(function(r){ return r.json(); }).catch(function(){ return null; })
@@ -2695,15 +2744,19 @@ function carregarRotina(){
     .then(function(resp){
       var res=resp[0];
       var todas=(res && res.itens)||[];
-      /* os números seguem o período escolhido; o quadro segue a semana */
-      VISITAS = todas.filter(function(v){ return v.data>=j.de && v.data<=j.ate; });
+      /* os números seguem o período escolhido; o quadro segue a semana.
+         O gerente é a exceção: a tela dele mostra passado E próximas, então
+         fica com a janela inteira que foi consultada. */
+      VISITAS = ehGerente() ? todas
+                            : todas.filter(function(v){ return v.data>=j.de && v.data<=j.ate; });
       SEMANA  = todas.filter(function(v){ return v.data>=sem.de && v.data<=sem.ate; });
       SEMANA_REU = (resp[1] && resp[1].itens) || [];
       renderRotina();
-      if(ehGestor()){ renderPainel(); renderSemana(); }
+      if(ehGerente()){ /* a tela do gerente já se desenhou inteira em renderRotina */ }
+      else if(ehGestor()){ renderPainel(); renderSemana(); }
       else {
-        /* o supervisor não vê o painel dos colegas, mas vê a própria cobertura */
-        var c=cobertura();
+        /* o supervisor não vê o painel dos colegas, mas vê as próprias lojas */
+        var c=painelPorLoja()+cobertura();
         $('painelEquipe').innerHTML=c;
         $('painelEquipe').classList.toggle('hidden', !c);
         $('semanaEquipe').classList.add('hidden');
@@ -2719,7 +2772,61 @@ function badgeStatus(s){
 
 /* A Rotina virou painel: números no topo, o que precisa de atenção logo abaixo,
    e depois planejado × realizado, cobertura e semana. A execução mora na Agenda. */
+/* ---------- ROTINA VISTA PELO GERENTE ----------
+   Ele não tem carteira para cumprir: tem lojas para receber. A tela dele
+   responde outras perguntas — "quando alguém esteve aqui?", "quem vem?" — e
+   NÃO mostra o cumprimento do supervisor. Esse número é ferramenta de gestão
+   da supervisão; na mão da loja vira placar. */
+function renderRotinaGerente(){
+  var box=$('rotinaKpis');
+  var lojas=minhasLojas();
+  $('rotinaAtencao').innerHTML='';
+  $('painelEquipe').classList.add('hidden');
+  $('semanaEquipe').classList.add('hidden');
+  if(!lojas.length){
+    box.innerHTML='<p class="sub">Nenhuma loja está no seu nome ainda. Peça ao coordenador para '+
+      'preencher a coluna <b>Gerente</b> na aba EQUIPE.</p>';
+    return;
+  }
+  var recebidas=VISITAS.filter(function(v){ return !ehTarefa(v) && v.status==='Concluída'; });
+  var previstas=VISITAS.filter(function(v){ return !ehTarefa(v) && v.status==='Planejada'; });
+  var ultima=ultimaVisitaPorLoja();
+  var hoje=hojeISO();
+
+  var h='<div class="kpis">'+
+    '<div class="kpi"><div class="kv">'+lojas.length+'</div><div class="kl">Minhas lojas</div>'+
+      '<div class="kx">'+esc(lojas.join(' · '))+'</div></div>'+
+    '<div class="kpi ok"><div class="kv">'+recebidas.length+'</div><div class="kl">Visitas recebidas</div>'+
+      '<div class="kx">no período selecionado</div></div>'+
+    '<div class="kpi'+(previstas.length?'':' al')+'"><div class="kv">'+previstas.length+'</div>'+
+      '<div class="kl">Visitas por vir</div><div class="kx">'+
+      (previstas.length?'já marcadas':'nada marcado ainda')+'</div></div>'+
+    '</div>';
+
+  h+='<h3 style="margin:26px 0 6px">Suas lojas</h3>'+
+     '<p class="sub" style="margin-bottom:8px">Quando cada uma foi visitada pela última vez, quem esteve lá e o que já está marcado.</p>'+
+     '<div class="rolar"><table class="pnl"><tr><th>Loja</th><th>Supervisor</th>'+
+     '<th>Última visita</th><th>Próxima marcada</th></tr>';
+  lojas.forEach(function(l){
+    var k=chaveLoja(l);
+    var u=ultima[k];
+    var dias = u ? Math.round((new Date(hoje+'T12:00:00')-new Date(u.data+'T12:00:00'))/86400000) : null;
+    var cor = dias===null ? 'var(--red)' : (dias>30?'var(--red)':(dias>14?'#B7791F':'var(--ok)'));
+    var prox=previstas.filter(function(v){ return chaveLoja(v.loja)===k; })
+                      .sort(function(a,b){ return a.data<b.data?-1:1; })[0];
+    var dono=(indiceCarteira()[k]||{}).dono||'';
+    h+='<tr><td><b>'+esc(l)+'</b></td><td>'+esc(dono||'—')+'</td>'+
+       '<td style="color:'+cor+';font-weight:bold">'+
+       (u?dataBr(u.data)+' <span style="font-weight:normal;color:var(--muted)">('+
+          (dias===0?'hoje':dias+' dia'+(dias>1?'s':''))+' · '+esc(String(u.quem||'').split(' ')[0])+')</span>'
+         :'sem visita no período')+'</td>'+
+       '<td>'+(prox?dataBr(prox.data)+(prox.hora?' às '+prox.hora:''):'—')+'</td></tr>';
+  });
+  box.innerHTML=h+'</table></div>';
+}
+
 function renderRotina(){
+  if(ehGerente()) return renderRotinaGerente();
   var box=$('rotinaKpis');
   if(!VISITAS.length){
     box.innerHTML='<p class="sub">Nada registrado neste período. Marque visitas e tarefas em <b>Agendar</b>.</p>';
@@ -2854,6 +2961,9 @@ function urlWaze(v){
   return 'https://waze.com/ul?q='+encodeURIComponent(enderecoDe(v))+'&navigate=yes';
 }
 function botoesVisita(v){
+  /* Quem gerencia a loja acompanha a visita; quem registra é quem foi até
+     lá. Botão de "Cheguei" na mão do gerente falsearia o registro. */
+  if(ehGerente() && !mesmaPessoa(v.supervisor||'', euSou())) return '';
   var t=ehTarefa(v);
   /* visita de loja ganha rota e "em rota"; tarefa e escritório não têm estrada */
   var deCampo = !t && !ehEscritorio(v) && v.loja;
@@ -3074,7 +3184,7 @@ function renderPainel(){
        '<td>'+(o.tPlan? o.tFeitas+' de '+o.tPlan : '—')+'</td>'+
        '<td>'+(o.eDias? o.eDias+(o.eDias>1?' dias':' dia')+(o.eMin?' · '+hm(o.eMin):'') : '—')+'</td></tr>';
   });
-  box.innerHTML=h+'</table></div>'+cobertura();
+  box.innerHTML=h+'</table></div>'+painelPorLoja()+cobertura();
   box.classList.remove('hidden');
 }
 
@@ -3170,6 +3280,63 @@ function cobertura(){
     h+='</div></div>';
   });
   return algum ? h : '';
+}
+
+/* ---------- POR LOJA ----------
+   O quadro de cima responde "como está cada pessoa". Este responde a outra
+   pergunta, que ninguém conseguia fazer ao app: "quem cuida desta loja e
+   quando ela foi vista pela última vez?". Supervisor e gerente na mesma
+   linha, porque a loja tem os dois — um vai lá, o outro está lá. */
+function ultimaVisitaPorLoja(){
+  var m={};
+  VISITAS.forEach(function(v){
+    if(ehTarefa(v) || ehEscritorio(v) || !v.loja) return;
+    if(v.status!=='Concluída') return;
+    var k=chaveLoja(v.loja);
+    if(!m[k] || v.data>m[k].data) m[k]={data:v.data, quem:v.supervisor||''};
+  });
+  return m;
+}
+function painelPorLoja(){
+  var idx=indiceCarteira();
+  var chaves=Object.keys(idx);
+  if(!chaves.length) return '';
+  var ultima=ultimaVisitaPorLoja();
+  var feitas={}, planejadas={};
+  VISITAS.forEach(function(v){
+    if(ehTarefa(v) || ehEscritorio(v) || !v.loja) return;
+    var k=chaveLoja(v.loja);
+    planejadas[k]=(planejadas[k]||0)+1;
+    if(v.status==='Concluída') feitas[k]=(feitas[k]||0)+1;
+  });
+  var quem = ehGestor() ? null : souQuem();
+  var linhas=chaves.map(function(k){ return idx[k]; })
+    .filter(function(x){ return !quem || mesmaPessoa(x.dono, quem); })
+    .sort(function(a,b){ return a.loja<b.loja?-1:1; });
+  if(!linhas.length) return '';
+
+  var h='<h3 style="margin:26px 0 6px">Por loja</h3>'+
+    '<p class="sub" style="margin-bottom:8px">Quem supervisiona, quem gerencia e quando a loja foi '+
+    'vista pela última vez. <b>Mais de 30 dias sem visita</b> fica em vermelho.</p>'+
+    '<div class="rolar"><table class="pnl"><tr><th>Loja</th><th>Supervisor</th><th>Gerente</th>'+
+    '<th>Visitas no período</th><th>Última visita</th></tr>';
+  var hoje=hojeISO();
+  linhas.forEach(function(x){
+    var k=chaveLoja(x.loja);
+    var u=ultima[k];
+    var dias = u ? Math.round((new Date(hoje+'T12:00:00')-new Date(u.data+'T12:00:00'))/86400000) : null;
+    var cor = dias===null ? 'var(--red)' : (dias>30 ? 'var(--red)' : (dias>14?'#B7791F':'var(--ok)'));
+    var g=gerenteDaLoja(x.loja);
+    h+='<tr><td><b>'+esc(x.loja)+'</b></td>'+
+       '<td>'+esc(x.dono||'—')+'</td>'+
+       '<td>'+(g?esc(g):'<span style="color:var(--muted)">a definir</span>')+'</td>'+
+       '<td>'+(feitas[k]||0)+(planejadas[k]?' de '+planejadas[k]:'')+'</td>'+
+       '<td style="color:'+cor+';font-weight:bold">'+
+         (u ? dataBr(u.data)+' <span style="font-weight:normal;color:var(--muted)">('+
+              (dias===0?'hoje':dias+' dia'+(dias>1?'s':''))+')</span>'
+            : 'sem visita no período')+'</td></tr>';
+  });
+  return h+'</table></div>';
 }
 
 /* ---------- agenda visual da semana ---------- */
@@ -5325,7 +5492,7 @@ function carregarPainelPend(forcar){
   if(!ENVIO_URL){ box.innerHTML='<p class="sub">Indisponível: envio para o Google não configurado.</p>'; return; }
   if(PN_DADOS && !forcar){ renderPainelPend(PN_DADOS); return; }
   box.innerHTML='<p class="sub">Carregando…</p>';
-  var url=ENVIO_URL+'?acao=pendencias';
+  var url=ENVIO_URL+'?acao=pendencias'+paramEscopo();
   var trava=travaEscopo();
   if(trava) url+='&responsavel='+encodeURIComponent(trava);
   fetch(url).then(function(r){ return r.json(); })
@@ -5405,7 +5572,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v41.2';
+var VERSAO_APP='v42';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
@@ -5420,7 +5587,23 @@ function euSou(){ return (SESSAO && SESSAO.nome) || GESTOR; }
 /* Devolve o nome a forçar no filtro, ou '' quando a pessoa pode ver todos. */
 function travaEscopo(){
   if(!SESSAO) return '';          /* ainda na tela de entrada: nada a travar */
-  return ehCoordenador() ? '' : euSou();
+  if(ehCoordenador()) return '';
+  /* O gerente não é travado por PESSOA e sim por LOJA: filtrar as visitas
+     pelo nome dele devolveria uma lista vazia, porque quem faz a visita é o
+     supervisor. O recorte dele vai por outro caminho (escopo=lojas). */
+  if(ehGerente()) return '';
+  return euSou();
+}
+/* Gerente: responde por lojas, não por carteira de visitas. */
+function ehGerente(){ return !!(SESSAO && SESSAO.escopo==='lojas'); }
+function minhasLojas(){
+  if(!SESSAO) return [];
+  return (SESSAO.gerencia && SESSAO.gerencia.length) ? SESSAO.gerencia : lojasQueGerencia(euSou());
+}
+/* Trecho de URL que o servidor usa para aplicar o escopo do gerente.
+   A trava real está lá; isto aqui é só o pedido. */
+function paramEscopo(){
+  return ehGerente() ? '&escopo=lojas&quem='+encodeURIComponent(euSou()) : '';
 }
 
 var NOMES_CONHECIDOS=[];
@@ -6766,7 +6949,7 @@ function carregarPendencias(forcar){
   box.innerHTML='<div class="pend"><div class="ph">'+ICO('pin')+' Ações da última reunião</div>'+
     '<div class="pe">Buscando o que ficou combinado…</div></div>';
 
-  var url = ENVIO_URL+'?acao=pendencias';
+  var url = ENVIO_URL+'?acao=pendencias'+paramEscopo();
   if(PEND.soLoja && S.local) url += '&local='+encodeURIComponent(S.local);
 
   fetch(url)
