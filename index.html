@@ -1425,6 +1425,16 @@ tr.incompleto input{background:transparent}
       <div class="hint">É este tempo que sai do seu link de agendamento. Ninguém consegue marcar
       reunião com você por cima dele.</div>
     </div>
+    <!-- Quem agenda decide se o gerente da loja vê. Desmarcado (o padrão),
+         o compromisso não aparece na tela dele — bom para visita reservada. -->
+    <div id="wrapGer" class="hidden" style="margin-top:10px">
+      <label style="display:flex;align-items:center;gap:8px;text-transform:none;font-weight:normal;cursor:pointer">
+        <input type="checkbox" id="vMostrarGer" style="width:auto;margin:0">
+        Mostrar ao gerente da loja
+      </label>
+      <div class="hint">Marcado, o gerente vê este compromisso na tela dele (só ver — editar continua
+      sendo de quem marcou). Desmarcado, ele não fica sabendo.</div>
+    </div>
     <label id="labTrabalho">Trabalho a ser executado <span style="color:var(--red)">*</span></label>
     <textarea id="vTrabalho" rows="4" placeholder="Ex.: Revisar a exposição da linha premium, conferir o estoque de imobiliária e treinar a Ana na abordagem de fechamento."></textarea>
     <div class="btnrow">
@@ -2491,7 +2501,8 @@ function renderAgendaCompleta(){
         '<button class="btn btn-ghost btn-sm" data-edreuniao="'+a.linha+'">'+ICO('pencil')+' Editar</button>'+
         '<button class="btn btn-ghost btn-sm" data-desmarcar="'+a.linha+'" style="color:var(--red);border-color:#f3c6c8">Desmarcar</button>'
       : botoesVisita(a.obj) +
-        (a.status==='Realizada' ? ''
+        /* o gerente acompanha a agenda da loja; editar é de quem marcou */
+        (a.status==='Realizada' || (ehGerente() && !mesmaPessoaApp((a.obj&&a.obj.supervisor)||'', euSou())) ? ''
           : '<button class="btn btn-ghost btn-sm" data-edvisita="'+a.linha+'">'+ICO('pencil')+' Editar</button>');
     h+='<div class="ag'+(a.data===hoje?' hoje':'')+(a.k==='google'?' gcal':'')+'" style="border-left-color:'+cor+';align-items:flex-start">'+
        '<div class="agd" style="background:'+cor+'"><b>'+(a.hora||'--').slice(0,2)+'</b><span>'+(a.hora||'--:--').slice(3)+'</span></div>'+
@@ -3575,6 +3586,7 @@ function abrirNovaVisita(tipo){
   $('vSup').value=souQuem();
   preencherLojas($('vSup').value);
   $('vTrabalho').value='';
+  if($('vMostrarGer')) $('vMostrarGer').checked=false;   /* reservado por padrão */
   $('vStatus').classList.add('hidden');
   $('vSalvar').textContent = 'Salvar '+(t?'tarefa':'visita');
   $('vExcluir').classList.add('hidden');
@@ -3682,6 +3694,7 @@ function abrirEditarVisita(linha){
   $('vSup').value=v.supervisor||'';
   preencherLojas(v.supervisor||'');
   $('vTrabalho').value=v.trabalho||'';
+  if($('vMostrarGer')) $('vMostrarGer').checked=!!v.mostrarGerente;
   $('vStatus').classList.add('hidden');
   $('vSalvar').textContent='Salvar alterações';
   $('vExcluir').classList.remove('hidden');
@@ -3717,6 +3730,14 @@ function validaVisita(){
   var ok = $('vData').value && $('vSup').value.trim() && $('vTrabalho').value.trim().length>=10 &&
            (!precisaLoja || $('vLoja').value.trim());
   $('vSalvar').disabled=!ok;
+  /* a opção do gerente só faz sentido quando o local é uma loja de verdade
+     (tarefa com loja como referência também conta; Escritório não) */
+  var wg=$('wrapGer');
+  if(wg){
+    var l=$('vLoja').value.trim();
+    var ehLoja = l && !ehEscritorio(l) && !!indiceCarteira()[chaveLoja(l)];
+    wg.classList.toggle('hidden', !ehLoja);
+  }
 }
 /* Grava a loja sempre com o nome oficial da carteira. Digitou "friburgo",
    "08-Friburgo" ou "FRIBURGO"? Vai para a planilha como "08 - Friburgo".
@@ -3737,13 +3758,16 @@ function salvarVisita(){
   b.style.background='#eef3ff'; b.style.color='var(--navy)'; b.style.border='1.5px solid var(--navy)';
   b.textContent='⏳ Salvando…'; b.classList.remove('hidden');
   var loja = nomeOficialLoja($('vLoja').value);
+  var mostrarGer = !$('wrapGer').classList.contains('hidden') && $('vMostrarGer').checked;
   var corpo = VISITA_EDIT
     ? {tipo:'editarVisita', linha:VISITA_EDIT.linha, data:$('vData').value, hora:$('vHora').value,
        loja:loja, responsavel:$('vSup').value.trim(), trabalho:$('vTrabalho').value.trim(),
-       tempo:(TIPO_NOVO==='Tarefa' ? $('vTempo').value : '')}
+       tempo:(TIPO_NOVO==='Tarefa' ? $('vTempo').value : ''),
+       mostrarGerente:mostrarGer, quem:euSou()}
     : {tipo:'visita', atividade:TIPO_NOVO, data:$('vData').value, hora:$('vHora').value,
        loja:loja, supervisor:$('vSup').value.trim(), trabalho:$('vTrabalho').value.trim(),
-       tempo:(TIPO_NOVO==='Tarefa' ? $('vTempo').value : '')};
+       tempo:(TIPO_NOVO==='Tarefa' ? $('vTempo').value : ''),
+       mostrarGerente:mostrarGer, quem:euSou()};
   fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
     body:JSON.stringify(corpo)})
     .then(function(r){ return r.json(); })
@@ -4973,7 +4997,7 @@ function decidirPedido(linha, decisao, motivo){
 function carregarBloqueios(){
   if(!ENVIO_URL || !$('agBloqueios')) return;
   var quem=travaEscopo();
-  fetch(ENVIO_URL+'?acao=bloqueios'+(quem?'&quem='+encodeURIComponent(quem):''))
+  fetch(ENVIO_URL+'?acao=bloqueios'+souEu()+(quem?'&quem='+encodeURIComponent(quem):''))
     .then(function(r){ return r.json(); })
     .then(function(res){ BLOQUEIOS=(res&&res.itens)||[]; renderBloqueios(); })
     .catch(function(){});
@@ -4986,9 +5010,13 @@ function renderBloqueios(){
       /* faixa de horas quando existe: "25/08 14:00–16:00" diz na hora o que
          "25/08" sozinho esconde */
       var horas = (b.hIni && b.hFim) ? ' '+b.hIni+'–'+b.hFim : '';
+      /* liberar a agenda é do dono dela; a coordenação libera qualquer uma.
+         O servidor confere de novo — este esconder é cortesia, não a trava. */
+      var meuOuGeral = vejoTodos() || mesmaPessoaApp(b.pessoa||'', euSou());
       return '<span style="white-space:nowrap">'+dataBr(b.de)+(b.ate!==b.de?'–'+dataBr(b.ate):'')+horas+
         (b.motivo?' ('+esc(b.motivo)+')':'')+(ehCoordenador()?' · '+esc(b.pessoa):'')+
-        ' <a href="#" data-blx="'+b.linha+'" style="color:var(--red);font-weight:700">liberar</a></span>';
+        (meuOuGeral?' <a href="#" data-blx="'+b.linha+'" style="color:var(--red);font-weight:700">liberar</a>':'')+
+        '</span>';
     }).join(' &nbsp;·&nbsp; ')+'</div>';
 }
 delegar('agBloqueios', { 'data-blx': function(l){
@@ -5644,7 +5672,7 @@ function renderEquipe(){
        (p.lojas&&p.lojas.length?' · '+p.lojas.length+' loja(s)':'')+
        (temFone?' · '+esc(p.fone):'')+'</div>'+
        (!temFone&&!temMail&&!eu
-         ? '<div class="ags" style="color:var(--red)">sem contato cadastrado — peça para preencher em Minha conta</div>'
+         ? '<div class="ags" style="color:var(--red)">sem contato — nem em Minha conta, nem na agenda de contatos</div>'
          : '')+
        '</div>'+
        '<div class="agb">'+
@@ -5652,8 +5680,8 @@ function renderEquipe(){
        (temMail?'<a class="btn btn-ghost btn-sm" href="mailto:'+esc(p.email)+'" target="_blank" rel="noopener noreferrer">'+ICO('mail')+' E-mail</a>':'')+
        '</div></div>';
   });
-  h+='<div class="hint">O contato vem do que cada um preencheu em <b>Minha conta</b>. '+
-     'Quem aparece sem contato ainda não cadastrou — e não vai receber o resumo da manhã também.</div>';
+  h+='<div class="hint">O contato vem de <b>Minha conta</b> e, quando falta, da <b>agenda de contatos</b> '+
+     '(aba CONTATOS da planilha) — cargo e telefone dos gerentes já entram sozinhos por ali.</div>';
   box.innerHTML=h;
   recolherDicas();
   carregarPermissoes();
@@ -5712,12 +5740,17 @@ function renderLotacao(){
     h+='<tr'+(u.ativo?'':' style="opacity:.5"')+'><td><b>'+esc(u.nome)+'</b>'+
        (u.ativo?'':'<div class="ts">inativo</div>')+'</td>'+
        '<td>'+esc(u.cargo||'—')+'</td>'+
-       '<td><select data-lot="'+i+'">'+opcoes+'</select></td>'+
+       '<td><select data-lot="'+i+'">'+opcoes+'</select>'+
+       (!u.loja && u.lojaContato
+         ? '<div class="hint" style="margin-top:4px">A agenda de contatos diz: <b>'+esc(u.lojaContato)+
+           '</b> — já vale para a cascata; escolher aqui só grava de vez.</div>'
+         : '')+
+       '</td>'+
        '<td>'+ve+'</td></tr>';
   });
   box.innerHTML=h+'</table></div>'+
     '<div class="hint">Supervisor fica <b>sem loja</b>: as lojas dele já vêm da carteira. '+
-    'Preencha para gerente, assistente, vendedor e auxiliar.</div>';
+    'Vazio, vale a loja escrita na <b>agenda de contatos</b>; escolher aqui ganha da agenda.</div>';
   LOT_ITENS.forEach(function(u,i){
     var sel=box.querySelector('[data-lot="'+i+'"]');
     if(sel) sel.value=u.loja||'';
@@ -6019,7 +6052,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v44';
+var VERSAO_APP='v44.2';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
