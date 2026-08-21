@@ -847,7 +847,7 @@ tr.incompleto input{background:transparent}
 
       <div id="rotEquipe" class="hidden">
         <h1>Equipe</h1>
-        <p class="sub">Quem é quem, com o contato que cada um cadastrou em Minha conta.</p>
+        <p class="sub">Quem é quem, com o contato vindo da agenda de contatos da empresa.</p>
         <div id="eqLista"></div>
 
         <!-- A régua de acesso: só leitura aqui. Quem edita é a planilha, e é
@@ -1053,8 +1053,10 @@ tr.incompleto input{background:transparent}
             <div><label>E-mail</label><input type="text" id="ctEmail" placeholder="ana@sotintas.com.br"></div>
             <div><label>Cargo</label><input type="text" id="ctCargo" placeholder="Gerente"></div>
           </div>
-          <label>Loja ou empresa</label>
-          <input list="listaLojas" type="text" id="ctEmpresa" placeholder="07 - Matriz">
+          <div class="grid2">
+            <div><label>Loja ou empresa</label><input list="listaLojas" type="text" id="ctEmpresa" placeholder="07 - Matriz"></div>
+            <div><label>Setor</label><select id="ctSetor"><option value="">— escolher depois —</option></select></div>
+          </div>
           <div class="btnrow">
             <button class="btn btn-primary btn-sm" id="ctSalvar"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg> Salvar contato</button>
           </div>
@@ -1676,6 +1678,8 @@ tr.incompleto input{background:transparent}
       padding:11px 14px;font-size:13px;color:#8a6100;margin-bottom:14px">
       <b>Seu PIN ainda é 1234.</b> Enquanto for, qualquer um da equipe entra no seu nome.
     </div>
+    <div class="hint" style="margin-top:0">O que você salvar aqui vai para a <b>agenda de contatos</b>
+    da empresa — é de lá que a equipe, o Em rota e os avisos puxam seu telefone.</div>
     <label>E-mail para o resumo da manhã</label>
     <input type="text" id="cnEmail" placeholder="voce@sotintas.com.br">
     <label>WhatsApp</label>
@@ -5680,8 +5684,8 @@ function renderEquipe(){
        (temMail?'<a class="btn btn-ghost btn-sm" href="mailto:'+esc(p.email)+'" target="_blank" rel="noopener noreferrer">'+ICO('mail')+' E-mail</a>':'')+
        '</div></div>';
   });
-  h+='<div class="hint">O contato vem de <b>Minha conta</b> e, quando falta, da <b>agenda de contatos</b> '+
-     '(aba CONTATOS da planilha) — cargo e telefone dos gerentes já entram sozinhos por ali.</div>';
+  h+='<div class="hint">O contato de todo mundo vem de um lugar só: a <b>agenda de contatos</b> '+
+     '(aba CONTATOS da planilha). O que cada um salva em Minha conta entra lá.</div>';
   box.innerHTML=h;
   recolherDicas();
   carregarPermissoes();
@@ -6052,7 +6056,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v44.2';
+var VERSAO_APP='v45';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
@@ -6417,13 +6421,21 @@ function carregarContatos(forcar, depois){
     .catch(function(){ box.innerHTML='<p class="sub">Sem conexão para carregar os contatos.</p>'; });
 }
 $('ctAtualizar').onclick=function(){ carregarContatos(true); };
+if($('ctSetor')) $('ctSetor').innerHTML='<option value="">— escolher depois —</option>'+
+  ['Comercial','Financeiro','Compras','TI','Viks','Logística','RH','Marketing',
+   'Centro de Distribuição','Gerente de loja','Atendimento On Line']
+   .map(function(x){ return '<option value="'+x+'">'+x+'</option>'; }).join('');
 $('ctBusca').oninput=renderContatos;
+
+/* Os setores da empresa, na ordem da tela. "Sem setor" fecha a lista. */
+var SETORES=['Comercial','Financeiro','Compras','TI','Viks','Logística','RH','Marketing',
+  'Centro de Distribuição','Gerente de loja','Atendimento On Line'];
 
 function renderContatos(){
   var box=$('ctLista'), termo=semAcento($('ctBusca').value);
   var lista=CONTATOS.filter(function(c){
     if(!termo) return true;
-    return semAcento(c.nome+' '+c.empresa+' '+c.cargo).indexOf(termo)>=0 ||
+    return semAcento(c.nome+' '+c.empresa+' '+c.cargo+' '+(c.setor||'')).indexOf(termo)>=0 ||
            String(c.fone||'').replace(/\D/g,'').indexOf(termo.replace(/\D/g,''))>=0;
   });
   if(!CONTATOS.length){
@@ -6432,18 +6444,68 @@ function renderContatos(){
     return;
   }
   if(!lista.length){ box.innerHTML='<p class="sub">Nada encontrado para "'+esc($('ctBusca').value)+'".</p>'; return; }
-  var h='<div class="hint" style="margin-top:0">'+lista.length+' de '+CONTATOS.length+' contato(s).</div>';
+
+  /* agrupado por setor, na ordem oficial; o que não tem setor fecha a lista */
+  var grupos={}, ordem=SETORES.slice();
   lista.forEach(function(c){
-    h+='<div class="ag">'+
-       '<div class="agi"><div class="agt">'+esc(c.nome)+'</div>'+
-       '<div class="ags">'+[c.cargo,c.empresa,c.fone,c.email].filter(Boolean).map(esc).join(' · ')+'</div></div>'+
-       (c.fone?'<a class="btn btn-ghost btn-sm" href="https://wa.me/'+foneWa(c.fone)+'" target="_blank" rel="noopener noreferrer">'+ICO('chat')+'</a>':'')+
-       (ehCoordenador()
-         ? '<button class="btn btn-ghost btn-sm" data-ctdel="'+c.linha+'" title="Remover da agenda">'+ICO('x')+'</button>'
-         : '')+
-       '</div>';
+    var st=(c.setor||'').trim()||'Sem setor';
+    var achou='';
+    SETORES.forEach(function(x){ if(semAcento(x)===semAcento(st)) achou=x; });
+    st=achou||st;
+    if(!grupos[st]){ grupos[st]=[]; if(ordem.indexOf(st)<0) ordem.push(st); }
+    grupos[st].push(c);
+  });
+  if(grupos['Sem setor']){ ordem=ordem.filter(function(x){ return x!=='Sem setor'; }); ordem.push('Sem setor'); }
+
+  var podeSetor=podeEditarEquipe();
+  var opcoesSetor='<option value="">Sem setor</option>'+
+    SETORES.map(function(x){ return '<option value="'+esc(x)+'">'+esc(x)+'</option>'; }).join('');
+
+  var h='<div class="hint" style="margin-top:0">'+lista.length+' de '+CONTATOS.length+' contato(s).</div>';
+  ordem.forEach(function(st){
+    var g=grupos[st]; if(!g || !g.length) return;
+    h+='<div style="margin:18px 0 8px;font-size:13px;font-weight:bold;color:var(--navy);'+
+       'text-transform:uppercase;letter-spacing:.5px">'+esc(st)+' <span style="color:var(--muted);font-weight:normal">('+g.length+')</span></div>';
+    g.forEach(function(c){
+      var sub=[c.cargo,c.empresa,c.fone,c.email].filter(Boolean).map(esc).join(' · ');
+      /* no contato do gerente, a(s) loja(s) que ele gerencia — vindas da aba
+         EQUIPE, que é quem manda nesse assunto */
+      var lojas=(c.gerencia&&c.gerencia.length)
+        ? '<div class="ags" style="color:var(--navy)">gerencia: <b>'+c.gerencia.map(esc).join(' · ')+'</b></div>'
+        : '';
+      h+='<div class="ag">'+
+         '<div class="agi"><div class="agt">'+esc(c.nome)+'</div>'+
+         '<div class="ags">'+sub+'</div>'+lojas+
+         (podeSetor
+           ? '<div style="margin-top:6px"><select data-ctsetor="'+c.linha+'" style="width:auto;min-width:180px;font-size:13px;padding:5px 8px">'+opcoesSetor+'</select>'+
+             (c.setor && !c.setorGravado ? ' <span class="ts">setor deduzido — confirme</span>' : '')+'</div>'
+           : '')+
+         '</div>'+
+         (c.fone?'<a class="btn btn-ghost btn-sm" href="https://wa.me/'+foneWa(c.fone)+'" target="_blank" rel="noopener noreferrer">'+ICO('chat')+'</a>':'')+
+         (ehCoordenador()
+           ? '<button class="btn btn-ghost btn-sm" data-ctdel="'+c.linha+'" title="Remover da agenda">'+ICO('x')+'</button>'
+           : '')+
+         '</div>';
+    });
   });
   box.innerHTML=h;
+  if(podeSetor){
+    CONTATOS.forEach(function(c){
+      var sel=box.querySelector('[data-ctsetor="'+c.linha+'"]');
+      if(sel) sel.value=(function(){ var v=''; SETORES.forEach(function(x){ if(semAcento(x)===semAcento(c.setor||'')) v=x; }); return v; })();
+    });
+    Array.prototype.forEach.call(box.querySelectorAll('[data-ctsetor]'),function(sel){
+      sel.onchange=function(){
+        var linha=sel.getAttribute('data-ctsetor'), novo=sel.value;
+        enviar({tipo:'setorContato', linha:linha, setor:novo, quem:euSou()}, function(res){
+          if(res&&res.ok){ toast('Setor salvo.');
+            CONTATOS.forEach(function(c){ if(String(c.linha)===String(linha)){ c.setor=novo; c.setorGravado=true; } });
+            renderContatos();
+          } else toast((res&&res.erro)||'Não consegui salvar o setor.');
+        });
+      };
+    });
+  }
 }
 delegar('ctLista', {'data-ctdel': function(linha){
   var c=CONTATOS.filter(function(x){ return String(x.linha)===String(linha); })[0];
@@ -6458,7 +6520,8 @@ delegar('ctLista', {'data-ctdel': function(linha){
 
 $('ctSalvar').onclick=function(){
   var c={nome:$('ctNome').value.trim(), fone:$('ctFone').value.trim(), email:$('ctEmail').value.trim(),
-         cargo:$('ctCargo').value.trim(), empresa:$('ctEmpresa').value.trim()};
+         cargo:$('ctCargo').value.trim(), empresa:$('ctEmpresa').value.trim(),
+         setor:($('ctSetor')&&$('ctSetor').value)||''};
   if(!c.nome){ ctBox('erro','Informe o nome.'); return; }
   if(!c.fone && !c.email){ ctBox('erro','Informe pelo menos o WhatsApp ou o e-mail — sem um dos dois o contato não serve para convidar.'); return; }
   enviarContatos([c], function(){
