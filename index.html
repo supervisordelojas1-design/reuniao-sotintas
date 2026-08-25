@@ -834,7 +834,9 @@ tr.incompleto input{background:transparent}
         <button class="btn btn-ghost btn-sm" id="dpAtualizar"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg> Atualizar relatório</button>
         <button class="btn btn-navy btn-sm" id="dpZap"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg> Resumo para WhatsApp</button>
         <button class="btn btn-ghost btn-sm" id="dpCsv">⤓ Baixar planilha (.xlsx)</button>
+        <button class="btn btn-ghost btn-sm" id="dpRecibo">🧾 Recibo de reembolso (PDF)</button>
       </div>
+      <div id="dpReciboBox" class="hidden" style="margin-top:12px;padding:11px 14px;border-radius:10px;font-size:14px"></div>
       <div id="dpRel" style="margin-top:16px"></div>
     </div>
 
@@ -6134,7 +6136,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v47.1';
+var VERSAO_APP='v47.2';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
@@ -7661,6 +7663,48 @@ $('dpCsv').onclick=function(){
     a.download=nomeArq+'.csv';
     a.click();
     toast('Sem conexão para o formato com abas — baixei o CSV simples.');
+  });
+};
+
+/* ============ RECIBO DE REEMBOLSO (PDF) ============
+   O acerto de contas merece papel: um PDF por pessoa, com a tabela do
+   período, os totais, as linhas de assinatura e OS COMPROVANTES DENTRO.
+   Quem monta é o servidor (ele tem acesso ao Drive onde as fotos moram);
+   aqui só se escolhe o período e se recebem os links.                  */
+function reciboBox(cor,html){
+  var b=$('dpReciboBox');
+  var e={info:['#eef3ff','#1C3F8F'],ok:['#e9f7ef','#1a8f5a'],erro:['#fdeaea','#D32027']}[cor];
+  b.style.background=e[0]; b.style.color=e[1]; b.style.border='1.5px solid '+e[1];
+  b.innerHTML=html; b.classList.remove('hidden');
+}
+$('dpRecibo').onclick=function(){
+  var de=$('dpDe').value, ate=$('dpAte').value;
+  if(!de || !ate){ reciboBox('erro','Escolha o período (De / Até) antes de gerar o recibo.'); return; }
+  var bt=$('dpRecibo'); bt.disabled=true;
+  reciboBox('info','Gerando o(s) recibo(s)… pode levar um minuto: os comprovantes vão dentro do PDF.');
+  enviar({ tipo:'reciboReembolso', de:de, ate:ate,
+           responsavel:$('dpFiltro').value, quem:euSou() }, function(res){
+    bt.disabled=false;
+    if(!res || !res.ok){
+      reciboBox('erro','Não consegui gerar: '+((res&&res.erro)||'sem conexão'));
+      return;
+    }
+    if(!(res.recibos||[]).length){
+      reciboBox('info','Nenhuma despesa no período escolhido — nada para fechar.');
+      return;
+    }
+    var h='<b>'+res.recibos.length+' recibo'+(res.recibos.length>1?'s':'')+' pronto'+
+          (res.recibos.length>1?'s':'')+'</b> — período '+dataBr(de)+' a '+dataBr(ate)+':';
+    h+='<ul style="margin:8px 0 0;padding-left:18px">';
+    res.recibos.forEach(function(r){
+      h+='<li style="margin:4px 0">'+r.nome+' — '+brl(r.total)+
+         (r.total>r.acertado ? ' <span style="color:#D32027">('+brl(r.total-r.acertado)+' em aberto)</span>' : ' (tudo acertado)')+
+         ' · <a href="'+r.url+'" target="_blank" rel="noopener"><b>Abrir PDF</b></a></li>';
+    });
+    h+='</ul><div class="sub" style="margin-top:6px">Os arquivos também ficam salvos no Drive, na pasta '+
+       (res.pasta ? '<a href="'+res.pasta+'" target="_blank" rel="noopener"><b>Recibos de reembolso</b></a>'
+                  : '"Recibos de reembolso"')+'.</div>';
+    reciboBox('ok',h);
   });
 };
 
