@@ -833,7 +833,7 @@ tr.incompleto input{background:transparent}
       <div class="btnrow" style="margin-top:10px">
         <button class="btn btn-ghost btn-sm" id="dpAtualizar"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg> Atualizar relatório</button>
         <button class="btn btn-navy btn-sm" id="dpZap"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg> Resumo para WhatsApp</button>
-        <button class="btn btn-ghost btn-sm" id="dpCsv">⤓ Baixar planilha (.csv)</button>
+        <button class="btn btn-ghost btn-sm" id="dpCsv">⤓ Baixar planilha (.xlsx)</button>
       </div>
       <div id="dpRel" style="margin-top:16px"></div>
     </div>
@@ -6094,7 +6094,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v46';
+var VERSAO_APP='v46.3';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
@@ -7543,23 +7543,85 @@ $('dpZap').onclick=function(){
   $('modalZap').classList.add('show');
 };
 
+/* A planilha baixada agora é .xlsx de verdade: aba GERAL com o total no
+   topo + uma aba por pessoa, cada uma com o próprio total. A biblioteca
+   (SheetJS) só é buscada na hora do clique; sem internet, o botão cai para
+   o CSV antigo — planilha pior é melhor que planilha nenhuma. */
+var XLSX_URL='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+function comXLSX(pronto, semLib){
+  if(window.XLSX){ pronto(); return; }
+  var sc=document.createElement('script');
+  sc.src=XLSX_URL;
+  sc.onload=function(){ pronto(); };
+  sc.onerror=function(){ semLib(); };
+  document.head.appendChild(sc);
+}
+function linhasDespesas(itens){
+  var L=[['Data','Responsável','Tipo','Valor','Loja ou motivo','Observação','Aprovação',
+          'Situação','Data do reembolso','Quem acertou','Comprovante']];
+  itens.forEach(function(i){
+    L.push([dataBr(i.data), i.responsavel, i.tipo, Number(i.valor)||0, i.referencia||'', i.obs||'',
+      i.aprovacao||'aguardando', i.reembolsada?'Acertada':'Em aberto',
+      i.dataReembolso||'', i.quemAcertou||'', i.comprovante||'']);
+  });
+  return L;
+}
+function abaComTotal(itens, rotulo){
+  var total=0, acertado=0;
+  itens.forEach(function(i){ var v=Number(i.valor)||0; total+=v; if(i.reembolsada) acertado+=v; });
+  var topo=[[rotulo,'','',''],
+            ['TOTAL DAS DESPESAS', total, 'JÁ ACERTADO', acertado],
+            ['EM ABERTO', total-acertado, '', ''],
+            []];
+  var ws=XLSX.utils.aoa_to_sheet(topo.concat(linhasDespesas(itens)));
+  ws['!cols']=[{wch:11},{wch:16},{wch:13},{wch:10},{wch:34},{wch:40},{wch:12},{wch:11},{wch:14},{wch:12},{wch:60}];
+  return ws;
+}
+/* Excel não aceita : \ / ? * [ ] no nome da aba, nem mais de 31 letras */
+function nomeDeAba(n){ return String(n||'—').replace(/[:\\\/?*\[\]]/g,' ').slice(0,31) || '—'; }
+
 $('dpCsv').onclick=function(){
   var _todas=(DP_DADOS?(DP_DADOS.itens||[]).concat(DP_DADOS.acertados||[]):[]);
   if(!_todas.length){ toast('Nada para baixar neste período.'); return; }
-  /* a planilha do mês leva as duas pilhas: quem confere precisa ver o que já
-     foi pago ao lado do que ainda está aberto */
-  var L=['Data;Responsavel;Tipo;Valor;Loja ou motivo;Observacao;Aprovacao;Situacao;Data do reembolso;Quem acertou;Comprovante'];
-  _todas.sort(function(a,b){ return a.data<b.data?1:-1; }).forEach(function(i){
-    L.push([i.data,i.responsavel,i.tipo,String(i.valor).replace('.',','),i.referencia,i.obs,
-      i.aprovacao||'aguardando', i.reembolsada?'Acertada':'Em aberto',
-      i.dataReembolso||'', i.quemAcertou||'', i.comprovante]
-      .map(function(c){ return String(c||'').replace(/;/g,','); }).join(';'));
+  _todas.sort(function(a,b){ return a.data<b.data?1:-1; });
+  var nomeArq='despesas_'+($('dpDe').value||'')+'_a_'+($('dpAte').value||'');
+  comXLSX(function(){
+    var wb=XLSX.utils.book_new();
+    /* aba Geral: tudo, com o total no topo */
+    XLSX.utils.book_append_sheet(wb, abaComTotal(_todas, 'TODAS AS DESPESAS DO PERÍODO'), 'Geral');
+    /* uma aba por pessoa, na ordem de quem gastou mais */
+    var porPessoa={}, ordem=[];
+    _todas.forEach(function(i){
+      var k=null;
+      ordem.forEach(function(n){ if(mesmaPessoaApp(n, i.responsavel)) k=n; });
+      if(!k){ k=i.responsavel||'—'; ordem.push(k); }
+      (porPessoa[k]=porPessoa[k]||[]).push(i);
+    });
+    ordem.sort(function(a,b){
+      var t=function(n){ return porPessoa[n].reduce(function(x,i){ return x+(Number(i.valor)||0); },0); };
+      return t(b)-t(a);
+    });
+    ordem.forEach(function(n){
+      XLSX.utils.book_append_sheet(wb, abaComTotal(porPessoa[n], 'DESPESAS DE '+String(n).toUpperCase()), nomeDeAba(n));
+    });
+    XLSX.writeFile(wb, nomeArq+'.xlsx');
+    toast('Planilha baixada: aba Geral + uma por pessoa, com totais.');
+  }, function(){
+    /* sem internet para buscar a biblioteca: CSV de sempre */
+    var L=['Data;Responsavel;Tipo;Valor;Loja ou motivo;Observacao;Aprovacao;Situacao;Data do reembolso;Quem acertou;Comprovante'];
+    _todas.forEach(function(i){
+      L.push([i.data,i.responsavel,i.tipo,String(i.valor).replace('.',','),i.referencia,i.obs,
+        i.aprovacao||'aguardando', i.reembolsada?'Acertada':'Em aberto',
+        i.dataReembolso||'', i.quemAcertou||'', i.comprovante]
+        .map(function(c){ return String(c||'').replace(/;/g,','); }).join(';'));
+    });
+    var blob=new Blob(['\ufeff'+L.join('\n')],{type:'text/csv;charset=utf-8'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=nomeArq+'.csv';
+    a.click();
+    toast('Sem conexão para o formato com abas — baixei o CSV simples.');
   });
-  var blob=new Blob(['﻿'+L.join('\n')],{type:'text/csv;charset=utf-8'});
-  var a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='despesas_'+($('dpDe').value||'')+'_a_'+($('dpAte').value||'')+'.csv';
-  a.click();
 };
 
 /* ============ AÇÕES ABERTAS DA ÚLTIMA REUNIÃO ============
