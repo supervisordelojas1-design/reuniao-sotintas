@@ -1100,20 +1100,25 @@ tr.incompleto input{background:transparent}
       <h1 id="agTitulo">Agenda</h1>
       <p class="sub" id="agSub"></p>
 
-      <!-- a primeira pergunta do dia é "quando", não "de quem" -->
-      <div class="verbar" id="agFaixa">
-        <button data-per="hoje" class="sel">Hoje</button>
-        <button data-per="semana">Semana</button>
-        <button data-per="mes">Mês</button>
+      <!-- a primeira pergunta do dia é "quando", não "de quem". O 📅 pesquisa
+           uma data: escolheu, o Dia/Semana/Mês passam a contar a partir dela.
+           O input transparente por cima do ícone é o que abre o calendário
+           NATIVO em qualquer aparelho — botão com showPicker falha no iOS. -->
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div class="verbar" id="agFaixa" style="margin-bottom:0">
+          <button data-per="hoje" class="sel">Hoje</button>
+          <button data-per="semana">Semana</button>
+          <button data-per="mes">Mês</button>
+          <button type="button" id="agBtnData" title="Ir para uma data" aria-label="Ir para uma data"
+            style="position:relative;padding:8px 12px">
+            <svg class="ic" aria-hidden="true"><use href="#i-calendar-days"/></svg>
+            <input type="date" id="agData" aria-label="Ir para a data"
+              style="position:absolute;left:0;top:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0;margin:0">
+          </button>
+        </div>
+        <button class="btn btn-ghost btn-sm hidden" id="agDataHoje">Voltar para hoje</button>
       </div>
-
-      <!-- pesquisar pela data: escolheu um dia, o Dia/Semana/Mês passam a
-           contar a partir DELE. O botão volta tudo para hoje. -->
-      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:8px">
-        <div style="flex:1;min-width:170px"><label>Ir para a data</label>
-          <input type="date" id="agData"></div>
-        <button class="btn btn-ghost btn-sm hidden" id="agDataHoje" style="margin-bottom:2px">Voltar para hoje</button>
-      </div>
+      <div style="height:var(--s3)"></div>
 
       <div class="mesnav hidden" id="agMesNav">
         <button class="btn btn-ghost btn-sm" id="agMesAnt"><svg class="ic" aria-hidden="true"><use href="#i-arrow-left"/></svg></button>
@@ -2655,6 +2660,8 @@ function carregarAgendaUnificada(){
   var pilulaDia=document.querySelector('[data-per="hoje"]');
   if(pilulaDia) pilulaDia.textContent = pesquisou ? 'Dia' : 'Hoje';
   if($('agDataHoje')) $('agDataHoje').classList.toggle('hidden', !pesquisou);
+  /* o ícone acende quando há uma data pesquisada — é o "sel" da pesquisa */
+  if($('agBtnData')) $('agBtnData').className = pesquisou ? 'sel' : '';
   $('agSub').textContent = AG_PER==='hoje'
     ? (pesquisou ? 'Reuniões, visitas e tarefas de '+dataBr(agRef())+'.' : 'Reuniões, visitas e tarefas de hoje.')
     : (AG_PER==='semana'
@@ -6127,7 +6134,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v47';
+var VERSAO_APP='v47.1';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
