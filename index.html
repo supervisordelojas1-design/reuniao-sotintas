@@ -694,6 +694,67 @@ tr.incompleto input{background:transparent}
   .ata [contenteditable]{outline:none!important}
   @page{margin:14mm}
 }
+
+/* =================== MODO ESCURO ===================
+   Escolhido em Minha conta, guardado só no aparelho. Os tons derivam dos
+   mesmos tokens do tema claro; o navy vira acento claro para o texto ler
+   bem no fundo escuro. A ATA continua um documento branco de propósito:
+   ela vira PDF, e PDF é papel. */
+html[data-tema="escuro"]{
+  --ink:#e7ecf7; --muted:#9aa6c4; --line:#2b3854; --bg:#0e1524;
+  --navy:#8fb0f0; --navy-d:#a9c3f7;
+  --navy-05:#1a2440; --navy-10:#223053; --navy-20:#34497c;
+  --warn-bg:#382d10; --ok:#4cc38a;
+  --e1:0 1px 2px rgba(0,0,0,.4); --e2:0 2px 8px rgba(0,0,0,.45); --e3:0 8px 28px rgba(0,0,0,.6);
+}
+html[data-tema="escuro"] .topbar{background:#152F69}
+html[data-tema="escuro"] .topbar img{background:#fff}
+html[data-tema="escuro"] .btn-navy{background:#2a52b0;color:#fff}
+html[data-tema="escuro"] .btn-primary{color:#fff}
+html[data-tema="escuro"] .card,
+html[data-tema="escuro"] .btn-ghost,
+html[data-tema="escuro"] .model,
+html[data-tema="escuro"] .prog,
+html[data-tema="escuro"] .verbar button.sel,
+html[data-tema="escuro"] .tab2.sel,
+html[data-tema="escuro"] .lbox,
+html[data-tema="escuro"] .ag,
+html[data-tema="escuro"] .kpi,
+html[data-tema="escuro"] .step,
+html[data-tema="escuro"] .pi,
+html[data-tema="escuro"] .cap,
+html[data-tema="escuro"] .semana .chip,
+html[data-tema="escuro"] .gaveta,
+html[data-tema="escuro"] .gaveta .guia,
+html[data-tema="escuro"] .modal .mbox{background:#18213a}
+html[data-tema="escuro"] input,
+html[data-tema="escuro"] textarea,
+html[data-tema="escuro"] select{background:#121a2e;color:var(--ink);border-color:var(--line)}
+html[data-tema="escuro"] .card .card{background:var(--navy-05)}
+html[data-tema="escuro"] .model.sel{background:#2c1a22}
+html[data-tema="escuro"] .ag.hoje{background:#241a26}
+html[data-tema="escuro"] .gaveta.ativa>summary{background:#2c1a22}
+html[data-tema="escuro"] .pend{background:#241f10}
+html[data-tema="escuro"] .pi.venc{background:#241418}
+html[data-tema="escuro"] .livebox{background:#241418;color:#e8aeb2}
+html[data-tema="escuro"] tr.incompleto td{background:#241418}
+html[data-tema="escuro"] .b-and{background:#382d10;color:#e8c56b}
+/* a ata é documento: fica clara, e os tokens voltam aos do papel dentro dela */
+html[data-tema="escuro"] .ata{
+  --ink:#16233d; --navy:#1C3F8F; --muted:#67728c; --red:#D32027; --line:#e4e9f3;
+  background:#fff; color:#16233d;
+}
+
+/* =================== FONTE GRANDE ===================
+   Um degrau acima em toda a escala — para ler no balcão sem óculos. */
+html[data-fonte="grande"]{
+  --fs-xs:13px; --fs-sm:14px; --fs-md:15.5px; --fs-lg:18px; --fs-xl:21px; --fs-2xl:25px;
+}
+html[data-fonte="grande"] body{font-size:17px}
+html[data-fonte="grande"] input,
+html[data-fonte="grande"] textarea,
+html[data-fonte="grande"] select{font-size:17px}
+html[data-fonte="grande"] .btn{font-size:15.5px}
 </style>
 </head>
 <body>
@@ -1328,6 +1389,21 @@ tr.incompleto input{background:transparent}
     <textarea id="bNotas" rows="7" placeholder="Digite os pontos principais. O que for transcrito pelo microfone entra aqui automaticamente."></textarea>
     <div class="hint" id="micHint"></div>
 
+    <!-- estacionamento: o assunto fora de pauta é ouvido, registrado e a
+         reunião segue no trilho — o pátio ao lado da estrada -->
+    <details class="gaveta" id="gvEstac">
+      <summary><span style="font-size:15px">🅿️</span> <span>Estacionamento</span> <span class="gvc" id="estCont"></span></summary>
+      <div style="padding:12px 14px">
+        <div class="hint" style="margin-top:0">Assunto importante que <b>não é desta pauta</b>? Estacione aqui:
+        a pessoa foi ouvida, o tema fica registrado e a reunião segue. No fim, cada um ganha um destino.</div>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="estTxt" placeholder="Ex.: folga do gerente de Angra" style="flex:1">
+          <button type="button" class="btn btn-navy btn-sm" id="estAdd">Estacionar</button>
+        </div>
+        <div id="estLista" style="margin-top:10px"></div>
+      </div>
+    </details>
+
     <div id="actsWrap" class="hidden">
       <h3>Decisões e próximos passos</h3>
       <table class="acts">
@@ -1711,6 +1787,11 @@ tr.incompleto input{background:transparent}
     <div id="cnDeOnde" class="hint hidden"></div>
     <div class="hint">Todo dia cedo você recebe o que é seu: compromissos do dia, ações vencidas e
     despesas questionadas. Dia sem nada não gera e-mail.</div>
+    <label>Aparência <span style="font-weight:normal;text-transform:none">(só neste aparelho)</span></label>
+    <div class="btnrow" style="margin-top:2px;margin-bottom:6px">
+      <button type="button" class="btn btn-ghost btn-sm" id="cnTema">🌙 Modo escuro</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="cnFonte">🔎 Fonte grande</button>
+    </div>
     <label>PIN atual <span style="color:var(--red)">*</span></label>
     <input type="password" id="cnAtual" inputmode="numeric" maxlength="6" placeholder="&#8226;&#8226;&#8226;&#8226;">
     <div class="grid2">
@@ -1981,7 +2062,7 @@ function novoEstado(k, cond){
     titulo:'', condutor:'', data:'', hora:'', local:'', part:'', emails:'', objetivo:'',
     blocos: blocos,
     acoes:[{a:'',r:'',p:''}], status:'Sim', pend:'', followData:'', followHora:'08:00',
-    gravacoes:[], cur:0, ini:null, fim:null, totalSeg:0, enviado:false
+    gravacoes:[], estacionamento:[], cur:0, ini:null, fim:null, totalSeg:0, enviado:false
   };
 }
 var sel = 'padrao';
@@ -4088,6 +4169,7 @@ function renderBloco(){
   }
   $('btnPrev').disabled = S.cur===0;
   $('btnNext').textContent = S.cur===S.blocos.length-1 ? 'Ir para a ata →' : 'Próximo bloco →';
+  renderEstac();
   if(typeof syncNav==='function') syncNav();
   if(typeof carregarPendencias==='function') carregarPendencias(false);
   if(typeof marcarGavetas==='function') marcarGavetas();
@@ -4117,6 +4199,7 @@ function renderCorrido(b){
   $('fechoWrap').classList.remove('hidden');
   $('fStatus').value=S.status; $('fPendencia').value=S.pend;
   $('fFollowData').value=S.followData||''; $('fFollowHora').value=S.followHora||'08:00';
+  renderEstac();
 }
 function marcar(tag){
   var b=S.blocos[S.cur];
@@ -4737,6 +4820,66 @@ function auTranscrever(){
   });
 }
 
+/* ============ ESTACIONAMENTO ============
+   O pátio ao lado da estrada: o assunto fora de pauta não é abandonado,
+   fica guardado à vista — mas fora da pista, para o comboio não parar.
+   Cada assunto ganha um destino no fim: vira ação, vai para a próxima
+   pauta, ou morre ali de propósito.                                   */
+var EST_ROTULO={acao:'✔ virou ação', pauta:'📌 próxima pauta', encerrado:'encerrado na hora'};
+function renderEstac(){
+  if(!S || !$('estLista')) return;
+  var lista=S.estacionamento||[];
+  var abertos=lista.filter(function(e){return !e.destino;}).length;
+  $('estCont').textContent = lista.length ? (abertos? abertos+' sem destino' : lista.length+' resolvido'+(lista.length>1?'s':'')) : '';
+  var h='';
+  lista.forEach(function(e,i){
+    h+='<div class="pi" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
+       '<span style="flex:1;min-width:150px'+(e.destino==='encerrado'?';text-decoration:line-through;color:var(--muted)':'')+'">🅿️ '+esc(e.txt)+'</span>'+
+       (e.destino
+         ? '<span class="hint" style="margin:0">'+EST_ROTULO[e.destino]+'</span>'+
+           '<button type="button" class="btn btn-ghost btn-sm" data-est="voltar" data-i="'+i+'" title="Desfazer o destino">↺</button>'
+         : '<button type="button" class="btn btn-ghost btn-sm" data-est="acao" data-i="'+i+'">→ Vira ação</button>'+
+           '<button type="button" class="btn btn-ghost btn-sm" data-est="pauta" data-i="'+i+'">→ Próxima pauta</button>'+
+           '<button type="button" class="btn btn-ghost btn-sm" data-est="encerrado" data-i="'+i+'">Encerrar</button>')+
+       '</div>';
+  });
+  $('estLista').innerHTML=h;
+}
+function estacionar(){
+  var t=$('estTxt').value.trim();
+  if(!t){ toast('Escreva o assunto antes de estacionar.'); return; }
+  if(!S) return;
+  (S.estacionamento=S.estacionamento||[]).push({txt:t, destino:''});
+  $('estTxt').value='';
+  $('gvEstac').open=true;
+  renderEstac(); salvarLocal();
+  toast('Estacionado. A reunião segue na pauta.');
+}
+$('estAdd').onclick=estacionar;
+$('estTxt').onkeydown=function(ev){ if(ev.key==='Enter'){ ev.preventDefault(); estacionar(); } };
+$('estLista').onclick=function(ev){
+  var b=ev.target.closest ? ev.target.closest('[data-est]') : null;
+  if(!b || !S) return;
+  var i=+b.getAttribute('data-i'), e=(S.estacionamento||[])[i];
+  if(!e) return;
+  var d=b.getAttribute('data-est');
+  if(d==='voltar'){
+    if(e.destino==='acao') toast('A ação criada continua na tabela — apague lá se não valer mais.');
+    e.destino='';
+  } else {
+    e.destino=d;
+    if(d==='acao'){
+      /* entra na tabela de Decisões; dono e prazo se definem lá */
+      var vazia=S.acoes.filter(function(a){return a.a.trim();}).length===0;
+      if(vazia && S.acoes.length===1 && !S.acoes[0].a.trim()) S.acoes[0]={a:e.txt,r:'',p:''};
+      else S.acoes.push({a:e.txt,r:'',p:''});
+      if(!$('actsWrap').classList.contains('hidden')) renderActs();
+      toast('Virou ação — defina o dono e o prazo na tabela de decisões.');
+    }
+  }
+  renderEstac(); salvarLocal();
+};
+
 /* ============ ATA ============ */
 function gerarAta(){
   /* Encerrar pelo botão "Ir para a ata" não passava pelo btnFinish, e o
@@ -4805,6 +4948,18 @@ function gerarAta(){
   if(S.followData) h+='<p><b>Follow-up marcado para:</b> '+dataBr(S.followData)+' às '+(S.followHora||'08:00')+'</p>';
   if(blFecho && blFecho.notas.trim()) h+='<p contenteditable>'+esc(blFecho.notas.trim())+'</p>';
 
+  /* o estacionamento sai na ata COM o destino de cada assunto: quem levantou
+     o tema vê que ele não morreu no esquecimento — ou vê que morreu de propósito */
+  if((S.estacionamento||[]).length){
+    h+='<h4>Estacionamento — assuntos fora de pauta</h4>';
+    var rotEst={acao:'virou ação (está na tabela de decisões)',
+                pauta:'vai para a pauta da próxima reunião',
+                encerrado:'encerrado na hora', '':'ficou sem destino — decidir fora da reunião'};
+    S.estacionamento.forEach(function(e){
+      h+='<p contenteditable>🅿️ '+esc(e.txt)+' — <b>'+rotEst[e.destino||'']+'</b></p>';
+    });
+  }
+
   if(S.gravacoes.length){
     h+='<h4>Registros de mídia</h4>';
     S.gravacoes.forEach(function(g){ h+='<p style="font-size:13px">🎧 '+esc(g.arquivo)+' — bloco "'+esc(g.bloco)+'" ('+fmt(g.dur)+')</p>'; });
@@ -4870,7 +5025,16 @@ function payloadGoogle(){
     condutor:S.condutor, participantes:S.part, presentes:S.presentes||S.part, ausentes:S.ausentes||'',
     emails:S.emails, modoCond:S.modoCond||'blocos',
     objetivo: elObj?elObj.innerText.trim():S.objetivo,
-    status:S.status, pendencia:($('ataPend')?$('ataPend').innerText.trim():S.pend),
+    status:S.status,
+    /* o que foi estacionado para a próxima pauta viaja na pendência: assim a
+       aba ACOES/REUNIOES guarda o compromisso e a Abertura seguinte cobra */
+    pendencia:(function(){
+      var p=($('ataPend')?$('ataPend').innerText.trim():S.pend)||'';
+      var pauta=(S.estacionamento||[]).filter(function(e){return e.destino==='pauta';})
+                                      .map(function(e){return e.txt;});
+      if(pauta.length) p+=(p?' | ':'')+'Próxima pauta (estacionamento): '+pauta.join('; ');
+      return p;
+    })(),
     followData:S.followData, followHora:S.followHora||'08:00',
     duracaoReal:Math.round(S.totalSeg/60),
     duracaoPrevista:S.blocos.reduce(function(a,b){return a+b.min;},0),
@@ -6142,12 +6306,40 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v47.3';
+var VERSAO_APP='v48';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
 try{ var _tv=document.getElementById('topVersao');
      if(_tv) _tv.textContent='Só Tintas Meet · '+VERSAO_APP; }catch(e){}
+
+/* =================== APARÊNCIA (por aparelho) ===================
+   Modo escuro e fonte grande moram no aparelho, não na planilha: o
+   Danilo pode usar escuro no celular e claro no computador. */
+var PREF_TEMA='sotintas_tema', PREF_FONTE='sotintas_fonte';
+function aplicarAparencia(){
+  var tema='', fonte='';
+  try{ tema=localStorage.getItem(PREF_TEMA)||''; fonte=localStorage.getItem(PREF_FONTE)||''; }catch(e){}
+  var raiz=document.documentElement;
+  if(tema==='escuro') raiz.setAttribute('data-tema','escuro'); else raiz.removeAttribute('data-tema');
+  if(fonte==='grande') raiz.setAttribute('data-fonte','grande'); else raiz.removeAttribute('data-fonte');
+  var bT=document.getElementById('cnTema'), bF=document.getElementById('cnFonte');
+  if(bT) bT.innerHTML = tema==='escuro' ? '☀️ Voltar ao claro' : '🌙 Modo escuro';
+  if(bF) bF.innerHTML = fonte==='grande' ? '🔎 Fonte normal' : '🔎 Fonte grande';
+}
+function alternarPref(chave, valor){
+  try{
+    var atual=localStorage.getItem(chave)||'';
+    if(atual===valor) localStorage.removeItem(chave);
+    else localStorage.setItem(chave, valor);
+  }catch(e){}
+  aplicarAparencia();
+}
+aplicarAparencia();
+try{
+  document.getElementById('cnTema').onclick=function(){ alternarPref(PREF_TEMA,'escuro'); };
+  document.getElementById('cnFonte').onclick=function(){ alternarPref(PREF_FONTE,'grande'); };
+}catch(e){}
 
 var LS_SESSAO='sotintas_sessao_v1';
 var SESSAO=null;
