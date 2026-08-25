@@ -7,7 +7,7 @@
  * Troque o número da versão sempre que subir um index.html novo — é o que
  * faz o aparelho baixar a versão nova em vez de servir a antiga.
  */
-var VERSAO = 'ast-v47';
+var VERSAO = 'ast-v47.1';
 var CASCA  = ['./', './index.html', './agenda.html', './manifest.json'];
 
 self.addEventListener('install', function (e) {
