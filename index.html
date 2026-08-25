@@ -1107,6 +1107,14 @@ tr.incompleto input{background:transparent}
         <button data-per="mes">Mês</button>
       </div>
 
+      <!-- pesquisar pela data: escolheu um dia, o Dia/Semana/Mês passam a
+           contar a partir DELE. O botão volta tudo para hoje. -->
+      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:8px">
+        <div style="flex:1;min-width:170px"><label>Ir para a data</label>
+          <input type="date" id="agData"></div>
+        <button class="btn btn-ghost btn-sm hidden" id="agDataHoje" style="margin-bottom:2px">Voltar para hoje</button>
+      </div>
+
       <div class="mesnav hidden" id="agMesNav">
         <button class="btn btn-ghost btn-sm" id="agMesAnt"><svg class="ic" aria-hidden="true"><use href="#i-arrow-left"/></svg></button>
         <span id="agMesRotulo"></span>
@@ -2595,13 +2603,23 @@ function renderProgressoDia(itens){
    para achar a própria visita. */
 var AG_PER='hoje';      /* 'hoje' | 'semana' | 'mes' */
 var AG_MES=0;           /* deslocamento em meses, 0 = mês atual */
+var AG_DATA='';         /* data pesquisada (ISO); '' = hoje */
+function agRef(){ return AG_DATA || hojeISO(); }
 var GCAL=[];            /* compromissos vindos da Agenda Google */
 
 function janelaAgenda(){
-  var hoje=new Date();
-  if(AG_PER==='hoje')   return {de:hojeISO(), ate:hojeISO(), rotulo:'Hoje'};
-  if(AG_PER==='semana') return {de:hojeISO(), ate:isoMais(6), rotulo:'Próximos 7 dias'};
-  var base=new Date(hoje.getFullYear(), hoje.getMonth()+AG_MES, 1);
+  /* tudo conta a partir da data pesquisada; sem pesquisa, a partir de hoje */
+  var refIso=agRef();
+  var pr=refIso.split('-');
+  var ref=new Date(+pr[0], +pr[1]-1, +pr[2]);
+  var ehHoje = refIso===hojeISO();
+  if(AG_PER==='hoje')   return {de:refIso, ate:refIso, rotulo: ehHoje?'Hoje':dataBr(refIso)};
+  if(AG_PER==='semana'){
+    var fimSem=dataLocal(new Date(ref.getTime()+6*86400000));
+    return {de:refIso, ate:fimSem,
+            rotulo: ehHoje?'Próximos 7 dias':'7 dias a partir de '+dataBr(refIso)};
+  }
+  var base=new Date(ref.getFullYear(), ref.getMonth()+AG_MES, 1);
   var fim =new Date(base.getFullYear(), base.getMonth()+1, 0);
   var MES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   return {de:dataLocal(base), ate:dataLocal(fim), rotulo:MES[base.getMonth()]+' '+base.getFullYear()};
@@ -2614,8 +2632,16 @@ delegar('agFaixa', {'data-per': function(v){
 }});
 $('agMesAnt').onclick =function(){ AG_MES--; carregarAgendaUnificada(); };
 $('agMesProx').onclick=function(){ AG_MES++; carregarAgendaUnificada(); };
-$('agMesHoje').onclick=function(){ AG_MES=0; AG_PER='hoje'; carregarAgendaUnificada(); };
+$('agMesHoje').onclick=function(){ AG_MES=0; AG_DATA=''; if($('agData')) $('agData').value=''; AG_PER='hoje'; carregarAgendaUnificada(); };
 $('agGoogle').onchange=function(){ carregarAgendaUnificada(); };
+if($('agData')) $('agData').onchange=function(){
+  AG_DATA=this.value||''; AG_MES=0;
+  carregarAgendaUnificada();
+};
+if($('agDataHoje')) $('agDataHoje').onclick=function(){
+  AG_DATA=''; if($('agData')) $('agData').value='';
+  AG_MES=0; carregarAgendaUnificada();
+};
 
 function carregarAgendaUnificada(){
   var j=janelaAgenda();
@@ -2624,9 +2650,16 @@ function carregarAgendaUnificada(){
   });
   $('agMesNav').classList.toggle('hidden', AG_PER!=='mes');
   $('agMesRotulo').textContent=j.rotulo;
+  var pesquisou = AG_DATA && AG_DATA!==hojeISO();
+  /* a pílula diz o que ela vai mostrar: "Hoje" só quando é hoje mesmo */
+  var pilulaDia=document.querySelector('[data-per="hoje"]');
+  if(pilulaDia) pilulaDia.textContent = pesquisou ? 'Dia' : 'Hoje';
+  if($('agDataHoje')) $('agDataHoje').classList.toggle('hidden', !pesquisou);
   $('agSub').textContent = AG_PER==='hoje'
-    ? 'Reuniões, visitas e tarefas de hoje.'
-    : (AG_PER==='semana' ? 'Os próximos sete dias.' : j.rotulo+' — use as setas para outros meses.');
+    ? (pesquisou ? 'Reuniões, visitas e tarefas de '+dataBr(agRef())+'.' : 'Reuniões, visitas e tarefas de hoje.')
+    : (AG_PER==='semana'
+        ? (pesquisou ? 'Sete dias a partir de '+dataBr(agRef())+'.' : 'Os próximos sete dias.')
+        : j.rotulo+' — use as setas para outros meses.');
 
   $('agendaLista').innerHTML='<p class="sub">Carregando…</p>';
   carregarProximas();
@@ -6094,7 +6127,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v46.3';
+var VERSAO_APP='v47';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
