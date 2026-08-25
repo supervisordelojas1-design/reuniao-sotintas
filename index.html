@@ -4289,7 +4289,10 @@ function gravar(tipo){
       toast('A transcrição ao vivo continua ligada — se o áudio sair picotado, desligue uma das duas.');
     }
     var mime = tipo==='video' ? 'video/webm' : 'audio/webm';
-    try{ mr=new MediaRecorder(st,{mimeType:mime}); }catch(e){ mr=new MediaRecorder(st); }
+    /* voz não precisa de qualidade de estúdio: 64 kbps deixa a fala nítida
+       e o arquivo com METADE do tamanho — sobe em metade do tempo no 4G */
+    var opts = tipo==='video' ? {mimeType:mime} : {mimeType:mime, audioBitsPerSecond:64000};
+    try{ mr=new MediaRecorder(st,opts); }catch(e){ mr=new MediaRecorder(st); }
     mr.ondataavailable=function(e){ if(e.data.size) chunks.push(e.data); };
 
     /* O sistema pode cortar a captura sem avisar (tela travada, ligação
@@ -4643,9 +4646,12 @@ function auGerar(){
       AU_REF=ref;
       auBarra(100);
       var min=Math.round(AU_DUR/60);
-      auBox('info','✅ Áudio enviado. <b>A IA está ouvindo.</b> '+
-        (min? 'Gravação de '+hm(min)+' costuma levar de 1 a 2 minutos.' :
-              'Costuma levar de 1 a 2 minutos.'));
+      /* estimativa honesta: ~1 minuto de leitura a cada 10 de gravação.
+         Prometer "1 a 2 minutos" para uma reunião de 50 só gera desconfiança. */
+      var est=Math.max(1, Math.ceil((min||30)/10));
+      auBox('info','✅ Áudio enviado. <b>A IA está ouvindo a reunião inteira.</b> '+
+        (min? 'Gravação de '+hm(min)+': ' : '')+'a leitura leva uns '+est+
+        (est>1?' minutos':' minuto')+'. Deixe esta tela aberta.');
       return auPost({
         tipo:'ataAudio', fileUri:ref.fileUri, mime:ref.mime,
         titulo:S.titulo||'', objetivo:S.objetivo||'', modelo:TPL[S.tpl].nome,
@@ -6136,7 +6142,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v47.2';
+var VERSAO_APP='v47.3';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
