@@ -1427,6 +1427,15 @@ tr.incompleto input{background:transparent}
       <div class="hint">É este tempo que sai do seu link de agendamento. Ninguém consegue marcar
       reunião com você por cima dele.</div>
     </div>
+    <!-- Horários reais: só aparecem ao EDITAR algo em andamento ou concluído.
+         Quem esqueceu do "Cheguei" na hora acerta aqui depois. -->
+    <div id="wrapHoras" class="hidden">
+      <div class="grid2">
+        <div><label id="labIni">Cheguei às</label><input type="time" id="vIni"></div>
+        <div><label id="labFim">Saí às</label><input type="time" id="vFim"></div>
+      </div>
+      <div class="hint">Ajustando os horários, a permanência é recalculada sozinha.</div>
+    </div>
     <!-- Quem agenda decide se o gerente da loja vê. Desmarcado (o padrão),
          o compromisso não aparece na tela dele — bom para visita reservada. -->
     <div id="wrapGer" class="hidden" style="margin-top:10px">
@@ -3270,11 +3279,25 @@ function marcarVisita(tipo, linha, motivo){
 }
 
 /* ---------- painel do gestor ---------- */
+/* A linha do quadro é a PESSOA, não a grafia: "Ramon Guerra", "Ramom" e
+   "Ramon" caem na mesma linha, com o nome oficial do cadastro. Registro
+   conjunto ("Bruno e Danilo") entra na linha do primeiro nome. */
+function pessoaDoQuadro(n){
+  var t=String(n||'').trim();
+  if(!t) return '—';
+  var primeiro=t.split(/,| e |&|\//i)[0].trim()||t;
+  var nomes=Object.keys(EQUIPE||{});
+  for(var i=0;i<nomes.length;i++){
+    if(mesmaPessoaApp(nomes[i], primeiro)) return nomes[i];
+  }
+  return primeiro;
+}
+
 function renderPainel(){
   var box=$('painelEquipe');
   var porSup={};
   VISITAS.forEach(function(v){
-    var s=v.supervisor||'—';
+    var s=pessoaDoQuadro(v.supervisor);
     if(!porSup[s]) porSup[s]={plan:0,feitas:0,nao:0,min:0,comTempo:0,tPlan:0,tFeitas:0,eDias:0,eMin:0};
     var o=porSup[s];
     if(ehTarefa(v)){
@@ -3514,8 +3537,8 @@ function renderSemana(){
     .map(function(a){ return {data:a.data, hora:a.hora, titulo:a.titulo, quem:donoReuniao(a), status:a.status||''}; });
 
   var sups={};
-  SEMANA.forEach(function(v){ if(dias.indexOf(v.data)>=0) sups[v.supervisor||'—']=true; });
-  reunioes.forEach(function(a){ sups[a.quem]=true; });
+  SEMANA.forEach(function(v){ if(dias.indexOf(v.data)>=0) sups[pessoaDoQuadro(v.supervisor)]=true; });
+  reunioes.forEach(function(a){ sups[pessoaDoQuadro(a.quem)]=true; });
   var nomes=Object.keys(sups).sort();
   if(!nomes.length){ box.classList.add('hidden'); return; }
   var hojeI=hojeISO();
@@ -3531,8 +3554,8 @@ function renderSemana(){
   nomes.forEach(function(n){
     h+='<div class="sn">'+esc(n)+'</div>';
     dias.forEach(function(d){
-      var doDia=SEMANA.filter(function(v){ return v.data===d && (v.supervisor||'—')===n; });
-      var reuDia=reunioes.filter(function(a){ return a.data===d && a.quem===n; });
+      var doDia=SEMANA.filter(function(v){ return v.data===d && pessoaDoQuadro(v.supervisor)===n; });
+      var reuDia=reunioes.filter(function(a){ return a.data===d && pessoaDoQuadro(a.quem)===n; });
       h+='<div class="sc">';
       doDia.forEach(function(v){
         var cls = v.status==='Concluída'?' ok':(v.status==='Não realizada'?' nao':(ehEscritorio(v)?' esc':''));
@@ -3593,6 +3616,7 @@ function abrirNovaVisita(tipo){
   preencherLojas($('vSup').value);
   $('vTrabalho').value='';
   if($('vMostrarGer')) $('vMostrarGer').checked=false;   /* reservado por padrão */
+  if($('wrapHoras')) $('wrapHoras').classList.add('hidden');
   $('vStatus').classList.add('hidden');
   $('vSalvar').textContent = 'Salvar '+(t?'tarefa':'visita');
   $('vExcluir').classList.add('hidden');
@@ -3701,6 +3725,16 @@ function abrirEditarVisita(linha){
   preencherLojas(v.supervisor||'');
   $('vTrabalho').value=v.trabalho||'';
   if($('vMostrarGer')) $('vMostrarGer').checked=!!v.mostrarGerente;
+  var comecou = v.status==='Em andamento' || v.status==='Concluída';
+  if($('wrapHoras')){
+    $('wrapHoras').classList.toggle('hidden', !comecou);
+    if(comecou){
+      $('labIni').textContent = t ? 'Comecei às' : 'Cheguei às';
+      $('labFim').textContent = t ? 'Concluí às' : 'Saí às';
+      $('vIni').value=(v.checkin||'').slice(0,5);
+      $('vFim').value=(v.checkout||'').slice(0,5);
+    }
+  }
   $('vStatus').classList.add('hidden');
   $('vSalvar').textContent='Salvar alterações';
   $('vExcluir').classList.remove('hidden');
@@ -3769,6 +3803,8 @@ function salvarVisita(){
     ? {tipo:'editarVisita', linha:VISITA_EDIT.linha, data:$('vData').value, hora:$('vHora').value,
        loja:loja, responsavel:$('vSup').value.trim(), trabalho:$('vTrabalho').value.trim(),
        tempo:(TIPO_NOVO==='Tarefa' ? $('vTempo').value : ''),
+       inicio:(!$('wrapHoras').classList.contains('hidden') ? $('vIni').value : ''),
+       fim:(!$('wrapHoras').classList.contains('hidden') ? $('vFim').value : ''),
        mostrarGerente:mostrarGer, quem:euSou()}
     : {tipo:'visita', atividade:TIPO_NOVO, data:$('vData').value, hora:$('vHora').value,
        loja:loja, supervisor:$('vSup').value.trim(), trabalho:$('vTrabalho').value.trim(),
@@ -6058,7 +6094,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v45.1';
+var VERSAO_APP='v46';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
