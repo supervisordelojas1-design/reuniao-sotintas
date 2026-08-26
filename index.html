@@ -1197,8 +1197,18 @@ html[data-fonte="grande"] .btn{font-size:15.5px}
 
       <div id="agProgresso"></div>
 
-      <div class="grid2">
+      <div class="grid3">
         <div><label>Mostrar de</label><select id="fAgendaQuem"></select></div>
+        <div><label>Modalidade</label>
+          <select id="fAgendaTipo">
+            <option value="">Tudo</option>
+            <option value="reuniao">Reuniões</option>
+            <option value="treinamento">Treinamentos</option>
+            <option value="visita">Visitas</option>
+            <option value="tarefa">Tarefas</option>
+            <option value="google">Agenda Google</option>
+          </select>
+        </div>
         <div style="display:flex;align-items:flex-end">
           <button class="btn btn-navy" id="btnCompartilharAgenda" style="width:100%"><svg class="ic" aria-hidden="true"><use href="#i-share"/></svg> Compartilhar</button>
         </div>
@@ -2601,8 +2611,8 @@ function renderAgendaCompleta(){
   var itens=[];
   PROX.forEach(function(a){
     /* leva os campos que a edição precisa: sem eles o modal abriria vazio */
-    itens.push({k:'reuniao', data:a.data, hora:a.hora||'', titulo:a.titulo,
-      sub:(a.modelo||'')+(a.duracao?' · '+a.duracao+' min':'')+(a.local?' · '+a.local:''),
+    itens.push({k:'reuniao', data:a.data, hora:a.hora||'', titulo:a.titulo, modelo:a.modelo||'',
+      sub:(a.modelo||'')+(a.duracao?' · '+(duracaoTxt(a.duracao)||a.duracao+' min'):'')+(a.local?' · '+a.local:''),
       extra:a.participantes?a.participantes:'', linha:a.linha,
       local:a.local||'', objetivo:a.objetivo||'', duracao:a.duracao||''});
   });
@@ -2621,10 +2631,23 @@ function renderAgendaCompleta(){
       extra:'', linha:'', gid:e.id});
   });
   if(quem) itens=itens.filter(function(a){ return a.k==='reuniao' || a.k==='google' || a.pessoa===quem; });
+  /* filtro por modalidade: reunião, treinamento (reunião com o roteiro de
+     treinamento), visita, tarefa ou só o espelho do Google. Treinamento
+     conta separado DE PROPÓSITO — quem filtra "Reuniões" quer pauta, não
+     capacitação; quem filtra "Treinamentos" quer só as capacitações. */
+  var mod=$('fAgendaTipo') ? $('fAgendaTipo').value : '';
+  if(mod) itens=itens.filter(function(a){
+    if(mod==='treinamento') return a.k==='reuniao' && /treinamento/i.test(a.modelo||'');
+    if(mod==='reuniao')     return a.k==='reuniao' && !/treinamento/i.test(a.modelo||'');
+    return a.k===mod;
+  });
   AGENDA_ITENS=itens;
   renderProgressoDia(itens);
   if(!itens.length){
-    box.innerHTML='<p class="sub">Nada marcado neste filtro. Use <b>Agendar</b> para criar reunião, visita ou tarefa.</p>';
+    var nomeMod={reuniao:'reunião', treinamento:'treinamento', visita:'visita', tarefa:'tarefa', google:'compromisso do Google'}[mod]||'';
+    box.innerHTML='<p class="sub">'+(mod
+      ? 'Nenhum(a) '+nomeMod+' neste período. Troque a modalidade para "Tudo" ou mude o período.'
+      : 'Nada marcado neste filtro. Use <b>Agendar</b> para criar reunião, visita ou tarefa.')+'</p>';
     return;
   }
   itens.sort(function(a,b){ return (a.data+a.hora) < (b.data+b.hora) ? -1 : 1; });
@@ -5617,6 +5640,8 @@ function casaNoGalho(n){
 }
 montarFiltroAgenda();
 $('fAgendaQuem').onchange=renderAgendaCompleta;
+/* trocar a modalidade não pede rede: os dados do período já estão na mão */
+$('fAgendaTipo').onchange=renderAgendaCompleta;
 $('btnCompartilharAgenda').onclick=function(){
   var t=textoAgenda();
   $('zapText').value=t; $('modalZap').classList.add('show');
@@ -6378,7 +6403,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v48.1';
+var VERSAO_APP='v48.2';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
