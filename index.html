@@ -1245,6 +1245,24 @@ html[data-fonte="grande"] .btn{font-size:15.5px}
     <div id="wrapTipoSel" class="hidden">
       <select id="fTipoSel"></select>
     </div>
+    <!-- só quando o tipo é Treinamento: qual treinamento e em que formato -->
+    <div id="wrapTreino" class="hidden">
+      <div class="grid2">
+        <div><label>Tipo de treinamento</label>
+          <select id="fTreinoTipo">
+            <option>Treinamento Interno</option>
+            <option>Treinamento de Fornecedores</option>
+            <option>Treinamento Terceirizado</option>
+          </select>
+        </div>
+        <div><label>Formato</label>
+          <select id="fTreinoFormato">
+            <option>Presencial</option>
+            <option>On-line</option>
+          </select>
+        </div>
+      </div>
+    </div>
     <div class="models" id="models"></div>
 
     <h3 id="hCond">2. Como você quer conduzir?</h3>
@@ -2046,6 +2064,14 @@ var TPL = {
   {t:'Expectativa e plano',min:10,q:'O que muda a partir de segunda?',tipo:'acoes',guia:['Deixar claro o padrão esperado, em comportamento','Perguntar do que a pessoa precisa de você','Combinar 1 ou 2 mudanças, não uma lista']},
   {t:'Fechamento',min:5,q:'Ela sai sabendo onde está e para onde vai.',tipo:'fecho',guia:['Pedir que ela resuma o combinado com as palavras dela','Marcar a data da próxima conversa']}
  ]},
+ acolhimento:{icone:'star',nome:'Acolhimento',desc:'Integração de quem chega: história, combinados e primeiros passos.',blocos:[
+  {t:'Boas-vindas e apresentação',min:5,q:'A pessoa precisa sair daqui sentindo que era esperada.',guia:['Preparar a chegada ANTES: acesso, uniforme, lugar dela pronto','Apresentar a pessoa ao time pelo nome, não "o novato"','Contar em 2 minutos por que ela foi escolhida']},
+  {t:'História, valores e jeito Só Tintas',min:10,q:'Cultura se conta com história, não com cartaz.',guia:['Contar um caso real de cada valor na prática','Explicar o "Colorindo vidas e realizando sonhos" com um exemplo de cliente','Dizer com clareza o que a empresa NÃO tolera']},
+  {t:'O papel e o combinado',min:15,q:'Expectativa clara evita a primeira frustração.',guia:['Descrever a função e a rotina da primeira semana','Apresentar as metas e como o bônus funciona','Combinar horários, folgas e canais de comunicação']},
+  {t:'Dúvidas e expectativas da pessoa',min:10,q:'Agora é ela quem fala.',guia:['Perguntar o que ela espera dos primeiros 30 dias','Perguntar como ela prefere receber feedback','Anotar as dúvidas sem resposta para dar retorno com data']},
+  {t:'Próximos passos',min:5,q:'Acolhimento sem plano vira só um café.',tipo:'acoes',guia:['Definir padrinho/madrinha da primeira semana','Marcar a conversa de 30 dias','Agendar o treinamento inicial com data']},
+  {t:'Fechamento',min:5,q:'',tipo:'fecho',guia:['Reforçar que a porta está aberta','Pedir que ela resuma o combinado']}
+ ]},
  treinamento:{icone:'compass',nome:'Treinamento',desc:'Capacitação de produto, sistema ou técnica de venda.',blocos:[
   {t:'Abertura e objetivo de aprendizagem',min:5,q:'O que a pessoa vai saber FAZER ao final?',guia:['Declarar a habilidade que será treinada','Conectar com um problema real da loja','Levantar o nível atual do grupo']},
   {t:'Conteúdo',min:20,q:'Ensinar menos, fixar mais.',guia:['Explicar o conceito com exemplo da rotina da loja','Mostrar o certo e o errado lado a lado','Checar entendimento a cada bloco']},
@@ -2060,6 +2086,20 @@ var TPL = {
   {t:'Ofensores e causas',min:20,q:'É problema de processo, de pessoa ou de estoque?',guia:['Cada supervisor traz a causa raiz da própria loja','Buscar padrão comum entre as lojas','Separar o que depende da matriz do que é local']},
   {t:'Decisões por loja',min:20,q:'',tipo:'acoes',guia:['Uma ação principal por loja','Nomear o responsável direto (não "a loja")','Prazo dentro do mês corrente']},
   {t:'Fechamento',min:5,q:'',tipo:'fecho',guia:['Resumir decisões','Confirmar data do próximo encontro']}
+ ]},
+ diretoria:{icone:'target',nome:'Reunião com Diretoria',desc:'Prestação de contas e decisões com a direção da empresa.',blocos:[
+  {t:'Abertura e pauta',min:5,q:'Tempo de diretoria é caro: pauta enxuta.',guia:['Validar a pauta e o tempo de cada ponto','Dizer logo QUAL decisão precisa sair desta reunião']},
+  {t:'Números e resultados',min:15,q:'Número primeiro, narrativa depois.',guia:['Resultado x meta consolidado da rede','Destaques e ofensores do período','O que já está sendo feito sobre cada ofensor']},
+  {t:'Propostas e necessidades',min:15,q:'Pedido claro: o quê, quanto custa, para quando.',guia:['Apresentar cada proposta com custo e retorno esperado','Dizer o que trava sem essa decisão','Antecipar as objeções prováveis com resposta pronta']},
+  {t:'Decisões da diretoria',min:10,q:'Sem decisão registrada, a reunião não aconteceu.',tipo:'acoes',guia:['Registrar o que foi aprovado, negado ou adiado','Encaminhamento com dono e prazo','Adiado ganha DATA de retorno, não "depois vemos"']},
+  {t:'Fechamento',min:5,q:'',tipo:'fecho',guia:['Recapitular as decisões em voz alta','Combinar quando e como será o retorno']}
+ ]},
+ liderancas:{icone:'share',nome:'Alinhamento com outras Lideranças',desc:'Comercial, RH, compras, logística, marketing — combinados entre áreas.',blocos:[
+  {t:'Abertura',min:5,q:'O objetivo comum em uma frase.',guia:['Ler o objetivo que une as áreas nesta conversa','Combinar o tempo de fala de cada área']},
+  {t:'Contexto de cada área',min:15,q:'Cada área fala; nenhuma julga ainda.',guia:['Cada líder traz o que impacta as demais áreas','Registrar as dependências: quem espera o quê de quem']},
+  {t:'Pontos de fricção',min:15,q:'Atrito não resolvido vira retrabalho.',guia:['Nomear onde um processo trava o outro','Buscar a causa do atrito, não o culpado','Separar o que se resolve aqui do que sobe para a diretoria']},
+  {t:'Combinados entre áreas',min:10,q:'Um combinado por fricção, com dono dos dois lados.',tipo:'acoes',guia:['Cada combinado com um responsável de CADA área','Prazo e forma de checagem definidos juntos']},
+  {t:'Fechamento',min:5,q:'',tipo:'fecho',guia:['Resumir os combinados','Marcar o próximo alinhamento antes de sair']}
  ]}
 };
 
@@ -2191,7 +2231,10 @@ function renderModels(){
        '<div class="mt">'+t.blocos.length+' blocos · '+tot+' min</div></button>';
   });
   $('models').innerHTML=h;
-  Array.prototype.forEach.call(document.querySelectorAll('.model'),function(b){
+  /* SÓ os cards de dentro de #models: pegar todos os .model da página
+     sequestrava o clique dos cards da escolha do Agendar (data-agtipo),
+     e o card Treinamento morria na segunda visita */
+  Array.prototype.forEach.call(document.querySelectorAll('#models .model'),function(b){
     b.onclick=function(){sel=b.dataset.k;renderModels();renderAgenda();};
   });
 }
@@ -2374,7 +2417,7 @@ function setModo(m){
   $('modosCond').classList.toggle('hidden', agendando);
   $('wrapTitulo').classList.toggle('hidden', agendando);
   $('tabParts').classList.toggle('semPresenca', agendando);
-  $('hTipo').textContent  = agendando ? '1. Tipo da reunião' : '1. Que tipo de reunião é essa?';
+  atualizarAreaTreino();
   $('hDados').textContent = agendando ? '2. Quando e onde' : '3. Dados da reunião';
   $('hObj').innerHTML     = (agendando ? '3.' : '4.') + ' Objetivo da reunião <span style="color:var(--red)">*</span>';
   $('labParts').textContent = agendando ? 'Quem convidar' : 'Participantes';
@@ -2424,11 +2467,24 @@ function montarTipoSel(){
 }
 function sincronizarTipoSel(){ if($('fTipoSel').value!==sel) $('fTipoSel').value=sel; }
 
+/* A área "Tipo de treinamento + Formato" só aparece quando o tipo escolhido
+   em Agendar é Treinamento — e o título da seção acompanha. */
+function atualizarAreaTreino(){
+  var agendando = (modo==='agendar');
+  var treino = agendando && sel==='treinamento';
+  if($('wrapTreino')) $('wrapTreino').classList.toggle('hidden', !treino);
+  $('hTipo').textContent = !agendando ? '1. Que tipo de reunião é essa?'
+    : (treino ? '1. Tipo de treinamento' : '1. Tipo da reunião');
+}
+
 /* Sem campo de título, o título vem do tipo + local. "Alinhamento — 07 Matriz"
-   diz mais numa lista de agenda que qualquer nome inventado na hora. */
+   diz mais numa lista de agenda que qualquer nome inventado na hora.
+   No treinamento, o título carrega o TIPO escolhido: "Treinamento Interno — Matriz". */
 function tituloAutomatico(){
   var loc=$('fLocal').value.trim();
-  $('fTitulo').value = TPL[sel].nome + (loc ? ' — ' + loc : '');
+  var base = (modo==='agendar' && sel==='treinamento' && $('fTreinoTipo'))
+    ? $('fTreinoTipo').value : TPL[sel].nome;
+  $('fTitulo').value = base + (loc ? ' — ' + loc : '');
   if(!$('fCondutor').value.trim()) $('fCondutor').value = GESTOR + ' – ' + (EQUIPE[GESTOR] ? EQUIPE[GESTOR].papel : '');
   checkStart();
 }
@@ -2497,9 +2553,15 @@ function agBox(cor,html){
 function appUrl(){ return location.href.split('?')[0].split('#')[0]; }
 function dadosAgendamento(){
   var t=TPL[sel];
+  /* o modelo do treinamento leva o tipo e o formato: é o que a Agenda, a
+     planilha e o filtro por modalidade vão mostrar — e todos continuam
+     contendo a palavra "Treinamento", que é o que o filtro procura */
+  var nomeModelo = (sel==='treinamento' && $('fTreinoTipo'))
+    ? $('fTreinoTipo').value+' · '+$('fTreinoFormato').value
+    : t.nome;
   return {
     tipo:'agendamento',
-    titulo:$('fTitulo').value.trim(), modelo:t.nome, tplKey:sel,
+    titulo:$('fTitulo').value.trim(), modelo:nomeModelo, tplKey:sel,
     data:$('fData').value, hora:$('fHora').value,
     duracao: minutosDe($('fDuracao').value) || t.blocos.reduce(function(a,b){return a+b.min;},0),
     lembrete: parseInt($('fLembrete').value,10) || 30,
@@ -5556,7 +5618,8 @@ Array.prototype.forEach.call(document.querySelectorAll('[data-agtipo]'),function
       agendarTipo='reuniao'; setModo('agendar');
       sel='treinamento'; sincronizarTipoSel(); renderModels(); renderAgenda();
       $('fDuracao').value=duracaoTxt(TPL[sel].blocos.reduce(function(a,b){return a+b.min;},0));
-      sincronizarFimComDuracao(); resumoGavetasAgenda(); tituloAutomatico();
+      sincronizarFimComDuracao(); resumoGavetasAgenda();
+      atualizarAreaTreino(); tituloAutomatico();
       return;
     }
     if(t==='checklist'){ agendarTipo='checklist'; setModo('agendar'); return; }
@@ -5802,6 +5865,14 @@ $('fTipoSel').onchange=function(){
   renderModels(); renderAgenda();
   $('fDuracao').value = duracaoTxt(TPL[sel].blocos.reduce(function(a,b){return a+b.min;},0));
   sincronizarFimComDuracao(); resumoGavetasAgenda();
+  atualizarAreaTreino();
+  tituloAutomatico();
+};
+$('fTreinoTipo').onchange=tituloAutomatico;
+$('fTreinoFormato').onchange=function(){
+  /* formato on-line sem local: sugere a plataforma no lugar da loja */
+  if($('fTreinoFormato').value==='On-line' && !$('fLocal').value.trim())
+    $('fLocal').placeholder='Google Meet / Zoom';
   tituloAutomatico();
 };
 $('fLocal').addEventListener('input', function(){ if(modo==='agendar') tituloAutomatico(); });
@@ -6403,7 +6474,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v48.2';
+var VERSAO_APP='v48.3';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
