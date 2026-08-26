@@ -4608,10 +4608,13 @@ $('btnRevisar').onclick=function(){
   var total=blocos.reduce(function(a,b){ return a+(b.notas||'').length; },0);
   if(total<80){ toast('Há pouco texto para revisar. Grave, transcreva ou digite mais antes.'); return; }
 
+  var porTopicos = S.modoCond==='corrido';
   $('btnRevisar').disabled=true;
-  boxStatus('info','Lendo a transcrição e reescrevendo… costuma levar de 10 a 30 segundos.');
+  boxStatus('info', porTopicos
+    ? 'A IA está organizando a transcrição nos <b>principais tópicos abordados</b>… 10 a 30 segundos.'
+    : 'Lendo a transcrição e reescrevendo… costuma levar de 10 a 30 segundos.');
   fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify({tipo:'revisarAta', blocos:blocos,
+    body:JSON.stringify({tipo:'revisarAta', blocos:blocos, porTopicos:porTopicos,
       objetivo:S.objetivo||'', participantes:S.part||''})})
     .then(function(r){ return r.json(); })
     .then(function(res){
@@ -4623,6 +4626,7 @@ $('btnRevisar').onclick=function(){
       }
       $('googleStatus').classList.add('hidden');
       REVISAO=res.revisao||{};
+      if(porTopicos) REVISAO.origem='topicos';
       mostrarRevisao();
     })
     .catch(function(){ $('btnRevisar').disabled=false; boxStatus('erro','Sem conexão para revisar.'); });
@@ -4632,7 +4636,8 @@ function mostrarRevisao(){
   var r=REVISAO, conf=(r.confianca||'media').toLowerCase();
   var rot={alta:'confiança alta',media:'confiança média',baixa:'confiança baixa'}[conf]||'confiança média';
   var doAudio = r.origem==='audio';
-  $('rvTitulo').textContent = doAudio ? 'Rascunho da ata — feito do áudio' : 'Ata revisada';
+  $('rvTitulo').textContent = doAudio ? 'Rascunho da ata — feito do áudio'
+    : (r.origem==='topicos' ? 'Ata organizada — principais tópicos abordados' : 'Ata revisada');
   $('rvTranscrever').classList.toggle('hidden', !(doAudio && AU_REF));
   if(doAudio && AU_REF){ $('rvTranscrever').innerHTML='Anexar a transcrição completa'; $('rvTranscrever').disabled=false; }
   $('rvSub').innerHTML=(doAudio
@@ -4696,9 +4701,21 @@ $('rvAplicar').onclick=function(){
   /* guarda o original: revisão de IA é sugestão, e desfazer precisa existir */
   if(!S.brutoOriginal) S.brutoOriginal=S.blocos.map(function(b){ return b.notas||''; });
 
-  (REVISAO.blocos||[]).forEach(function(b,i){
-    if(S.blocos[i] && b.texto) S.blocos[i].notas=b.texto;
-  });
+  if(REVISAO.origem==='topicos'){
+    /* modo corrido: os "blocos" devolvidos SÃO os tópicos criados pela IA.
+       Guardamos a lista (a ata renderiza cada um com título) e o bloco único
+       recebe o texto compilado — é ele que viaja para a planilha e o PDF. */
+    S.topicos=(REVISAO.blocos||[]).filter(function(b){ return (b.texto||'').trim(); });
+    if(S.topicos.length && S.blocos[0]){
+      S.blocos[0].notas=S.topicos.map(function(t){
+        return '■ '+(t.titulo||'Tópico')+'\n'+t.texto;
+      }).join('\n\n');
+    }
+  } else {
+    (REVISAO.blocos||[]).forEach(function(b,i){
+      if(S.blocos[i] && b.texto) S.blocos[i].notas=b.texto;
+    });
+  }
   (REVISAO.acoes||[]).forEach(function(a){
     if(!a.acao) return;
     var repetida=S.acoes.some(function(x){ return norml(x.a)===norml(a.acao); });
@@ -5054,19 +5071,29 @@ function gerarAta(){
     }
   }
 
-  h+='<h4>'+(S.modoCond==='corrido'?'Transcrição e anotações':'Registro por bloco')+'</h4>';
-  S.blocos.forEach(function(b,i){
-    if(b.tipo==='fecho') return;
-    if(b.tipo==='acoes' && !b.notas.trim()) return;
-    var txt=b.notas.trim();
-    if(S.modoCond!=='corrido'){
-      /* ata feita do áudio não teve bloco cronometrado: mostrar 00:00 de 15 min
-         seria informação falsa com cara de precisão */
-      h+='<p style="margin-top:12px"><b style="color:var(--navy)">'+(i+1)+'. '+esc(b.t)+'</b> '+
-         (S.porAudio?'':'<span style="color:var(--muted);font-size:12px">('+fmt(b.seg)+' de '+b.min+' min)</span>')+'</p>';
-    }
-    h+='<p contenteditable>'+(txt?esc(txt):'<span style="color:#b6bdcd">— sem registro —</span>')+'</p>';
-  });
+  /* no corrido com a IA já aplicada, a ata sai pelos PRINCIPAIS TÓPICOS
+     ABORDADOS — cada assunto com título próprio, em vez do paredão de texto */
+  if(S.modoCond==='corrido' && S.topicos && S.topicos.length){
+    h+='<h4>Principais tópicos abordados</h4>';
+    S.topicos.forEach(function(t,i){
+      h+='<p style="margin-top:12px"><b style="color:var(--navy)">'+(i+1)+'. '+esc(t.titulo||'Tópico')+'</b></p>'+
+         '<p contenteditable>'+esc(t.texto||'')+'</p>';
+    });
+  } else {
+    h+='<h4>'+(S.modoCond==='corrido'?'Transcrição e anotações':'Registro por bloco')+'</h4>';
+    S.blocos.forEach(function(b,i){
+      if(b.tipo==='fecho') return;
+      if(b.tipo==='acoes' && !b.notas.trim()) return;
+      var txt=b.notas.trim();
+      if(S.modoCond!=='corrido'){
+        /* ata feita do áudio não teve bloco cronometrado: mostrar 00:00 de 15 min
+           seria informação falsa com cara de precisão */
+        h+='<p style="margin-top:12px"><b style="color:var(--navy)">'+(i+1)+'. '+esc(b.t)+'</b> '+
+           (S.porAudio?'':'<span style="color:var(--muted);font-size:12px">('+fmt(b.seg)+' de '+b.min+' min)</span>')+'</p>';
+      }
+      h+='<p contenteditable>'+(txt?esc(txt):'<span style="color:#b6bdcd">— sem registro —</span>')+'</p>';
+    });
+  }
 
   h+='<h4>Decisões e próximos passos</h4>';
   if(acoes.length){
@@ -5118,8 +5145,22 @@ function gerarAta(){
   $('ataBox').innerHTML=h;
   $('viewRun').classList.add('hidden'); $('viewAta').classList.remove('hidden');
   configGoogle();
+  /* o botão diz o que vai fazer: no corrido ele organiza por tópicos */
+  $('btnRevisar').innerHTML=ICO('bulb')+(S.modoCond==='corrido'
+    ? ' Organizar em tópicos (IA)' : ' Revisar a transcrição');
   S.fase='ata'; salvarLocal();
   window.scrollTo(0,0);
+
+  /* O PEDIDO DO BRUNO: houve transcrição no modo corrido? A IA já parte
+     sozinha para organizar a ata pelos principais tópicos — uma vez só,
+     e sempre passando pela tela de conferência antes de aplicar. */
+  if(S.modoCond==='corrido' && !S.topicos && !S.iaTopicosAuto && ENVIO_URL){
+    var bruto=(S.blocos[0]&&S.blocos[0].notas||'').trim();
+    if(bruto.length>=200){
+      S.iaTopicosAuto=true; salvarLocal();
+      setTimeout(function(){ $('btnRevisar').onclick(); }, 400);
+    }
+  }
 }
 
 /* ============ ENVIO PARA O GOOGLE ============ */
@@ -6492,7 +6533,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v48.4';
+var VERSAO_APP='v49';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
