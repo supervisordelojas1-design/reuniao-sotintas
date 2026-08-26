@@ -1482,6 +1482,7 @@ html[data-fonte="grande"] .btn{font-size:15.5px}
       <button class="btn btn-primary" id="btnPdf"><svg class="ic" aria-hidden="true"><use href="#i-file"/></svg> Salvar em PDF</button>
       <button class="btn btn-navy" id="btnGoogle"><svg class="ic" aria-hidden="true"><use href="#i-cloud-up"/></svg> Enviar para o Google</button>
       <button class="btn btn-navy" id="btnZap"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg> Copiar para WhatsApp</button>
+      <button class="btn btn-navy" id="btnPdfZap"><svg class="ic" aria-hidden="true"><use href="#i-file"/></svg> Ata em PDF no WhatsApp</button>
       <button class="btn btn-navy" id="btnMail"><svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg> Enviar por e-mail</button>
       <button class="btn btn-ghost" id="btnJson"><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg> Baixar backup (.json)</button>
       <button class="btn btn-ghost" id="btnBack"><svg class="ic" aria-hidden="true"><use href="#i-arrow-left"/></svg> Voltar e ajustar</button>
@@ -5223,29 +5224,64 @@ function payloadGoogle(){
     ataHtml:'<html><head><meta charset="utf-8"><style>'+css+'</style></head><body>'+$('ataBox').innerHTML+'</body></html>'
   };
 }
+/* ============ ATA EM PDF DIRETO NO WHATSAPP ============
+   Um toque: o app ENVIA a ata (planilha + PDF no Drive + e-mails — a regra
+   de ouro continua valendo) e abre o WhatsApp com o link do PDF pronto para
+   escolher o grupo. Se a ata já foi enviada, só abre o WhatsApp. */
+var ZAP_APOS=false;
+function textoAtaZap(url){
+  var L=cabecalhoMsg();
+  L.push('*Ata de reunião — '+(S.titulo||'')+'*');
+  L.push('📅 '+dataBr(S.data)+(S.hora?' às '+S.hora:''));
+  if(S.objetivo) L.push('🎯 '+S.objetivo);
+  if(S.status) L.push('✅ Objetivo atingido: '+S.status);
+  L.push('');
+  L.push('📎 Ata completa em PDF: '+url);
+  return L.join('\n');
+}
+function linkZapAta(){ return 'https://wa.me/?text='+encodeURIComponent(textoAtaZap(S.pdfUrl)); }
+$('btnPdfZap').onclick=function(){
+  if(S.enviado && S.pdfUrl){ window.open(linkZapAta(),'_blank'); return; }
+  if(!ENVIO_URL){ configGoogle(); return; }
+  ZAP_APOS=true;
+  enviarGoogle();
+};
+
 function enviarGoogle(){
   if(!ENVIO_URL){ configGoogle(); return; }
   $('btnGoogle').disabled=true;
-  boxStatus('info','⏳ Enviando para a planilha, o Drive e a Agenda…');
+  boxStatus('info', ZAP_APOS
+    ? '⏳ Registrando a ata e gerando o PDF… o WhatsApp abre em seguida com o link.'
+    : '⏳ Enviando para a planilha, o Drive e a Agenda…');
   /* text/plain evita o preflight de CORS que o Apps Script não responde */
   fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payloadGoogle())})
     .then(function(r){ return r.json(); })
     .then(function(res){
       if(res && res.ok){
         S.enviado=true; dirty=false; limparLocal();
+        if(res.pdfUrl && String(res.pdfUrl).indexOf('http')===0) S.pdfUrl=res.pdfUrl;
         var l='✅ <b>Enviado.</b> '+res.linhasAcoes+' ação(ões) na planilha.';
-        if(res.pdfUrl) l+=' <a href="'+res.pdfUrl+'" target="_blank" rel="noopener noreferrer">Abrir a ata no Drive</a>.';
+        if(S.pdfUrl) l+=' <a href="'+S.pdfUrl+'" target="_blank" rel="noopener noreferrer">Abrir a ata no Drive</a>'+
+                       ' · <a href="'+linkZapAta()+'" target="_blank" rel="noopener noreferrer"><b>Mandar no WhatsApp</b></a>.';
         if(res.eventoCriado) l+=' Follow-up criado na Agenda.';
         if(res.agendamentoBaixado) l+=' Agendamento marcado como realizado.';
         boxStatus('ok',l);
         if(res.resumo) mostrarResumo(res.resumo);
         $('btnGoogle').textContent='☁ Enviado ao Google';
+        if(ZAP_APOS){
+          ZAP_APOS=false;
+          if(S.pdfUrl) window.open(linkZapAta(),'_blank');
+          /* se o navegador segurar o pop-up, o link "Mandar no WhatsApp"
+             acima fica na caixa verde como segunda porta */
+        }
       } else {
+        ZAP_APOS=false;
         boxStatus('erro','⚠ O Google respondeu com erro: '+esc((res&&res.erro)||'desconhecido')+'. A ata não se perdeu — use "Baixar backup (.json)" e tente de novo.');
         $('btnGoogle').disabled=false;
       }
     })
     .catch(function(){
+      ZAP_APOS=false;
       boxStatus('erro','⚠ <b>Não consegui falar com o Google.</b> Confira a URL do Apps Script e se a implantação está como "Qualquer pessoa". Enquanto isso, salve o PDF e o backup (.json) para não perder a ata.');
       $('btnGoogle').disabled=false;
     });
