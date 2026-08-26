@@ -1044,7 +1044,12 @@ html[data-fonte="grande"] .btn{font-size:15.5px}
         <button class="model" data-agtipo="tarefa">
           <div class="mi"><svg class="ic" aria-hidden="true"><use href="#i-check-square"/></svg></div>
           <div class="mn">Tarefa extra</div>
-          <div class="md">Tudo que não é visita: relatório, campanha, treinamento, reunião externa.</div>
+          <div class="md">Tudo que não é visita: relatório, campanha, reunião externa.</div>
+        </button>
+        <button class="model" data-agtipo="treinamento">
+          <div class="mi"><svg class="ic" aria-hidden="true"><use href="#i-compass"/></svg></div>
+          <div class="mn">Treinamento</div>
+          <div class="md">Capacitação de produto, sistema ou técnica de venda — já entra com o roteiro de treinamento (abertura, conteúdo, prática).</div>
         </button>
         <button class="model" data-agtipo="checklist">
           <div class="mi"><svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg></div>
@@ -1258,8 +1263,9 @@ html[data-fonte="grande"] .btn{font-size:15.5px}
     </div>
     <details class="gaveta hidden" id="wrapDuracao">
       <summary><svg class="ic" aria-hidden="true"><use href="#i-timer"/></svg> <span>Duração e lembrete</span> <span class="gvc" id="durResumo"></span></summary>
-      <div class="grid2" style="padding:0 var(--s3) var(--s3)">
-        <div><label>Duração prevista (minutos)</label><input type="text" id="fDuracao" placeholder="55"></div>
+      <div class="grid3" style="padding:0 var(--s3) var(--s3)">
+        <div><label>Hora de término <span style="font-weight:normal;text-transform:none">(opcional)</span></label><input type="time" id="fHoraFim"></div>
+        <div><label>Duração prevista</label><input type="text" id="fDuracao" placeholder="Ex.: 55 min ou 8 horas"></div>
         <div><label>Lembrete antes</label>
           <select id="fLembrete">
             <option value="15">15 minutos antes</option>
@@ -2388,7 +2394,7 @@ function setModo(m){
   $('labEmails').innerHTML = m==='agendar'
     ? 'E-mails dos convidados <span style="text-transform:none;font-weight:normal">(recebem o convite da Agenda e depois a ata)</span>'
     : 'E-mails para envio da ata <span style="text-transform:none;font-weight:normal">(opcional, separados por vírgula)</span>';
-  if(m==='agendar' && !$('fDuracao').value) $('fDuracao').value = TPL[sel].blocos.reduce(function(a,b){return a+b.min;},0);
+  if(m==='agendar' && !$('fDuracao').value) $('fDuracao').value = duracaoTxt(TPL[sel].blocos.reduce(function(a,b){return a+b.min;},0));
   $('agStatus').classList.add('hidden');
   if(typeof resumoGavetasAgenda==='function') resumoGavetasAgenda();
   renderConvites();
@@ -2418,10 +2424,51 @@ function tituloAutomatico(){
 }
 
 
+/* =================== DURAÇÃO QUE FALA A SUA LÍNGUA ===================
+   O Bruno digitou "8 horas" e a etiqueta mostrou "8 horas min". O campo
+   agora entende o que for digitado — "55", "55 min", "8 horas", "1h30",
+   "1:30" — e devolve na mesma moeda: hora quando é hora, minuto quando
+   é minuto. Por dentro continua tudo em minutos, que é o que a Agenda
+   Google e a planilha esperam. */
+function minutosDe(txt){
+  var t=String(txt||'').trim().toLowerCase().replace(',','.');
+  if(!t) return 0;
+  var m=t.match(/^(\d+(?:\.\d+)?)\s*h(?:oras?|rs?|s)?\.?\s*(?:e\s*)?(\d+)?\s*(?:min(?:utos?)?)?\.?$/);
+  if(m) return Math.round(parseFloat(m[1])*60+(parseInt(m[2],10)||0));
+  m=t.match(/^(\d{1,2})[:h](\d{2})$/);
+  if(m) return parseInt(m[1],10)*60+parseInt(m[2],10);
+  m=t.match(/^(\d+(?:\.\d+)?)\s*(?:min(?:utos?)?\.?)?$/);
+  if(m) return Math.round(parseFloat(m[1]));
+  return parseInt(t,10)||0;
+}
+function duracaoTxt(min){
+  min=Math.round(min||0);
+  if(min<=0) return '';
+  if(min<60) return min+' min';
+  var h=Math.floor(min/60), r=min%60;
+  if(!r) return h+(h===1?' hora':' horas');
+  return h+'h'+(r<10?'0':'')+r;
+}
+function somaHora(hhmm,min){
+  var p=hhmm.split(':'), t=(+p[0])*60+(+p[1])+min;
+  t=((t%1440)+1440)%1440;
+  return ('0'+Math.floor(t/60)).slice(-2)+':'+('0'+(t%60)).slice(-2);
+}
+function difMin(ini,fim){
+  var a=ini.split(':'), b=fim.split(':');
+  var d=((+b[0])*60+(+b[1]))-((+a[0])*60+(+a[1]));
+  if(d<=0) d+=1440;                 /* terminou "antes" de começar = virou o dia */
+  return d;
+}
+function sincronizarFimComDuracao(){
+  var m=minutosDe($('fDuracao').value);
+  if(m>0 && $('fHora').value) $('fHoraFim').value=somaHora($('fHora').value,m);
+}
+
 /* etiqueta das gavetas de Agendar: gaveta fechada precisa dizer o que guarda */
 function resumoGavetasAgenda(){
   var d=$('durResumo');
-  if(d) d.textContent = ($('fDuracao').value||'—')+' min · aviso '+
+  if(d) d.textContent = (duracaoTxt(minutosDe($('fDuracao').value))||'—')+' · aviso '+
     ({'15':'15 min','30':'30 min','60':'1 h','1440':'1 dia'}[$('fLembrete').value]||'')+' antes';
   var p=$('partsResumo');
   if(p){
@@ -2444,7 +2491,7 @@ function dadosAgendamento(){
     tipo:'agendamento',
     titulo:$('fTitulo').value.trim(), modelo:t.nome, tplKey:sel,
     data:$('fData').value, hora:$('fHora').value,
-    duracao: parseInt($('fDuracao').value,10) || t.blocos.reduce(function(a,b){return a+b.min;},0),
+    duracao: minutosDe($('fDuracao').value) || t.blocos.reduce(function(a,b){return a+b.min;},0),
     lembrete: parseInt($('fLembrete').value,10) || 30,
     local:$('fLocal').value.trim(), condutor:$('fCondutor').value.trim(),
     /* dono da reunião: é o que faz a agenda de cada um ser a dele */
@@ -2464,7 +2511,7 @@ function textoConvite(nome){
   L.push('');
   if(nome) { L.push('Oi, '+nome+'!'); L.push(''); }
   L.push('📌 *'+(d.titulo||'Reunião')+'*');
-  L.push('📅 '+dataBr(d.data)+' às '+d.hora+' ('+d.duracao+' min)');
+  L.push('📅 '+dataBr(d.data)+' às '+d.hora+' ('+(duracaoTxt(d.duracao)||d.duracao+' min')+')');
   if(d.condutor) L.push('👤 '+d.condutor);
   L.push('🎯 *Objetivo:* '+d.objetivo);
   if(d.local){
@@ -5480,6 +5527,15 @@ Array.prototype.forEach.call(document.querySelectorAll('[data-agtipo]'),function
   b.onclick=function(){
     var t=b.dataset.agtipo;
     if(t==='reuniao'){ agendarTipo='reuniao'; setModo('agendar'); return; }
+    if(t==='treinamento'){
+      /* é uma reunião com o roteiro de treinamento já escolhido — um toque
+         a menos do que entrar em Reunião e trocar o tipo no select */
+      agendarTipo='reuniao'; setModo('agendar');
+      sel='treinamento'; sincronizarTipoSel(); renderModels(); renderAgenda();
+      $('fDuracao').value=duracaoTxt(TPL[sel].blocos.reduce(function(a,b){return a+b.min;},0));
+      sincronizarFimComDuracao(); resumoGavetasAgenda(); tituloAutomatico();
+      return;
+    }
     if(t==='checklist'){ agendarTipo='checklist'; setModo('agendar'); return; }
     if(t==='contatos'){ agendarTipo='contatos'; setModo('agendar'); carregarContatos(); return; }
     abrirNovaVisita(t==='tarefa'?'Tarefa':'Visita');
@@ -5719,11 +5775,27 @@ montarTipoSel();
 $('fTipoSel').onchange=function(){
   sel=$('fTipoSel').value;
   renderModels(); renderAgenda();
-  $('fDuracao').value = TPL[sel].blocos.reduce(function(a,b){return a+b.min;},0);
+  $('fDuracao').value = duracaoTxt(TPL[sel].blocos.reduce(function(a,b){return a+b.min;},0));
+  sincronizarFimComDuracao(); resumoGavetasAgenda();
   tituloAutomatico();
 };
 $('fLocal').addEventListener('input', function(){ if(modo==='agendar') tituloAutomatico(); });
-$('fDuracao').addEventListener('input', resumoGavetasAgenda);
+/* início + duração + término andam juntos: quem foi mexido por último manda */
+$('fDuracao').addEventListener('input', function(){
+  var m=minutosDe($('fDuracao').value);
+  if(m>0 && $('fHora').value) $('fHoraFim').value=somaHora($('fHora').value,m);
+  resumoGavetasAgenda();
+});
+$('fHoraFim').addEventListener('change', function(){
+  if($('fHoraFim').value && $('fHora').value)
+    $('fDuracao').value=duracaoTxt(difMin($('fHora').value,$('fHoraFim').value));
+  resumoGavetasAgenda();
+});
+$('fHora').addEventListener('change', function(){
+  /* mudou o início: a duração fica, o término acompanha */
+  sincronizarFimComDuracao();
+  resumoGavetasAgenda();
+});
 $('fLembrete').addEventListener('change', resumoGavetasAgenda);
 
 $('btnConviteZap').onclick=function(){
@@ -6306,7 +6378,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v48';
+var VERSAO_APP='v48.1';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
