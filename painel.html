@@ -296,10 +296,10 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
 <div id="pnlUp" class="pup">
  <div class="pupbox">
   <h3>Atualizar dados do painel</h3>
-  <p>Solte aqui META, INDICADORES e as carteiras (Evolução por Cliente) — em qualquer ordem, eu separo sozinho.</p>
+  <p>Solte aqui META, INDICADORES, as carteiras e até o mapa de lojas (.txt) — em qualquer ordem, o servidor separa sozinho.</p>
   <div class="pupdrop" id="pupDrop" onclick="document.getElementById('pupFile').click()">
    📂 Clique e selecione os arquivos .xlsx<br><small>pode selecionar todos de uma vez</small></div>
-  <input type="file" id="pupFile" multiple accept=".xlsx,.xls" style="display:none">
+  <input type="file" id="pupFile" multiple accept=".xlsx,.xls,.txt,.tsv,.csv" style="display:none">
   <div class="pupstat" id="pupStat"></div>
   <div class="btns" style="margin-top:14px">
    <button class="b pri" id="pupGo" onclick="enviarUpload()" disabled>Processar e atualizar</button>
@@ -312,7 +312,7 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
   <div class="plogo">ST</div>
   <h2>Painel de Coordenação</h2>
   <p>Entre com o mesmo nome e PIN do Assistente ST</p>
-  <div style="font-size:10px;color:#8fa0b8;margin:-10px 0 12px;font-weight:700">versão 25</div>
+  <div style="font-size:10px;color:#8fa0b8;margin:-10px 0 12px;font-weight:700">versão 26</div>
   <input id="plNome" placeholder="Seu nome" autocomplete="username">
   <input id="plPin" placeholder="PIN" type="password" inputmode="numeric" maxlength="6" autocomplete="current-password">
   <button id="plBtn" onclick="fazerLogin()">Entrar</button>
@@ -324,7 +324,7 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
   <div class="hdtop">
    <div class="brand">
     <div class="logo">ST</div>
-    <div><h1 id="hTit">Coordenação de Supervisão</h1><span id="hSub">Só Tintas · Painel de Performance · <b style="color:#FFD100">v25</b></span></div>
+    <div><h1 id="hTit">Coordenação de Supervisão</h1><span id="hSub">Só Tintas · Painel de Performance · <b style="color:#FFD100">v26</b></span></div>
    </div>
    <div class="per"><b id="hPer">—</b><span id="hDias">—</span><span id="btnUp" style="display:none" onclick="abrirUpload()"> · ⚙️ atualizar dados</span><span id="lnkSair" style="display:none" onclick="sairPainel()"> · sair</span></div>
   </div>
@@ -1378,54 +1378,30 @@ function iniciarSeguro(dados,lock){
  catch(e){ mostrarErro('ERRO AO MONTAR O PAINEL:\n'+e.message+'\n'+(e.stack||'').split('\n')[1]);
   var lg=document.getElementById('pnlLogin'); if(lg) lg.classList.remove('hidden'); }
 }
-var UPK={meta:null,ind:null,carteiras:[]};
-function carregaXLSX(cb){
- if(window.XLSX) return cb();
- var s=document.createElement('script');
- s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
- s.onload=cb; s.onerror=function(){document.getElementById('pupStat').textContent='Não carreguei o leitor de planilhas. Verifique a internet.'};
- document.head.appendChild(s);
-}
+var UPK=[];
 function abrirUpload(){
- UPK={meta:null,ind:null,carteiras:[]};
+ UPK=[];
  document.getElementById('pupStat').textContent='';
  document.getElementById('pupGo').disabled=true;
  document.getElementById('pnlUp').classList.add('on');
- carregaXLSX(function(){});
-}
-function classifica(aoa){
- var h0=(aoa[0]||[]).map(function(x){return String(x||'').trim()});
- if(h0[0]==='Mês') return 'carteira';
- if(h0[1]==='Vendedor') return 'ind';
- if(h0[0]==='Filial') return 'meta';
- return null;
 }
 function lerArquivos(files){
- var st=document.getElementById('pupStat'); st.textContent='Lendo...';
- carregaXLSX(function(){
-  var resta=files.length;
-  Array.prototype.forEach.call(files,function(f){
-   var fr=new FileReader();
-   fr.onload=function(ev){
-    try{
-     var wb=XLSX.read(ev.target.result,{type:'array'});
-     var aoa=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true,defval:''});
-     aoa=aoa.map(function(r){return r.map(function(c){return c==null?'':c})});
-     var tp=classifica(aoa);
-     if(tp==='meta') UPK.meta=aoa;
-     else if(tp==='ind') UPK.ind=aoa;
-     else if(tp==='carteira') UPK.carteiras.push(aoa);
-     else st.textContent+='\n⚠️ '+f.name+': formato não reconhecido';
-    }catch(e){ st.textContent+='\n⚠️ '+f.name+': '+e.message; }
-    if(--resta===0){
-     st.textContent='Prontos para enviar:'+(UPK.meta?'\n✓ META':'')+(UPK.ind?'\n✓ INDICADORES':'')+
-      (UPK.carteiras.length?'\n✓ Carteira: '+UPK.carteiras.length+' lojas':'')+
-      '\n\nClique em Processar e atualizar.';
-     document.getElementById('pupGo').disabled=!(UPK.meta||UPK.ind||UPK.carteiras.length);
-    }
-   };
-   fr.readAsArrayBuffer(f);
-  });
+ var st=document.getElementById('pupStat'); st.textContent='Empacotando '+files.length+' arquivo(s)...';
+ var resta=files.length;
+ Array.prototype.forEach.call(files,function(f){
+  var fr=new FileReader();
+  fr.onload=function(ev){
+   try{ UPK.push({nome:f.name,b64:String(ev.target.result).split(',')[1]||''}); }
+   catch(e){ st.textContent+='\n⚠️ '+f.name+': '+e.message; }
+   if(--resta===0){
+    var kb=UPK.reduce(function(a,x){return a+x.b64.length*0.75},0)/1024;
+    st.textContent='✓ '+UPK.length+' arquivo(s) prontos ('+kb.toFixed(0)+' KB).\n'+
+     'O servidor identifica cada um sozinho (META, INDICADORES, carteiras e mapa .txt).\n\n'+
+     'Clique em Processar e atualizar.';
+    document.getElementById('pupGo').disabled=!UPK.length;
+   }
+  };
+  fr.readAsDataURL(f);
  });
 }
 function enviarUpload(){
@@ -1441,9 +1417,9 @@ function enviarUpload(){
  if(typeof google!=='undefined'&&google.script&&google.script.run){
   google.script.run.withSuccessHandler(fim)
    .withFailureHandler(function(e){st.textContent='✕ Servidor: '+e.message;bt.disabled=false})
-   .uploadEProcessar(s.u,s.p,UPK);
+   .upload64(s.u,s.p,UPK);
  }else{
-  postAPI({tipo:'upload',u:s.u,p:s.p,pacote:UPK},fim,
+  postAPI({tipo:'upload64',u:s.u,p:s.p,arquivos:UPK},fim,
    function(m){st.textContent='✕ '+m;bt.disabled=false});
  }
 }
