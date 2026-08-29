@@ -1436,6 +1436,15 @@ function pedirDados(u,p,cb,errCb){
    .catch(function(){errCb('Sem conexão com o servidor.')});
  }
 }
+/* link individual: painel.html?u=RAMON abre com o nome pronto, so falta o PIN */
+(function(){try{
+ var q=new URLSearchParams(location.search), un=(q.get('u')||q.get('nome')||'').trim();
+ if(!un) return;
+ function pf(){var c=document.getElementById('plNome'); if(!c) return;
+  c.value=un; c.setAttribute('readonly','readonly'); c.style.opacity='.75';
+  var pin=document.getElementById('plPin'); if(pin) setTimeout(function(){pin.focus()},250);}
+ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',pf); else pf();
+}catch(e){}})();
 function fazerLogin(){
  var u=document.getElementById('plNome').value.trim();
  var p=document.getElementById('plPin').value.trim();
