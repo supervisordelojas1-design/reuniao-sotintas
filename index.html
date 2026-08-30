@@ -2628,6 +2628,13 @@ function agendar(){
 
 /* ============ PRÓXIMAS REUNIÕES ============ */
 var PROX=[];
+/* AS REUNIÕES DA JANELA DA AGENDA, separadas das "próximas".
+   Antes as duas moravam em PROX: a busca com período (?acao=agendamentos&de&ate)
+   e a busca das próximas (?acao=proximas, que NÃO tem período) escreviam na
+   mesma variável, e quem respondesse por último mandava na tela. Com o
+   "Hoje" selecionado aparecia treinamento de setembro, porque a resposta sem
+   período chegava depois e reescrevia a lista. Cada uma na sua caixa. */
+var AG_REUN=null;
 function carregarProximas(){
   if(!ENVIO_URL) return;
   /* a agenda é de quem entrou: coordenador vê tudo, os outros veem o que
@@ -2680,7 +2687,7 @@ function renderAgendaCompleta(){
 
   var quem=$('fAgendaQuem').value||'';
   var itens=[];
-  PROX.forEach(function(a){
+  (AG_REUN || PROX).forEach(function(a){
     /* leva os campos que a edição precisa: sem eles o modal abriria vazio */
     itens.push({k:'reuniao', data:a.data, hora:a.hora||'', titulo:a.titulo, modelo:a.modelo||'',
       sub:(a.modelo||'')+(a.duracao?' · '+(duracaoTxt(a.duracao)||a.duracao+' min'):'')+(a.local?' · '+a.local:''),
@@ -2700,6 +2707,16 @@ function renderAgendaCompleta(){
       sub:(e.diaTodo?'dia todo':(e.hora+(e.fim?' às '+e.fim:'')))+
           (e.local?' · '+e.local:'')+(e.convidados?' · '+e.convidados+' convidado(s)':''),
       extra:'', linha:'', gid:e.id});
+  });
+  /* A JANELA DA TELA É A LEI. Toda resposta que chega — reunião, visita,
+     Agenda Google — pode ter sido pedida para outro período (a pessoa trocou
+     de "Hoje" para "Mês" enquanto a anterior voltava) ou vir sem período
+     nenhum. Filtrar aqui é o que garante que o que está escrito na pílula é
+     o que está na lista. */
+  var jn=janelaAgenda();
+  itens=itens.filter(function(a){
+    if(!a.data) return true;
+    return a.data>=jn.de && a.data<=jn.ate;
   });
   if(quem) itens=itens.filter(function(a){ return a.k==='reuniao' || a.k==='google' || a.pessoa===quem; });
   /* filtro por modalidade: reunião, treinamento (reunião com o roteiro de
@@ -2914,7 +2931,7 @@ function carregarAgendaUnificada(){
 
   Promise.all(pedidos).then(function(res){
     VISITAS = (res[0] && res[0].itens) || [];
-    if(res[1] && res[1].ok) PROX = res[1].itens || PROX;
+    if(res[1] && res[1].ok) AG_REUN = res[1].itens || [];
     GCAL = (res[2] && res[2].itens) || [];
     renderAgendaCompleta();
     carregarClima();               /* chega depois e redesenha: a agenda não espera o tempo */
@@ -2922,7 +2939,12 @@ function carregarAgendaUnificada(){
   });
 }
 function acharPorLinha(l){
-  for(var i=0;i<PROX.length;i++){ if(String(PROX[i].linha)===String(l)) return PROX[i]; }
+  /* a reunião pode estar na lista da agenda (janela) ou na das próximas:
+     quem edita a partir da agenda precisa achar nas duas */
+  var fontes=[AG_REUN||[], PROX];
+  for(var f=0;f<fontes.length;f++)
+    for(var i=0;i<fontes[f].length;i++)
+      if(String(fontes[f][i].linha)===String(l)) return fontes[f][i];
   return null;
 }
 /* Os botões destas listas são ligados por DELEGAÇÃO (ver o final do arquivo).
@@ -6571,7 +6593,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v49.5';
+var VERSAO_APP='v49.6';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
