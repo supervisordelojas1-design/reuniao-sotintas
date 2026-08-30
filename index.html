@@ -896,6 +896,7 @@ html[data-fonte="grande"] .btn{font-size:15.5px}
         <button class="btn btn-navy btn-sm" id="dpZap"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg> Resumo para WhatsApp</button>
         <button class="btn btn-ghost btn-sm" id="dpCsv">⤓ Baixar planilha (.xlsx)</button>
         <button class="btn btn-ghost btn-sm" id="dpRecibo">🧾 Recibo de reembolso (PDF)</button>
+        <button class="btn btn-navy btn-sm" id="dpPdfZap"><svg class="ic" aria-hidden="true"><use href="#i-file"/></svg> Resumo do período (PDF) → WhatsApp</button>
       </div>
       <div id="dpReciboBox" class="hidden" style="margin-top:12px;padding:11px 14px;border-radius:10px;font-size:14px"></div>
       <div id="dpRel" style="margin-top:16px"></div>
@@ -6569,7 +6570,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v49';
+var VERSAO_APP='v49.1';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
@@ -8160,7 +8161,8 @@ $('dpRecibo').onclick=function(){
     res.recibos.forEach(function(r){
       h+='<li style="margin:4px 0">'+r.nome+' — '+brl(r.total)+
          (r.total>r.acertado ? ' <span style="color:#D32027">('+brl(r.total-r.acertado)+' em aberto)</span>' : ' (tudo acertado)')+
-         ' · <a href="'+r.url+'" target="_blank" rel="noopener"><b>Abrir PDF</b></a></li>';
+         ' · <a href="'+r.url+'" target="_blank" rel="noopener"><b>Abrir PDF</b></a>'+
+         ' · <a href="'+linkZapRecibo(r,de,ate)+'" target="_blank" rel="noopener"><b>Mandar no WhatsApp</b></a></li>';
     });
     h+='</ul><div class="sub" style="margin-top:6px">Os arquivos também ficam salvos no Drive, na pasta '+
        (res.pasta ? '<a href="'+res.pasta+'" target="_blank" rel="noopener"><b>Recibos de reembolso</b></a>'
@@ -8168,6 +8170,90 @@ $('dpRecibo').onclick=function(){
     reciboBox('ok',h);
   });
 };
+
+
+/* ============ RESUMO DO PERÍODO EM PDF, DIRETO NO WHATSAPP ============
+   O botão de texto ao lado manda o recado; este manda o documento. Um
+   toque: o servidor monta o PDF do período (totais, por pessoa, por tipo
+   e os lançamentos), guarda no Drive com link aberto e o WhatsApp abre
+   com o resumo curto + o link. Enquanto o período e a pessoa não mudarem,
+   o segundo toque só reabre o WhatsApp — não gera PDF de novo.        */
+var DP_PDF = { chave:'', res:null };
+function chaveDpPdf(){ return $('dpDe').value+'|'+$('dpAte').value+'|'+$('dpFiltro').value; }
+
+function textoResumoZap(res){
+  var L=cabecalhoMsg();
+  L.push('*RESUMO DE DESPESAS*');
+  L.push(dataBr(res.de)+' a '+dataBr(res.ate));
+  var _q=$('dpFiltro').value;
+  if(_q) L.push('👤 '+_q);
+  L.push('');
+  L.push('Total lançado: *'+brl(res.total)+'* em '+res.lancamentos+' lançamento(s)');
+  L.push('Já acertado: '+brl(res.totalAcertado||0));
+  L.push('Em aberto: *'+brl(res.totalAberto||0)+'*');
+  L.push('A reembolsar (com de acordo): '+brl(res.aPagar||0));
+  if((res.pessoas||[]).length){
+    L.push('');
+    L.push('*Por pessoa*');
+    res.pessoas.forEach(function(p){
+      L.push('• '+p.nome+': '+brl(p.total)+' | a pagar '+brl(p.aPagar||0));
+    });
+  }
+  L.push('');
+  L.push('📎 Resumo completo em PDF: '+res.url);
+  return L.join('\n');
+}
+function linkZapResumo(res){ return 'https://wa.me/?text='+encodeURIComponent(textoResumoZap(res)); }
+
+$('dpPdfZap').onclick=function(){
+  var de=$('dpDe').value, ate=$('dpAte').value;
+  if(!de || !ate){ reciboBox('erro','Escolha o período (De / Até) antes de gerar o resumo em PDF.'); return; }
+  /* mesmo período, mesma pessoa: não refaz o PDF, só reabre o WhatsApp */
+  if(DP_PDF.res && DP_PDF.chave===chaveDpPdf()){ window.open(linkZapResumo(DP_PDF.res),'_blank'); return; }
+  var bt=$('dpPdfZap'); bt.disabled=true;
+  reciboBox('info','Montando o resumo em PDF… o WhatsApp abre em seguida com o link.');
+  enviar({ tipo:'resumoDespesasPdf', de:de, ate:ate,
+           responsavel:$('dpFiltro').value, quem:euSou() }, function(res){
+    bt.disabled=false;
+    if(!res || !res.ok){
+      reciboBox('erro','Não consegui gerar o resumo: '+((res&&res.erro)||'sem conexão')+
+                '. Nada se perdeu — os lançamentos continuam na planilha.');
+      return;
+    }
+    if(res.vazio){
+      reciboBox('info','Nenhuma despesa no período escolhido — não há o que resumir.');
+      return;
+    }
+    DP_PDF={ chave:chaveDpPdf(), res:res };
+    reciboBox('ok','<b>Resumo pronto</b> — '+dataBr(res.de)+' a '+dataBr(res.ate)+': '+
+      brl(res.total)+' em '+res.lancamentos+' lançamento(s), '+brl(res.totalAberto||0)+' em aberto.'+
+      ' <a href="'+res.url+'" target="_blank" rel="noopener"><b>Abrir PDF</b></a> · '+
+      '<a href="'+linkZapResumo(res)+'" target="_blank" rel="noopener"><b>Mandar no WhatsApp</b></a>'+
+      '<div class="sub" style="margin-top:6px">O arquivo fica salvo no Drive, na pasta '+
+      (res.pasta ? '<a href="'+res.pasta+'" target="_blank" rel="noopener"><b>Resumos de despesas</b></a>'
+                 : '"Resumos de despesas"')+'.</div>');
+    /* se o navegador segurar o pop-up, o link acima é a segunda porta */
+    window.open(linkZapResumo(res),'_blank');
+  });
+};
+
+/* O recibo de cada pessoa também vai para o WhatsApp: o valor em aberto é
+   justamente o que se conversa com ela. */
+function textoReciboZap(r, de, ate){
+  var L=cabecalhoMsg();
+  L.push('*RECIBO DE REEMBOLSO*');
+  L.push(r.nome);
+  L.push(dataBr(de)+' a '+dataBr(ate));
+  L.push('');
+  L.push('Total do período: *'+brl(r.total)+'*');
+  L.push('Já acertado: '+brl(r.acertado||0));
+  if(r.total-(r.acertado||0) > 0.009) L.push('Em aberto: *'+brl(r.total-(r.acertado||0))+'*');
+  else L.push('Situação: tudo acertado ✅');
+  L.push('');
+  L.push('📎 Recibo em PDF (com os comprovantes): '+r.url);
+  return L.join('\n');
+}
+function linkZapRecibo(r, de, ate){ return 'https://wa.me/?text='+encodeURIComponent(textoReciboZap(r,de,ate)); }
 
 /* ============ AÇÕES ABERTAS DA ÚLTIMA REUNIÃO ============
    Sem isto o app é um caderno com memória de uma página: registra o
