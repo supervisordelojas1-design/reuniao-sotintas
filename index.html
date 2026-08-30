@@ -6571,7 +6571,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v49.3';
+var VERSAO_APP='v49.4';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
@@ -8166,7 +8166,7 @@ $('dpRecibo').onclick=function(){
   var de=$('dpDe').value, ate=$('dpAte').value;
   if(!de || !ate){ reciboBox('erro','Escolha o período (De / Até) antes de gerar o recibo.'); return; }
   var bt=$('dpRecibo'); bt.disabled=true;
-  reciboBox('info','Gerando o(s) recibo(s)… pode levar um minuto: os comprovantes vão dentro do PDF.');
+  reciboBox('info','Gerando o(s) recibo(s) com o detalhamento e as notas originais dentro… pode levar um ou dois minutos.');
   enviar({ tipo:'reciboReembolso', de:de, ate:ate,
            responsavel:$('dpFiltro').value, quem:euSou() }, function(res){
     bt.disabled=false;
@@ -8188,7 +8188,7 @@ $('dpRecibo').onclick=function(){
          '<div class="btnrow" style="margin:4px 0 0">'+
          (r.pdfBase64
            ? '<button class="btn btn-navy btn-sm" data-zaprecibo="'+idx+'">📲 Enviar o PDF no WhatsApp</button>'
-           : '<span class="sub">com os comprovantes ficou pesado demais para anexar — mande o link</span>')+
+           : '<span class="sub">com as notas dentro passou de 10 MB — anexe pelo link</span>')+
          '<a class="btn btn-ghost btn-sm" href="'+r.url+'" target="_blank" rel="noopener">Abrir PDF</a>'+
          '<a class="btn btn-ghost btn-sm" href="'+linkZapRecibo(r,de,ate)+'" target="_blank" rel="noopener">Mandar só o link</a>'+
          '</div></li>';
@@ -8302,7 +8302,7 @@ $('dpPdfZap').onclick=function(){
   /* mesmo período, mesma pessoa: não refaz o PDF, só reabre o WhatsApp */
   if(DP_PDF.res && DP_PDF.chave===chaveDpPdf()){ window.open(linkZapResumo(DP_PDF.res),'_blank'); return; }
   var bt=$('dpPdfZap'); bt.disabled=true;
-  reciboBox('info','Montando o resumo em PDF… o WhatsApp abre em seguida com o link.');
+  reciboBox('info','Montando o documento: totais, detalhamento por pessoa e as notas originais dentro. Pode levar um ou dois minutos — não feche a tela.');
   enviar({ tipo:'resumoDespesasPdf', de:de, ate:ate,
            responsavel:$('dpFiltro').value, quem:euSou() }, function(res){
     bt.disabled=false;
@@ -8326,7 +8326,7 @@ function mostrarCaixaResumo(res){
   h+='<div class="btnrow" style="margin-top:10px">';
   h+= res.pdfBase64
     ? '<button class="btn btn-navy btn-sm" data-zapresumo="1">📲 Enviar o PDF no WhatsApp</button>'
-    : '<span class="sub">PDF grande demais para anexar — mande o link.</span>';
+    : '<span class="sub">Com todas as notas o arquivo passou de 10 MB — grande demais para anexar pelo celular. Mande o link abaixo.</span>';
   h+='<a class="btn btn-ghost btn-sm" href="'+res.url+'" target="_blank" rel="noopener">Abrir PDF</a>';
   h+='<a class="btn btn-ghost btn-sm" href="'+linkZapResumo(res)+'" target="_blank" rel="noopener">Mandar só o link</a>';
   h+='</div>';
