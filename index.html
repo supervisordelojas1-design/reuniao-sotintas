@@ -6571,7 +6571,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v49.4';
+var VERSAO_APP='v49.5';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
@@ -7308,14 +7308,26 @@ function primeiroDoMes(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.g
    Um supervisor vê "Minha equipe" (ele + os gerentes dele) e pode abrir um por
    um. Um vendedor vê só o próprio nome, e o campo fica travado — não há o que
    escolher. */
+/* A escolha de quem está na tela ganha da remontagem. Sem isto, a lista da
+   aba EQUIPE chegando do Google (que pode demorar no 4G) remontava o seletor
+   e zerava a pessoa escolhida: o Bruno filtrava "Ramon", a resposta chegava
+   dois segundos depois e a tela voltava a mostrar a equipe inteira — sem
+   nenhum aviso, parecendo que o filtro não funciona. É o mesmo cuidado que a
+   agenda já tinha. */
+function escolhaQueSobrevive(f, escolhido){
+  if(!escolhido) return '';
+  for(var i=0;i<f.options.length;i++) if(f.options[i].value===escolhido) return escolhido;
+  return '';
+}
 function montarFiltroDespesas(){
   var f=$('dpFiltro'); if(!f) return;
+  var escolhido=f.value;
   if(!SESSAO){ f.disabled=false; return; }
   var g=galhoOrdenado();
   if(vejoTodos()){
     var h='<option value="">Toda a equipe</option>';
     Object.keys(EQUIPE).forEach(function(n){ h+='<option value="'+esc(n)+'">'+esc(n)+'</option>'; });
-    f.innerHTML=h; f.disabled=false; f.value=''; return;
+    f.innerHTML=h; f.disabled=false; f.value=escolhaQueSobrevive(f, escolhido); return;
   }
   if(g.length<=1){
     f.innerHTML='<option value="">'+esc(euSou())+'</option>';
@@ -7325,7 +7337,7 @@ function montarFiltroDespesas(){
   g.forEach(function(n){
     h2+='<option value="'+esc(n)+'">'+esc(n)+(mesmaPessoaApp(n,euSou())?' (eu)':'')+'</option>';
   });
-  f.innerHTML=h2; f.disabled=false; f.value='';
+  f.innerHTML=h2; f.disabled=false; f.value=escolhaQueSobrevive(f, escolhido);
 }
 
 function iniciarDespesas(){
