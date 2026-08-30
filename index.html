@@ -838,7 +838,8 @@ html[data-fonte="grande"] .btn{font-size:15.5px}
         <h3 style="margin-top:0">Novo lançamento</h3>
         <div class="grid3">
           <div><label>Data</label><input type="date" id="dpData"></div>
-          <div><label>Quem gastou</label><input list="listaSup" id="dpQuem" placeholder="Seu nome"></div>
+          <div><label>Quem gastou</label><input list="listaSup" id="dpQuem" placeholder="Seu nome">
+            <div class="hint hidden" id="dpQuemFixo" style="margin-top:4px">No seu nome — é assim que o reembolso volta para você.</div></div>
           <div><label>Tipo</label>
             <select id="dpTipo">
               <option>Combustível</option>
@@ -6570,7 +6571,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v49.1';
+var VERSAO_APP='v49.3';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
@@ -6629,6 +6630,16 @@ function podeConduzirReuniao(){ return pode('conduzirReuniao', true); }
 function podeEditarEquipe(){    return pode('editarEquipe', ehCoordenador()); }
 function euSou(){ return (SESSAO && SESSAO.nome) || GESTOR; }
 /* Devolve o nome a forçar no filtro, ou '' quando a pessoa pode ver todos. */
+/* DESPESA É OUTRA CONVERSA: visita e agenda se olham em equipe, mas gasto
+   se lança no próprio nome — é quem gastou que recebe de volta. Por isso a
+   trava da despesa não é a mesma do escopo: aqui o GERENTE também entra
+   (no escopo ele é solto, porque responde por lojas), e só a coordenação
+   fica de fora, para lançar a nota que chegou no nome dela. */
+function travaDespesa(){
+  if(!SESSAO) return '';
+  if(ehCoordenador()) return '';
+  return euSou();
+}
 function travaEscopo(){
   if(!SESSAO) return '';          /* ainda na tela de entrada: nada a travar */
   if(ehCoordenador()) return '';
@@ -6753,9 +6764,19 @@ function aplicarEscopo(){
   if(typeof aplicarPermissaoContatos==='function') aplicarPermissaoContatos();
   if(typeof montarFiltroAgenda==='function') montarFiltroAgenda();
   if(typeof montarFiltroDespesas==='function') montarFiltroDespesas();
+  /* quem lança a despesa é sempre a própria pessoa — vale para todo mundo
+     menos a coordenação, e por isso vem ANTES do corte de escopo abaixo */
+  var meuNome=travaDespesa();
+  if($('dpQuem')){
+    if(meuNome){
+      $('dpQuem').value=meuNome; $('dpQuem').readOnly=true;
+      $('dpQuem').title='A despesa é lançada no seu nome.';
+    } else {
+      $('dpQuem').readOnly=false; $('dpQuem').title='';
+    }
+  }
+  if($('dpQuemFixo')) $('dpQuemFixo').classList.toggle('hidden', !meuNome);
   if(!travado) return;
-  /* quem lança a despesa é sempre a própria pessoa */
-  if($('dpQuem')){ $('dpQuem').value=travado; $('dpQuem').readOnly=true; }
   /* Rotina */
   if(typeof montarVisaoRotina==='function') montarVisaoRotina();
   var fq=$('fQuem');
@@ -7313,7 +7334,9 @@ function iniciarDespesas(){
     $('dpData').value = hojeISO();
     $('dpDe').value   = primeiroDoMes();
     $('dpAte').value  = hojeISO();
-    if(!$('dpQuem').value) $('dpQuem').value = GESTOR;
+    /* o padrão é QUEM ESTÁ LOGADO. Antes vinha GESTOR: quem entrasse e não
+       reparasse no campo lançava a própria despesa no nome do Bruno. */
+    if(!$('dpQuem').value) $('dpQuem').value = euSou();
   }
   montarFiltroDespesas();
   /* reaplica depois de montar o filtro — senão a lista completa volta e a
@@ -7546,7 +7569,7 @@ function anexosDoDoc(doc){
 
 function lancarLote(){
   if(!DP_DOCS.length) return;
-  var quem = travaEscopo() || $('dpQuem').value.trim();
+  var quem = travaDespesa() || $('dpQuem').value.trim();
   if(!quem){ dpBox('erro','Informe quem gastou antes de lançar.'); return; }
 
   var resumo = DP_DOCS.map(function(x,i){
@@ -7649,7 +7672,7 @@ $('dpSalvar').onclick=function(){
   dpBox('info','Enviando'+(DP_FOTO?' com a foto':'')+'…');
   var corpo = {
       tipo:'despesa', data:$('dpData').value,
-      responsavel: travaEscopo() || $('dpQuem').value.trim(),
+      responsavel: travaDespesa() || $('dpQuem').value.trim(),
       tipoDespesa:$('dpTipo').value, valor:valor, referencia:$('dpRef').value.trim(),
       obs:$('dpObs').value.trim(), lancadoPor:euSou(),
       anexos: DP_ANEXOS.map(function(a){ return {nome:a.nome, dados:a.dados}; }),
@@ -8155,14 +8178,20 @@ $('dpRecibo').onclick=function(){
       reciboBox('info','Nenhuma despesa no período escolhido — nada para fechar.');
       return;
     }
+    DP_RECIBOS={ itens:res.recibos, de:de, ate:ate };
     var h='<b>'+res.recibos.length+' recibo'+(res.recibos.length>1?'s':'')+' pronto'+
           (res.recibos.length>1?'s':'')+'</b> — período '+dataBr(de)+' a '+dataBr(ate)+':';
     h+='<ul style="margin:8px 0 0;padding-left:18px">';
-    res.recibos.forEach(function(r){
-      h+='<li style="margin:4px 0">'+r.nome+' — '+brl(r.total)+
+    res.recibos.forEach(function(r, idx){
+      h+='<li style="margin:6px 0">'+r.nome+' — '+brl(r.total)+
          (r.total>r.acertado ? ' <span style="color:#D32027">('+brl(r.total-r.acertado)+' em aberto)</span>' : ' (tudo acertado)')+
-         ' · <a href="'+r.url+'" target="_blank" rel="noopener"><b>Abrir PDF</b></a>'+
-         ' · <a href="'+linkZapRecibo(r,de,ate)+'" target="_blank" rel="noopener"><b>Mandar no WhatsApp</b></a></li>';
+         '<div class="btnrow" style="margin:4px 0 0">'+
+         (r.pdfBase64
+           ? '<button class="btn btn-navy btn-sm" data-zaprecibo="'+idx+'">📲 Enviar o PDF no WhatsApp</button>'
+           : '<span class="sub">com os comprovantes ficou pesado demais para anexar — mande o link</span>')+
+         '<a class="btn btn-ghost btn-sm" href="'+r.url+'" target="_blank" rel="noopener">Abrir PDF</a>'+
+         '<a class="btn btn-ghost btn-sm" href="'+linkZapRecibo(r,de,ate)+'" target="_blank" rel="noopener">Mandar só o link</a>'+
+         '</div></li>';
     });
     h+='</ul><div class="sub" style="margin-top:6px">Os arquivos também ficam salvos no Drive, na pasta '+
        (res.pasta ? '<a href="'+res.pasta+'" target="_blank" rel="noopener"><b>Recibos de reembolso</b></a>'
@@ -8172,6 +8201,67 @@ $('dpRecibo').onclick=function(){
 };
 
 
+/* ============ O PDF NA MÃO, NÃO O LINK ============
+   Link do Drive é ótimo para arquivar e péssimo para conversar: quem recebe
+   sai do WhatsApp, espera o Drive abrir e, se estiver em outra conta, apanha.
+   Aqui o PDF volta do servidor junto com a resposta e vira ARQUIVO no
+   aparelho — o mesmo anexo que se manda de uma conversa para a outra.
+   No celular, o menu de compartilhar do próprio aparelho abre com o PDF já
+   preso; no computador, onde esse menu não existe, o arquivo é baixado.
+   REGRA: compartilhar só funciona DENTRO do toque de quem está usando. Por
+   isso o botão de enviar nasce depois, na caixa: o primeiro toque gera, o
+   segundo envia. Tentar abrir sozinho depois da espera é convite a bloqueio. */
+function pdfDeBase64(b64, nome){
+  var bin=atob(b64), n=bin.length, arr=new Uint8Array(n);
+  for(var i=0;i<n;i++) arr[i]=bin.charCodeAt(i);
+  var blob=new Blob([arr],{type:'application/pdf'});
+  try{ return new File([blob], nome, {type:'application/pdf'}); }
+  catch(e){ return blob; }   /* navegador antigo: sem File, o download resolve */
+}
+function podeAnexarNoZap(f){
+  try{ return !!(navigator.share && navigator.canShare && navigator.canShare({files:[f]})); }
+  catch(e){ return false; }
+}
+function baixarBlob(b, nome){
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(b); a.download=nome;
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+}
+/* aviso de "baixei, agora é com você" — entra embaixo da caixa, sem apagar
+   o que já está escrito nela */
+function avisoBaixou(nome){
+  var b=$('dpReciboBox'); if(!b) return;
+  var d=document.createElement('div');
+  d.className='sub';
+  d.style.marginTop='8px';
+  d.innerHTML='⤓ <b>'+esc(nome)+'</b> foi baixado. Abra a conversa no '+
+    '<a href="https://web.whatsapp.com" target="_blank" rel="noopener">WhatsApp Web</a> '+
+    'e arraste o arquivo para dentro dela (ou use o clipe → Documento).';
+  b.appendChild(d);
+}
+/* Chamar SEMPRE de dentro do clique. Devolve true se foi para o menu de
+   compartilhar do aparelho; false se caiu no download. */
+function enviarPdfNoZap(b64, nome, titulo, texto){
+  if(!b64){
+    toast('Este PDF ficou grande demais para anexar — use o link para abrir e compartilhar.');
+    return false;
+  }
+  var f=pdfDeBase64(b64, nome);
+  if(podeAnexarNoZap(f)){
+    navigator.share({ files:[f], title:titulo, text:texto }).catch(function(err){
+      /* cancelou: não faz nada. Recusou de verdade: baixa, para o toque não
+         morrer sem resultado */
+      if(err && (err.name==='AbortError' || err.name==='NotAllowedError')) return;
+      baixarBlob(f, nome); avisoBaixou(nome);
+    });
+    return true;
+  }
+  baixarBlob(f, nome);
+  avisoBaixou(nome);
+  return false;
+}
+
 /* ============ RESUMO DO PERÍODO EM PDF, DIRETO NO WHATSAPP ============
    O botão de texto ao lado manda o recado; este manda o documento. Um
    toque: o servidor monta o PDF do período (totais, por pessoa, por tipo
@@ -8179,6 +8269,7 @@ $('dpRecibo').onclick=function(){
    com o resumo curto + o link. Enquanto o período e a pessoa não mudarem,
    o segundo toque só reabre o WhatsApp — não gera PDF de novo.        */
 var DP_PDF = { chave:'', res:null };
+var DP_RECIBOS = { itens:[], de:'', ate:'' };
 function chaveDpPdf(){ return $('dpDe').value+'|'+$('dpAte').value+'|'+$('dpFiltro').value; }
 
 function textoResumoZap(res){
@@ -8225,17 +8316,40 @@ $('dpPdfZap').onclick=function(){
       return;
     }
     DP_PDF={ chave:chaveDpPdf(), res:res };
-    reciboBox('ok','<b>Resumo pronto</b> — '+dataBr(res.de)+' a '+dataBr(res.ate)+': '+
-      brl(res.total)+' em '+res.lancamentos+' lançamento(s), '+brl(res.totalAberto||0)+' em aberto.'+
-      ' <a href="'+res.url+'" target="_blank" rel="noopener"><b>Abrir PDF</b></a> · '+
-      '<a href="'+linkZapResumo(res)+'" target="_blank" rel="noopener"><b>Mandar no WhatsApp</b></a>'+
-      '<div class="sub" style="margin-top:6px">O arquivo fica salvo no Drive, na pasta '+
-      (res.pasta ? '<a href="'+res.pasta+'" target="_blank" rel="noopener"><b>Resumos de despesas</b></a>'
-                 : '"Resumos de despesas"')+'.</div>');
-    /* se o navegador segurar o pop-up, o link acima é a segunda porta */
-    window.open(linkZapResumo(res),'_blank');
+    mostrarCaixaResumo(res);
   });
 };
+
+function mostrarCaixaResumo(res){
+  var h='<b>Resumo pronto</b> — '+dataBr(res.de)+' a '+dataBr(res.ate)+': '+
+    brl(res.total)+' em '+res.lancamentos+' lançamento(s), '+brl(res.totalAberto||0)+' em aberto.';
+  h+='<div class="btnrow" style="margin-top:10px">';
+  h+= res.pdfBase64
+    ? '<button class="btn btn-navy btn-sm" data-zapresumo="1">📲 Enviar o PDF no WhatsApp</button>'
+    : '<span class="sub">PDF grande demais para anexar — mande o link.</span>';
+  h+='<a class="btn btn-ghost btn-sm" href="'+res.url+'" target="_blank" rel="noopener">Abrir PDF</a>';
+  h+='<a class="btn btn-ghost btn-sm" href="'+linkZapResumo(res)+'" target="_blank" rel="noopener">Mandar só o link</a>';
+  h+='</div>';
+  h+='<div class="sub" style="margin-top:6px">A cópia fica salva no Drive, na pasta '+
+     (res.pasta ? '<a href="'+res.pasta+'" target="_blank" rel="noopener"><b>Resumos de despesas</b></a>'
+                : '"Resumos de despesas"')+'.</div>';
+  reciboBox('ok',h);
+}
+
+/* Os botões de enviar nascem dentro da caixa, que é reescrita a cada geração:
+   por isso o clique é ouvido pela caixa, e não por cada botão. */
+delegar('dpReciboBox', {
+  'data-zapresumo': function(){
+    var res=DP_PDF.res; if(!res) return;
+    enviarPdfNoZap(res.pdfBase64, res.arquivo||'resumo-despesas.pdf',
+      'Resumo de despesas', textoResumoZap(res).replace(/\n📎[^\n]*$/,'').trim());
+  },
+  'data-zaprecibo': function(i){
+    var r=(DP_RECIBOS.itens||[])[Number(i)]; if(!r) return;
+    enviarPdfNoZap(r.pdfBase64, r.arquivo||'recibo.pdf', 'Recibo de reembolso',
+      textoReciboZap(r, DP_RECIBOS.de, DP_RECIBOS.ate).replace(/\n📎[^\n]*$/,'').trim());
+  }
+});
 
 /* O recibo de cada pessoa também vai para o WhatsApp: o valor em aberto é
    justamente o que se conversa com ela. */
