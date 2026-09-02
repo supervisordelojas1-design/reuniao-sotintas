@@ -443,6 +443,7 @@ function grupaCart(cli,n){return {meses:n,cli:cli,
   if(!isNaN(Number(cod))) CART[String(Number(cod))]=box;
  });
 })();
+const ORF='Sem vendedor ativo';
 /* busca tolerante ao formato do codigo */
 function KL(cod){return CART[cod]||CART[('000'+cod).slice(-3)]||CART[String(Number(cod))]||null}
 /* carteira ativa: do vendedor, se houver um selecionado; senao a da loja */
@@ -691,8 +692,17 @@ function vLoja(cod){
   ` · <b style="color:var(--red)">ver indicadores ▾</b>`,`toggleV(${i})`,bdgV(v)).replace('class="row "','class="row exp"');
   h+=vExp(v,i,l)});
  const CK=KL(cod);
+ /* cliente sem vendedor ativo entra so na base da loja, em vendedor nenhum */
+ let orf=[];
+ if(CK){
+  const ativos={}; vs.forEach(function(v){ativos[v.nome]=1});
+  orf=CK.cli.filter(function(c){return !c.vend||!ativos[c.vend]});
+  CK.V=CK.V||{}; CK.V[ORF]=grupaCart(orf,CK.meses);
+ }
  h+='</div>'+cartBox(CK,'Carteira de clientes',null)
-  +(CK&&CK.SEMDONO&&CK.SEMDONO.length?`<div class="alert"><span>👤</span><span><b>${CK.SEMDONO.length} clientes sem vendedor ativo</b> nesta carteira — valem <b>${BRL(CK.SEMDONO.reduce((a,c)=>a+c.media,0))}/mês</b>. São contas de quem saiu ou ainda não foi redistribuída.</span></div>`:'')
+  +(orf.length?`<div class="alert"><span>👤</span><span><b>${orf.length} dos ${CK.cli.length} clientes estão sem vendedor ativo</b> — valem <b>${BRL(orf.reduce((a,c)=>a+c.media,0))}/mês</b>.
+   Entram na base da loja, mas em vendedor nenhum: são contas de quem saiu, de cadastro genérico ou de quem está fora do painel. Redistribuir é venda que já existe.</span></div>`
+   +cartBox(CK.V[ORF],'Clientes sem vendedor ativo',ORF):'')
   +nivelLoja(l)+acaoBox('loja:'+cod,l.nome)+resumoBox('loja:'+cod,l,'a loja '+l.cod);
  return h;
 }
