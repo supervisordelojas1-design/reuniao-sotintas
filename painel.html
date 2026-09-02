@@ -408,11 +408,22 @@ geral.nLojas=lojas.length;geral.nSups=sups.length;geral.nVend=sm(lojas,x=>x.vend
 geral.cai=lojas.filter(x=>x.cai).length;geral.nome='Rede Só Tintas';
 geral.Craw=roll(lojas.map(x=>x.Craw));geral.I=ind(geral.Craw,geral.fat);
 const CART={};
+/* mesmo tratamento de nome que o servidor usa em BASE_VENDEDORES */
+function normVend(t){var s=String(t||'').replace(/^[A-Z0-9]{3}\s*-\s*/,'')
+  .replace(/\s*-?\s*N\s?\d.*$/i,'').replace(/\s*-\s*\d+\s*$/,'').trim();
+ return s.replace(/\w\S*/g,function(w){return w.charAt(0).toUpperCase()+w.substr(1).toLowerCase()})}
+function grupaCart(cli,n){return {meses:n,cli:cli,
+  POS:cli.filter(function(c){return c.grupo=='POS'}).sort(function(a,b){return b.media-a.media}),
+  SUB:cli.filter(function(c){return c.grupo=='SUB'}).sort(function(a,b){return b.lacuna-a.lacuna}),
+  CRE:cli.filter(function(c){return c.grupo=='CRE'}).sort(function(a,b){return (b.proj-b.media)-(a.proj-a.media)}),
+  OK:cli.filter(function(c){return c.grupo=='OK'}),
+  REC:cli.filter(function(c){return c.grupo=='POS'&&c.perfil=='recorrente'}).sort(function(a,b){return b.media-a.media})}}
 (function(){const K=_.K||{};
  Object.keys(K).forEach(function(cod){
   const n=K[cod].n||1, cli=K[cod].c.map(function(c){
    const perfil=c[2]>=5?'recorrente':c[2]>=2?'ocasional':'compra única';
-   const o={nome:c[0],media:c[1],ativos:c[2],proj:c[3],perfil:perfil,meses:n};
+   const pv=String(c[0]).split(/ - VEND\.?:\s*/i);
+   const o={nome:pv[0].trim(),vend:pv.length>1?normVend(pv[1]):'',media:c[1],ativos:c[2],proj:c[3],perfil:perfil,meses:n};
    o.lacuna=Math.max(o.media-o.proj,0);
    o.var=o.media?o.proj/o.media-1:0;
    o.grupo = o.proj<=0 ? (o.media>0?'POS':null)
@@ -421,14 +432,22 @@ const CART={};
    o.prio = o.grupo=='POS' ? (o.media>=3000?'ALTA':o.media>=1000?'MÉDIA':'BAIXA')
           : o.grupo=='SUB' ? (o.lacuna>=1500?'ALTA':o.lacuna>=500?'MÉDIA':'BAIXA') : '';
    return o});
-  CART[cod]={meses:n,cli:cli,
-   POS:cli.filter(function(c){return c.grupo=='POS'}).sort(function(a,b){return b.media-a.media}),
-   SUB:cli.filter(function(c){return c.grupo=='SUB'}).sort(function(a,b){return b.lacuna-a.lacuna}),
-   CRE:cli.filter(function(c){return c.grupo=='CRE'}).sort(function(a,b){return (b.proj-b.media)-(a.proj-a.media)}),
-   OK:cli.filter(function(c){return c.grupo=='OK'}),
-   REC:cli.filter(function(c){return c.grupo=='POS'&&c.perfil=='recorrente'}).sort(function(a,b){return b.media-a.media})};
+  const box=grupaCart(cli,n);
+  /* carteira por vendedor + os que ficaram sem dono */
+  box.V={}; const porV={};
+  cli.forEach(function(c){ if(c.vend) (porV[c.vend]=porV[c.vend]||[]).push(c); });
+  Object.keys(porV).forEach(function(v){ box.V[v]=grupaCart(porV[v],n); });
+  box.SEMDONO=cli.filter(function(c){return !c.vend});
+  /* indexa nos dois formatos: a planilha as vezes come o zero a esquerda */
+  CART[cod]=box; CART[('000'+cod).slice(-3)]=box;
+  if(!isNaN(Number(cod))) CART[String(Number(cod))]=box;
  });
 })();
+/* busca tolerante ao formato do codigo */
+function KL(cod){return CART[cod]||CART[('000'+cod).slice(-3)]||CART[String(Number(cod))]||null}
+/* carteira ativa: do vendedor, se houver um selecionado; senao a da loja */
+function KAT(){const K=KL(ST.loja); if(!K) return null;
+ if(ST.vend&&K.V&&K.V[ST.vend]) return K.V[ST.vend]; return K}
 const D={periodo:P,meta_info:{vendExcluidos:_.x[0],lojasForaPainel:new Array(_.x[1])},
  geral:geral,supervisores:sups,lojas:lojas};
 
@@ -463,7 +482,7 @@ else PERFIS.push({v:'sup:'+LOCK,t:'🧭 Minha região — '+LOCK});
 D.lojas.slice().filter(l=>!LOCK||l.sup==LOCK).sort((a,b)=>a.cod.localeCompare(b.cod))
  .forEach(l=>PERFIS.push({v:'loja:'+l.cod,t:'🏪 Gerente — '+l.cod+' '+l.nome}));
 
-let ST={perfil:'geral',view:'geral',sup:null,loja:null,ind:null,nvT:null,nvN:null,cg:'POS'};
+let ST={perfil:'geral',view:'geral',sup:null,loja:null,vend:null,ind:null,nvT:null,nvN:null,cg:'POS'};
 
 /* ---------- persistencia local (F3 migra p/ planilha) ---------- */
 const KEY='stcoord_v1';
@@ -624,6 +643,18 @@ function vExp(v,i,ref){
   <div class="indc"><div class="l">$ Ticket Médio CPF</div><div class="v">${BRL(I.ticket)}</div>${delta(I.ticket,ref&&ref.I.ticket)}</div>
   <div class="indc"><div class="l">% Desconto CPF</div><div class="v">${PPCT(I.descCPF)}</div>${delta(I.descCPF,ref&&ref.I.descCPF,true)}</div>
   <div class="indc"><div class="l">Atendimentos</div><div class="v">${NUM(I.atend)}</div><div class="s">no mês</div></div>
+ </div>${cartBox(((KL(ST.loja)||{}).V||{})[v.nome],'Carteira de clientes de '+v.nome,v.nome)}</div>`}
+
+/* bloco de carteira — o mesmo da loja, reaproveitado pelo vendedor */
+function cartBox(K,titulo,vend){
+ const alvo=vend?`goCartV('${esc(vend).replace(/'/g,"")}','`:`goCart('`;
+ if(!K) return vend?`<div class="empty" style="margin-top:12px">Nenhum cliente com <b>${esc(vend)}</b> identificado na carteira desta loja.</div>`:'';
+ return `<div class="grp"><div class="grph"><span class="tg cnpj">CNPJ</span><h3>${esc(titulo)}</h3>
+  <span class="cnt">${K.cli.length} clientes · ${K.meses} meses de histórico</span></div><div class="ind">
+  <div class="indc cl" onclick="${alvo}POS')"><div class="l">A positivar</div><div class="v" style="color:#E53935">${K.POS.length}</div><div class="s">${BRL(K.POS.reduce((a,c)=>a+c.media,0))}/mês em jogo</div></div>
+  <div class="indc cl" onclick="${alvo}SUB')"><div class="l">Aproveitar melhor</div><div class="v" style="color:#D98B00">${K.SUB.length}</div><div class="s">${BRL(K.SUB.reduce((a,c)=>a+c.lacuna,0))} de lacuna</div></div>
+  <div class="indc cl" onclick="${alvo}CRE')"><div class="l">Crescendo</div><div class="v" style="color:#0E9F6E">${K.CRE.length}</div><div class="s">${BRL(K.CRE.reduce((a,c)=>a+c.proj-c.media,0))} acima da média</div></div>
+  <div class="indc"><div class="l">Comprando no padrão</div><div class="v" style="color:var(--tx3)">${K.OK.length}</div><div class="s">dentro da própria média</div></div>
  </div></div>`}
 function toggleV(i){const e=document.getElementById('ve'+i);if(e)e.classList.toggle('on')}
 
@@ -659,14 +690,10 @@ function vLoja(cod){
   (v.prox?` · <b style="color:var(--navy)">faltam ${K(v.prox.falta)} de Méd.90d para V${v.prox.nv}</b>`:` · <b style="color:#B8912B">teto da régua</b>`) +
   ` · <b style="color:var(--red)">ver indicadores ▾</b>`,`toggleV(${i})`,bdgV(v)).replace('class="row "','class="row exp"');
   h+=vExp(v,i,l)});
- const CK=CART[cod];
- h+='</div>'+(CK?`<div class="grp"><div class="grph"><span class="tg cnpj">CNPJ</span><h3>Carteira de clientes</h3>
-  <span class="cnt">${CK.cli.length} clientes · ${CK.meses} meses de histórico</span></div><div class="ind">
-  <div class="indc cl" onclick="goCart('POS')"><div class="l">A positivar</div><div class="v" style="color:#E53935">${CK.POS.length}</div><div class="s">${BRL(CK.POS.reduce((a,c)=>a+c.media,0))}/mês em jogo</div></div>
-  <div class="indc cl" onclick="goCart('SUB')"><div class="l">Aproveitar melhor</div><div class="v" style="color:#D98B00">${CK.SUB.length}</div><div class="s">${BRL(CK.SUB.reduce((a,c)=>a+c.lacuna,0))} de lacuna</div></div>
-  <div class="indc cl" onclick="goCart('CRE')"><div class="l">Crescendo</div><div class="v" style="color:#0E9F6E">${CK.CRE.length}</div><div class="s">${BRL(CK.CRE.reduce((a,c)=>a+c.proj-c.media,0))} acima da média</div></div>
-  <div class="indc"><div class="l">Comprando no padrão</div><div class="v" style="color:var(--tx3)">${CK.OK.length}</div><div class="s">dentro da própria média</div></div>
- </div></div>`:'')+nivelLoja(l)+acaoBox('loja:'+cod,l.nome)+resumoBox('loja:'+cod,l,'a loja '+l.cod);
+ const CK=KL(cod);
+ h+='</div>'+cartBox(CK,'Carteira de clientes',null)
+  +(CK&&CK.SEMDONO&&CK.SEMDONO.length?`<div class="alert"><span>👤</span><span><b>${CK.SEMDONO.length} clientes sem vendedor ativo</b> nesta carteira — valem <b>${BRL(CK.SEMDONO.reduce((a,c)=>a+c.media,0))}/mês</b>. São contas de quem saiu ou ainda não foi redistribuída.</span></div>`:'')
+  +nivelLoja(l)+acaoBox('loja:'+cod,l.nome)+resumoBox('loja:'+cod,l,'a loja '+l.cod);
  return h;
 }
 
@@ -1189,10 +1216,11 @@ function gaugeBox(o,titulo){
  return h+`</div></div>`}
 
 function waCart(){
- const K=CART[ST.loja]; if(!K) return;
+ const K=KAT(); if(!K) return;
  const g=ST.cg||'REC', L=K[g]||[], info=CGRUPO[g];
  const l=D.lojas.find(x=>x.cod==ST.loja);
- var lin=['*'+info[0].toUpperCase()+' — '+(l?l.cod+' · '+l.nome:'Carteira')+'*',
+ var lin=['*'+info[0].toUpperCase()+' — '+(ST.vend?ST.vend:(l?l.cod+' · '+l.nome:'Carteira'))+'*',
+  (ST.vend&&l?'Loja '+l.cod+' · '+l.nome:''),
   D.periodo.mes+'/'+D.periodo.ano+' · '+L.length+' clientes',''];
  L.slice(0,30).forEach(function(c,i){
   lin.push((i+1)+'. '+c.nome+' — '+BRL(g=='SUB'?c.lacuna:c.media)+'/mês ('+c.ativos+' de '+K.meses+')');});
@@ -1200,7 +1228,7 @@ function waCart(){
  window.open('https://wa.me/?text='+encodeURIComponent(lin.join('\n')),'_blank','noopener,noreferrer');
 }
 function pdfCart(completo){
- const K=CART[ST.loja]; if(!K) return;
+ const K=KAT(); if(!K) return;
  const l=D.lojas.find(x=>x.cod==ST.loja);
  const grupos = completo?['REC','POS','SUB','CRE']:[ST.cg||'REC'];
  var corpo='';
@@ -1215,7 +1243,7 @@ function pdfCart(completo){
   corpo+='</table>';
  });
  document.getElementById('parea').innerHTML='<div class="pdoc">'+
-  '<div class="ph"><div><h1>Carteira de Clientes — '+esc(l?l.cod+' · '+l.nome:'')+'</h1>'+
+  '<div class="ph"><div><h1>Carteira de Clientes — '+esc(ST.vend?ST.vend+' · Loja '+(l?l.cod:''):(l?l.cod+' · '+l.nome:''))+'</h1>'+
   '<div class="sub">Só Tintas · Coordenação de Supervisão · '+D.periodo.mes+'/'+D.periodo.ano+'</div></div>'+
   '<div class="dt">Emitido em '+new Date().toLocaleDateString('pt-BR')+'<br>Base '+new Date(D.periodo.dataBase+'T12:00').toLocaleDateString('pt-BR')+' · '+UD+' de '+UT+' dias úteis</div></div>'+
   corpo+
@@ -1224,18 +1252,20 @@ function pdfCart(completo){
  document.body.classList.add('impr');
  setTimeout(function(){window.print();setTimeout(function(){document.body.classList.remove('impr')},400)},120);
 }
-function goCart(g){ST.view='cart';ST.cg=g||ST.cg||'POS';render();window.scrollTo({top:0,behavior:'smooth'})}
+function goCart(g){ST.vend=null;ST.view='cart';ST.cg=g||ST.cg||'POS';render();window.scrollTo({top:0,behavior:'smooth'})}
+function goCartV(v,g){ST.vend=v;ST.view='cart';ST.cg=g||'POS';render();window.scrollTo({top:0,behavior:'smooth'})}
 const CGRUPO={REC:['Recorrentes sumidos','Ativos em 5 ou mais dos meses fechados e ZERADOS agora — a lista que vale a ligação','#B01A20'],
  POS:['A positivar','Compraram nos meses fechados e estão zerados no mês corrente','#E53935'],
  SUB:['Aproveitar melhor','Estão comprando, mas projetam menos de 70% da própria média','#D98B00'],
  CRE:['Crescendo','Projetam 30% acima da própria média — descubra o porquê e repita','#0E9F6E']};
 function cartChips(){
  let h='<div class="chips">';
- ['REC','POS','SUB','CRE'].forEach(function(g){const c=CART[ST.loja];
-  h+=`<button class="chip ${ST.cg==g?'on':''}" onclick="goCart('${g}')">${CGRUPO[g][0]} <b style="opacity:.7">${c?c[g].length:0}</b></button>`});
+ ['REC','POS','SUB','CRE'].forEach(function(g){const c=KAT();
+  const cl=ST.vend?`goCartV('${esc(ST.vend).replace(/'/g,"")}','${g}')`:`goCart('${g}')`;
+  h+=`<button class="chip ${ST.cg==g?'on':''}" onclick="${cl}">${CGRUPO[g][0]} <b style="opacity:.7">${c?c[g].length:0}</b></button>`});
  return h+'</div>'}
 function vCart(){
- const l=D.lojas.find(x=>x.cod==ST.loja), K=CART[ST.loja];
+ const l=D.lojas.find(x=>x.cod==ST.loja), K=KAT();
  if(!K) return btnVoltar()+'<div class="sec"><div class="empty">Esta loja ainda não tem carteira carregada.<br><br>Para habilitar, exporte a <b>Evolução Mensal por Cliente</b> desta loja e me envie.</div></div>';
  const g=ST.cg||'REC', L=K[g]||[], info=CGRUPO[g];
  const soma=L.reduce((a,c)=>a+(g=='SUB'?c.lacuna:g=='CRE'?c.proj-c.media:c.media),0);
@@ -1246,7 +1276,7 @@ function vCart(){
   <button class="b sec" onclick="waCart()">📲 WhatsApp da lista</button>
   <button class="b gh" onclick="pdfCart(false)">📄 PDF desta análise</button>
   <button class="b gh" onclick="pdfCart(true)">📄 PDF completo (4 análises)</button></div>`;
- h+=`<div class="pp"><div class="pph"><div><h2>${info[0]} — Carteira CNPJ</h2>
+ h+=`<div class="pp"><div class="pph"><div><h2>${info[0]} — Carteira CNPJ${ST.vend?' · '+esc(ST.vend):''}</h2>
    <span>Loja ${l?l.cod+' · '+l.nome:ST.loja} · ${info[1]} · base ${K.meses} meses fechados</span></div>
    <div class="ppb">${K.cli.length} clientes na carteira</div></div>
   <div class="ppg">
@@ -1300,12 +1330,13 @@ function vCart(){
 
 /* ---------- navegação ---------- */
 function goSub(v,id){
+ ST.vend=null;
  if(v=='sup'){ST.sup=id;ST.loja=null}
  if(v=='loja'){ST.loja=id;const l=D.lojas.find(x=>x.cod==id);if(l)ST.sup=l.sup}
  render();window.scrollTo({top:0,behavior:'smooth'});
 }
 function go(v,id){
- ST.ind=null;ST.nvT=null;
+ ST.ind=null;ST.nvT=null;ST.vend=null;
  if(v=='geral'){ST.view='geral';ST.sup=null;ST.loja=null}
  if(v=='sup'){ST.view='sup';ST.sup=id;ST.loja=null}
  if(v=='loja'){ST.view='loja';ST.loja=id;const l=D.lojas.find(x=>x.cod==id);if(l)ST.sup=l.sup}
@@ -1375,7 +1406,7 @@ sel.onchange=()=>{
 };
 render();
 /* expoe as funcoes que o HTML chama por onclick */
-window.enviarWA=enviarWA;window.goSub=goSub;window.toggleV=toggleV;window.ST=ST;window.render=render;window.gerarResumo=gerarResumo;window.go=go;window.goCart=goCart;window.goInd=goInd;window.goNivel=goNivel;window.pdfCart=pdfCart;window.pdfOrient=pdfOrient;window.pdfPlano=pdfPlano;window.printTela=printTela;window.salvarAcao=salvarAcao;window.salvarJustificativa=salvarJustificativa;window.waCart=waCart;window.waOrient=waOrient;
+window.goCartV=goCartV;window.cartBox=cartBox;window.KL=KL;window.KAT=KAT;window.enviarWA=enviarWA;window.goSub=goSub;window.toggleV=toggleV;window.ST=ST;window.render=render;window.gerarResumo=gerarResumo;window.go=go;window.goCart=goCart;window.goInd=goInd;window.goNivel=goNivel;window.pdfCart=pdfCart;window.pdfOrient=pdfOrient;window.pdfPlano=pdfPlano;window.printTela=printTela;window.salvarAcao=salvarAcao;window.salvarJustificativa=salvarJustificativa;window.waCart=waCart;window.waOrient=waOrient;
 if(!EMBUTIDO){var lk=document.getElementById('lnkSair');if(lk)lk.style.display='inline';}
 }
 /*FIM_PAINEL*/
