@@ -362,6 +362,22 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbzVe8joykFt0rWX9CjFgpeO
 function iniciarPainel(__D__, __L__) {
 const _ = __D__;
 const P={mes:_.p[0],ano:_.p[1],dataBase:_.p[2],utTotal:_.p[3],utDecorridos:_.p[4],utRestantes:_.p[5]};
+/* MES FECHADO: no fim do mes o projetado alcanca o faturado e a deducao de dias
+   uteis zera, jogando o painel para o dia 1 do mes seguinte. Quando isso
+   acontece, o export e o fechamento do mes anterior — rotula e conta assim. */
+P.fechado=false;
+(function(){
+ const somaF=(_.L||[]).reduce(function(a,l){return a+(l[5]||0)},0);
+ const somaP=(_.L||[]).reduce(function(a,l){return a+(l[6]||0)},0);
+ if(!(somaF>0)) return;
+ if(P.utDecorridos>2 || somaP>somaF*1.02) return;      /* mes ainda correndo */
+ const MES=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO',
+            'AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+ const d=new Date(P.dataBase+'T12:00'); d.setDate(0);   /* ultimo dia do mes anterior */
+ P.mes=MES[d.getMonth()]; P.ano=d.getFullYear();
+ P.dataBase=d.toISOString().slice(0,10);
+ P.utDecorridos=P.utTotal; P.utRestantes=0; P.fechado=true;
+})();
 const UT=P.utTotal,UD=P.utDecorridos,UR=P.utRestantes;
 const sm=(a,f)=>a.reduce((s,x)=>s+f(x),0);
 const _m=+P.dataBase.slice(5,7), NOVA=(P.ano>2026)||(P.ano==2026&&_m>=10);
@@ -1372,7 +1388,8 @@ function render(){
  pintarAbas();
  const p=D.periodo;
  document.getElementById('hPer').textContent=p.mes+' '+p.ano;
- document.getElementById('hDias').textContent=`até ${new Date(p.dataBase+'T12:00').toLocaleDateString('pt-BR')} · ${p.utDecorridos}/${p.utTotal} dias úteis`;
+ document.getElementById('hDias').textContent=`até ${new Date(p.dataBase+'T12:00').toLocaleDateString('pt-BR')} · ${p.utDecorridos}/${p.utTotal} dias úteis`
+  +(p.fechado?' · MÊS FECHADO':'');
 
  const bc=document.getElementById('bc'); let b=[];
  const niv=podeSubir();
