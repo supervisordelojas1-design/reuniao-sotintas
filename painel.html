@@ -389,7 +389,7 @@ function blk(ml,mt,f,pr){return{metaLoja:ml,metaTime:mt,fat:f,proj:pr,
  restLoja:Math.max(ml-f,0),restTime:Math.max(mt-f,0),
  ritmoNec:UR?Math.max(ml-f,0)/UR:0,ritmoReal:UD?f/UD:0}}
 const lojas=_.L.map(a=>{const o=blk(a[3],a[4],a[5],a[6]);
- o.cod=a[0];o.nome=a[1];o.sup=a[2];o.med90=a[7];o.Craw=a[8];o.I=ind(a[8],a[5]);
+ o.cod=('000'+a[0]).slice(-3);o.nome=a[1];o.sup=a[2];o.med90=a[7];o.Craw=a[8];o.I=ind(a[8],a[5]);
  o.nv=nvLoja(a[7]);o.nvRot=ROTL[o.nv][0];o.prox=proxL(a[7]);
  o.cai=!NOVA&&nvLojaNova(a[7])<o.nv?ROTL[nvLojaNova(a[7])][0]:null;
  o.vendedores=a[9].map(v=>{const nv=nvVend(v[3],o.nv),C=v.slice(4);return{
