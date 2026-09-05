@@ -892,6 +892,14 @@ html[data-fonte="grande"] .btn{font-size:15.5px}
           <select id="dpFiltro"><option value="">Toda a equipe</option></select>
         </div>
       </div>
+      <div class="grid3" style="margin-top:10px">
+        <div><label>Período por</label>
+          <select id="dpPor">
+            <option value="">Data da despesa (a da nota)</option>
+            <option value="lancamento">Data do lançamento (quando entrou no app)</option>
+          </select>
+        </div>
+      </div>
       <div class="btnrow" style="margin-top:10px">
         <button class="btn btn-ghost btn-sm" id="dpAtualizar"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg> Atualizar relatório</button>
         <button class="btn btn-navy btn-sm" id="dpZap"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg> Resumo para WhatsApp</button>
@@ -6593,7 +6601,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v49.6';
+var VERSAO_APP='v49.7';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
@@ -7739,6 +7747,8 @@ $('dpSalvar').onclick=function(){
 
 $('dpAtualizar').onclick=carregarDespesas;
 $('dpFiltro').onchange=carregarDespesas;
+$('dpPor').onchange=carregarDespesas;
+function dpPor(){ var e=$('dpPor'); return e && e.value==='lancamento' ? 'lancamento' : ''; }
 
 function carregarDespesas(){
   var box=$('dpRel');
@@ -7750,6 +7760,8 @@ function carregarDespesas(){
      pelo inspetor não destrava a despesa de quem está fora dele. */
   var quem = $('dpFiltro').value;
   if(quem) url+='&responsavel='+encodeURIComponent(quem);
+  /* v49.7: a régua do período. Vazio = data da despesa (coluna B), como sempre foi. */
+  if(dpPor()) url+='&por='+dpPor();
   fetch(url).then(function(r){ return r.json(); })
     .then(function(res){
       if(!res || !res.ok){
@@ -7796,6 +7808,11 @@ function renderDespesas(r){
       : '<div class="kpi ok"><div class="kv">'+ICO('check')+'</div><div class="kl">tudo decidido</div>'+
         '<div class="kx">'+(r.aprovadas||0)+' aprovada(s)'+((r.questionadas||0)?' · '+r.questionadas+' questionada(s)':'')+'</div></div>')+
     '</div>';
+  /* a tela diz qual régua está valendo — é o que evita "sumiu / apareceu do nada" */
+  if(r.por==='lancamento'){
+    h+='<p class="sub" style="margin:8px 0 0">Período pela <b>data de lançamento</b> (quando a despesa entrou no app). '+
+       'A data grande de cada linha continua sendo a da nota; a de lançamento aparece ao lado.</p>';
+  }
 
   /* ---- por pessoa: o que ainda devo, o que já paguei, e o custo por visita ---- */
   h+='<h3>Por pessoa</h3>'+
@@ -7882,6 +7899,7 @@ function renderDespesas(r){
        '<div class="ags">'+esc(i.responsavel)+(i.referencia?' · '+esc(i.referencia):'')+
        (i.estabelecimento&&i.estabelecimento!==i.referencia?' · '+esc(i.estabelecimento):'')+
        (i.obs?' · '+esc(i.obs):'')+(i.lidoIA?' · <b>lido do comprovante</b>':'')+
+       (r.por==='lancamento' && i.lancadoEm ? ' · <span style="color:var(--navy)">lançada em '+dataBr(i.lancadoEm)+'</span>' : '')+
        /* quem deu a baixa e quando: discreto, mas registrado */
        (i.reembolsada?'<br><span style="color:var(--navy);font-weight:700">reembolsada</span>'+
          (i.dataReembolso?' em '+esc(i.dataReembolso):'')+
@@ -8078,7 +8096,7 @@ $('dpZap').onclick=function(){
   if(!DP_DADOS || !DP_DADOS.lancamentos){ toast('Nada para resumir neste período.'); return; }
   var r=DP_DADOS, L=cabecalhoMsg();
   L.push('*DESPESAS*');
-  L.push(dataBr(r.de)+' a '+dataBr(r.ate));
+  L.push(dataBr(r.de)+' a '+dataBr(r.ate)+(r.por==='lancamento'?' (pela data de lançamento)':''));
   L.push('');
   L.push('Total: *'+brl(r.total)+'* em '+r.lancamentos+' lançamento(s)');
   L.push('Já acertado: *'+brl(r.totalAcertado||0)+'* ('+(r.nAcertado||0)+')');
@@ -8201,7 +8219,7 @@ $('dpRecibo').onclick=function(){
   if(!de || !ate){ reciboBox('erro','Escolha o período (De / Até) antes de gerar o recibo.'); return; }
   var bt=$('dpRecibo'); bt.disabled=true;
   reciboBox('info','Gerando o(s) recibo(s) com o detalhamento e as notas originais dentro… pode levar um ou dois minutos.');
-  enviar({ tipo:'reciboReembolso', de:de, ate:ate,
+  enviar({ tipo:'reciboReembolso', de:de, ate:ate, por:dpPor(),
            responsavel:$('dpFiltro').value, quem:euSou() }, function(res){
     bt.disabled=false;
     if(!res || !res.ok){
@@ -8304,7 +8322,7 @@ function enviarPdfNoZap(b64, nome, titulo, texto){
    o segundo toque só reabre o WhatsApp — não gera PDF de novo.        */
 var DP_PDF = { chave:'', res:null };
 var DP_RECIBOS = { itens:[], de:'', ate:'' };
-function chaveDpPdf(){ return $('dpDe').value+'|'+$('dpAte').value+'|'+$('dpFiltro').value; }
+function chaveDpPdf(){ return $('dpDe').value+'|'+$('dpAte').value+'|'+$('dpFiltro').value+'|'+dpPor(); }
 
 function textoResumoZap(res){
   var L=cabecalhoMsg();
@@ -8337,7 +8355,7 @@ $('dpPdfZap').onclick=function(){
   if(DP_PDF.res && DP_PDF.chave===chaveDpPdf()){ window.open(linkZapResumo(DP_PDF.res),'_blank'); return; }
   var bt=$('dpPdfZap'); bt.disabled=true;
   reciboBox('info','Montando o documento: totais, detalhamento por pessoa e as notas originais dentro. Pode levar um ou dois minutos — não feche a tela.');
-  enviar({ tipo:'resumoDespesasPdf', de:de, ate:ate,
+  enviar({ tipo:'resumoDespesasPdf', de:de, ate:ate, por:dpPor(),
            responsavel:$('dpFiltro').value, quem:euSou() }, function(res){
     bt.disabled=false;
     if(!res || !res.ok){
