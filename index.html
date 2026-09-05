@@ -899,6 +899,14 @@ html[data-fonte="grande"] .btn{font-size:15.5px}
             <option value="lancamento">Data do lançamento (quando entrou no app)</option>
           </select>
         </div>
+        <div><label>Incluir</label>
+          <select id="dpIncluir">
+            <option value="">Tudo do período</option>
+            <option value="aprovadas">Só aprovadas em aberto (o que vai pagar)</option>
+            <option value="aberto">Tudo em aberto (com as que aguardam de acordo)</option>
+            <option value="acertadas">Só as já acertadas</option>
+          </select>
+        </div>
       </div>
       <div class="btnrow" style="margin-top:10px">
         <button class="btn btn-ghost btn-sm" id="dpAtualizar"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg> Atualizar relatório</button>
@@ -6601,7 +6609,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v49.7';
+var VERSAO_APP='v49.8';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
@@ -7748,7 +7756,10 @@ $('dpSalvar').onclick=function(){
 $('dpAtualizar').onclick=carregarDespesas;
 $('dpFiltro').onchange=carregarDespesas;
 $('dpPor').onchange=carregarDespesas;
+$('dpIncluir').onchange=carregarDespesas;
 function dpPor(){ var e=$('dpPor'); return e && e.value==='lancamento' ? 'lancamento' : ''; }
+function dpIncluir(){ var e=$('dpIncluir'); var v=e?e.value:''; return (v==='aprovadas'||v==='aberto'||v==='acertadas')?v:''; }
+function rotuloIncluir(v){ return {aprovadas:'só aprovadas em aberto', aberto:'tudo em aberto', acertadas:'só as já acertadas'}[v]||''; }
 
 function carregarDespesas(){
   var box=$('dpRel');
@@ -7762,6 +7773,9 @@ function carregarDespesas(){
   if(quem) url+='&responsavel='+encodeURIComponent(quem);
   /* v49.7: a régua do período. Vazio = data da despesa (coluna B), como sempre foi. */
   if(dpPor()) url+='&por='+dpPor();
+  /* v49.8: o que entra. Vazio = tudo do período. Vale para a tela E para os
+     documentos — o PDF é a foto do que está na tela, nunca mais que isso. */
+  if(dpIncluir()) url+='&incluir='+dpIncluir();
   fetch(url).then(function(r){ return r.json(); })
     .then(function(res){
       if(!res || !res.ok){
@@ -7812,6 +7826,10 @@ function renderDespesas(r){
   if(r.por==='lancamento'){
     h+='<p class="sub" style="margin:8px 0 0">Período pela <b>data de lançamento</b> (quando a despesa entrou no app). '+
        'A data grande de cada linha continua sendo a da nota; a de lançamento aparece ao lado.</p>';
+  }
+  if(r.incluir){
+    h+='<p class="sub" style="margin:8px 0 0">Mostrando <b>'+rotuloIncluir(r.incluir)+'</b>. '+
+       'Os totais acima, o PDF, o recibo e o resumo para WhatsApp saem com exatamente estas despesas.</p>';
   }
 
   /* ---- por pessoa: o que ainda devo, o que já paguei, e o custo por visita ---- */
@@ -7875,6 +7893,7 @@ function renderDespesas(r){
   /* ---- lançamentos: em aberto × já acertado ---- */
   var emAberto=r.itens||[], jaAcertadas=r.acertados||[];
   if(DP_VISAO==='acertado' && !jaAcertadas.length) DP_VISAO='aberto';
+  if(DP_VISAO==='aberto' && !emAberto.length && jaAcertadas.length) DP_VISAO='acertado';
 
   h+='<h3>Lançamentos</h3>'+
      '<div class="tabs2">'+
@@ -8096,7 +8115,7 @@ $('dpZap').onclick=function(){
   if(!DP_DADOS || !DP_DADOS.lancamentos){ toast('Nada para resumir neste período.'); return; }
   var r=DP_DADOS, L=cabecalhoMsg();
   L.push('*DESPESAS*');
-  L.push(dataBr(r.de)+' a '+dataBr(r.ate)+(r.por==='lancamento'?' (pela data de lançamento)':''));
+  L.push(dataBr(r.de)+' a '+dataBr(r.ate)+(r.por==='lancamento'?' (pela data de lançamento)':'')+(r.incluir?' · '+rotuloIncluir(r.incluir):''));
   L.push('');
   L.push('Total: *'+brl(r.total)+'* em '+r.lancamentos+' lançamento(s)');
   L.push('Já acertado: *'+brl(r.totalAcertado||0)+'* ('+(r.nAcertado||0)+')');
@@ -8219,7 +8238,7 @@ $('dpRecibo').onclick=function(){
   if(!de || !ate){ reciboBox('erro','Escolha o período (De / Até) antes de gerar o recibo.'); return; }
   var bt=$('dpRecibo'); bt.disabled=true;
   reciboBox('info','Gerando o(s) recibo(s) com o detalhamento e as notas originais dentro… pode levar um ou dois minutos.');
-  enviar({ tipo:'reciboReembolso', de:de, ate:ate, por:dpPor(),
+  enviar({ tipo:'reciboReembolso', de:de, ate:ate, por:dpPor(), incluir:dpIncluir(),
            responsavel:$('dpFiltro').value, quem:euSou() }, function(res){
     bt.disabled=false;
     if(!res || !res.ok){
@@ -8322,7 +8341,7 @@ function enviarPdfNoZap(b64, nome, titulo, texto){
    o segundo toque só reabre o WhatsApp — não gera PDF de novo.        */
 var DP_PDF = { chave:'', res:null };
 var DP_RECIBOS = { itens:[], de:'', ate:'' };
-function chaveDpPdf(){ return $('dpDe').value+'|'+$('dpAte').value+'|'+$('dpFiltro').value+'|'+dpPor(); }
+function chaveDpPdf(){ return $('dpDe').value+'|'+$('dpAte').value+'|'+$('dpFiltro').value+'|'+dpPor()+'|'+dpIncluir(); }
 
 function textoResumoZap(res){
   var L=cabecalhoMsg();
@@ -8355,7 +8374,7 @@ $('dpPdfZap').onclick=function(){
   if(DP_PDF.res && DP_PDF.chave===chaveDpPdf()){ window.open(linkZapResumo(DP_PDF.res),'_blank'); return; }
   var bt=$('dpPdfZap'); bt.disabled=true;
   reciboBox('info','Montando o documento: totais, detalhamento por pessoa e as notas originais dentro. Pode levar um ou dois minutos — não feche a tela.');
-  enviar({ tipo:'resumoDespesasPdf', de:de, ate:ate, por:dpPor(),
+  enviar({ tipo:'resumoDespesasPdf', de:de, ate:ate, por:dpPor(), incluir:dpIncluir(),
            responsavel:$('dpFiltro').value, quem:euSou() }, function(res){
     bt.disabled=false;
     if(!res || !res.ok){
