@@ -755,6 +755,11 @@ html[data-fonte="grande"] input,
 html[data-fonte="grande"] textarea,
 html[data-fonte="grande"] select{font-size:17px}
 html[data-fonte="grande"] .btn{font-size:15.5px}
+/* v49.9: relatório de despesas recarregando — o que já está na tela fica
+   esmaecido e uma pílula "Atualizando…" acompanha a rolagem */
+#dpRel.dpEsperando > *:not(#dpAtualizando){opacity:.45;pointer-events:none}
+#dpAtualizando{position:sticky;top:calc(64px + env(safe-area-inset-top,0px));z-index:5;margin:0 0 10px;text-align:center}
+#dpAtualizando span{display:inline-block;background:var(--navy);color:#fff;font-weight:700;font-size:13px;padding:6px 14px;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
 </style>
 </head>
 <body>
@@ -6609,7 +6614,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v49.8';
+var VERSAO_APP='v49.9';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
@@ -7761,10 +7766,33 @@ function dpPor(){ var e=$('dpPor'); return e && e.value==='lancamento' ? 'lancam
 function dpIncluir(){ var e=$('dpIncluir'); var v=e?e.value:''; return (v==='aprovadas'||v==='aberto'||v==='acertadas')?v:''; }
 function rotuloIncluir(v){ return {aprovadas:'só aprovadas em aberto', aberto:'tudo em aberto', acertadas:'só as já acertadas'}[v]||''; }
 
+/* v49.9 — dois cuidados na hora de recarregar:
+   1) a lista que já está na tela NÃO some: fica esmaecida com um aviso
+      "Atualizando…" até a nova chegar. Apagar tudo e escrever "Carregando…"
+      fazia a tela piscar em branco a cada aprovação, acerto ou filtro — e no
+      4G da estrada esse branco durava segundos.
+   2) cada pedido leva um número. Se você troca o filtro duas vezes rápido, a
+      resposta do pedido velho é descartada — é a regra da v49.5/v49.6: quem
+      manda na tela é o que está escolhido nela, não quem respondeu por último. */
+var DP_PEDIDO=0;
+function dpMostrarAtualizando(box){
+  var tem = !!(DP_DADOS && DP_DADOS.ok) || !!box.querySelector('table');
+  if(!tem){ box.innerHTML='<p class="sub">Carregando…</p>'; return; }
+  box.classList.add('dpEsperando');
+  if(!$('dpAtualizando')){
+    var a=document.createElement('div'); a.id='dpAtualizando';
+    a.innerHTML='<span>Atualizando…</span>'; box.insertBefore(a, box.firstChild);
+  }
+}
+function dpFimAtualizando(box){
+  box.classList.remove('dpEsperando');
+  var a=$('dpAtualizando'); if(a && a.parentNode) a.parentNode.removeChild(a);
+}
 function carregarDespesas(){
   var box=$('dpRel');
   if(!ENVIO_URL){ box.innerHTML='<p class="sub">Relatório indisponível: o envio para o Google não está configurado.</p>'; return; }
-  box.innerHTML='<p class="sub">Carregando…</p>';
+  var meuPedido = ++DP_PEDIDO;
+  dpMostrarAtualizando(box);
   var url=ENVIO_URL+'?acao=despesas&de='+($('dpDe').value||'')+'&ate='+($('dpAte').value||'')+souEu();
   /* Em branco NÃO quer dizer "todo mundo": quer dizer "o meu galho".
      Quem decide o galho é o servidor, lendo a planilha. Mexer no <select>
@@ -7778,6 +7806,8 @@ function carregarDespesas(){
   if(dpIncluir()) url+='&incluir='+dpIncluir();
   fetch(url).then(function(r){ return r.json(); })
     .then(function(res){
+      if(meuPedido!==DP_PEDIDO) return;   /* resposta velha: já pedimos outra coisa */
+      dpFimAtualizando(box);
       if(!res || !res.ok){
         box.innerHTML='<p class="sub">Não consegui carregar o relatório'+(res&&res.erro?': '+esc(res.erro):'')+
           '. Confira se o Apps Script está na versão nova (a que tem <code>acao=despesas</code>).</p>';
@@ -7785,7 +7815,11 @@ function carregarDespesas(){
       }
       DP_DADOS=res; renderDespesas(res);
     })
-    .catch(function(){ box.innerHTML='<p class="sub">Não consegui carregar o relatório. Verifique a conexão e a versão do Apps Script.</p>'; });
+    .catch(function(){
+      if(meuPedido!==DP_PEDIDO) return;
+      dpFimAtualizando(box);
+      box.innerHTML='<p class="sub">Não consegui carregar o relatório. Verifique a conexão e a versão do Apps Script.</p>';
+    });
 }
 
 /* Em aberto × acertado. A despesa reembolsada não some — muda de lista.
