@@ -902,6 +902,7 @@ html[data-fonte="grande"] .btn{font-size:15.5px}
           <select id="dpPor">
             <option value="">Data da despesa (a da nota)</option>
             <option value="lancamento">Data do lançamento (quando entrou no app)</option>
+            <option value="aprovacao">Data da aprovação (só as aprovadas)</option>
           </select>
         </div>
         <div><label>Incluir</label>
@@ -6614,7 +6615,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v49.9';
+var VERSAO_APP='v50';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
@@ -7762,7 +7763,9 @@ $('dpAtualizar').onclick=carregarDespesas;
 $('dpFiltro').onchange=carregarDespesas;
 $('dpPor').onchange=carregarDespesas;
 $('dpIncluir').onchange=carregarDespesas;
-function dpPor(){ var e=$('dpPor'); return e && e.value==='lancamento' ? 'lancamento' : ''; }
+function dpPor(){ var e=$('dpPor'); var v=e?e.value:''; return (v==='lancamento'||v==='aprovacao') ? v : ''; }
+/* v50: o rótulo da régua, para a tela e o WhatsApp dizerem a mesma coisa */
+function rotuloPor(por){ return por==='lancamento' ? ' (pela data de lançamento)' : por==='aprovacao' ? ' (pela data de aprovação)' : ''; }
 function dpIncluir(){ var e=$('dpIncluir'); var v=e?e.value:''; return (v==='aprovadas'||v==='aberto'||v==='acertadas')?v:''; }
 function rotuloIncluir(v){ return {aprovadas:'só aprovadas em aberto', aberto:'tudo em aberto', acertadas:'só as já acertadas'}[v]||''; }
 
@@ -7861,6 +7864,10 @@ function renderDespesas(r){
     h+='<p class="sub" style="margin:8px 0 0">Período pela <b>data de lançamento</b> (quando a despesa entrou no app). '+
        'A data grande de cada linha continua sendo a da nota; a de lançamento aparece ao lado.</p>';
   }
+  if(r.por==='aprovacao'){
+    h+='<p class="sub" style="margin:8px 0 0">Período pela <b>data de aprovação</b>: só despesas <b>aprovadas</b> entre '+dataBr(r.de)+' e '+dataBr(r.ate)+'. '+
+       'Questionadas e as que ainda esperam seu de acordo ficam fora neste modo. A data grande continua sendo a da nota; a de aprovação aparece ao lado.</p>';
+  }
   if(r.incluir){
     h+='<p class="sub" style="margin:8px 0 0">Mostrando <b>'+rotuloIncluir(r.incluir)+'</b>. '+
        'Os totais acima, o PDF, o recibo e o resumo para WhatsApp saem com exatamente estas despesas.</p>';
@@ -7953,6 +7960,7 @@ function renderDespesas(r){
        (i.estabelecimento&&i.estabelecimento!==i.referencia?' · '+esc(i.estabelecimento):'')+
        (i.obs?' · '+esc(i.obs):'')+(i.lidoIA?' · <b>lido do comprovante</b>':'')+
        (r.por==='lancamento' && i.lancadoEm ? ' · <span style="color:var(--navy)">lançada em '+dataBr(i.lancadoEm)+'</span>' : '')+
+       (r.por==='aprovacao' && i.decididoEm ? ' · <span style="color:var(--navy)">aprovada em '+dataBr(i.decididoEm)+'</span>' : '')+
        /* quem deu a baixa e quando: discreto, mas registrado */
        (i.reembolsada?'<br><span style="color:var(--navy);font-weight:700">reembolsada</span>'+
          (i.dataReembolso?' em '+esc(i.dataReembolso):'')+
@@ -8149,7 +8157,7 @@ $('dpZap').onclick=function(){
   if(!DP_DADOS || !DP_DADOS.lancamentos){ toast('Nada para resumir neste período.'); return; }
   var r=DP_DADOS, L=cabecalhoMsg();
   L.push('*DESPESAS*');
-  L.push(dataBr(r.de)+' a '+dataBr(r.ate)+(r.por==='lancamento'?' (pela data de lançamento)':'')+(r.incluir?' · '+rotuloIncluir(r.incluir):''));
+  L.push(dataBr(r.de)+' a '+dataBr(r.ate)+rotuloPor(r.por)+(r.incluir?' · '+rotuloIncluir(r.incluir):''));
   L.push('');
   L.push('Total: *'+brl(r.total)+'* em '+r.lancamentos+' lançamento(s)');
   L.push('Já acertado: *'+brl(r.totalAcertado||0)+'* ('+(r.nAcertado||0)+')');
