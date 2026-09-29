@@ -833,7 +833,7 @@ html[data-fonte="grande"] .btn{font-size:15.5px}
       <button class="tab" id="tabAgora"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg> Reunião</button>
       <button class="tab" id="tabDespesas"><svg class="ic" aria-hidden="true"><use href="#i-wallet"/></svg> Despesas</button>
       <button class="tab" id="tabHistorico"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg> Histórico</button>
-     <button class="tab" id="tabPainel"><svg class="ic" aria-hidden="true"><use href="#i-chart"/></svg> Painel</button>
+     <button class="tab" id="tabPainel" style="display:none"><svg class="ic" aria-hidden="true"><use href="#i-chart"/></svg> Painel</button>
     </div>
 
     <div id="viewDespesas" class="hidden">
@@ -8737,7 +8737,12 @@ syncNav();
  var b=document.getElementById('tabPainel'), ov=document.getElementById('ovPainel'),
      f=document.getElementById('ifrPainel'), x=document.getElementById('ovFechar');
  if(!b||!ov||!f||!x) return;
- function nomeDaSessao(){ try{ var s=JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); return (s&&s.nome)?s.nome:''; }catch(e){ return ''; } }
+ function sessao(){ try{ return JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); }catch(e){ return null; } }
+ function nomeDaSessao(){ var s=sessao(); return (s&&s.nome)?s.nome:''; }
+ /* so Coordenador e Supervisor enxergam a aba */
+ function podeVerPainel(){ var s=sessao(); var p=((s&&s.papel)||'').trim().toLowerCase(); return p==='coordenador'||p==='supervisor'; }
+ function sincronizarAba(){ var ver=podeVerPainel(); b.style.display = ver ? '' : 'none'; if(!ver){ ov.style.display='none'; document.body.style.overflow=''; } }
+ sincronizarAba(); setInterval(sincronizarAba, 1500);
  b.addEventListener('click', function(ev){
   ev.preventDefault(); ev.stopPropagation();
   var u=nomeDaSessao();
