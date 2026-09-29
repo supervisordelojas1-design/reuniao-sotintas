@@ -7,7 +7,7 @@
  * Troque o número da versão sempre que subir um index.html novo — é o que
  * faz o aparelho baixar a versão nova em vez de servir a antiga.
  */
-var VERSAO = 'ast-v56';
+var VERSAO = 'ast-v57';
 var CASCA  = ['./', './index.html', './agenda.html', './manifest.json'];
 
 self.addEventListener('install', function (e) {
@@ -24,6 +24,22 @@ self.addEventListener('activate', function (e) {
 });
 
 self.addEventListener('fetch', function (e) {
+  /* PAGINAS SEMPRE DA REDE: o app nunca mais serve tela velha.
+     O cache fica so como socorro quando nao ha sinal. */
+  if (e.request.mode === "navigate") {
+    e.respondWith(
+      fetch(e.request).catch(function () {
+        return caches.match(e.request).then(function (r) {
+          if (r) return r;
+          return caches.match("index.html").then(function (r2) {
+            return r2 || caches.match("./");
+          });
+        });
+      })
+    );
+    return;
+  }
+
   var req = e.request;
   if (req.method !== 'GET') return;                       // POST nunca é cacheado
   var url = new URL(req.url);
