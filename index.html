@@ -833,6 +833,7 @@ html[data-fonte="grande"] .btn{font-size:15.5px}
       <button class="tab" id="tabAgora"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg> Reunião</button>
       <button class="tab" id="tabDespesas"><svg class="ic" aria-hidden="true"><use href="#i-wallet"/></svg> Despesas</button>
       <button class="tab" id="tabHistorico"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg> Histórico</button>
+     <button class="tab" id="tabPainel"><svg class="ic" aria-hidden="true"><use href="#i-chart"/></svg> Painel</button>
     </div>
 
     <div id="viewDespesas" class="hidden">
@@ -8722,6 +8723,33 @@ var LS_ABA='sotintas_aba_v1';
   setModo(alvo);
 })();
 syncNav();
+</script>
+<!-- ===== PAINEL DE COORDENACAO (aba embutida) ===== -->
+<div id="ovPainel" style="position:fixed;inset:0;z-index:99999;background:#0F2B46;display:none;flex-direction:column">
+ <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;color:#fff;font:600 14px system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
+  <button id="ovFechar" style="border:0;border-radius:8px;padding:9px 13px;background:#FFD100;color:#0F2B46;font:inherit;cursor:pointer">&larr; Voltar ao Assistente</button>
+  <span style="opacity:.85">Painel de Coordenacao</span>
+ </div>
+ <iframe id="ifrPainel" title="Painel de Coordenacao" style="flex:1;width:100%;border:0;background:#EEF1F5"></iframe>
+</div>
+<script>
+(function(){
+ var b=document.getElementById('tabPainel'), ov=document.getElementById('ovPainel'),
+     f=document.getElementById('ifrPainel'), x=document.getElementById('ovFechar');
+ if(!b||!ov||!f||!x) return;
+ function nomeDaSessao(){ try{ var s=JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); return (s&&s.nome)?s.nome:''; }catch(e){ return ''; } }
+ b.addEventListener('click', function(ev){
+  ev.preventDefault(); ev.stopPropagation();
+  var u=nomeDaSessao();
+  if(f.getAttribute('data-u')!==u || !f.getAttribute('src')){
+   f.setAttribute('src','painel.html'+(u?('?u='+encodeURIComponent(u)):''));
+   f.setAttribute('data-u',u);
+  }
+  ov.style.display='flex'; document.body.style.overflow='hidden';
+ }, true);
+ x.addEventListener('click', function(){ ov.style.display='none'; document.body.style.overflow=''; });
+ document.addEventListener('keydown', function(e){ if(e.key==='Escape' && ov.style.display!=='none') x.click(); });
+})();
 </script>
 </body>
 </html>
