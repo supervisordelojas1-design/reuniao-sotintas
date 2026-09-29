@@ -8758,5 +8758,21 @@ syncNav();
  document.addEventListener('keydown', function(e){ if(e.key==='Escape' && ov.style.display!=='none') x.click(); });
 })();
 </script>
+
+<!-- ===== AUTO-ATUALIZACAO DO APP ===== -->
+<script>
+(function(){
+ try{
+  if(!("serviceWorker" in navigator)) return;
+  var recarregou=false;
+  navigator.serviceWorker.addEventListener("controllerchange", function(){
+   if(recarregou) return; recarregou=true; location.reload();
+  });
+  function checar(){ navigator.serviceWorker.getRegistration().then(function(r){ if(r) r.update(); }).catch(function(){}); }
+  setTimeout(checar, 1500);
+  document.addEventListener("visibilitychange", function(){ if(!document.hidden) checar(); });
+ }catch(e){}
+})();
+</script>
 </body>
 </html>
