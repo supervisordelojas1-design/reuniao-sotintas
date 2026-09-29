@@ -1,30 +1,50 @@
 <!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>Diagnostico do Painel</title>
-<style>body{margin:0;background:#0F2B46;color:#fff;font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:20px}h1{font-size:19px;margin:0 0 14px}table{width:100%;border-collapse:collapse;font-size:14px}td{padding:8px 6px;border-bottom:1px solid rgba(255,255,255,.15);vertical-align:top}td:first-child{opacity:.75;width:45%}b{color:#FFD100}.ok{color:#7BE495}.no{color:#FF8A80}a{display:inline-block;margin-top:18px;padding:12px 18px;border-radius:10px;background:#FFD100;color:#0F2B46;font-weight:700;text-decoration:none}</style></head><body>
-<h1>Diagnostico da aba Painel</h1><table id="t"></table><div><a href="./">Voltar ao app</a></div>
+<style>body{margin:0;background:#0F2B46;color:#fff;font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:20px}
+h1{font-size:19px;margin:0 0 14px}table{width:100%;border-collapse:collapse;font-size:14px}
+td{padding:8px 6px;border-bottom:1px solid rgba(255,255,255,.15);vertical-align:top}td:first-child{opacity:.75;width:48%}
+b{color:#FFD100}.ok{color:#7BE495}.no{color:#FF8A80}
+a{display:inline-block;margin-top:18px;padding:12px 18px;border-radius:10px;background:#FFD100;color:#0F2B46;font-weight:700;text-decoration:none}</style>
+</head><body><h1>Diagnostico da aba Painel</h1><table id="t"></table><div><a href="./">Voltar ao app</a></div>
 <script>
-(async function(){
 var linhas=[];
-function add(k,v,bom){linhas.push("<tr><td>"+k+"</td><td class=\""+(bom===true?"ok":bom===false?"no":"")+"\">"+v+"</td></tr>");}
-add("Largura da tela", innerWidth+" px");
-var s=null,bruto=""; try{ bruto=localStorage.getItem("sotintas_sessao_v1")||""; s=JSON.parse(bruto||"null"); }catch(e){}
-add("Tem login salvo", s?"SIM":"NAO", !!s);
-add("Nome no login", (s&&s.nome)?s.nome:"(vazio)", !!(s&&s.nome));
-var p=(s&&s.papel)?String(s.papel):"";
-add("Papel no login", p?("<b>"+p+"</b>"):"(vazio)", !!p);
-add("Campos do login", s?Object.keys(s).join(", "):"-");
-var chaves=[]; try{ for(var i=0;i<localStorage.length;i++){ chaves.push(localStorage.key(i)); } }catch(e){}
-add("Chaves guardadas", chaves.join("<br>")||"-");
-try{ var cs=await caches.keys(); add("Cache no aparelho", cs.join(", ")||"-"); }catch(e){}
-try{ var t=await fetch("index.html?x="+Date.now(),{cache:"reload"}).then(function(r){return r.text()});
- var m=t.match(/Meet\s*&middot;\s*v(\d+)/)||t.match(/Meet[^<]{0,12}v(\d+)/);
- add("Versao no servidor", m?("v"+m[1]):"nao identificada");
- add("Tem a aba no codigo", t.indexOf("tabPainel")>=0?"SIM":"NAO", t.indexOf("tabPainel")>=0);
- add("Trava tolerante (v56)", t.indexOf("sessao antiga sem papel")>=0?"SIM":"NAO", t.indexOf("sessao antiga sem papel")>=0);
-}catch(e){ add("Leitura do servidor","falhou: "+e.message,false); }
-var pl=p.trim().toLowerCase();
-var deveria = s ? (pl==="" ? true : (pl.indexOf("coorden")>=0||pl.indexOf("supervis")>=0)) : false;
-add("<b>Deveria mostrar a aba?</b>", deveria?"<b>SIM</b>":"<b>NAO</b>", deveria);
-document.getElementById("t").innerHTML=linhas.join("");
+function add(k,val,bom){ var c = bom===true ? "ok" : (bom===false ? "no" : ""); linhas.push("<tr><td>"+k+"</td><td class=\""+c+"\">"+val+"</td></tr>"); pinta(); }
+function pinta(){ document.getElementById("t").innerHTML = linhas.join(""); }
+(async function(){
+ add("Largura da tela", innerWidth+" px");
+ var s=null; try{ s=JSON.parse(localStorage.getItem("sotintas_sessao_v1")||"null"); }catch(e){}
+ add("Login salvo", s?("<b>"+(s.nome||"?")+"</b> / "+(s.papel||"sem papel")):"NAO", !!s);
+ try{ var cs=await caches.keys(); add("Cache no aparelho", cs.join(", ")||"-"); }catch(e){}
+ var fr=document.createElement("iframe");
+ fr.style.cssText="position:fixed;left:-9999px;top:0;width:"+innerWidth+"px;height:1000px;border:0";
+ fr.src="index.html?medir=1";
+ document.body.appendChild(fr);
+ fr.onload=function(){ setTimeout(medir,2500); };
+ function medir(){
+  try{
+   var D=fr.contentDocument, W=fr.contentWindow;
+   var b=D.getElementById("tabPainel"), bar=D.querySelector(".tabs");
+   add("--- MEDINDO O APP POR DENTRO ---","");
+   add("Botao da aba existe", b?"SIM":"NAO", !!b);
+   if(b){
+    var e=W.getComputedStyle(b), r=b.getBoundingClientRect();
+    add("display", e.display, e.display!=="none");
+    add("visibility / opacity", e.visibility+" / "+e.opacity);
+    add("tamanho", Math.round(r.width)+" x "+Math.round(r.height), r.width>0&&r.height>0);
+    add("posicao x / y", Math.round(r.x)+" / "+Math.round(r.y));
+    var cabe = r.width>0 && r.x>=0 && (r.x+r.width)<=innerWidth;
+    add("CABE NA TELA?", cabe?"<b>SIM</b>":"<b>NAO - fica fora</b>", cabe);
+   }
+   if(bar){
+    var cb=W.getComputedStyle(bar); var rb=bar.getBoundingClientRect();
+    add("barra quebra linha?", cb.flexWrap, cb.flexWrap==="wrap");
+    add("barra rola de lado?", (bar.scrollWidth>bar.clientWidth+2)?("SIM ("+bar.scrollWidth+" em "+bar.clientWidth+")"):"NAO", !(bar.scrollWidth>bar.clientWidth+2));
+    var tops={}; var n=0; for(var i=0;i<bar.children.length;i++){ var tp=Math.round(bar.children[i].getBoundingClientRect().top); if(!tops[tp]){tops[tp]=1;n++;} }
+    add("linhas de aba", n);
+    var nomes=[]; for(var j=0;j<bar.children.length;j++){ nomes.push(bar.children[j].textContent.trim()); }
+    add("abas na barra", nomes.join(" | "));
+   }
+  }catch(err){ add("Falha ao medir", err.message, false); }
+ }
 })();
 </script></body></html>
