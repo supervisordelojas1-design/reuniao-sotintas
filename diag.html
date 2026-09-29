@@ -1,0 +1,30 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Diagnostico do Painel</title>
+<style>body{margin:0;background:#0F2B46;color:#fff;font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:20px}h1{font-size:19px;margin:0 0 14px}table{width:100%;border-collapse:collapse;font-size:14px}td{padding:8px 6px;border-bottom:1px solid rgba(255,255,255,.15);vertical-align:top}td:first-child{opacity:.75;width:45%}b{color:#FFD100}.ok{color:#7BE495}.no{color:#FF8A80}a{display:inline-block;margin-top:18px;padding:12px 18px;border-radius:10px;background:#FFD100;color:#0F2B46;font-weight:700;text-decoration:none}</style></head><body>
+<h1>Diagnostico da aba Painel</h1><table id="t"></table><div><a href="./">Voltar ao app</a></div>
+<script>
+(async function(){
+var linhas=[];
+function add(k,v,bom){linhas.push("<tr><td>"+k+"</td><td class=\""+(bom===true?"ok":bom===false?"no":"")+"\">"+v+"</td></tr>");}
+add("Largura da tela", innerWidth+" px");
+var s=null,bruto=""; try{ bruto=localStorage.getItem("sotintas_sessao_v1")||""; s=JSON.parse(bruto||"null"); }catch(e){}
+add("Tem login salvo", s?"SIM":"NAO", !!s);
+add("Nome no login", (s&&s.nome)?s.nome:"(vazio)", !!(s&&s.nome));
+var p=(s&&s.papel)?String(s.papel):"";
+add("Papel no login", p?("<b>"+p+"</b>"):"(vazio)", !!p);
+add("Campos do login", s?Object.keys(s).join(", "):"-");
+var chaves=[]; try{ for(var i=0;i<localStorage.length;i++){ chaves.push(localStorage.key(i)); } }catch(e){}
+add("Chaves guardadas", chaves.join("<br>")||"-");
+try{ var cs=await caches.keys(); add("Cache no aparelho", cs.join(", ")||"-"); }catch(e){}
+try{ var t=await fetch("index.html?x="+Date.now(),{cache:"reload"}).then(function(r){return r.text()});
+ var m=t.match(/Meet\s*&middot;\s*v(\d+)/)||t.match(/Meet[^<]{0,12}v(\d+)/);
+ add("Versao no servidor", m?("v"+m[1]):"nao identificada");
+ add("Tem a aba no codigo", t.indexOf("tabPainel")>=0?"SIM":"NAO", t.indexOf("tabPainel")>=0);
+ add("Trava tolerante (v56)", t.indexOf("sessao antiga sem papel")>=0?"SIM":"NAO", t.indexOf("sessao antiga sem papel")>=0);
+}catch(e){ add("Leitura do servidor","falhou: "+e.message,false); }
+var pl=p.trim().toLowerCase();
+var deveria = s ? (pl==="" ? true : (pl.indexOf("coorden")>=0||pl.indexOf("supervis")>=0)) : false;
+add("<b>Deveria mostrar a aba?</b>", deveria?"<b>SIM</b>":"<b>NAO</b>", deveria);
+document.getElementById("t").innerHTML=linhas.join("");
+})();
+</script></body></html>
