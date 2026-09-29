@@ -6616,7 +6616,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v55';
+var VERSAO_APP='v56';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
@@ -7765,7 +7765,7 @@ $('dpFiltro').onchange=carregarDespesas;
 $('dpPor').onchange=carregarDespesas;
 $('dpIncluir').onchange=carregarDespesas;
 function dpPor(){ var e=$('dpPor'); var v=e?e.value:''; return (v==='lancamento'||v==='aprovacao') ? v : ''; }
-/* v55: o rótulo da régua, para a tela e o WhatsApp dizerem a mesma coisa */
+/* v56: o rótulo da régua, para a tela e o WhatsApp dizerem a mesma coisa */
 function rotuloPor(por){ return por==='lancamento' ? ' (pela data de lançamento)' : por==='aprovacao' ? ' (pela data de aprovação)' : ''; }
 function dpIncluir(){ var e=$('dpIncluir'); var v=e?e.value:''; return (v==='aprovadas'||v==='aberto'||v==='acertadas')?v:''; }
 function rotuloIncluir(v){ return {aprovadas:'só aprovadas em aberto', aberto:'tudo em aberto', acertadas:'só as já acertadas'}[v]||''; }
@@ -8740,7 +8740,10 @@ syncNav();
  function sessao(){ try{ return JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); }catch(e){ return null; } }
  function nomeDaSessao(){ var s=sessao(); return (s&&s.nome)?s.nome:''; }
  /* so Coordenador e Supervisor enxergam a aba */
- function podeVerPainel(){ var s=sessao(); var p=((s&&s.papel)||'').trim().toLowerCase(); return p==='coordenador'||p==='supervisor'; }
+ function podeVerPainel(){ var s=sessao(); if(!s) return false;
+  var p=((s&&s.papel)||'').trim().toLowerCase();
+  if(!p) return true;                      /* sessao antiga sem papel: mostra e deixa o servidor decidir */
+  return p.indexOf('coorden')>=0 || p.indexOf('supervis')>=0; }
  function sincronizarAba(){ var ver=podeVerPainel(); b.style.display = ver ? '' : 'none'; if(!ver){ ov.style.display='none'; document.body.style.overflow=''; } }
  sincronizarAba(); setInterval(sincronizarAba, 1500);
  /* na primeira vez, rola a barra ate a aba nova para ela ser vista */
