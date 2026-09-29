@@ -1920,7 +1920,7 @@ html[data-fonte="grande"] .btn{font-size:15.5px}
   <button data-nav="rotina"><span class="bi"><svg class="ic" aria-hidden="true"><use href="#i-car"/></svg></span>Rotina</button>
   <button data-nav="agora"><span class="bi"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg></span>Reunião</button>
   <button data-nav="despesas"><span class="bi"><svg class="ic" aria-hidden="true"><use href="#i-wallet"/></svg></span>Despesas</button>
-  <button data-nav="historico"><span class="bi"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg></span>Histórico</button>
+  <button data-nav="historico"><span class="bi"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg></span>Histórico</button><button data-nav="painel" id="bnavPainel" style="display:none"><span class="bi"><svg class="ic" aria-hidden="true"><use href="#i-chart"></use></svg></span>Painel</button>
 </nav>
 
 <!-- avançar/voltar fixos durante a reunião (só no celular) -->
@@ -6616,7 +6616,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v56';
+var VERSAO_APP='v58';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
@@ -7765,7 +7765,7 @@ $('dpFiltro').onchange=carregarDespesas;
 $('dpPor').onchange=carregarDespesas;
 $('dpIncluir').onchange=carregarDespesas;
 function dpPor(){ var e=$('dpPor'); var v=e?e.value:''; return (v==='lancamento'||v==='aprovacao') ? v : ''; }
-/* v56: o rótulo da régua, para a tela e o WhatsApp dizerem a mesma coisa */
+/* v58: o rótulo da régua, para a tela e o WhatsApp dizerem a mesma coisa */
 function rotuloPor(por){ return por==='lancamento' ? ' (pela data de lançamento)' : por==='aprovacao' ? ' (pela data de aprovação)' : ''; }
 function dpIncluir(){ var e=$('dpIncluir'); var v=e?e.value:''; return (v==='aprovadas'||v==='aberto'||v==='acertadas')?v:''; }
 function rotuloIncluir(v){ return {aprovadas:'só aprovadas em aberto', aberto:'tudo em aberto', acertadas:'só as já acertadas'}[v]||''; }
@@ -8745,7 +8745,10 @@ syncNav();
   if(!p) return true;                      /* sessao antiga sem papel: mostra e deixa o servidor decidir */
   return p.indexOf('coorden')>=0 || p.indexOf('supervis')>=0; }
  function sincronizarAba(){ var ver=podeVerPainel(); b.style.display = ver ? '' : 'none'; if(!ver){ ov.style.display='none'; document.body.style.overflow=''; } }
- sincronizarAba(); setInterval(sincronizarAba, 1500);
+ var b2=document.getElementById("bnavPainel");
+ if(b2){ b2.addEventListener("click", function(ev){ ev.preventDefault(); ev.stopPropagation(); b.click(); }, true); }
+ function sincronizarTudo(){ sincronizarAba(); if(b2){ b2.style.display = podeVerPainel() ? "" : "none"; } }
+ sincronizarTudo(); setInterval(sincronizarTudo, 1500);
  /* na primeira vez, rola a barra ate a aba nova para ela ser vista */
  try{ if(!localStorage.getItem('painel_visto_v1')){ var t0=setInterval(function(){ if(b.offsetParent){ var bar=b.parentElement; if(bar&&bar.scrollWidth>bar.clientWidth){ bar.scrollTo({left:bar.scrollWidth,behavior:'smooth'}); } localStorage.setItem('painel_visto_v1','1'); clearInterval(t0); } },1000); setTimeout(function(){clearInterval(t0)},15000); } }catch(e){}
  b.addEventListener('click', function(ev){
