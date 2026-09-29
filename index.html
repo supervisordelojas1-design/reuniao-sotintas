@@ -6616,7 +6616,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v50';
+var VERSAO_APP='v53';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
@@ -7765,7 +7765,7 @@ $('dpFiltro').onchange=carregarDespesas;
 $('dpPor').onchange=carregarDespesas;
 $('dpIncluir').onchange=carregarDespesas;
 function dpPor(){ var e=$('dpPor'); var v=e?e.value:''; return (v==='lancamento'||v==='aprovacao') ? v : ''; }
-/* v50: o rótulo da régua, para a tela e o WhatsApp dizerem a mesma coisa */
+/* v53: o rótulo da régua, para a tela e o WhatsApp dizerem a mesma coisa */
 function rotuloPor(por){ return por==='lancamento' ? ' (pela data de lançamento)' : por==='aprovacao' ? ' (pela data de aprovação)' : ''; }
 function dpIncluir(){ var e=$('dpIncluir'); var v=e?e.value:''; return (v==='aprovadas'||v==='aberto'||v==='acertadas')?v:''; }
 function rotuloIncluir(v){ return {aprovadas:'só aprovadas em aberto', aberto:'tudo em aberto', acertadas:'só as já acertadas'}[v]||''; }
