@@ -833,7 +833,7 @@ html[data-fonte="grande"] .btn{font-size:15.5px}
       <button class="tab" id="tabAgora"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg> Reunião</button>
       <button class="tab" id="tabDespesas"><svg class="ic" aria-hidden="true"><use href="#i-wallet"/></svg> Despesas</button>
       <button class="tab" id="tabHistorico"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg> Histórico</button>
-     <button class="tab" id="tabPainel" style="display:none"><svg class="ic" aria-hidden="true"><use href="#i-chart"/></svg> Painel</button>
+     <button class="tab" id="tabPainel" style="display:none;box-shadow:inset 0 -3px 0 #FFD100;font-weight:700"><svg class="ic" aria-hidden="true"><use href="#i-chart"/></svg> Painel</button>
     </div>
 
     <div id="viewDespesas" class="hidden">
@@ -8743,6 +8743,8 @@ syncNav();
  function podeVerPainel(){ var s=sessao(); var p=((s&&s.papel)||'').trim().toLowerCase(); return p==='coordenador'||p==='supervisor'; }
  function sincronizarAba(){ var ver=podeVerPainel(); b.style.display = ver ? '' : 'none'; if(!ver){ ov.style.display='none'; document.body.style.overflow=''; } }
  sincronizarAba(); setInterval(sincronizarAba, 1500);
+ /* na primeira vez, rola a barra ate a aba nova para ela ser vista */
+ try{ if(!localStorage.getItem('painel_visto_v1')){ var t0=setInterval(function(){ if(b.offsetParent){ var bar=b.parentElement; if(bar&&bar.scrollWidth>bar.clientWidth){ bar.scrollTo({left:bar.scrollWidth,behavior:'smooth'}); } localStorage.setItem('painel_visto_v1','1'); clearInterval(t0); } },1000); setTimeout(function(){clearInterval(t0)},15000); } }catch(e){}
  b.addEventListener('click', function(ev){
   ev.preventDefault(); ev.stopPropagation();
   var u=nomeDaSessao();
