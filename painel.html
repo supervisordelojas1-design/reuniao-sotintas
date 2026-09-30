@@ -316,7 +316,7 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
   <div class="plogo">ST</div>
   <h2>Painel de Coordenação</h2>
   <p>Entre com o mesmo nome e PIN do Assistente ST</p>
-  <div style="font-size:10px;color:#8fa0b8;margin:-10px 0 12px;font-weight:700">versão 32</div>
+  <div style="font-size:10px;color:#8fa0b8;margin:-10px 0 12px;font-weight:700">versão 33</div>
   <input id="plNome" placeholder="Seu nome" autocomplete="username">
   <input id="plPin" placeholder="PIN" type="password" inputmode="numeric" maxlength="6" autocomplete="current-password">
   <button id="plBtn" onclick="fazerLogin()">Entrar</button>
@@ -328,7 +328,7 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
   <div class="hdtop">
    <div class="brand">
     <div class="logo">ST</div>
-    <div><h1 id="hTit">Coordenação de Supervisão</h1><span id="hSub">Só Tintas · Painel de Performance · <b style="color:#FFD100">v32</b></span></div>
+    <div><h1 id="hTit">Coordenação de Supervisão</h1><span id="hSub">Só Tintas · Painel de Performance · <b style="color:#FFD100">v33</b></span></div>
    </div>
    <div class="per"><b id="hPer">—</b><span id="hDias">—</span><span id="btnUp" style="display:none" onclick="abrirUpload()"> · ⚙️ atualizar dados</span><span id="lnkSair" style="display:none" onclick="sairPainel()"> · sair</span></div>
   </div>
@@ -470,11 +470,21 @@ const ORC={};
 (function(){
  const O=_.O||{}, base=new Date(P.dataBase+'T12:00');
  function faixa(d){ return d<=7?'Q':(d<=15?'M':'F') }
+ /* a data pode chegar como texto aaaa-mm-dd, como dd/mm/aaaa ou ja
+    convertida em objeto de data pela planilha — aceita os tres */
+ function dOrc(x){
+  if(x instanceof Date) return x;
+  var s=String(x||''), m;
+  if((m=/^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(s))) return new Date(+m[1],+m[2]-1,+m[3],12,0,0);
+  if((m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(s))) return new Date(+m[3],+m[2]-1,+m[1],12,0,0);
+  var d=new Date(s); return isNaN(d.getTime())?null:d;
+ }
+ function fmtD(d){ return d ? d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2) : '' }
  Object.keys(O).forEach(function(cod){
   const lista=O[cod].map(function(r){
-   const dt=new Date(r[2]+'T12:00');
-   const dias=Math.max(0,Math.round((base-dt)/86400000));
-   return {vend:r[0], comMeta:!!r[1], data:r[2], dias:dias, faixa:faixa(dias),
+   const dt=dOrc(r[2]);
+   const dias=dt?Math.max(0,Math.round((base-dt)/86400000)):0;
+   return {vend:r[0], comMeta:!!r[1], data:fmtD(dt), dias:dias, faixa:faixa(dias),
            cli:r[3], tel:r[4], valor:r[5]};
   });
   ORC[cod]=grupaOrc(lista); ORC[('000'+cod).slice(-3)]=ORC[cod];
