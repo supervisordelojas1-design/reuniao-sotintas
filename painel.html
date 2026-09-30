@@ -316,7 +316,7 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
   <div class="plogo">ST</div>
   <h2>Painel de Coordenação</h2>
   <p>Entre com o mesmo nome e PIN do Assistente ST</p>
-  <div style="font-size:10px;color:#8fa0b8;margin:-10px 0 12px;font-weight:700">versão 31</div>
+  <div style="font-size:10px;color:#8fa0b8;margin:-10px 0 12px;font-weight:700">versão 32</div>
   <input id="plNome" placeholder="Seu nome" autocomplete="username">
   <input id="plPin" placeholder="PIN" type="password" inputmode="numeric" maxlength="6" autocomplete="current-password">
   <button id="plBtn" onclick="fazerLogin()">Entrar</button>
@@ -328,7 +328,7 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
   <div class="hdtop">
    <div class="brand">
     <div class="logo">ST</div>
-    <div><h1 id="hTit">Coordenação de Supervisão</h1><span id="hSub">Só Tintas · Painel de Performance · <b style="color:#FFD100">v31</b></span></div>
+    <div><h1 id="hTit">Coordenação de Supervisão</h1><span id="hSub">Só Tintas · Painel de Performance · <b style="color:#FFD100">v32</b></span></div>
    </div>
    <div class="per"><b id="hPer">—</b><span id="hDias">—</span><span id="btnUp" style="display:none" onclick="abrirUpload()"> · ⚙️ atualizar dados</span><span id="lnkSair" style="display:none" onclick="sairPainel()"> · sair</span></div>
   </div>
@@ -460,6 +460,57 @@ function grupaCart(cli,n){return {meses:n,cli:cli,
  });
 })();
 const ORF='Sem vendedor ativo';
+/* ---------- ORCAMENTOS EM ABERTO ----------
+   Temperatura medida contra a DATA_BASE do periodo, nunca contra o dia de
+   hoje: assim um morno de setembro nao vira frio so porque o mes virou. */
+const ORCG={Q:['Quente','Ate 7 dias — o cliente ainda lembra do preco','#E53935'],
+            M:['Morno','De 8 a 15 dias — esfriando, ligacao ainda salva','#D98B00'],
+            F:['Frio','Mais de 15 dias — provavelmente ja comprou em outro lugar','#5A6B7D']};
+const ORC={};
+(function(){
+ const O=_.O||{}, base=new Date(P.dataBase+'T12:00');
+ function faixa(d){ return d<=7?'Q':(d<=15?'M':'F') }
+ Object.keys(O).forEach(function(cod){
+  const lista=O[cod].map(function(r){
+   const dt=new Date(r[2]+'T12:00');
+   const dias=Math.max(0,Math.round((base-dt)/86400000));
+   return {vend:r[0], comMeta:!!r[1], data:r[2], dias:dias, faixa:faixa(dias),
+           cli:r[3], tel:r[4], valor:r[5]};
+  });
+  ORC[cod]=grupaOrc(lista); ORC[('000'+cod).slice(-3)]=ORC[cod];
+  if(!isNaN(Number(cod))) ORC[String(Number(cod))]=ORC[cod];
+ });
+})();
+function grupaOrc(l){
+ const ord=function(a,b){return b.valor-a.valor};
+ const vals=l.map(x=>x.valor).sort(function(a,b){return a-b});
+ const med=vals.length?vals[Math.floor(vals.length/2)]:0;
+ const maior=l.reduce(function(a,x){return (!a||x.valor>a.valor)?x:a},null);
+ const o={itens:l, total:l.reduce(function(a,x){return a+x.valor},0), mediana:med, maior:maior,
+   Q:l.filter(x=>x.faixa=='Q').sort(ord), M:l.filter(x=>x.faixa=='M').sort(ord),
+   F:l.filter(x=>x.faixa=='F').sort(ord),
+   ger:l.filter(x=>!x.comMeta).sort(ord)};
+ o.V={};
+ l.forEach(function(x){ (o.V[x.vend]=o.V[x.vend]||[]).push(x) });
+ Object.keys(o.V).forEach(function(v){ o.V[v]=grupaOrcSimples(o.V[v]) });
+ return o;
+}
+function grupaOrcSimples(l){
+ const ord=function(a,b){return b.valor-a.valor};
+ const vals=l.map(x=>x.valor).sort(function(a,b){return a-b});
+ return {itens:l, total:l.reduce(function(a,x){return a+x.valor},0),
+   mediana:vals.length?vals[Math.floor(vals.length/2)]:0,
+   maior:l.reduce(function(a,x){return (!a||x.valor>a.valor)?x:a},null),
+   Q:l.filter(x=>x.faixa=='Q').sort(ord), M:l.filter(x=>x.faixa=='M').sort(ord),
+   F:l.filter(x=>x.faixa=='F').sort(ord), ger:[], V:{}};
+}
+/* soma os orcamentos de varias lojas (regiao ou rede) */
+function OSoma(cods){
+ let l=[];
+ cods.forEach(function(c){ const o=ORC[c]||ORC[('000'+c).slice(-3)]; if(o) l=l.concat(o.itens) });
+ return l.length?grupaOrc(l):null;
+}
+function OL(cod){return ORC[cod]||ORC[('000'+cod).slice(-3)]||ORC[String(Number(cod))]||null}
 /* busca tolerante ao formato do codigo */
 function KL(cod){return CART[cod]||CART[('000'+cod).slice(-3)]||CART[String(Number(cod))]||null}
 /* carteira ativa: do vendedor, se houver um selecionado; senao a da loja */
@@ -499,7 +550,7 @@ else PERFIS.push({v:'sup:'+LOCK,t:'🧭 Minha região — '+LOCK});
 D.lojas.slice().filter(l=>!LOCK||l.sup==LOCK).sort((a,b)=>a.cod.localeCompare(b.cod))
  .forEach(l=>PERFIS.push({v:'loja:'+l.cod,t:'🏪 Gerente — '+l.cod+' '+l.nome}));
 
-let ST={perfil:'geral',view:'geral',sup:null,loja:null,vend:null,ind:null,nvT:null,nvN:null,cg:'POS'};
+let ST={perfil:'geral',view:'geral',sup:null,loja:null,vend:null,ovend:null,og:'F',ind:null,nvT:null,nvN:null,cg:'POS'};
 
 /* ---------- persistencia local (F3 migra p/ planilha) ---------- */
 const KEY='stcoord_v1';
@@ -660,7 +711,93 @@ function vExp(v,i,ref){
   <div class="indc"><div class="l">$ Ticket Médio CPF</div><div class="v">${BRL(I.ticket)}</div>${delta(I.ticket,ref&&ref.I.ticket)}</div>
   <div class="indc"><div class="l">% Desconto CPF</div><div class="v">${PPCT(I.descCPF)}</div>${delta(I.descCPF,ref&&ref.I.descCPF,true)}</div>
   <div class="indc"><div class="l">Atendimentos</div><div class="v">${NUM(I.atend)}</div><div class="s">no mês</div></div>
- </div>${cartBox(((KL(ST.loja)||{}).V||{})[v.nome],'Carteira de clientes de '+v.nome,v.nome)}</div>`}
+ </div>${orcBox(((OL(ST.loja)||{}).V||{})[v.nome],'Orçamentos em aberto de '+v.nome,v.rest,v.nome)}${cartBox(((KL(ST.loja)||{}).V||{})[v.nome],'Carteira de clientes de '+v.nome,v.nome)}</div>`}
+
+/* bloco de orcamentos em aberto — rede, regiao, loja e vendedor */
+function orcBox(O,titulo,escopoFalta,chave){
+ if(!O||!O.itens.length) return '';
+ const alvo=chave?`goOrc('${esc(chave).replace(/'/g,"")}','`:`goOrc(null,'`;
+ const pesoMaior=O.maior&&O.total?O.maior.valor/O.total:0;
+ let h=`<div class="grp"><div class="grph"><span class="tg cnpj">FUNIL</span><h3>${esc(titulo)}</h3>
+  <span class="cnt">${O.itens.length} propostas · típico ${BRL(O.mediana)}</span></div><div class="ind">
+  <div class="indc cl" onclick="${alvo}Q')"><div class="l">🔴 Quente · até 7 dias</div><div class="v" style="color:#E53935">${O.Q.length}</div><div class="s">${BRL(O.Q.reduce((a,c)=>a+c.valor,0))}</div></div>
+  <div class="indc cl" onclick="${alvo}M')"><div class="l">🟠 Morno · 8 a 15 dias</div><div class="v" style="color:#D98B00">${O.M.length}</div><div class="s">${BRL(O.M.reduce((a,c)=>a+c.valor,0))}</div></div>
+  <div class="indc cl" onclick="${alvo}F')"><div class="l">⚫ Frio · mais de 15 dias</div><div class="v" style="color:#5A6B7D">${O.F.length}</div><div class="s">${BRL(O.F.reduce((a,c)=>a+c.valor,0))}</div></div>
+  <div class="indc"><div class="l">Total em aberto</div><div class="v">${BRL(O.total)}</div><div class="s">${O.ger.length?BRL(O.ger.reduce((a,c)=>a+c.valor,0))+' de gerência':'todos com meta'}</div></div>
+ </div>`;
+ if(escopoFalta&&escopoFalta>0) h+=`<div class="ppleg" style="padding:0 16px 12px">Faltam <b>${BRL(escopoFalta)}</b> para a meta e há <b>${BRL(O.total)}</b> em proposta — <b>${(O.total/escopoFalta*100).toFixed(0)}%</b> do que falta.</div>`;
+ if(pesoMaior>=0.25) h+=`<div class="alert" style="margin:0 14px 14px"><span>⚠️</span><span>Um único orçamento — <b>${esc(O.maior.cli.replace(/^\d+-/,''))}</b>, ${BRL(O.maior.valor)}, parado há ${O.maior.dias} dias — vale <b>${(pesoMaior*100).toFixed(0)}%</b> de todo o valor aqui. Sem ele sobram ${BRL(O.total-O.maior.valor)} pulverizados.</span></div>`;
+ return h+`</div>`;
+}
+function goOrc(v,g){ST.ovend=v||null;ST.view='orc';ST.og=g||'F';render();window.scrollTo({top:0,behavior:'smooth'})}
+function OAT(){
+ if(ST.loja){const o=OL(ST.loja); if(!o) return null;
+  if(ST.ovend&&o.V&&o.V[ST.ovend]) return o.V[ST.ovend]; return o}
+ if(ST.sup) return OSoma(D.lojas.filter(l=>l.sup==ST.sup).map(l=>l.cod));
+ return OSoma(D.lojas.map(l=>l.cod));
+}
+function vOrc(){
+ const O=OAT();
+ if(!O) return btnVoltar()+'<div class="sec"><div class="empty">Sem orçamentos carregados para este escopo.</div></div>';
+ const g=ST.og||'F', L=O[g]||[], info=ORCG[g];
+ const alvo=ST.ovend?`goOrc('${esc(ST.ovend).replace(/'/g,"")}','`:`goOrc(null,'`;
+ const onde=ST.loja?('Loja '+ST.loja):ST.sup?('Região '+ST.sup):'Rede Só Tintas';
+ let h=btnVoltar()+'<div class="chips">';
+ ['Q','M','F'].forEach(function(k){
+  h+=`<button class="chip ${g==k?'on':''}" onclick="${alvo}${k}')">${ORCG[k][0]} <b style="opacity:.7">${O[k].length}</b></button>`});
+ h+='</div>';
+ h+=`<div class="btns" style="margin:0 0 13px">
+  <button class="b sec" onclick="waOrc()">📲 WhatsApp da lista</button>
+  <button class="b gh" onclick="pdfOrc()">📄 PDF para a reunião</button></div>`;
+ h+=`<div class="pp"><div class="pph"><div><h2>${info[0]} — Orçamentos em aberto${ST.ovend?' · '+esc(ST.ovend):''}</h2>
+   <span>${esc(onde)} · ${info[1]}</span></div><div class="ppb">${O.itens.length} propostas no escopo</div></div>
+  <div class="ppg">
+   <div class="ppc"><div class="l">Nesta faixa</div><div class="v">${L.length}</div><div class="f">${PPCT(O.itens.length?L.length/O.itens.length:0)} das propostas</div></div>
+   <div class="ppc"><div class="l">Valor da faixa</div><div class="v">${BRL(L.reduce((a,c)=>a+c.valor,0))}</div><div class="f">de ${BRL(O.total)} em aberto</div></div>
+   <div class="ppc"><div class="l">Valor típico</div><div class="v">${BRL(O.mediana)}</div><div class="f">mediana do escopo</div></div>
+   <div class="ppc"><div class="l">Em nome de gerência</div><div class="v">${O.ger.length}</div><div class="f">${BRL(O.ger.reduce((a,c)=>a+c.valor,0))}</div></div>
+  </div></div>`;
+ if(!L.length) h+='<div class="sec"><div class="empty">Nenhum orçamento nesta faixa.</div></div>';
+ else{
+  h+='<div class="sec"><div class="sech"><h3>Lista para ligação</h3><span class="cnt">maior valor primeiro</span></div><table class="ptab" style="width:100%"><tr><th>#</th><th>Cliente</th><th>Vendedor</th><th>Dias</th><th>Valor</th><th>Telefone</th></tr>';
+  L.forEach(function(c,i){
+   h+=`<tr><td>${i+1}</td><td>${esc(c.cli.replace(/^\d+-/,''))}</td><td>${esc(c.vend)}${c.comMeta?'':' <b style="color:var(--tx3)">(gerência)</b>'}</td><td>${c.dias}d</td><td><b>${BRL(c.valor)}</b></td><td>${esc(c.tel||'—')}</td></tr>`});
+  h+='</table></div>';
+ }
+ return h;
+}
+function waOrc(){
+ const O=OAT(); if(!O) return;
+ const g=ST.og||'F', L=O[g]||[], info=ORCG[g];
+ const onde=ST.loja?('Loja '+ST.loja):ST.sup?('Região '+ST.sup):'Rede';
+ var lin=['*ORÇAMENTOS '+info[0].toUpperCase()+' — '+(ST.ovend?ST.ovend:onde)+'*',
+  D.periodo.mes+'/'+D.periodo.ano+' · '+L.length+' propostas · '+BRL(L.reduce((a,c)=>a+c.valor,0)),''];
+ L.slice(0,25).forEach(function(c,i){
+  lin.push((i+1)+'. '+c.cli.replace(/^\d+-/,'')+' — '+BRL(c.valor)+' · '+c.dias+' dias'+(c.tel?' · '+c.tel:''));});
+ if(L.length>25){lin.push('');lin.push('… e mais '+(L.length-25)+' — lista completa no PDF.');}
+ window.open('https://wa.me/?text='+encodeURIComponent(lin.join('\n')),'_blank','noopener,noreferrer');
+}
+function pdfOrc(){
+ const O=OAT(); if(!O) return;
+ const onde=ST.loja?('Loja '+ST.loja):ST.sup?('Região '+ST.sup):'Rede Só Tintas';
+ var corpo='';
+ ['F','M','Q'].forEach(function(g){
+  const L=O[g]||[], info=ORCG[g];
+  corpo+='<h2 style="color:'+info[2]+'">'+info[0]+' — '+L.length+' propostas · '+BRL(L.reduce(function(a,c){return a+c.valor},0))+'</h2>';
+  if(!L.length){corpo+='<p style="font-size:11px;color:#67728c">Nenhuma proposta nesta faixa.</p>';return}
+  corpo+='<table class="ptab"><tr><th>#</th><th>Cliente</th><th>Vendedor</th><th>Dias</th><th>Valor</th><th>Telefone</th><th>Retorno</th></tr>';
+  L.forEach(function(c,i){corpo+='<tr><td>'+(i+1)+'</td><td>'+esc(c.cli.replace(/^\d+-/,''))+'</td><td>'+esc(c.vend)+(c.comMeta?'':' (gerência)')+'</td><td>'+c.dias+'</td><td>'+BRL(c.valor)+'</td><td>'+esc(c.tel||'')+'</td><td></td></tr>'});
+  corpo+='</table>';
+ });
+ document.getElementById('parea').innerHTML='<div class="pdoc">'+
+  '<div class="ph"><div><h1>Orçamentos em Aberto — '+esc(ST.ovend?ST.ovend+' · '+onde:onde)+'</h1>'+
+  '<div class="sub">Só Tintas · Coordenação de Supervisão · '+D.periodo.mes+'/'+D.periodo.ano+'</div></div>'+
+  '<div class="dt">Emitido em '+new Date().toLocaleDateString('pt-BR')+'<br>Base '+new Date(D.periodo.dataBase+'T12:00').toLocaleDateString('pt-BR')+'</div></div>'+
+  corpo+'<div class="ass"><div>Gerente</div><div>Supervisor</div></div>'+
+  '<div class="fo">A coluna Retorno é para anotar à mão o resultado de cada ligação.</div></div>';
+ document.body.classList.add('impr');
+ setTimeout(function(){window.print();setTimeout(function(){document.body.classList.remove('impr')},400)},120);
+}
 
 /* bloco de carteira — o mesmo da loja, reaproveitado pelo vendedor */
 function cartBox(K,titulo,vend){
@@ -683,7 +820,8 @@ function vGeral(){
  h+=indBloco(g,null)+ritmoBox(g);
  h+=`<div class="sec"><div class="sech"><h3>Regiões por supervisor</h3><span class="cnt">${g.nSups} supervisores · ${g.nLojas} lojas · ${g.nVend} vendedores</span></div>`;
  D.supervisores.forEach((s,i)=>h+=linha(s,i,`${s.nLojas} lojas · ${s.nVend} vendedores · falta ${K(s.restLoja)}`,`go('sup','${esc(s.nome)}')`));
- h+='</div>'+resumoBox('geral',g,'a rede');
+ h+='</div>'+orcBox(OSoma(D.lojas.map(l=>l.cod)),'Orçamentos em aberto — rede',g.restLoja,null)
+  +resumoBox('geral',g,'a rede');
  return h;
 }
 function vSup(nome){
@@ -693,7 +831,8 @@ function vSup(nome){
  let h=kpiGrid(s,'da região')+gaugeBox(s,'Atingimento da região '+s.nome)+indBloco(s,D.geral)+ritmoBox(s);
  h+=`<div class="sec"><div class="sech"><h3>Lojas da região</h3><span class="cnt">${ls.length} lojas</span></div>`;
  ls.forEach((l,i)=>h+=linha(l,i,`Loja ${l.cod} · Méd.90d ${K(l.med90)} · ${l.vendedores.length} vendedores · falta ${K(l.restLoja)}`,`go('loja','${l.cod}')`,bdgL(l)));
- h+='</div>'+resumoBox('sup:'+nome,s,'a região de '+nome);
+ h+='</div>'+orcBox(OSoma(ls.map(l=>l.cod)),'Orçamentos em aberto — região '+nome,s.restLoja,null)
+  +resumoBox('sup:'+nome,s,'a região de '+nome);
  return h;
 }
 function vLoja(cod){
@@ -715,7 +854,8 @@ function vLoja(cod){
   orf=CK.cli.filter(function(c){return !c.vend||!ativos[c.vend]});
   CK.V=CK.V||{}; CK.V[ORF]=grupaCart(orf,CK.meses);
  }
- h+='</div>'+cartBox(CK,'Carteira de clientes',null)
+ h+='</div>'+orcBox(OL(cod),'Orçamentos em aberto',l.restLoja,null)
+  +cartBox(CK,'Carteira de clientes',null)
   +(orf.length?`<div class="alert"><span>👤</span><span><b>${orf.length} dos ${CK.cli.length} clientes estão sem vendedor ativo</b> — valem <b>${BRL(orf.reduce((a,c)=>a+c.media,0))}/mês</b>.
    Entram na base da loja, mas em vendedor nenhum: são contas de quem saiu, de cadastro genérico ou de quem está fora do painel. Redistribuir é venda que já existe.</span></div>`
    +cartBox(CK.V[ORF],'Clientes sem vendedor ativo',ORF):'')
@@ -1356,13 +1496,13 @@ function vCart(){
 
 /* ---------- navegação ---------- */
 function goSub(v,id){
- ST.vend=null;
+ ST.vend=null;ST.ovend=null;
  if(v=='sup'){ST.sup=id;ST.loja=null}
  if(v=='loja'){ST.loja=id;const l=D.lojas.find(x=>x.cod==id);if(l)ST.sup=l.sup}
  render();window.scrollTo({top:0,behavior:'smooth'});
 }
 function go(v,id){
- ST.ind=null;ST.nvT=null;ST.vend=null;
+ ST.ind=null;ST.nvT=null;ST.vend=null;ST.ovend=null;
  if(v=='geral'){ST.view='geral';ST.sup=null;ST.loja=null}
  if(v=='sup'){ST.view='sup';ST.sup=id;ST.loja=null}
  if(v=='loja'){ST.view='loja';ST.loja=id;const l=D.lojas.find(x=>x.cod==id);if(l)ST.sup=l.sup}
@@ -1404,6 +1544,8 @@ function render(){
  let t,s,html;
  if(ST.view=='cart'){const l=D.lojas.find(x=>x.cod==ST.loja);
   t=CGRUPO[ST.cg||'POS'][0]; s='Carteira CNPJ · '+(l?l.cod+' · '+l.nome:'loja'); html=vCart()}
+ else if(ST.view=='orc'){t='Orçamentos '+ORCG[ST.og||'F'][0];
+  s=(ST.ovend?ST.ovend+' · ':'')+(ST.loja?('Loja '+ST.loja):ST.sup?('Região '+ST.sup):'Rede Só Tintas'); html=vOrc()}
  else if(ST.view=='nivel'){t=(ST.nvT=='L'?'Lojas Nível '+ST.nvN:'Vendedores V'+ST.nvN);
   s=ST.loja?('Loja '+ST.loja):ST.sup?('Região '+ST.sup):'Rede Só Tintas'; html=vNivel()}
  else if(ST.view=='ind'){const m=IND.find(x=>x.k==ST.ind)||IND[0];
@@ -1433,7 +1575,7 @@ sel.onchange=()=>{
 };
 render();
 /* expoe as funcoes que o HTML chama por onclick */
-window.goCartV=goCartV;window.cartBox=cartBox;window.KL=KL;window.KAT=KAT;window.enviarWA=enviarWA;window.goSub=goSub;window.toggleV=toggleV;window.ST=ST;window.render=render;window.gerarResumo=gerarResumo;window.go=go;window.goCart=goCart;window.goInd=goInd;window.goNivel=goNivel;window.pdfCart=pdfCart;window.pdfOrient=pdfOrient;window.pdfPlano=pdfPlano;window.printTela=printTela;window.salvarAcao=salvarAcao;window.salvarJustificativa=salvarJustificativa;window.waCart=waCart;window.waOrient=waOrient;
+window.goCartV=goCartV;window.goOrc=goOrc;window.waOrc=waOrc;window.pdfOrc=pdfOrc;window.orcBox=orcBox;window.OL=OL;window.OSoma=OSoma;window.OAT=OAT;window.cartBox=cartBox;window.KL=KL;window.KAT=KAT;window.enviarWA=enviarWA;window.goSub=goSub;window.toggleV=toggleV;window.ST=ST;window.render=render;window.gerarResumo=gerarResumo;window.go=go;window.goCart=goCart;window.goInd=goInd;window.goNivel=goNivel;window.pdfCart=pdfCart;window.pdfOrient=pdfOrient;window.pdfPlano=pdfPlano;window.printTela=printTela;window.salvarAcao=salvarAcao;window.salvarJustificativa=salvarJustificativa;window.waCart=waCart;window.waOrient=waOrient;
 if(!EMBUTIDO){var lk=document.getElementById('lnkSair');if(lk)lk.style.display='inline';}
 }
 /*FIM_PAINEL*/
