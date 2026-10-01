@@ -210,6 +210,8 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
 .grph .tg{font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;letter-spacing:.5px}
 .tg.cnpj{background:#E7EFF8;color:#1F4E79}.tg.cpf{background:#F3ECF8;color:#5B3A78}
 .grph .cnt{font-size:11px;color:var(--tx3);font-weight:600;margin-left:auto}
+.grph .selo{font-size:11px;font-weight:700;width:100%;margin-top:-1px}
+.ppselo{font-size:11px;font-weight:700;display:block;margin-top:3px}
 .ind{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:1px;background:var(--line)}
 .indc{background:var(--card);padding:13px 15px}
 .indc .l{font-size:9.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--tx3);font-weight:800;line-height:1.3}
@@ -328,7 +330,7 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
   <div class="hdtop">
    <div class="brand">
     <div class="logo">ST</div>
-    <div><h1 id="hTit">Coordenação de Supervisão</h1><span id="hSub">Só Tintas · Painel de Performance · <b style="color:#FFD100">v33</b></span></div>
+    <div><h1 id="hTit">Coordenação de Supervisão</h1><span id="hSub">Só Tintas · Painel de Performance · <b style="color:#FFD100">v34</b></span></div>
    </div>
    <div class="per"><b id="hPer">—</b><span id="hDias">—</span><span id="btnUp" style="display:none" onclick="abrirUpload()"> · ⚙️ atualizar dados</span><span id="lnkSair" style="display:none" onclick="sairPainel()"> · sair</span></div>
   </div>
@@ -463,12 +465,32 @@ const ORF='Sem vendedor ativo';
 /* ---------- ORCAMENTOS EM ABERTO ----------
    Temperatura medida contra a DATA_BASE do periodo, nunca contra o dia de
    hoje: assim um morno de setembro nao vira frio so porque o mes virou. */
+/* Carimbo de atualizacao de cada base. O dia vira as 00:00, entao
+   ontem e diferenca de DATA no calendario e nao de 24 horas corridas:
+   uma carga as 23h50 de ontem aparece como ontem as 00h10 de hoje. */
+const ATZ={num:(_.t||[])[0]||'',cart:(_.t||[])[1]||'',orc:(_.t||[])[2]||''};
+function selo(ts,cls){
+ const k=cls||'selo', ic='🕓 ';
+ if(!ts) return '<span class="'+k+'" style="color:#8FA9C2">'+ic+'sem registro de atualização</span>';
+ const m=/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/.exec(String(ts));
+ if(!m) return '<span class="'+k+'" style="color:#8FA9C2">'+ic+'atualizado em '+esc(String(ts))+'</span>';
+ const hj=new Date(), d0=new Date(+m[1],+m[2]-1,+m[3]);
+ const h0=new Date(hj.getFullYear(),hj.getMonth(),hj.getDate());
+ const dias=Math.round((h0-d0)/86400000);
+ const hora=m[4]+'h'+m[5], data=m[3]+'/'+m[2]+'/'+m[1];
+ const quando=dias<=0?('hoje às '+hora):dias===1?('ontem às '+hora):(data+' às '+hora+' · há '+dias+' dias');
+ const cor=dias<=1?'#1E8E3E':(dias<=7?'#D98B00':'#E53935');
+ return '<span class="'+k+'" style="color:'+cor+'">'+ic+'atualizado '+quando+'</span>';
+}
 const ORCG={Q:['Quente','Ate 7 dias — o cliente ainda lembra do preco','#E53935'],
             M:['Morno','De 8 a 15 dias — esfriando, ligacao ainda salva','#D98B00'],
             F:['Frio','Mais de 15 dias — provavelmente ja comprou em outro lugar','#5A6B7D']};
 const ORC={};
 (function(){
- const O=_.O||{}, base=new Date(P.dataBase+'T12:00');
+ /* O relogio da temperatura e a data REAL de hoje, nao a dataBase do
+    painel: num mes recem-virado a dataBase vai para o fim do mes e
+    jogava TODO orcamento para frio. */
+ const O=_.O||{}, hj_=new Date(), base=new Date(hj_.getFullYear(),hj_.getMonth(),hj_.getDate(),12,0,0);
  function faixa(d){ return d<=7?'Q':(d<=15?'M':'F') }
  /* a data pode chegar como texto aaaa-mm-dd, como dd/mm/aaaa ou ja
     convertida em objeto de data pela planilha — aceita os tres */
@@ -681,7 +703,7 @@ function painelPrincipal(){
  const pl=n=>(dl[n]/g.nLojas*100).toFixed(1).replace('.',',')+'%';
  let h=`<div class="pp"><div class="pph">
   <div><h2>Painel de Coordenação Comercial</h2>
-   <span>${D.periodo.mes} ${D.periodo.ano} · apurado até ${new Date(D.periodo.dataBase+'T12:00').toLocaleDateString('pt-BR')} · ${UD} de ${UT} dias úteis (${PPCT(RE)} do mês)</span></div>
+   <span>${D.periodo.mes} ${D.periodo.ano} · apurado até ${new Date(D.periodo.dataBase+'T12:00').toLocaleDateString('pt-BR')} · ${UD} de ${UT} dias úteis (${PPCT(RE)} do mês)</span>${selo(ATZ.num,'ppselo')}</div>
   <div class="ppb">${g.nLojas} lojas · ${g.nSups} supervisores · ${tv} vendedores</div></div>
   <div class="ppg">
    <div class="ppc"><div class="l">Faturado</div><div class="v">${BRL(g.fat)}</div><div class="f">média de ${BRL(g.ritmoReal)} por dia útil</div></div>
@@ -729,7 +751,7 @@ function orcBox(O,titulo,escopoFalta,chave){
  const alvo=chave?`goOrc('${esc(chave).replace(/'/g,"")}','`:`goOrc(null,'`;
  const pesoMaior=O.maior&&O.total?O.maior.valor/O.total:0;
  let h=`<div class="grp"><div class="grph"><span class="tg cnpj">FUNIL</span><h3>${esc(titulo)}</h3>
-  <span class="cnt">${O.itens.length} propostas · típico ${BRL(O.mediana)}</span></div><div class="ind">
+  <span class="cnt">${O.itens.length} propostas · típico ${BRL(O.mediana)}</span>${selo(ATZ.orc)}</div><div class="ind">
   <div class="indc cl" onclick="${alvo}Q')"><div class="l">🔴 Quente · até 7 dias</div><div class="v" style="color:#E53935">${O.Q.length}</div><div class="s">${BRL(O.Q.reduce((a,c)=>a+c.valor,0))}</div></div>
   <div class="indc cl" onclick="${alvo}M')"><div class="l">🟠 Morno · 8 a 15 dias</div><div class="v" style="color:#D98B00">${O.M.length}</div><div class="s">${BRL(O.M.reduce((a,c)=>a+c.valor,0))}</div></div>
   <div class="indc cl" onclick="${alvo}F')"><div class="l">⚫ Frio · mais de 15 dias</div><div class="v" style="color:#5A6B7D">${O.F.length}</div><div class="s">${BRL(O.F.reduce((a,c)=>a+c.valor,0))}</div></div>
@@ -814,7 +836,7 @@ function cartBox(K,titulo,vend){
  const alvo=vend?`goCartV('${esc(vend).replace(/'/g,"")}','`:`goCart('`;
  if(!K) return vend?`<div class="empty" style="margin-top:12px">Nenhum cliente com <b>${esc(vend)}</b> identificado na carteira desta loja.</div>`:'';
  return `<div class="grp"><div class="grph"><span class="tg cnpj">CNPJ</span><h3>${esc(titulo)}</h3>
-  <span class="cnt">${K.cli.length} clientes · ${K.meses} meses de histórico</span></div><div class="ind">
+  <span class="cnt">${K.cli.length} clientes · ${K.meses} meses de histórico</span>${selo(ATZ.cart)}</div><div class="ind">
   <div class="indc cl" onclick="${alvo}POS')"><div class="l">A positivar</div><div class="v" style="color:#E53935">${K.POS.length}</div><div class="s">${BRL(K.POS.reduce((a,c)=>a+c.media,0))}/mês em jogo</div></div>
   <div class="indc cl" onclick="${alvo}SUB')"><div class="l">Aproveitar melhor</div><div class="v" style="color:#D98B00">${K.SUB.length}</div><div class="s">${BRL(K.SUB.reduce((a,c)=>a+c.lacuna,0))} de lacuna</div></div>
   <div class="indc cl" onclick="${alvo}CRE')"><div class="l">Crescendo</div><div class="v" style="color:#0E9F6E">${K.CRE.length}</div><div class="s">${BRL(K.CRE.reduce((a,c)=>a+c.proj-c.media,0))} acima da média</div></div>
