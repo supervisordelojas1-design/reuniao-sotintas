@@ -1,0 +1,242 @@
+<!doctype html><html data-theme="dark" style="color-scheme:dark"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Níveis de Lojas e Vendedores · Outubro 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#0f1522; --surface:#1a2336; --ink:#eef2fb; --muted:#9aa5bb; --line:#2c3850;
+  --accent:#ff3b47; --accent-ink:#ffffff;
+  --ouro:#E6B935; --ouro-ink:#2a2000; --prata:#C3CBD8; --prata-ink:#1a2030; --bronze:#D98A3D; --bronze-ink:#2a1500;
+  --gold:#E6B935; --silver:#C3CBD8; --bronzem:#D98A3D;
+  --v1:#111319; --v1-ink:#ffffff; --v2:#d32531; --v2-ink:#ffffff; --v3:#E6B935; --v3-ink:#2a2000; --v4:#178048; --v4-ink:#ffffff; --v5:#2d6ae0; --v5-ink:#ffffff;
+  --navy:#4f7cf0; --cai:#d64550; --cai-ink:#ffffff; --sobe:#178048; --sobe-ink:#ffffff;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Public Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:#0f1522;color:#eef2fb;font-family:var(--f-body);font-size:14px;line-height:1.45}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 48px;display:flex;flex-direction:column;gap:18px}
+.topbar{height:8px;background:var(--accent);border-radius:0 0 6px 6px;margin:-20px -16px 4px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(24px,4vw,36px);line-height:1.05;margin:4px 0 0;color:var(--accent)}
+.sub{color:var(--muted);font-size:13px}
+.tabs{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px;gap:4px}
+.tabs button{border:0;background:transparent;color:var(--muted);font:700 14px var(--f-body);padding:9px 22px;border-radius:999px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--navy);color:#fff}
+.controls{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 16px}
+.search{flex:1 1 220px;min-width:0}
+.search input{width:100%;font:500 14px var(--f-body);padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.filtros{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{border:1px solid var(--line);background:var(--bg);color:var(--muted);font:700 12px var(--f-body);padding:6px 12px;border-radius:8px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+.chip.muda[aria-pressed="true"]{background:var(--accent);border-color:var(--accent)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:12px;color:var(--muted);align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:30px;height:18px;border-radius:5px;display:inline-grid;place-items:center;font-size:10px;font-weight:800}
+.resumo{display:flex;flex-wrap:wrap;gap:10px}
+.rcard{flex:1 1 140px;background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--c);border-radius:12px;padding:12px 14px}
+.rcard .big{font-family:var(--f-display);font-weight:800;font-size:28px;line-height:1}
+.rcard .lbl{color:var(--muted);font-size:12px;font-weight:600;margin-top:2px}
+.alerta{background:#2a1a1f;border:1px solid var(--cai);border-radius:12px;padding:12px 16px;font-size:13px;color:#ffd9d4;display:flex;gap:10px;align-items:center}
+.alerta b{font-family:var(--f-display)}
+.podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:end}
+.pd{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:5px;border-top:6px solid var(--c)}
+.pd.r1{order:2;padding-block:24px}.pd.r2{order:1}.pd.r3{order:3}
+.pd .pos{font-family:var(--f-display);font-weight:800;font-size:26px;color:var(--c);line-height:1}
+.pd .nm{font-weight:700;font-size:16px;overflow-wrap:anywhere}
+.pd .meta{color:var(--muted);font-size:12px}
+.pd .niv{display:inline-block;font-family:var(--f-display);font-weight:800;font-size:15px;padding:3px 10px;border-radius:7px;margin-top:3px}
+@media (max-width:640px){.podium{grid-template-columns:1fr}.pd.r1,.pd.r2,.pd.r3{order:0}}
+.tbl{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:620px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line)}
+th{background:var(--bg);font-weight:700;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+td.pos{font-family:var(--f-display);font-weight:800;color:var(--muted);width:44px}
+td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+tr:last-child td{border-bottom:0}
+tr.muda-row{background:#2a1a22}
+.pill{display:inline-block;font-family:var(--f-display);font-weight:800;font-size:13px;padding:3px 10px;border-radius:7px}
+.faixa{color:var(--muted);font-size:11px;display:block;margin-top:2px}
+.mudtag{display:inline-block;font-weight:800;font-size:12px;padding:3px 9px;border-radius:7px}
+.seta{font-family:var(--f-display);font-weight:800}
+.empty{text-align:center;color:var(--muted);padding:24px}
+.foot{text-align:center;color:var(--muted);font-size:11px;margin-top:4px}
+.tabs{flex-wrap:wrap}
+/* Curva de crescimento */
+#crescimento{display:flex;flex-direction:column;gap:14px}
+.treino{display:flex;gap:14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--navy);border-radius:14px;padding:14px 16px}
+.treino .tbadge{flex:0 0 auto;font-family:var(--f-display);font-weight:800;font-size:14px;color:#fff;background:var(--navy);padding:9px 14px;border-radius:10px;white-space:nowrap;text-align:center;line-height:1.2}
+.treino b{font-family:var(--f-display);font-size:16px}
+.treino small{color:var(--muted);font-size:13px;display:block;margin-top:3px;line-height:1.4}
+.ctitle{font-family:var(--f-display);font-weight:800;font-size:19px;margin:4px 0 -6px;color:var(--ink)}
+.cnote{color:var(--muted);font-size:12px;margin:0}
+.escada{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;align-items:end;height:300px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 14px 14px}
+.step{display:flex;flex-direction:column;justify-content:flex-end;height:100%;gap:8px}
+.bar{border-radius:12px 12px 4px 4px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:12px 4px;gap:4px;box-shadow:0 6px 18px rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08)}
+.bar .vb{font-family:var(--f-display);font-weight:800;font-size:clamp(18px,4.5vw,26px);line-height:1}
+.bar .jn{font-size:clamp(9px,2.3vw,12px);font-weight:700;text-align:center;opacity:.95}
+.step .axis{text-align:center;font-size:13px;color:var(--ink);font-weight:800}
+.step .axis span{display:block;font-size:10px;font-weight:600;color:var(--muted)}
+.curvacards{display:flex;flex-direction:column;gap:10px}
+.cc{display:flex;gap:14px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--c);border-radius:12px;padding:12px 14px}
+.cc .cbadge{flex:0 0 54px;height:54px;border-radius:12px;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:20px;border:1px solid rgba(255,255,255,.08)}
+.cc .ct{flex:1;min-width:0}
+.cc .ct b{font-family:var(--f-display);font-size:16px}
+.cc .ct .jan{display:inline-block;font-size:11px;font-weight:800;padding:2px 9px;border-radius:6px;background:var(--bg);border:1px solid var(--line);color:var(--ink);margin-left:8px}
+.cc .ct p{margin:5px 0 0;color:var(--muted);font-size:13px;line-height:1.45}
+@media (max-width:640px){.escada{height:240px;gap:5px;padding:14px 8px 10px}.treino{flex-direction:column;align-items:flex-start}}
+/* Prazos */
+.sit-pill{display:inline-block;font-family:var(--f-display);font-weight:800;font-size:12px;padding:3px 10px;border-radius:7px;color:#fff;white-space:nowrap}
+tr.atraso-row{background:#2e171c}
+.warn{color:#ff8a82;font-weight:800}
+.admcell{font-variant-numeric:tabular-nums;white-space:nowrap}
+.selects{display:flex;gap:8px;flex-wrap:wrap}
+.selects select{font:600 12px var(--f-body);padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);max-width:190px;cursor:pointer}
+</style></head><body>
+<div class="wrap">
+<div class="topbar"></div>
+<header>
+ <div><div class="eyebrow">Só Tintas · Colorindo Vidas e Realizando Sonhos</div>
+ <h1>Níveis de Lojas e Vendedores</h1>
+ <div class="sub">Régua a partir de Outubro/2026 vs Jul–Set · base: $ Méd. 90 dias (setembro)</div></div>
+ <div class="tabs" id="tabs" role="tablist"></div>
+</header>
+<div class="controls">
+ <div class="search"><input id="q" placeholder="Buscar por nome, loja ou código..."></div>
+ <div class="selects" id="selects"></div>
+ <div class="filtros" id="filtros"></div>
+</div>
+<div class="legend" id="legend"></div>
+<div class="alerta" id="alerta"></div>
+<div class="resumo" id="resumo"></div>
+<section class="podium" id="podium"></section>
+<div class="tbl"><table><thead id="thead"></thead><tbody id="tb"></tbody></table></div>
+<section id="crescimento" hidden>
+ <div class="treino">
+  <div class="tbadge">Contrato<br>0 – 3 meses</div>
+  <div><b>Fase de Treinamento</b><small>A partir da data de início de contrato, o vendedor tem 3 meses de experiência dedicados ao treinamento. A curva de crescimento começa ao fim dessa fase — a contagem de meses abaixo é de atuação <b>após</b> o treinamento.</small></div>
+ </div>
+ <div class="ctitle">Curva de Crescimento do Vendedor · V1 → V5</div>
+ <p class="cnote">Janela de tempo esperada para alcançar cada nível após a fase de treinamento.</p>
+ <div class="escada" id="escada"></div>
+ <div class="curvacards" id="curvacards"></div>
+</section>
+<div class="foot">Mudança = comparação da régua Jul–Set com a de Outubro, usando a Méd. 90 dias atual. Loja out/26: Ouro&gt;250k · Prata 150–250k · Bronze&lt;150k</div>
+</div>
+<script>
+const LOJAS=[{"id": "007", "n": "MATRIZ", "sup": "BRUNO", "med": 501861.3200000003, "niv": 3, "niv_ant": 3, "muda": 0}, {"id": "033", "n": "MACAE 2", "sup": "DANILO", "med": 423769.9966666668, "niv": 3, "niv_ant": 3, "muda": 0}, {"id": "002", "n": "MAIS TINTAS", "sup": "BRUNO", "med": 383261.4833333341, "niv": 3, "niv_ant": 3, "muda": 0}, {"id": "017", "n": "STA CRUZ", "sup": "BRUNO", "med": 349023.4233333332, "niv": 3, "niv_ant": 3, "muda": 0}, {"id": "026", "n": "SAO CRISTOVAO", "sup": "RAMON", "med": 308053.1700000001, "niv": 3, "niv_ant": 3, "muda": 0}, {"id": "010", "n": "PET 1", "sup": "BRUNO", "med": 265081.82333333313, "niv": 3, "niv_ant": 3, "muda": 0}, {"id": "016", "n": "MARICA", "sup": "DANILO", "med": 240051.14666666658, "niv": 2, "niv_ant": 3, "muda": -1}, {"id": "024", "n": "NOVA IGUACU 2", "sup": "RAMON", "med": 231267.6299999999, "niv": 2, "niv_ant": 3, "muda": -1}, {"id": "009", "n": "MAGE", "sup": "BRUNO", "med": 214911.79333333345, "niv": 2, "niv_ant": 3, "muda": -1}, {"id": "038", "n": "ITAGUAI", "sup": "DANILO", "med": 201475.55333333314, "niv": 2, "niv_ant": 3, "muda": -1}, {"id": "006", "n": "ITAIPAVA", "sup": "BRUNO", "med": 195148.43000000008, "niv": 2, "niv_ant": 3, "muda": -1}, {"id": "027", "n": "ARARUAMA", "sup": "DANILO", "med": 191456.72999999972, "niv": 2, "niv_ant": 3, "muda": -1}, {"id": "013", "n": "SARACURUNA", "sup": "BRUNO", "med": 188576.93000000005, "niv": 2, "niv_ant": 3, "muda": -1}, {"id": "012", "n": "PIABETA", "sup": "BRUNO", "med": 181305.65666666673, "niv": 2, "niv_ant": 3, "muda": -1}, {"id": "015", "n": "TRES RIOS", "sup": "BRUNO", "med": 175854.46000000008, "niv": 2, "niv_ant": 2, "muda": 0}, {"id": "028", "n": "ANGRA DOS REIS", "sup": "DANILO", "med": 162619.93000000002, "niv": 2, "niv_ant": 2, "muda": 0}, {"id": "029", "n": "ITAIPU", "sup": "DANILO", "med": 152109.46333333311, "niv": 2, "niv_ant": 2, "muda": 0}, {"id": "036", "n": "SAO JOAO", "sup": "RAMON", "med": 152107.98666666658, "niv": 2, "niv_ant": 2, "muda": 0}, {"id": "004", "n": "PET 2", "sup": "BRUNO", "med": 146046.32999999987, "niv": 1, "niv_ant": 2, "muda": -1}, {"id": "034", "n": "CABO FRIO", "sup": "DANILO", "med": 143518.37333333315, "niv": 1, "niv_ant": 2, "muda": -1}, {"id": "008", "n": "FRIBURGO", "sup": "BRUNO", "med": 129187.88666666672, "niv": 1, "niv_ant": 2, "muda": -1}, {"id": "035", "n": "TAQUARA", "sup": "RAMON", "med": 128519.88666666659, "niv": 1, "niv_ant": 2, "muda": -1}, {"id": "030", "n": "BARAO", "sup": "DANILO", "med": 125904.97999999994, "niv": 1, "niv_ant": 2, "muda": -1}, {"id": "021", "n": "QUEIMADOS", "sup": "RAMON", "med": 120704.36666666664, "niv": 1, "niv_ant": 2, "muda": -1}, {"id": "032", "n": "PARAISO", "sup": "DANILO", "med": 100250.39000000014, "niv": 1, "niv_ant": 2, "muda": -1}, {"id": "019", "n": "NILOPOLIS", "sup": "RAMON", "med": 99260.36333333336, "niv": 1, "niv_ant": 1, "muda": 0}, {"id": "022", "n": "DEP. ALTO", "sup": "BRUNO", "med": 95674.97333333337, "niv": 1, "niv_ant": 1, "muda": 0}, {"id": "025", "n": "BELFORD ROXO", "sup": "RAMON", "med": 85505.47000000002, "niv": 1, "niv_ant": 1, "muda": 0}, {"id": "023", "n": "DEP. VARZEA", "sup": "BRUNO", "med": 60653.82000000004, "niv": 1, "niv_ant": 1, "muda": 0}, {"id": "018", "n": "NOVA IGUACU 1", "sup": "RAMON", "med": 56497.476666666655, "niv": 1, "niv_ant": 1, "muda": 0}];
+const VENDS=[{"id": "026", "nome": "GABRIEL WILLIAN", "loja": "SAO CRISTOVAO", "sup": "RAMON", "med": 273555.83333333343, "nivloja": 3, "niv": 5, "niv_ant": 5, "muda": 0, "adm": "12/06/2023", "ten": 40, "tcasa": "3a 4m", "esp": 4, "sit": "ADIANTADO", "alvo": 5, "prazo": "", "prazotxt": "Topo (V5)"}, {"id": "033", "nome": "NELTON VELASCO", "loja": "MACAE 2", "sup": "DANILO", "med": 213557.53666666662, "nivloja": 3, "niv": 5, "niv_ant": 5, "muda": 0, "adm": "24/10/2024", "ten": 24, "tcasa": "2a 0m", "esp": 2, "sit": "ADIANTADO", "alvo": 5, "prazo": "", "prazotxt": "Topo (V5)"}, {"id": "007", "nome": "MONIQUE MORAES", "loja": "MATRIZ", "sup": "BRUNO", "med": 194156.29666666655, "nivloja": 3, "niv": 5, "niv_ant": 5, "muda": 0, "adm": "26/07/2022", "ten": 51, "tcasa": "4a 3m", "esp": 4, "sit": "ADIANTADO", "alvo": 5, "prazo": "", "prazotxt": "Topo (V5)"}, {"id": "002", "nome": "PATRICK MARINHEIRO", "loja": "MAIS TINTAS", "sup": "BRUNO", "med": 158839.41333333336, "nivloja": 3, "niv": 5, "niv_ant": 5, "muda": 0, "adm": "19/10/2019", "ten": 84, "tcasa": "7a 0m", "esp": 4, "sit": "ADIANTADO", "alvo": 5, "prazo": "", "prazotxt": "Topo (V5)"}, {"id": "016", "nome": "CLAYTON CARVALHO", "loja": "MARICA", "sup": "DANILO", "med": 157248.8966666663, "nivloja": 2, "niv": 5, "niv_ant": 5, "muda": 0, "adm": "03/03/2017", "ten": 116, "tcasa": "9a 8m", "esp": 4, "sit": "ADIANTADO", "alvo": 5, "prazo": "", "prazotxt": "Topo (V5)"}, {"id": "038", "nome": "JUAN LIMA", "loja": "ITAGUAI", "sup": "DANILO", "med": 147036.31999999995, "nivloja": 2, "niv": 5, "niv_ant": 5, "muda": 0, "adm": "18/09/2024", "ten": 25, "tcasa": "2a 1m", "esp": 2, "sit": "ADIANTADO", "alvo": 5, "prazo": "", "prazotxt": "Topo (V5)"}, {"id": "010", "nome": "PRISCILA  MOTTA", "loja": "PET 1", "sup": "BRUNO", "med": 145693.50666666665, "nivloja": 3, "niv": 4, "niv_ant": 5, "muda": -1, "adm": "30/06/2020", "ten": 76, "tcasa": "6a 4m", "esp": 4, "sit": "EM DIA", "alvo": 5, "prazo": "30/09/2023", "prazotxt": "V5 a partir de 30/09/2023 (36+)"}, {"id": "033", "nome": "MATHEUS DE SOUZA", "loja": "MACAE 2", "sup": "DANILO", "med": 136286.62333333326, "nivloja": 3, "niv": 4, "niv_ant": 5, "muda": -1, "adm": "11/09/2023", "ten": 37, "tcasa": "3a 1m", "esp": 3, "sit": "ADIANTADO", "alvo": 5, "prazo": "11/12/2026", "prazotxt": "V5 a partir de 11/12/2026 (36+)"}, {"id": "007", "nome": "ALFREDO PEREIRA  GOMES", "loja": "MATRIZ", "sup": "BRUNO", "med": 133433.79999999996, "nivloja": 3, "niv": 4, "niv_ant": 5, "muda": -1, "adm": "01/03/2024", "ten": 32, "tcasa": "2a 8m", "esp": 3, "sit": "ADIANTADO", "alvo": 5, "prazo": "01/06/2027", "prazotxt": "V5 a partir de 01/06/2027 (36+)"}, {"id": "012", "nome": "LEONARDO OLIVEIRA", "loja": "PIABETA", "sup": "BRUNO", "med": 133022.05333333346, "nivloja": 2, "niv": 5, "niv_ant": 5, "muda": 0, "adm": "03/03/2021", "ten": 68, "tcasa": "5a 8m", "esp": 4, "sit": "ADIANTADO", "alvo": 5, "prazo": "", "prazotxt": "Topo (V5)"}, {"id": "013", "nome": "MARCOS PAULO", "loja": "SARACURUNA", "sup": "BRUNO", "med": 132149.91, "nivloja": 2, "niv": 5, "niv_ant": 5, "muda": 0, "adm": "03/03/2021", "ten": 68, "tcasa": "5a 8m", "esp": 4, "sit": "ADIANTADO", "alvo": 5, "prazo": "", "prazotxt": "Topo (V5)"}, {"id": "030", "nome": "LUAN PINTO", "loja": "BARAO", "sup": "DANILO", "med": 124701.8333333333, "nivloja": 1, "niv": 5, "niv_ant": 5, "muda": 0, "adm": "01/11/2023", "ten": 36, "tcasa": "3a 0m", "esp": 3, "sit": "ADIANTADO", "alvo": 5, "prazo": "", "prazotxt": "Topo (V5)"}, {"id": "024", "nome": "LEANDRA ABREU", "loja": "NOVA IGUACU 2", "sup": "RAMON", "med": 122466.12333333328, "nivloja": 2, "niv": 5, "niv_ant": 4, "muda": 1, "adm": "09/03/2026", "ten": 7, "tcasa": "7m", "esp": 0, "sit": "EM DIA", "alvo": 5, "prazo": "", "prazotxt": "Topo (V5)"}, {"id": "008", "nome": "JOAO RODRIGUES", "loja": "FRIBURGO", "sup": "BRUNO", "med": 120816.93666666675, "nivloja": 1, "niv": 5, "niv_ant": 5, "muda": 0, "adm": "01/09/2023", "ten": 38, "tcasa": "3a 2m", "esp": 3, "sit": "ADIANTADO", "alvo": 5, "prazo": "", "prazotxt": "Topo (V5)"}, {"id": "017", "nome": "HUDLLON SILVA", "loja": "STA CRUZ", "sup": "BRUNO", "med": 116766.32666666666, "nivloja": 3, "niv": 4, "niv_ant": 4, "muda": 0, "adm": "01/02/2016", "ten": 129, "tcasa": "10a 9m", "esp": 4, "sit": "EM DIA", "alvo": 5, "prazo": "01/05/2019", "prazotxt": "V5 a partir de 01/05/2019 (36+)"}, {"id": "015", "nome": "MATEUS MARTINS", "loja": "TRES RIOS", "sup": "BRUNO", "med": 108786.77000000006, "nivloja": 2, "niv": 4, "niv_ant": 5, "muda": -1, "adm": "08/01/2025", "ten": 21, "tcasa": "1a 9m", "esp": 2, "sit": "ADIANTADO", "alvo": 5, "prazo": "08/04/2028", "prazotxt": "V5 a partir de 08/04/2028 (36+)"}, {"id": "017", "nome": "BENJAMIM MOREIRA", "loja": "STA CRUZ", "sup": "BRUNO", "med": 106301.20333333337, "nivloja": 3, "niv": 4, "niv_ant": 4, "muda": 0, "adm": "30/03/2021", "ten": 67, "tcasa": "5a 7m", "esp": 4, "sit": "EM DIA", "alvo": 5, "prazo": "30/06/2024", "prazotxt": "V5 a partir de 30/06/2024 (36+)"}, {"id": "027", "nome": "FERNANDO DANIEL", "loja": "ARARUAMA", "sup": "DANILO", "med": 104011.1366666666, "nivloja": 2, "niv": 4, "niv_ant": 4, "muda": 0, "adm": "04/10/2024", "ten": 25, "tcasa": "2a 1m", "esp": 2, "sit": "ADIANTADO", "alvo": 5, "prazo": "04/01/2028", "prazotxt": "V5 a partir de 04/01/2028 (36+)"}, {"id": "010", "nome": "VICTOR GABRIEL", "loja": "PET 1", "sup": "BRUNO", "med": 101706.91666666663, "nivloja": 3, "niv": 4, "niv_ant": 4, "muda": 0, "adm": "17/05/2024", "ten": 29, "tcasa": "2a 5m", "esp": 3, "sit": "ADIANTADO", "alvo": 5, "prazo": "17/08/2027", "prazotxt": "V5 a partir de 17/08/2027 (36+)"}, {"id": "002", "nome": "RAFAEL PACHECO", "loja": "MAIS TINTAS", "sup": "BRUNO", "med": 100913.82666666673, "nivloja": 3, "niv": 4, "niv_ant": 4, "muda": 0, "adm": "13/10/2025", "ten": 12, "tcasa": "1a 0m", "esp": 1, "sit": "ADIANTADO", "alvo": 5, "prazo": "13/01/2029", "prazotxt": "V5 a partir de 13/01/2029 (36+)"}, {"id": "004", "nome": "BRUNO UBERABA", "loja": "PET 2", "sup": "BRUNO", "med": 99009.29333333338, "nivloja": 1, "niv": 5, "niv_ant": 5, "muda": 0, "adm": "27/05/2026", "ten": 5, "tcasa": "5m", "esp": 0, "sit": "EM DIA", "alvo": 5, "prazo": "", "prazotxt": "Topo (V5)"}, {"id": "034", "nome": "JONATHAN VIEIRA", "loja": "CABO FRIO", "sup": "DANILO", "med": 98566.88333333326, "nivloja": 1, "niv": 5, "niv_ant": 5, "muda": 0, "adm": "04/12/2023", "ten": 35, "tcasa": "2a 11m", "esp": 3, "sit": "ADIANTADO", "alvo": 5, "prazo": "", "prazotxt": "Topo (V5)"}, {"id": "009", "nome": "RENAN LOPES", "loja": "MAGE", "sup": "BRUNO", "med": 95313.28666666664, "nivloja": 2, "niv": 4, "niv_ant": 4, "muda": 0, "adm": "03/03/2021", "ten": 68, "tcasa": "5a 8m", "esp": 4, "sit": "EM DIA", "alvo": 5, "prazo": "03/06/2024", "prazotxt": "V5 a partir de 03/06/2024 (36+)"}, {"id": "006", "nome": "MATHEUS DE OLIVEIRA", "loja": "ITAIPAVA", "sup": "BRUNO", "med": 93335.60333333332, "nivloja": 2, "niv": 4, "niv_ant": 4, "muda": 0, "adm": "07/11/2022", "ten": 48, "tcasa": "4a 0m", "esp": 4, "sit": "EM DIA", "alvo": 5, "prazo": "07/02/2026", "prazotxt": "V5 a partir de 07/02/2026 (36+)"}, {"id": "036", "nome": "LUCIANO FARIAS", "loja": "SAO JOAO", "sup": "RAMON", "med": 90245.45333333335, "nivloja": 2, "niv": 4, "niv_ant": 4, "muda": 0, "adm": "24/07/2024", "ten": 27, "tcasa": "2a 3m", "esp": 3, "sit": "ADIANTADO", "alvo": 5, "prazo": "24/10/2027", "prazotxt": "V5 a partir de 24/10/2027 (36+)"}, {"id": "029", "nome": "GABRIEL DE OLIVEIRA", "loja": "ITAIPU", "sup": "DANILO", "med": 89904.12333333334, "nivloja": 2, "niv": 3, "niv_ant": 4, "muda": -1, "adm": "09/03/2026", "ten": 7, "tcasa": "7m", "esp": 0, "sit": "EM DIA", "alvo": 4, "prazo": "09/06/2029", "prazotxt": "V4 até 09/06/2029"}, {"id": "007", "nome": "BERNARDO LATINI", "loja": "MATRIZ", "sup": "BRUNO", "med": 88898.67999999993, "nivloja": 3, "niv": 3, "niv_ant": 4, "muda": -1, "adm": "07/10/2024", "ten": 25, "tcasa": "2a 1m", "esp": 2, "sit": "ADIANTADO", "alvo": 4, "prazo": "07/01/2028", "prazotxt": "V4 até 07/01/2028"}, {"id": "028", "nome": "MURYLO HENRIQUE", "loja": "ANGRA DOS REIS", "sup": "DANILO", "med": 85995.28000000003, "nivloja": 2, "niv": 3, "niv_ant": 4, "muda": -1, "adm": "29/08/2025", "ten": 14, "tcasa": "1a 2m", "esp": 1, "sit": "ADIANTADO", "alvo": 4, "prazo": "29/11/2028", "prazotxt": "V4 até 29/11/2028"}, {"id": "007", "nome": "FELIPE OLIMPIO", "loja": "MATRIZ", "sup": "BRUNO", "med": 85364.21666666675, "nivloja": 3, "niv": 3, "niv_ant": 4, "muda": -1, "adm": "01/10/2025", "ten": 13, "tcasa": "1a 1m", "esp": 1, "sit": "ADIANTADO", "alvo": 4, "prazo": "01/01/2029", "prazotxt": "V4 até 01/01/2029"}, {"id": "022", "nome": "FRANKLIN WILLIAN", "loja": "DEP. ALTO", "sup": "BRUNO", "med": 79652.81000000003, "nivloja": 1, "niv": 4, "niv_ant": 4, "muda": 0, "adm": "11/02/2026", "ten": 8, "tcasa": "8m", "esp": 0, "sit": "EM DIA", "alvo": 5, "prazo": "11/05/2029", "prazotxt": "V5 a partir de 11/05/2029 (36+)"}, {"id": "028", "nome": "LUCCAS BRAYAN N 1", "loja": "ANGRA DOS REIS", "sup": "DANILO", "med": 76622.99999999996, "nivloja": 2, "niv": 3, "niv_ant": 4, "muda": -1, "adm": "03/09/2025", "ten": 14, "tcasa": "1a 2m", "esp": 1, "sit": "ADIANTADO", "alvo": 4, "prazo": "03/12/2028", "prazotxt": "V4 até 03/12/2028"}, {"id": "033", "nome": "KETLEN VITORIA", "loja": "MACAE 2", "sup": "DANILO", "med": 73875.48333333335, "nivloja": 3, "niv": 3, "niv_ant": 3, "muda": 0, "adm": "14/05/2026", "ten": 5, "tcasa": "5m", "esp": 0, "sit": "EM DIA", "alvo": 4, "prazo": "14/08/2029", "prazotxt": "V4 até 14/08/2029"}, {"id": "009", "nome": "JESSÉ DE SOUZA", "loja": "MAGE", "sup": "BRUNO", "med": 69803.45666666665, "nivloja": 2, "niv": 3, "niv_ant": 3, "muda": 0, "adm": "09/11/2021", "ten": 59, "tcasa": "4a 11m", "esp": 4, "sit": "ATRASADO", "alvo": 4, "prazo": "09/02/2025", "prazotxt": "V4 até 09/02/2025 ⚠"}, {"id": "017", "nome": "MARIO JORGE", "loja": "STA CRUZ", "sup": "BRUNO", "med": 69462.35333333335, "nivloja": 3, "niv": 2, "niv_ant": 3, "muda": -1, "adm": "12/06/2023", "ten": 40, "tcasa": "3a 4m", "esp": 4, "sit": "ATRASADO", "alvo": 3, "prazo": "12/09/2025", "prazotxt": "V3 até 12/09/2025 ⚠"}, {"id": "002", "nome": "PAULO RAMOS", "loja": "MAIS TINTAS", "sup": "BRUNO", "med": 66659.74666666666, "nivloja": 3, "niv": 2, "niv_ant": 3, "muda": -1, "adm": null, "sit": "SEMDATA"}, {"id": "021", "nome": "FABRÍCIO BRITO", "loja": "QUEIMADOS", "sup": "RAMON", "med": 63451.20333333339, "nivloja": 1, "niv": 3, "niv_ant": 3, "muda": 0, "adm": "08/04/2026", "ten": 6, "tcasa": "6m", "esp": 0, "sit": "EM DIA", "alvo": 4, "prazo": "08/07/2029", "prazotxt": "V4 até 08/07/2029"}, {"id": "036", "nome": "MARLON PRATA", "loja": "SAO JOAO", "sup": "RAMON", "med": 61862.53333333335, "nivloja": 2, "niv": 3, "niv_ant": 3, "muda": 0, "adm": "25/08/2025", "ten": 14, "tcasa": "1a 2m", "esp": 1, "sit": "ADIANTADO", "alvo": 4, "prazo": "25/11/2028", "prazotxt": "V4 até 25/11/2028"}, {"id": "032", "nome": "LEONARDO RODRIGUES - N 1", "loja": "PARAISO", "sup": "DANILO", "med": 58957.24333333334, "nivloja": 1, "niv": 3, "niv_ant": 3, "muda": 0, "adm": null, "sit": "SEMDATA"}, {"id": "023", "nome": "WELLINGTON CARVALHO", "loja": "DEP. VARZEA", "sup": "BRUNO", "med": 58245.25000000002, "nivloja": 1, "niv": 3, "niv_ant": 3, "muda": 0, "adm": "11/03/2021", "ten": 67, "tcasa": "5a 7m", "esp": 4, "sit": "ATRASADO", "alvo": 4, "prazo": "11/06/2024", "prazotxt": "V4 até 11/06/2024 ⚠"}, {"id": "024", "nome": "STEPHANIE SANTOS", "loja": "NOVA IGUACU 2", "sup": "RAMON", "med": 55284.04666666667, "nivloja": 2, "niv": 2, "niv_ant": 2, "muda": 0, "adm": "20/01/2022", "ten": 57, "tcasa": "4a 9m", "esp": 4, "sit": "ATRASADO", "alvo": 3, "prazo": "20/04/2024", "prazotxt": "V3 até 20/04/2024 ⚠"}, {"id": "002", "nome": "CRISTHIAN RODRIGUES", "loja": "MAIS TINTAS", "sup": "BRUNO", "med": 54871.27333333328, "nivloja": 3, "niv": 2, "niv_ant": 2, "muda": 0, "adm": "13/05/2026", "ten": 5, "tcasa": "5m", "esp": 0, "sit": "EM DIA", "alvo": 3, "prazo": "13/08/2028", "prazotxt": "V3 até 13/08/2028"}, {"id": "024", "nome": "RAMON DE ASSIS", "loja": "NOVA IGUACU 2", "sup": "RAMON", "med": 53250.6466666667, "nivloja": 2, "niv": 2, "niv_ant": 2, "muda": 0, "adm": "21/08/2024", "ten": 26, "tcasa": "2a 2m", "esp": 2, "sit": "EM DIA", "alvo": 3, "prazo": "21/11/2026", "prazotxt": "V3 até 21/11/2026"}, {"id": "019", "nome": "LUIZ COSTA", "loja": "NILOPOLIS", "sup": "RAMON", "med": 51230.14999999999, "nivloja": 1, "niv": 3, "niv_ant": 3, "muda": 0, "adm": "19/06/2023", "ten": 40, "tcasa": "3a 4m", "esp": 4, "sit": "ATRASADO", "alvo": 4, "prazo": "19/09/2026", "prazotxt": "V4 até 19/09/2026 ⚠"}, {"id": "009", "nome": "VITOR SIQUEIRA", "loja": "MAGE", "sup": "BRUNO", "med": 49791.61000000002, "nivloja": 2, "niv": 2, "niv_ant": 1, "muda": 1, "adm": "10/06/2025", "ten": 16, "tcasa": "1a 4m", "esp": 2, "sit": "EM DIA", "alvo": 3, "prazo": "10/09/2027", "prazotxt": "V3 até 10/09/2027"}, {"id": "029", "nome": "BERNARDO ALVES", "loja": "ITAIPU", "sup": "DANILO", "med": 48077.42666666664, "nivloja": 2, "niv": 2, "niv_ant": 2, "muda": 0, "adm": "07/05/2026", "ten": 6, "tcasa": "6m", "esp": 0, "sit": "EM DIA", "alvo": 3, "prazo": "07/08/2028", "prazotxt": "V3 até 07/08/2028"}, {"id": "025", "nome": "RAPHAEL BARBOSA 2", "loja": "BELFORD ROXO", "sup": "RAMON", "med": 47903.40999999998, "nivloja": 1, "niv": 2, "niv_ant": 3, "muda": -1, "adm": "07/10/2024", "ten": 25, "tcasa": "2a 1m", "esp": 2, "sit": "EM DIA", "alvo": 3, "prazo": "07/01/2027", "prazotxt": "V3 até 07/01/2027"}, {"id": "019", "nome": "THIAGO RODRIGO", "loja": "NILOPOLIS", "sup": "RAMON", "med": 47790.67000000002, "nivloja": 1, "niv": 2, "niv_ant": 3, "muda": -1, "adm": "02/10/2023", "ten": 37, "tcasa": "3a 1m", "esp": 3, "sit": "ATRASADO", "alvo": 3, "prazo": "02/01/2026", "prazotxt": "V3 até 02/01/2026 ⚠"}, {"id": "006", "nome": "DIEGO PAIVA", "loja": "ITAIPAVA", "sup": "BRUNO", "med": 46541.57666666667, "nivloja": 2, "niv": 2, "niv_ant": 1, "muda": 1, "adm": "03/07/2026", "ten": 4, "tcasa": "4m", "esp": 0, "sit": "EM DIA", "alvo": 3, "prazo": "03/10/2028", "prazotxt": "V3 até 03/10/2028"}, {"id": "021", "nome": "ABNER ROBERTO", "loja": "QUEIMADOS", "sup": "RAMON", "med": 42248.5, "nivloja": 1, "niv": 2, "niv_ant": 2, "muda": 0, "adm": "17/09/2025", "ten": 13, "tcasa": "1a 1m", "esp": 1, "sit": "ADIANTADO", "alvo": 3, "prazo": "17/12/2027", "prazotxt": "V3 até 17/12/2027"}, {"id": "032", "nome": "PAULO CESAR", "loja": "PARAISO", "sup": "DANILO", "med": 41278.17333333332, "nivloja": 1, "niv": 2, "niv_ant": 2, "muda": 0, "adm": "16/11/2019", "ten": 83, "tcasa": "6a 11m", "esp": 4, "sit": "ATRASADO", "alvo": 3, "prazo": "16/02/2022", "prazotxt": "V3 até 16/02/2022 ⚠"}, {"id": "018", "nome": "THAYLAN MELO", "loja": "NOVA IGUACU 1", "sup": "RAMON", "med": 39498.696666666656, "nivloja": 1, "niv": 2, "niv_ant": 2, "muda": 0, "adm": null, "sit": "SEMDATA"}, {"id": "034", "nome": "KESIA REGINA", "loja": "CABO FRIO", "sup": "DANILO", "med": 37119.24333333329, "nivloja": 1, "niv": 2, "niv_ant": 1, "muda": 1, "adm": "21/01/2025", "ten": 21, "tcasa": "1a 9m", "esp": 2, "sit": "EM DIA", "alvo": 3, "prazo": "21/04/2027", "prazotxt": "V3 até 21/04/2027"}, {"id": "025", "nome": "SUELEN DE OLIVEIRA", "loja": "BELFORD ROXO", "sup": "RAMON", "med": 34078.759999999995, "nivloja": 1, "niv": 2, "niv_ant": 2, "muda": 0, "adm": "15/10/2025", "ten": 12, "tcasa": "1a 0m", "esp": 1, "sit": "ADIANTADO", "alvo": 3, "prazo": "15/01/2028", "prazotxt": "V3 até 15/01/2028"}, {"id": "035", "nome": "MARIANE BARBOSA", "loja": "TAQUARA", "sup": "RAMON", "med": 31474.11333333333, "nivloja": 1, "niv": 2, "niv_ant": 1, "muda": 1, "adm": "20/07/2026", "ten": 3, "tcasa": "3m", "esp": 0, "sit": "EM DIA", "alvo": 3, "prazo": "20/10/2028", "prazotxt": "V3 até 20/10/2028"}, {"id": "027", "nome": "PEDRO RAMOS", "loja": "ARARUAMA", "sup": "DANILO", "med": 28850.940000000028, "nivloja": 2, "niv": 1, "niv_ant": 1, "muda": 0, "adm": "16/07/2026", "ten": 3, "tcasa": "3m", "esp": 0, "sit": "EM DIA", "alvo": 2, "prazo": "16/10/2027", "prazotxt": "V2 até 16/10/2027"}, {"id": "038", "nome": "JOCIMAR PEGO DE ARAUJO", "loja": "ITAGUAI", "sup": "DANILO", "med": 27904.89333333335, "nivloja": 2, "niv": 1, "niv_ant": 1, "muda": 0, "adm": "09/07/2026", "ten": 3, "tcasa": "3m", "esp": 0, "sit": "EM DIA", "alvo": 2, "prazo": "09/10/2027", "prazotxt": "V2 até 09/10/2027"}, {"id": "026", "nome": "MARCELLO SANTORO", "loja": "SAO CRISTOVAO", "sup": "RAMON", "med": 23123.99666666667, "nivloja": 3, "niv": 1, "niv_ant": 1, "muda": 0, "adm": "10/08/2026", "ten": 2, "tcasa": "2m", "esp": 0, "sit": "TREINO", "alvo": 2, "prazo": "10/11/2027", "prazotxt": "V2 até 10/11/2027"}, {"id": "010", "nome": "VINÍCIUS MOREIRA", "loja": "PET 1", "sup": "BRUNO", "med": 17492.080000000005, "nivloja": 3, "niv": 1, "niv_ant": 1, "muda": 0, "adm": "17/07/2026", "ten": 3, "tcasa": "3m", "esp": 0, "sit": "EM DIA", "alvo": 2, "prazo": "17/10/2027", "prazotxt": "V2 até 17/10/2027"}, {"id": "018", "nome": "JOAO VICTOR ROCHA", "loja": "NOVA IGUACU 1", "sup": "RAMON", "med": 12972.946666666663, "nivloja": 1, "niv": 1, "niv_ant": 1, "muda": 0, "adm": "09/01/2026", "ten": 9, "tcasa": "9m", "esp": 1, "sit": "EM DIA", "alvo": 2, "prazo": "09/04/2027", "prazotxt": "V2 até 09/04/2027"}, {"id": "012", "nome": "FERNANDA SOUZA", "loja": "PIABETA", "sup": "BRUNO", "med": 10650.14666666667, "nivloja": 2, "niv": 1, "niv_ant": 1, "muda": 0, "adm": "17/09/2025", "ten": 13, "tcasa": "1a 1m", "esp": 1, "sit": "EM DIA", "alvo": 2, "prazo": "17/12/2026", "prazotxt": "V2 até 17/12/2026"}, {"id": "022", "nome": "THAIS MOURA", "loja": "DEP. ALTO", "sup": "BRUNO", "med": 4618.1433333333325, "nivloja": 1, "niv": 1, "niv_ant": 1, "muda": 0, "adm": "19/08/2026", "ten": 2, "tcasa": "2m", "esp": 0, "sit": "TREINO", "alvo": 2, "prazo": "19/11/2027", "prazotxt": "V2 até 19/11/2027"}, {"id": "023", "nome": "RAFAEL PEIXOTO", "loja": "DEP. VARZEA", "sup": "BRUNO", "med": 546.2600000000001, "nivloja": 1, "niv": 1, "niv_ant": 1, "muda": 0, "adm": null, "sit": "SEMDATA"}, {"id": "030", "nome": "JOANA CARLA", "loja": "BARAO", "sup": "DANILO", "med": 47.38333333333333, "nivloja": 1, "niv": 1, "niv_ant": 1, "muda": 0, "adm": null, "sit": "SEMDATA"}, {"id": "035", "nome": "CARLOS ALEXANDRE", "loja": "TAQUARA", "sup": "RAMON", "med": 44.86333333333325, "nivloja": 1, "niv": 1, "niv_ant": 1, "muda": 0, "adm": null, "sit": "SEMDATA"}];
+const NIVLOJA={3:{nome:'Ouro · N3',cor:'ouro',faixa:'acima de R$ 250 mil'},2:{nome:'Prata · N2',cor:'prata',faixa:'R$ 150 a 250 mil'},1:{nome:'Bronze · N1',cor:'bronze',faixa:'abaixo de R$ 150 mil'}};
+const NIVV={5:{nome:'V5 · Elite',cor:'v5'},4:{nome:'V4 · Sênior',cor:'v4'},3:{nome:'V3 · Pleno',cor:'v3'},2:{nome:'V2 · Júnior',cor:'v2'},1:{nome:'V1 · Iniciante',cor:'v1'}};
+const FAIXAV={3:['< 50k','50–70k','70–100k','100–150k','> 150k'],2:['< 40k','40–60k','60–90k','90–110k','> 110k'],1:['< 30k','30–50k','50–66k','65–85k','> 85k']};
+let st={tab:0,q:'',filtro:null,somuda:false,loja:null,sup:null};
+const $=id=>document.getElementById(id);
+const brl=v=>'R$ '+Math.round(v).toLocaleString('pt-BR');
+const CURVA=[
+ {v:1,nome:'V1 · Iniciante',cor:'v1',janela:'1 a 6 meses',eixo:'1–6',desc:'Primeiros passos no salão após o treinamento — domínio do mix básico, atendimento e sistema, construindo os primeiros resultados.'},
+ {v:2,nome:'V2 · Júnior',cor:'v2',janela:'6 a 12 meses',eixo:'6–12',desc:'Ganha autonomia, começa a formar carteira própria e a bater a meta individual com mais consistência.'},
+ {v:3,nome:'V3 · Pleno',cor:'v3',janela:'12 a 24 meses',eixo:'12–24',desc:'Vendedor consolidado e referência técnica em cores e produtos, com indicadores de CPF saudáveis.'},
+ {v:4,nome:'V4 · Sênior',cor:'v4',janela:'24 a 36 meses',eixo:'24–36',desc:'Alto volume de vendas, fideliza clientes, apoia os colegas mais novos e puxa o resultado da loja.'},
+ {v:5,nome:'V5 · Elite',cor:'v5',janela:'acima de 36 meses',eixo:'36+',desc:'Topo da carreira de vendas — maiores tickets, carteira CNPJ forte e presença na Elite das Vendas CPF.'}
+];
+['LOJAS','VENDEDORES','CURVA V1→V5','PRAZOS'].forEach((t,i)=>{const b=document.createElement('button');b.setAttribute('role','tab');b.textContent=t;b.onclick=()=>{st.tab=i;st.filtro=null;st.somuda=false;st.loja=null;st.sup=null;st.q='';$('q').value='';render()};$('tabs').appendChild(b)});
+const SITC={'EM DIA':'#178048','ATRASADO':'#d64550','ADIANTADO':'#4f7cf0','TREINO':'#E6B935','SEMDATA':'#6b7688'};
+const SITL={'EM DIA':'Em dia','ATRASADO':'Atrasado','ADIANTADO':'Adiantado','TREINO':'Em treino','SEMDATA':'Sem data'};
+const SITORD=['ATRASADO','EM DIA','ADIANTADO','TREINO','SEMDATA'];
+function norm(s){return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')}
+function buildSelects(data,lojaKey){
+ const sups=[...new Set(data.map(x=>x.sup))].sort();
+ let html='';
+ if(lojaKey){
+  const lojas=[...new Set(data.map(x=>x[lojaKey]))].sort();
+  html+='<select id="selLoja"><option value="">Todas as lojas</option>'+lojas.map(l=>`<option ${st.loja===l?'selected':''}>${l}</option>`).join('')+'</select>';
+ }
+ html+='<select id="selSup"><option value="">Todos os supervisores</option>'+sups.map(s=>`<option ${st.sup===s?'selected':''}>${s}</option>`).join('')+'</select>';
+ $('selects').innerHTML=html;
+ if(lojaKey)$('selLoja').onchange=e=>{st.loja=e.target.value||null;render()};
+ $('selSup').onchange=e=>{st.sup=e.target.value||null;render()};
+}
+function mudtag(m,isLoja){
+ if(m===0) return '<span class="mudtag" style="background:var(--line);color:var(--ink)">mantém</span>';
+ const cai=m<0; const cor=cai?'cai':'sobe'; const txt=cai?('cai '+(-m)+' nível'+(-m>1?'is':'')):('sobe '+m+' nível'+(m>1?'is':''));
+ return `<span class="mudtag" style="background:var(--${cor});color:var(--${cor}-ink)">${cai?'▼':'▲'} ${txt}</span>`;
+}
+function renderCurva(){
+ const hs=[36,52,68,84,100];
+ $('escada').innerHTML=CURVA.map((c,i)=>`<div class="step"><div class="bar" style="height:${hs[i]}%;background:var(--${c.cor});color:var(--${c.cor}-ink)"><span class="vb">V${c.v}</span><span class="jn">${c.nome.split(' · ')[1]}</span></div><div class="axis">${c.eixo}<span>meses</span></div></div>`).join('');
+ $('curvacards').innerHTML=CURVA.map(c=>`<div class="cc" style="--c:var(--${c.cor})"><div class="cbadge" style="background:var(--${c.cor});color:var(--${c.cor}-ink)">V${c.v}</div><div class="ct"><b>${c.nome}</b><span class="jan">${c.janela}</span><p>${c.desc}</p></div></div>`).join('');
+}
+const FOOTDEF=document.querySelector('.foot').innerHTML;
+function setFoot(tab){
+ document.querySelector('.foot').innerHTML = (tab===3)
+  ? "<b>Nível atual</b> = classificação por venda (Méd. 90d). <b>Esperado</b> = nível previsto pela curva conforme o tempo de casa (treino de 3 meses + janela do nível). <b>⚠</b> = prazo vencido sem o nível atingido. Admissão extraída do Relatório de Vendedores · hoje: 07/10/2026."
+  : FOOTDEF;
+}
+function renderPrazos(){
+ const data=VENDS;
+ $('legend').innerHTML=SITORD.map(k=>`<span><i class="sw" style="background:${SITC[k]};color:#fff">●</i>${SITL[k]}</span>`).join('');
+ $('filtros').innerHTML='<span style="font-size:12px;color:var(--muted);font-weight:700">Situação:</span>'+SITORD.map(k=>`<button class="chip" data-s="${k}" aria-pressed="${st.filtro===k}">${SITL[k]}</button>`).join('');
+ [...$('filtros').querySelectorAll('.chip[data-s]')].forEach(b=>b.onclick=()=>{const s=b.dataset.s;st.filtro=st.filtro===s?null:s;render()});
+ buildSelects(VENDS,'loja');
+ $('resumo').innerHTML=SITORD.map(k=>{const c=data.filter(x=>x.sit===k).length;return `<div class="rcard" style="--c:${SITC[k]}"><div class="big">${c}</div><div class="lbl">${SITL[k]}</div></div>`}).join('');
+ const rank={'ATRASADO':0,'EM DIA':1,'TREINO':2,'ADIANTADO':3,'SEMDATA':4};
+ let L=[...data].sort((a,b)=>(rank[a.sit]-rank[b.sit])||((b.ten||0)-(a.ten||0)));
+ const q=norm(st.q);
+ let R=L.filter(s=>{const txt=s.nome+' '+s.loja+' '+s.sup+' '+(s.adm||'');return (!q||norm(txt).includes(q))&&(!st.filtro||s.sit===st.filtro)&&(!st.loja||s.loja===st.loja)&&(!st.sup||s.sup===st.sup)});
+ $('thead').innerHTML='<tr><th>Vendedor</th><th>Loja</th><th>Admissão</th><th>Tempo de casa</th><th>Nível atual</th><th>Esperado</th><th>Situação</th><th>Próximo prazo</th></tr>';
+ $('tb').innerHTML=R.length?R.map(s=>{
+  const na=NIVV[s.niv];
+  const esp=(s.sit==='SEMDATA')?'—':(s.esp?('V'+s.esp):'treino');
+  const prazo=(s.prazotxt||'—').replace('⚠','<span class="warn">⚠ vencido</span>');
+  return `<tr class="${s.sit==='ATRASADO'?'atraso-row':''}"><td><b>${s.nome}</b></td><td>${s.loja}</td><td class="admcell">${s.adm||'—'}</td><td class="admcell">${s.tcasa||'—'}</td><td><span class="pill" style="background:var(--${na.cor});color:var(--${na.cor}-ink)">V${s.niv}</span></td><td style="color:var(--muted);font-weight:700">${esp}</td><td><span class="sit-pill" style="background:${SITC[s.sit]}">${SITL[s.sit]}</span></td><td>${prazo}</td></tr>`;
+ }).join(''):'<tr><td colspan="8" class="empty">Nenhum vendedor encontrado.</td></tr>';
+}
+function render(){
+ [...$('tabs').children].forEach((b,i)=>b.setAttribute('aria-selected',i===st.tab));
+ const growth=st.tab===2;
+ document.querySelector('.controls').hidden=growth;
+ ['legend','alerta','resumo','podium'].forEach(id=>$(id).hidden=growth);
+ document.querySelector('.tbl').hidden=growth;
+ $('crescimento').hidden=!growth;
+ if(growth){renderCurva();return;}
+ const isPrazos=st.tab===3;
+ $('podium').hidden=isPrazos;
+ $('alerta').hidden=isPrazos;
+ setFoot(st.tab);
+ if(isPrazos){renderPrazos();return;}
+ const isLoja=st.tab===0;
+ const data=isLoja?LOJAS:VENDS;
+ const nivs=isLoja?[3,2,1]:[5,4,3,2,1];
+ if(isLoja) $('legend').innerHTML=[3,2,1].map(n=>`<span><i class="sw" style="background:var(--${NIVLOJA[n].cor});color:var(--${NIVLOJA[n].cor}-ink)">N${n}</i>${NIVLOJA[n].nome.split(' · ')[0]} · ${NIVLOJA[n].faixa}</span>`).join('');
+ else $('legend').innerHTML=[5,4,3,2,1].map(n=>`<span><i class="sw" style="background:var(--${NIVV[n].cor});color:var(--${NIVV[n].cor}-ink)">V${n}</i>${NIVV[n].nome.split(' · ')[1]}</span>`).join('');
+ $('filtros').innerHTML='<span style="font-size:12px;color:var(--muted);font-weight:700">Nível:</span>'+nivs.map(n=>`<button class="chip" data-n="${n}" aria-pressed="${st.filtro===n}">${isLoja?'N':'V'}${n}</button>`).join('')+`<button class="chip muda" id="bmuda" aria-pressed="${st.somuda}">⚠ Só quem muda de nível</button>`;
+ [...$('filtros').querySelectorAll('.chip[data-n]')].forEach(b=>b.onclick=()=>{const n=+b.dataset.n;st.filtro=st.filtro===n?null:n;render()});
+ $('bmuda').onclick=()=>{st.somuda=!st.somuda;render()};
+ buildSelects(isLoja?LOJAS:VENDS, isLoja?null:'loja');
+ const nmuda=data.filter(x=>x.muda!==0).length; const ncai=data.filter(x=>x.muda<0).length; const nsobe=data.filter(x=>x.muda>0).length;
+ $('alerta').innerHTML=`<span>⚠</span><div><b>${nmuda}</b> ${isLoja?'lojas':'vendedores'} mudam de nível na régua de Outubro — <b style="color:#ff8a82">${ncai} caem</b>${nsobe?` · <b style="color:#5fd99a">${nsobe} sobem</b>`:''}. Use o filtro <b>“Só quem muda”</b> para ver a lista.</div>`;
+ $('resumo').innerHTML=nivs.map(n=>{const c=data.filter(x=>x.niv===n).length;const info=isLoja?NIVLOJA[n]:NIVV[n];return `<div class="rcard" style="--c:var(--${info.cor})"><div class="big">${c}</div><div class="lbl">${isLoja?('Nível '+n):(info.nome)}</div></div>`}).join('');
+ let L=[...data].sort((a,b)=>b.med-a.med); L.forEach((s,i)=>s.pos=i+1);
+ const cols=['var(--gold)','var(--silver)','var(--bronzem)'];
+ $('podium').innerHTML=L.slice(0,3).map((s,i)=>{const info=isLoja?NIVLOJA[s.niv]:NIVV[s.niv];const nome=isLoja?(s.id+' · '+s.n):s.nome;const sub=isLoja?('Supervisor '+s.sup):(s.loja+' · '+s.sup);return `<div class="pd r${i+1}" style="--c:${cols[i]}"><div class="pos">${i+1}º</div><div class="nm">${nome}</div><div class="meta">${sub} · Méd. 90d ${brl(s.med)}</div><span class="niv" style="background:var(--${info.cor});color:var(--${info.cor}-ink)">${info.nome}</span></div>`}).join('');
+ const q=norm(st.q);
+ let R=L.filter(s=>{
+  const txt=isLoja?(s.id+' '+s.n+' '+s.sup):(s.nome+' '+s.loja+' '+s.sup);
+  return (!q||norm(txt).includes(q)) && (!st.filtro||s.niv===st.filtro) && (!st.somuda||s.muda!==0)
+   && (!st.sup||s.sup===st.sup) && (!st.loja||(isLoja?s.n===st.loja:s.loja===st.loja));
+ });
+ if(isLoja){
+  $('thead').innerHTML='<tr><th>#</th><th>Loja</th><th>Supervisor</th><th class="num">Méd. 90 dias</th><th>Nível Out/26</th><th>Mudança (Jul-Set → Out)</th></tr>';
+  $('tb').innerHTML=R.length?R.map(s=>{const info=NIVLOJA[s.niv];return `<tr class="${s.muda?'muda-row':''}"><td class="pos">${s.pos}</td><td><b>${s.id} · ${s.n}</b></td><td>${s.sup}</td><td class="num">${brl(s.med)}</td><td><span class="pill" style="background:var(--${info.cor});color:var(--${info.cor}-ink)">${info.nome}</span></td><td>${s.muda?`<span class="seta">N${s.niv_ant} → N${s.niv}</span> &nbsp; ${mudtag(s.muda,true)}`:mudtag(0)}</td></tr>`}).join(''):'<tr><td colspan="6" class="empty">Nenhuma loja encontrada.</td></tr>';
+ }else{
+  $('thead').innerHTML='<tr><th>#</th><th>Vendedor</th><th>Loja</th><th class="num">Méd. 90 dias</th><th>Nível Out/26</th><th>Mudança (Jul-Set → Out)</th></tr>';
+  $('tb').innerHTML=R.length?R.map(s=>{const info=NIVV[s.niv];const fx=FAIXAV[s.nivloja][s.niv-1];return `<tr class="${s.muda?'muda-row':''}"><td class="pos">${s.pos}</td><td><b>${s.nome}</b></td><td>${s.loja}</td><td class="num">${brl(s.med)}</td><td><span class="pill" style="background:var(--${info.cor});color:var(--${info.cor}-ink)">${info.nome}</span><span class="faixa">faixa ${fx}</span></td><td>${s.muda?`<span class="seta">V${s.niv_ant} → V${s.niv}</span> &nbsp; ${mudtag(s.muda,false)}`:mudtag(0)}</td></tr>`}).join(''):'<tr><td colspan="6" class="empty">Nenhum vendedor encontrado.</td></tr>';
+ }
+}
+$('q').oninput=e=>{st.q=e.target.value;render()};
+render();
+</script>
+</body></html>
