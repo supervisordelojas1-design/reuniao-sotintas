@@ -8788,5 +8788,171 @@ syncNav();
   .tabs .tab{flex:1 1 auto}
 }
 </style>
+<!-- ===== NIVEIS (aba embutida, espelha o Painel) ===== -->
+<div id="ovNiveis" style="position:fixed;inset:0;z-index:99999;background:#0f1522;display:none;flex-direction:column">
+ <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;color:#fff;font:600 14px system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
+  <button id="ovNivFechar" style="border:0;border-radius:8px;padding:9px 13px;background:#FFD100;color:#0F2B46;font:inherit;cursor:pointer">&larr; Voltar ao Assistente</button>
+  <span style="opacity:.85">Niveis de Lojas e Vendedores</span>
+ </div>
+ <iframe id="ifrNiveis" title="Niveis de Lojas e Vendedores" style="flex:1;width:100%;border:0;background:#0f1522"></iframe>
+</div>
+
+<!-- ===== TELA INICIAL (LAUNCHER DE CARDS) ===== -->
+<div id="ovInicio" aria-hidden="true">
+  <div class="ini-top">
+    <div class="ini-tt">
+      <div class="ini-h">Assistente ST</div>
+      <div class="ini-s">O que você quer abrir?</div>
+    </div>
+    <button type="button" id="iniFechar" class="ini-close">Ir para o app &rarr;</button>
+  </div>
+  <div class="ini-grid" id="iniGrid">
+    <button type="button" class="ini-card feat" data-act="painel" data-gate="1">
+      <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-chart"/></svg></span>
+      <span class="ini-nm">Painel</span>
+      <span class="ini-ds">Painel de coordenação</span>
+    </button>
+    <button type="button" class="ini-card feat" data-act="niveis" data-gate="1">
+      <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-target"/></svg></span>
+      <span class="ini-nm">Níveis</span>
+      <span class="ini-ds">Lojas, vendedores e prazos</span>
+    </button>
+    <button type="button" class="ini-card" data-act="agenda">
+      <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-calendar-days"/></svg></span>
+      <span class="ini-nm">Agenda</span>
+      <span class="ini-ds">Seus compromissos</span>
+    </button>
+    <button type="button" class="ini-card" data-act="agendar">
+      <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg></span>
+      <span class="ini-nm">Agendar</span>
+      <span class="ini-ds">Reunião, visita, tarefa</span>
+    </button>
+    <button type="button" class="ini-card" data-act="agora">
+      <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg></span>
+      <span class="ini-nm">Reunião</span>
+      <span class="ini-ds">Conduzir e gerar a ata</span>
+    </button>
+    <button type="button" class="ini-card" data-act="rotina">
+      <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-car"/></svg></span>
+      <span class="ini-nm">Rotina</span>
+      <span class="ini-ds">Pendências e equipe</span>
+    </button>
+    <button type="button" class="ini-card" data-act="despesas">
+      <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-wallet"/></svg></span>
+      <span class="ini-nm">Despesas</span>
+      <span class="ini-ds">Lançar e exportar</span>
+    </button>
+    <button type="button" class="ini-card" data-act="historico">
+      <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg></span>
+      <span class="ini-nm">Histórico</span>
+      <span class="ini-ds">Reuniões e atas</span>
+    </button>
+  </div>
+  <div class="ini-foot">Só Tintas · Colorindo Vidas e Realizando Sonhos</div>
+</div>
+
+<style>
+#ovInicio{position:fixed;inset:0;z-index:99998;background:var(--bg,#f5f7fb);display:none;
+  flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#ovInicio.aberto{display:flex}
+#ovInicio .ini-top{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;
+  gap:12px;padding:18px 16px 16px;background:linear-gradient(135deg,var(--navy,#1C3F8F),var(--navy-d,#152F69));color:#fff;
+  box-shadow:0 2px 10px rgba(20,35,70,.18)}
+#ovInicio .ini-h{font-size:21px;font-weight:800;line-height:1.05}
+#ovInicio .ini-s{font-size:13px;opacity:.85;margin-top:3px;font-weight:600}
+#ovInicio .ini-close{border:0;background:rgba(255,255,255,.16);color:#fff;font:700 13px inherit;
+  padding:9px 13px;border-radius:999px;cursor:pointer;white-space:nowrap}
+#ovInicio .ini-close:hover{background:rgba(255,255,255,.26)}
+#ovInicio .ini-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:16px;max-width:900px;
+  margin:0 auto;width:100%}
+@media (min-width:720px){#ovInicio .ini-grid{grid-template-columns:repeat(4,1fr)}}
+#ovInicio .ini-card{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;
+  background:#fff;border:1px solid var(--line,#e4e9f3);border-radius:var(--r-lg,16px);padding:16px 15px;
+  cursor:pointer;box-shadow:var(--e1,0 1px 2px rgba(20,35,70,.05));transition:transform .08s,box-shadow .12s,border-color .12s}
+#ovInicio .ini-card:hover{box-shadow:var(--e3,0 8px 28px rgba(20,35,70,.14));transform:translateY(-2px);border-color:var(--navy-20,#c9d6f0)}
+#ovInicio .ini-card:active{transform:translateY(0)}
+#ovInicio .ini-ic{display:grid;place-items:center;width:46px;height:46px;border-radius:12px;
+  background:var(--navy-10,#e6ecf9);color:var(--navy,#1C3F8F);margin-bottom:4px}
+#ovInicio .ini-ic .ic{width:24px;height:24px}
+#ovInicio .ini-nm{font-size:16px;font-weight:800;color:var(--ink,#16233d)}
+#ovInicio .ini-ds{font-size:12.5px;color:var(--muted,#67728c);font-weight:600;line-height:1.3}
+#ovInicio .ini-card.feat{background:linear-gradient(135deg,var(--navy,#1C3F8F),var(--navy-d,#152F69));border-color:transparent}
+#ovInicio .ini-card.feat .ini-nm{color:#fff}
+#ovInicio .ini-card.feat .ini-ds{color:rgba(255,255,255,.82)}
+#ovInicio .ini-card.feat .ini-ic{background:rgba(255,255,255,.16);color:#FFD100}
+#ovInicio .ini-foot{text-align:center;color:var(--muted,#67728c);font-size:11px;font-weight:700;
+  letter-spacing:.3px;padding:6px 16px 26px}
+#btnInicio{display:none}
+body:not(.travado) #btnInicio{display:inline-flex}
+</style>
+
+<script>
+(function(){
+  var ov=document.getElementById('ovInicio');
+  var grid=document.getElementById('iniGrid');
+  if(!ov||!grid) return;
+
+  function sessao(){ try{ return JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); }catch(e){ return null; } }
+  function logado(){ var s=sessao(); return !!(s&&s.nome) && !document.body.classList.contains('travado'); }
+  function podeVer(){ var s=sessao(); if(!s) return false; var p=((s&&s.papel)||'').trim().toLowerCase();
+    if(!p) return true; return p.indexOf('coorden')>=0 || p.indexOf('supervis')>=0; }
+
+  function aplicarGate(){
+    var ver=podeVer();
+    Array.prototype.forEach.call(grid.querySelectorAll('[data-gate]'),function(c){
+      c.style.display = ver ? '' : 'none';
+    });
+  }
+  function abrirInicio(){ aplicarGate(); ov.classList.add('aberto'); ov.setAttribute('aria-hidden','false');
+    document.body.style.overflow='hidden'; window.scrollTo(0,0); }
+  function fecharInicio(){ ov.classList.remove('aberto'); ov.setAttribute('aria-hidden','true');
+    document.body.style.overflow=''; }
+  window.abrirInicio=abrirInicio; window.fecharInicio=fecharInicio;
+
+  // overlay de Niveis (espelha o do Painel)
+  var ovN=document.getElementById('ovNiveis'), ifrN=document.getElementById('ifrNiveis'),
+      xN=document.getElementById('ovNivFechar');
+  function abrirNiveis(){
+    if(!ovN||!ifrN) return;
+    var s=sessao(); var u=(s&&s.nome)?s.nome:'';
+    if(!ifrN.getAttribute('src')){ ifrN.setAttribute('src','niveis.html'+(u?('?u='+encodeURIComponent(u)):'')); }
+    ovN.style.display='flex'; document.body.style.overflow='hidden';
+  }
+  if(xN){ xN.addEventListener('click', function(){ ovN.style.display='none'; document.body.style.overflow=''; }); }
+
+  grid.addEventListener('click', function(ev){
+    var c=ev.target && ev.target.closest ? ev.target.closest('.ini-card') : null;
+    if(!c) return;
+    var act=c.getAttribute('data-act');
+    fecharInicio();
+    if(act==='painel'){ var tp=document.getElementById('tabPainel'); if(tp) tp.click(); return; }
+    if(act==='niveis'){ abrirNiveis(); return; }
+    if(typeof setModo==='function'){ setModo(act); window.scrollTo(0,0); }
+  });
+
+  document.getElementById('iniFechar').addEventListener('click', fecharInicio);
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape' && ov.classList.contains('aberto')) fecharInicio(); });
+
+  // botao "Inicio" no topo, para reabrir o menu a qualquer momento
+  (function(){
+    var barra=document.querySelector('.topbar-in'); var user=document.getElementById('btnUser');
+    if(!barra||!user) return;
+    var b=document.createElement('button');
+    b.id='btnInicio'; b.className='chip-dica'; b.type='button'; b.title='Tela inicial';
+    b.innerHTML='<svg class="ic" aria-hidden="true"><use href="#i-compass"/></svg><span class="ct"> Início</span>';
+    b.addEventListener('click', abrirInicio);
+    barra.insertBefore(b, user);
+  })();
+
+  // mostrar o menu como primeira tela apos o login (uma vez por carregamento)
+  var jaMostrou=false;
+  var t=setInterval(function(){
+    if(jaMostrou) return;
+    if(logado()){ jaMostrou=true; abrirInicio(); }
+  }, 400);
+  setTimeout(function(){ clearInterval(t); }, 20000);
+})();
+</script>
+
 </body>
 </html>
