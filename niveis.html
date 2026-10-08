@@ -303,15 +303,40 @@ render();
   function sess(){ try{ return JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); }catch(e){ return null; } }
   function ehGestor(){ var s=sess(); if(!s) return false; return ((s.papel||'').toLowerCase()).indexOf('coorden')>=0; }
 
+  /* ===== Carteira oficial (loja -> supervisor) e trava por gestão ===== */
+  var SUPMAP = {
+    '010':'BRUNO','004':'BRUNO','006':'BRUNO','007':'BRUNO','002':'BRUNO','022':'BRUNO','023':'BRUNO','009':'BRUNO','012':'BRUNO','017':'BRUNO','013':'BRUNO',
+    '033':'DANILO','034':'DANILO','027':'DANILO','029':'DANILO','016':'DANILO','032':'DANILO','030':'DANILO','028':'DANILO','038':'DANILO',
+    '026':'RAMON','035':'RAMON','036':'RAMON','018':'RAMON','024':'RAMON','025':'RAMON','019':'RAMON','021':'RAMON',
+    '015':'CARLOS EDUARDO','008':'CARLOS EDUARDO'
+  };
+  function remapSup(a){ if(a) a.forEach(function(r){ var s=SUPMAP[r.id]; if(s) r.sup=s; }); return a; }
+  var VIEW=(function(){
+    var s=sess(); if(!s) return {all:true};
+    var p=((s.papel||'')).toLowerCase(); if(p.indexOf('coorden')>=0) return {all:true};
+    var nome=String(s.nome||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().trim();
+    var sups=['BRUNO','DANILO','RAMON','CARLOS EDUARDO'];
+    var m=sups.filter(function(S){ var f=S.split(' ')[0]; return nome.indexOf(S)>=0 || nome.split(' ')[0]===f; })[0];
+    return m?{all:false,sup:m}:{all:true};
+  })();
+  var LOJAS_FULL=LOJAS.slice(), VENDS_FULL=VENDS.slice();
+  function scopeApply(){
+    remapSup(LOJAS_FULL); remapSup(VENDS_FULL);
+    if(VIEW.all){ LOJAS=LOJAS_FULL.slice(); VENDS=VENDS_FULL.slice(); }
+    else { LOJAS=LOJAS_FULL.filter(function(l){return SUPMAP[l.id]===VIEW.sup;});
+           VENDS=VENDS_FULL.filter(function(v){return SUPMAP[v.id]===VIEW.sup;}); }
+    if(typeof render==='function') render();
+  }
+
   /* ---------- carregar dados publicados (todos veem o mesmo) ---------- */
   function aplicar(d){
     if(d && Array.isArray(d.LOJAS) && Array.isArray(d.VENDS)){
-      LOJAS = d.LOJAS; VENDS = d.VENDS;
-      if(typeof render==='function') render();
+      LOJAS_FULL = d.LOJAS; VENDS_FULL = d.VENDS; scopeApply();
       return true;
     }
     return false;
   }
+  scopeApply();
   if(BACKEND_NIVEIS){
     fetch(BACKEND_NIVEIS).then(function(r){return r.json();}).then(function(j){
       if(j && j.ok && j.data) aplicar(j.data);
