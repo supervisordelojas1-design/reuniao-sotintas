@@ -184,11 +184,26 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
 .ppbar .tag{color:#8FA9C2;width:44px;font-size:10px}
 .ppbar .bar{height:11px;background:rgba(255,255,255,.15);border-radius:6px}
 .ppbar .bar i{border-radius:6px}
-.ppbar .mk{background:var(--card);opacity:.75;width:2px;top:-3px;bottom:-3px;z-index:2}
-.ppbar .wk{position:absolute;top:-3px;bottom:-3px;width:1px;background:rgba(255,255,255,.22);z-index:1}
-.wkruler{position:relative;height:13px;margin:0 68px 5px 52px}
-.wkruler .wl{position:absolute;transform:translateX(-50%);font-size:9px;font-weight:800;color:#8FA9C2;letter-spacing:.3px}
-.wkruler .wl.on{color:#FFD100}
+.ppbar .bar{overflow:hidden}
+.ppbar .bar i{position:relative;z-index:1}
+.ppbar .mk{background:#fff;opacity:.9;width:2px;top:0;bottom:0;z-index:3}
+.ppbar .wk{position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,.30);z-index:2}
+.ppbar .wc{position:absolute;top:0;bottom:0;z-index:0}
+.ppbar .wc.alt{background:rgba(255,255,255,.06)}
+.ppbar .wc.on{background:rgba(255,209,0,.16)}
+.wkruler{position:relative;height:17px;margin:2px 60px 7px 52px}
+.wkruler .wl{position:absolute;transform:translateX(-50%);top:0;font-size:10px;font-weight:800;color:#9FB6CC;letter-spacing:.3px;
+ padding:2px 7px;border-radius:999px;cursor:default;transition:color .12s,background .12s}
+.wkruler .wl:hover{color:#fff;background:rgba(255,255,255,.12)}
+.wkruler .wl.on{color:#0F2B46;background:#FFD100}
+/* tooltip da meta semanal */
+.wktip{position:fixed;z-index:99999;display:none;pointer-events:none;background:var(--card);color:var(--tx);
+ border:1px solid var(--line);border-radius:11px;padding:10px 12px;box-shadow:0 10px 30px rgba(0,0,0,.28);
+ font-size:12px;max-width:270px}
+.wktip .tt{font-weight:800;font-size:12.5px;margin-bottom:5px;color:var(--navy-ink)}
+.wktip .rw{display:flex;justify-content:space-between;gap:16px;color:var(--tx2);font-size:11.5px;line-height:1.7}
+.wktip .rw b{color:var(--tx);font-weight:800}
+.wktip .ac{margin-top:5px;padding-top:5px;border-top:1px solid var(--line);color:var(--tx3);font-size:11px}
 .ppbar .pc{color:#fff;width:60px;font-size:14px}
 .ppleg{font-size:10.5px;color:#8FA9C2;margin-top:11px;line-height:1.5}
 .ppleg b{color:#C9DAE9}
@@ -599,14 +614,31 @@ const RE = D.periodo.utDecorridos / D.periodo.utTotal;
 /* ---------- semanas (5 dias úteis cada) ---------- */
 const SEMUT=5;                                   // dias úteis por semana
 const SEM=(function(){var a=[];for(var k=SEMUT;k<UT;k+=SEMUT)a.push(k/UT);return a;})(); // fração de cada fim de semana
+const SEMBOUND=[0].concat(SEM,[1]);              // fronteiras (0 … 1)
 const SEMATUAL=Math.min(Math.ceil(UD/SEMUT)||1, SEM.length+1);   // semana corrente
-/* tracinhos de fim de semana dentro de uma barra */
+/* tracinhos simples (barras pequenas de loja/vendedor) */
 function wkTicks(){ return SEM.map(function(f){return '<span class="wk" style="left:'+(f*100).toFixed(1)+'%"></span>';}).join(''); }
-/* régua com os números das semanas (S1, S2… com a semana atual em destaque) */
-function wkRuler(){
- var b=[0].concat(SEM,[1]), h='';
- for(var i=0;i<b.length-1;i++){ var c=(b[i]+b[i+1])/2, on=(i+1===SEMATUAL);
-  h+='<span class="wl'+(on?' on':'')+'" style="left:'+(c*100).toFixed(1)+'%">S'+(i+1)+'</span>'; }
+/* faixas de semana (zebra) + semana atual destacada + divisórias — visual "diagrama" da barra grande */
+function wkCells(){
+ var h='';
+ for(var i=0;i<SEMBOUND.length-1;i++){
+  var l=SEMBOUND[i]*100, w=(SEMBOUND[i+1]-SEMBOUND[i])*100, on=(i+1===SEMATUAL);
+  h+='<span class="wc'+(i%2?' alt':'')+(on?' on':'')+'" style="left:'+l.toFixed(2)+'%;width:'+w.toFixed(2)+'%"></span>';
+ }
+ return h + SEM.map(function(f){return '<span class="wk" style="left:'+(f*100).toFixed(1)+'%"></span>';}).join('');
+}
+/* régua com os números das semanas; cada chip carrega a meta da semana p/ mostrar no hover */
+function wkRuler(mL,mT){
+ var h='';
+ for(var i=0;i<SEMBOUND.length-1;i++){
+  var c=(SEMBOUND[i]+SEMBOUND[i+1])/2, on=(i+1===SEMATUAL);
+  var fSem=SEMBOUND[i+1]-SEMBOUND[i], fAc=SEMBOUND[i+1];
+  var d=' data-sem="'+(i+1)+'"'
+       +' data-mlsem="'+Math.round((mL||0)*fSem)+'" data-mtsem="'+Math.round((mT||0)*fSem)+'"'
+       +' data-mlac="'+Math.round((mL||0)*fAc)+'" data-mtac="'+Math.round((mT||0)*fAc)+'"'
+       +' data-fac="'+(fAc*100).toFixed(0)+'"';
+  h+='<span class="wl'+(on?' on':'')+'" style="left:'+(c*100).toFixed(1)+'%"'+d+'>S'+(i+1)+'</span>';
+ }
  return '<div class="wkruler">'+h+'</div>';
 }
 
@@ -761,12 +793,10 @@ function painelPrincipal(){
    <div class="ppc"><div class="l">Ritmo</div><div class="v">${g.ritmoReal>=g.ritmoNec?'No ritmo':'Abaixo'}</div><div class="f">${g.ritmoReal>=g.ritmoNec?'folga de ':'déficit de '}${BRL(Math.abs(g.ritmoReal-g.ritmoNec))}/dia</div></div>
   </div>`;
  h+=`<div class="ppbar">
-  ${wkRuler()}
-  <div class="bl"><span class="tag">LOJA</span><span class="bar">${wkTicks()}<span class="mk" style="left:${(RE*100).toFixed(1)}%"></span><i style="width:${Math.min(g.pctLoja*100,100)}%;background:${g.pctLoja>=RE?'#2FD08E':'#FF6B70'}"></i></span><span class="pc">${PPCT(g.pctLoja)}</span></div>
-  <div class="bl"><span class="tag">TIME</span><span class="bar">${wkTicks()}<span class="mk" style="left:${(RE*100).toFixed(1)}%"></span><i style="width:${Math.min(g.pctTime*100,100)}%;background:${g.pctTime>=RE?'#2FD08E':'#FF6B70'};opacity:.65"></i></span><span class="pc">${PPCT(g.pctTime)}</span></div>
-  <div class="ppleg">Os tracinhos marcam o fim de cada semana (${SEMUT} dias úteis) — estamos na <b>S${SEMATUAL}</b>.
-   A marca branca está em <b>${PPCT(RE)}</b> — o quanto do mês já passou (${UD} de ${UT} dias úteis).
-   Barra além da marca = no ritmo. Barra aquém = atrasado.</div>
+  ${wkRuler(g.metaLoja,g.metaTime)}
+  <div class="bl"><span class="tag">LOJA</span><span class="bar">${wkCells()}<span class="mk" style="left:${(RE*100).toFixed(1)}%"></span><i style="width:${Math.min(g.pctLoja*100,100)}%;background:${g.pctLoja>=RE?'#2FD08E':'#FF6B70'}"></i></span><span class="pc">${PPCT(g.pctLoja)}</span></div>
+  <div class="bl"><span class="tag">TIME</span><span class="bar">${wkCells()}<span class="mk" style="left:${(RE*100).toFixed(1)}%"></span><i style="width:${Math.min(g.pctTime*100,100)}%;background:${g.pctTime>=RE?'#2FD08E':'#FF6B70'};opacity:.65"></i></span><span class="pc">${PPCT(g.pctTime)}</span></div>
+  <div class="ppleg">Passe o mouse em <b>S1·S2·S3…</b> para ver a meta de cada semana. A faixa amarela é a semana atual (<b>S${SEMATUAL}</b>); a linha branca em <b>${PPCT(RE)}</b> marca o quanto do mês já passou (${UD} de ${UT} dias úteis). Barra além da linha = no ritmo.</div>
  </div></div>`;
  h+=gaugeBox(g,'Atingimento da rede');
  h+=`<div class="grp"><div class="grph"><h3>Resumo de níveis</h3><span class="cnt">régua ${NOVA?'a partir de Out/26':'Jul–Set/26'} · base Méd. 90 dias</span></div><div class="ind">`;
@@ -1783,6 +1813,36 @@ function fazerLogin(){
 document.getElementById('plPin').addEventListener('keydown',function(e){if(e.key==='Enter')fazerLogin()});
 document.getElementById('pupFile').addEventListener('change',function(ev){lerArquivos(ev.target.files)});
 window.abrirUpload=abrirUpload;window.enviarUpload=enviarUpload;
+</script>
+<div id="wktip" class="wktip"></div>
+<script>
+/* tooltip da meta semanal — delegação em document, sobrevive aos re-render */
+(function(){
+ var tip=document.getElementById('wktip'); if(!tip) return;
+ function brl(n){ n=Math.round(+n||0); return 'R$ '+n.toLocaleString('pt-BR'); }
+ function alvo(e){ return (e.target&&e.target.closest)?e.target.closest('.wl[data-sem]'):null; }
+ function mostra(el){
+  var s=el.getAttribute('data-sem');
+  tip.innerHTML='<div class="tt">Semana '+s+'</div>'
+   +'<div class="rw"><span>Meta da semana · Loja</span><b>'+brl(el.getAttribute('data-mlsem'))+'</b></div>'
+   +'<div class="rw"><span>Meta da semana · Time</span><b>'+brl(el.getAttribute('data-mtsem'))+'</b></div>'
+   +'<div class="ac">Acumulado até o fim da S'+s+': Loja '+brl(el.getAttribute('data-mlac'))+' · Time '+brl(el.getAttribute('data-mtac'))+' ('+el.getAttribute('data-fac')+'% do mês)</div>';
+  tip.style.display='block';
+ }
+ document.addEventListener('mouseover',function(e){ var el=alvo(e); if(el) mostra(el); });
+ document.addEventListener('mouseout',function(e){ if(alvo(e)) tip.style.display='none'; });
+ document.addEventListener('mousemove',function(e){
+  if(tip.style.display!=='block') return;
+  var w=tip.offsetWidth, h=tip.offsetHeight;
+  var x=e.clientX+14; if(x+w>innerWidth-8) x=e.clientX-w-14;
+  var y=e.clientY+16; if(y+h>innerHeight-8) y=e.clientY-h-16;
+  tip.style.left=Math.max(8,x)+'px'; tip.style.top=Math.max(8,y)+'px';
+ });
+ /* toque: mostra ao tocar no chip e esconde ao tocar fora */
+ document.addEventListener('touchstart',function(e){ var el=alvo(e); if(el){ mostra(el);
+  var r=el.getBoundingClientRect(); tip.style.left=Math.max(8,Math.min(r.left,innerWidth-tip.offsetWidth-8))+'px'; tip.style.top=(r.bottom+8)+'px';
+ } else { tip.style.display='none'; } },{passive:true});
+})();
 </script>
 </body>
 </html>
