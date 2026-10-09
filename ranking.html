@@ -1,0 +1,394 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ranking Só Tintas 2026</title>
+<script>
+/* tema compartilhado (?tema / localStorage / postMessage do app) */
+(function(){
+ function qp(n){try{return new URLSearchParams(location.search).get(n);}catch(e){return null;}}
+ function ls(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+ var p=(qp('tema')||'').toLowerCase();
+ var t=(p==='claro'||p==='light')?'light':(p==='escuro'||p==='dark')?'dark':null;
+ if(!t){var s=(ls('st_tema')||'').toLowerCase();t=(s==='dark'||s==='escuro')?'dark':'light';}
+ function ap(x){document.documentElement.setAttribute('data-theme',x);try{document.documentElement.style.colorScheme=x;}catch(e){}try{localStorage.setItem('st_tema',x);}catch(e){}}
+ ap(t);
+ window.addEventListener('message',function(ev){var d=ev&&ev.data;if(d&&(d.st_tema==='light'||d.st_tema==='dark'))ap(d.st_tema);});
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
+/* Layout: cartela de cores — cabeçalho, pódio, tabela com "fichas" mensais coloridas por pontos */
+:root{
+  --bg:#f5f6f8; --surface:#ffffff; --ink:#14213a; --muted:#5d6779; --line:#dde1e8;
+  --accent:#1f4fd1; --accent-ink:#ffffff;
+  --p0:#e6e8ec; --p0-ink:#6b7280;
+  --p1:#ffd99a; --p1-ink:#6b4300;
+  --p2:#7fd0a6; --p2-ink:#0b4a2c;
+  --p3:#1f4fd1; --p3-ink:#ffffff;
+  --gold:#d4a017; --silver:#9aa3b2; --bronze:#b8723d;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Public Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1522; --surface:#172034; --ink:#e8ecf4; --muted:#9aa5bb; --line:#2a3550;
+  --accent:#7aa2ff; --accent-ink:#0f1522;
+  --p0:#232d43; --p0-ink:#8e99ae; --p1:#7a5a1c; --p1-ink:#ffe7b8; --p2:#1f6b47; --p2-ink:#d6f5e4; --p3:#4f7cf0; --p3-ink:#ffffff;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1522; --surface:#172034; --ink:#e8ecf4; --muted:#9aa5bb; --line:#2a3550;
+  --accent:#7aa2ff; --accent-ink:#0f1522;
+  --p0:#232d43; --p0-ink:#8e99ae; --p1:#7a5a1c; --p1-ink:#ffe7b8; --p2:#1f6b47; --p2-ink:#d6f5e4; --p3:#4f7cf0; --p3-ink:#ffffff;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:24px 48px;display:flex;flex-direction:column;gap:20px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(26px,4vw,38px);line-height:1.05;margin:4px 0 0;text-wrap:balance}
+.hd-r{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.atz{color:var(--muted);font-size:11.5px;font-weight:600;white-space:nowrap}
+.atz b{color:var(--ink);font-weight:800}
+.tabs{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px;gap:4px}
+.tabs button{border:0;background:transparent;color:var(--muted);font:600 14px var(--f-body);padding:8px 18px;border-radius:999px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+button:focus-visible,input:focus-visible,label:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.controls{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 16px}
+.months{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.months .lbl{font-size:12px;color:var(--muted);font-weight:600;margin-right:4px}
+.chip{border:1px solid var(--line);background:var(--bg);color:var(--muted);font:600 12px var(--f-body);padding:5px 10px;border-radius:8px;cursor:pointer;letter-spacing:.04em}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip.link{background:transparent;border-style:dashed}
+.search{flex:1 1 200px;min-width:0}
+.search input{width:100%;font:500 14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.chk{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--muted);cursor:pointer;border-radius:6px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12px;color:var(--muted);align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:22px;height:16px;border-radius:4px;display:inline-grid;place-items:center;font-size:10px;font-weight:700}
+.podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:end}
+.pd{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:6px;min-width:0;border-top:6px solid var(--c)}
+.pd.r1{order:2;padding-block:24px}.pd.r2{order:1}.pd.r3{order:3}
+.pd .pos{font-family:var(--f-display);font-weight:800;font-size:28px;color:var(--c);line-height:1}
+.pd .nm{font-weight:700;font-size:16px;overflow-wrap:anywhere}
+.pd .sub{color:var(--muted);font-size:12px}
+.pd .pts{font-family:var(--f-display);font-weight:800;font-size:22px;font-variant-numeric:tabular-nums}
+.pd .pts small{font-family:var(--f-body);font-weight:500;font-size:12px;color:var(--muted)}
+@media (max-width:640px){.podium{grid-template-columns:1fr}.pd.r1,.pd.r2,.pd.r3{order:0}}
+.tbl{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700;position:sticky;top:0;background:var(--surface)}
+td.num,th.num{text-align:right}
+td.pos{font-family:var(--f-display);font-weight:800;font-size:16px;width:44px}
+td.nm{white-space:normal;min-width:160px}
+td.nm b{display:block;font-weight:700}
+td.nm span{color:var(--muted);font-size:12px}
+td.pts{font-family:var(--f-display);font-weight:800;font-size:18px}
+.mm{display:flex;gap:3px}
+.cell{width:56px;height:30px;border-radius:5px;display:grid;place-items:center;font-size:10.5px;letter-spacing:-.01em;font-weight:700;position:relative;cursor:default}
+.cell.na{background:transparent;border:1px dashed var(--line);color:var(--muted)}
+.cell.x::after{content:"";position:absolute;top:3px;right:3px;width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.7}
+.mh{display:flex;gap:3px}.mh span{width:56px;text-align:center}
+.bd{display:inline-flex;gap:4px}
+.bd i{font-style:normal;font-size:11px;font-weight:700;padding:2px 6px;border-radius:5px}
+tr.tie td.pos::after{content:"*";color:var(--accent);margin-left:2px}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.note h2{font-family:var(--f-display);font-size:17px;margin:0;font-weight:700}
+.note ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;color:var(--muted)}
+.note b{color:var(--ink)}
+.empty{padding:24px;color:var(--muted);text-align:center}
+#tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12px;padding:8px 10px;border-radius:8px;line-height:1.4;z-index:10;max-width:240px}
+@media (prefers-reduced-motion:no-preference){.tabs button,.chip{transition:background .15s,color .15s}}
+/* ----- atualização (coordenador) ----- */
+#btnUpdToggle{background:var(--accent);color:var(--accent-ink);border:0;border-radius:9px;padding:8px 14px;font:700 12.5px var(--f-body);cursor:pointer;display:none;align-self:flex-start}
+#btnUpdToggle.show{display:inline-block}
+#updCard{display:none;background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--accent);border-radius:14px;padding:14px 16px}
+#updCard.show{display:block}
+#updCard h3{font-family:var(--f-display);font-size:16px;margin:0 0 2px}
+#updCard .u-sub{color:var(--muted);font-size:12px;margin-bottom:12px}
+#updCard .u-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:560px){#updCard .u-grid{grid-template-columns:1fr}}
+#updCard label{display:block;font-size:11.5px;font-weight:700;color:var(--muted);margin-bottom:4px}
+#updCard input[type=file],#updCard select{width:100%;font:600 12px var(--f-body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px}
+#updCard input[type=file]{border-style:dashed}
+#updCard .u-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
+#updCard button{border:0;border-radius:9px;padding:10px 16px;font:700 13px var(--f-body);cursor:pointer}
+#updCard .u-calc{background:var(--accent);color:var(--accent-ink)}
+#updCard .u-pub{background:#128a52;color:#fff;display:none}
+#updCard .u-pub.show{display:inline-block}
+#updCard .u-prev{display:none;margin-top:12px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:12.5px}
+#updCard .u-prev.show{display:block}
+#updCard .u-prev .u-row{color:var(--muted);margin:3px 0}
+#updCard .u-prev b{color:var(--ink)}
+#updCard .u-warn{color:#c0392b}
+#updCard .u-msg{font-size:12.5px;font-weight:700;margin-top:8px}
+</style>
+</head><body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Só Tintas · Premiação 2026</div>
+      <h1 id="ttl">Ranking de Lojas</h1>
+    </div>
+    <div class="hd-r">
+      <div class="tabs" role="tablist">
+        <button role="tab" id="tab-l" aria-selected="true">Lojas</button>
+        <button role="tab" id="tab-v" aria-selected="false">Vendedores</button>
+      </div>
+      <div class="atz">Atualizado em <b id="atzVal">—</b></div>
+    </div>
+  </header>
+
+  <button id="btnUpdToggle" type="button">⚙ Atualizar ranking</button>
+  <div id="updCard">
+    <h3>Atualizar ranking do mês</h3>
+    <div class="u-sub">Coordenador geral: escolha o mês e suba <b>META</b> (lojas) e <b>INDICADORES</b> (vendedores). O painel acrescenta/atualiza o mês e, ao publicar, <b>todos</b> veem o ranking novo.</div>
+    <div class="u-grid">
+      <div><label>Mês de referência</label><select id="uMes"></select></div>
+      <div><label>META (metas de loja)</label><input type="file" id="fMeta" accept=".xlsx,.xls,.csv"></div>
+      <div><label>INDICADORES (vendedores)</label><input type="file" id="fInd" accept=".xlsx,.xls,.csv"></div>
+    </div>
+    <div class="u-actions">
+      <button class="u-calc" id="btnCalc">Pré-visualizar</button>
+      <button class="u-pub" id="btnPub">Publicar para todos</button>
+    </div>
+    <div class="u-prev" id="uPrev"></div>
+    <div class="u-msg" id="uMsg"></div>
+  </div>
+
+  <div class="controls">
+    <div class="months" id="months"><span class="lbl">Meses</span></div>
+    <div class="search"><input id="q" type="search" placeholder="Buscar loja ou vendedor" aria-label="Buscar"></div>
+    <label class="chk"><input type="checkbox" id="full"> Só quem teve meta em todos os meses selecionados</label>
+  </div>
+
+  <div class="legend">
+    <span><i class="sw" style="background:var(--p3);color:var(--p3-ink)">3</i>Meta 3 · 130% ou mais</span>
+    <span><i class="sw" style="background:var(--p2);color:var(--p2-ink)">2</i>Meta 2 · 100% a 129,99%</span>
+    <span><i class="sw" style="background:var(--p1);color:var(--p1-ink)">1</i>Meta 1 · 95% a 99,99%</span>
+    <span><i class="sw" style="background:var(--p0);color:var(--p0-ink)">0</i>Abaixo de 95%</span>
+    <span><i class="sw cell na" style="width:22px;height:16px">–</i>Sem meta no mês</span>
+    <span id="lg-x"><i class="sw cell x" style="background:var(--p2);color:var(--p2-ink);width:22px;height:16px"></i>Vendeu em outra loja (somado)</span>
+  </div>
+
+  <section class="podium" id="podium" aria-label="Pódio"></section>
+
+  <div class="tbl"><table>
+    <thead><tr>
+      <th>#</th><th id="h-nm">Loja</th><th class="num">Pontos</th><th>Metas batidas</th><th class="num">% médio</th><th class="num">Meses</th><th><div class="mh" id="mh"></div></th>
+    </tr></thead>
+    <tbody id="tb"></tbody>
+  </table></div>
+
+  <section class="notes">
+    <div class="note"><h2>Regra de pontuação</h2><ul>
+      <li><b>Meta 1 = 1 ponto</b> (95% a 99,99% de atingimento no mês)</li>
+      <li><b>Meta 2 = 2 pontos</b> (100% a 129,99%)</li>
+      <li><b>Meta 3 = 3 pontos</b> (130% ou mais)</li>
+      <li>Pontos somados nos meses selecionados. <b>Desempate:</b> maior % médio de atingimento (média simples dos meses com meta). Empates resolvidos no desempate aparecem com *.</li>
+    </ul></div>
+    <div class="note"><h2>De onde vem cada meta de loja</h2><ul>
+      <li><b>Jan e Fev:</b> soma das metas individuais dos vendedores (linha Total da loja).</li>
+      <li><b>Mar:</b> meta própria para 002 Mais Tintas, 016 Maricá, 013 Saracuruna, 030 Barão 1 e 032 Paraíso; demais lojas pela soma dos vendedores.</li>
+      <li><b>Abr em diante:</b> meta própria da loja (arquivo META), independente da soma dos vendedores.</li>
+    </ul></div>
+    <div class="note"><h2>Critérios dos vendedores</h2><ul>
+      <li>Metas simbólicas (R$ 1 a R$ 3, usadas para gerentes e cadastros) não contam; só entram metas a partir de R$ 1.000.</li>
+      <li>Quem teve meta numa loja e vendeu em outra no mesmo mês tem <b>todo o faturamento somado</b> contra sua meta total.</li>
+      <li>Percentuais exibidos com o valor real de atingimento (faturado ÷ meta), com duas casas decimais e sem arredondamento.</li>
+      <li>Vendedor sem meta num mês anterior não pontua nesse mês. Use o filtro de meses completos para comparar só quem esteve o período todo.</li>
+    </ul></div>
+  </section>
+</div>
+<div id="tip" hidden></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+let DATA={"lojas":[{"id":"033","n":"Macae 2","m":{"1":[421782.16,403356.34,0],"2":[360000,287662.88,0],"3":[396912.0,398449.99,0],"4":[363836.0,430228.51,1],"5":[352034.1,399937.85,1],"6":[380197.0,461417.51,1],"7":[426043.0,457190.98,1],"8":[403202.7,352701.5,1],"9":[357000.0,336894.72,1]}},{"id":"007","n":"Matriz","m":{"1":[479744.81,368649.45,0],"2":[434000.0,322540.96,0],"3":[503246.2,631461.79,0],"4":[461309.02,482740.66,1],"5":[463486.43,443367.94,1],"6":[505000.0,410141.15,1],"7":[447354.0,540967.22,1],"8":[468006.3,554475.59,1],"9":[470059.05,447265.71,1]}},{"id":"017","n":"Santa Cruz","m":{"1":[297755.33,291195.5,0],"2":[262001,226886.92,0],"3":[277038.0,307815.12,0],"4":[253951.5,325357.47,1],"5":[293265.23,284177.17,1],"6":[320000.0,289304.42,1],"7":[304044.0,399912.44,1],"8":[319504.5,357853.41,1],"9":[296250.61,354346.61,1]}},{"id":"002","n":"Mais Tintas","m":{"1":[339353.64,281237.2,0],"2":[290001.0,264625.84,0],"3":[302998.0,368165.39,1],"4":[305453.33,416999.79,1],"5":[356791.59,409834.12,1],"6":[399990.0,288101.36,1],"7":[373477.0,458361.49,1],"8":[373506.3,403321.6,1],"9":[382000.5,390507.77,1]}},{"id":"010","n":"Petropolis 1","m":{"1":[254838.96,255283.37,0],"2":[238000,239765.69,0],"3":[284578.0,551216.99,0],"4":[260863.17,260974.4,1],"5":[294582.04,205315.45,1],"6":[285000.0,294249.7,1],"7":[260845.0,239393.03,1],"8":[252004.5,261602.74,1],"9":[280297.5,295166.73,1]}},{"id":"016","n":"Marica","m":{"1":[221794.42,252449.37,0],"2":[235001.0,150137.71,0],"3":[230145.0,243063.64,1],"4":[210967.17,216785.29,1],"5":[197258.4,256516.77,1],"6":[213039.0,253549.13,1],"7":[244277.0,266029.32,1],"8":[247504.5,200574.99,1],"9":[200602.46,228241.14,1]}},{"id":"015","n":"Três Rios","m":{"1":[223915.42,243426.46,0],"2":[190001.0,144272.84,0],"3":[223714.0,239739.41,0],"4":[205071.17,216295.07,1],"5":[225820.1,272242.03,1],"6":[250000.0,251976.68,1],"7":[242784.0,159684.4,1],"8":[162002.7,115902.3,1],"9":[162695.0,106673.53,1]}},{"id":"029","n":"Itaipu","m":{"1":[180000.0,215989.71,0],"2":[190000,129805.12,0],"3":[198462.0,166646.93,0],"4":[181923.5,175637.47,1],"5":[164726.1,114265.12,1],"6":[181199.0,136636.14,1],"7":[100000,137289.38,1],"8":[121502.7,182402.87,1],"9":[157487.0,189288.29,1]}},{"id":"026","n":"São Cristóvão","m":{"1":[177319.07,215103.95,0],"2":[210001.0,155745.47,0],"3":[210597.0,300240.44,0],"4":[193047.25,227967.95,1],"5":[230265.9,211993.38,1],"6":[242841.0,196821.18,1],"7":[230000,301058.5,1],"8":[270003.6,426279.83,1],"9":[257877.0,235007.38,1]}},{"id":"038","n":"Itaguai","m":{"1":[193502.0,203897.29,0],"2":[185000,131963.95,0],"3":[197566.0,200738.2,0],"4":[181102.17,192930.15,1],"5":[169544.87,169591.61,1],"6":[180000.0,182959.19,1],"7":[175417.0,230667.71,1],"8":[175205.7,190799.76,1],"9":[177813,230935.06,1]}},{"id":"004","n":"Petropolis 2","m":{"1":[163134.22,164941.54,0],"2":[155000,104273.18,0],"3":[159722.0,102420.99,0],"4":[146411.83,113790.71,1],"5":[131943.19,120290.43,1],"6":[150000.0,136981.72,1],"7":[137167.0,163751.41,1],"8":[135002.7,137405.86,1],"9":[147877.0,106871.91,1]}},{"id":"024","n":"Nova Iguacu 2","m":{"1":[104576.71,163261.16,0],"2":[130068.8,234371.9,0],"3":[260001.0,149853.1,0],"4":[238334.25,214270.72,1],"5":[228000.0,128817.88,1],"6":[246240.0,254163.68,1],"7":[192956.0,209154.5,1],"8":[202447.8,230484.71,1],"9":[226913.2,253907.34,1]}},{"id":"027","n":"Araruama","m":{"1":[158884.06,160654.56,0],"2":[140001,158183.82,0],"3":[196755.0,196881.25,0],"4":[180358.75,133098.89,1],"5":[146676.6,162132.92,1],"6":[161344.0,162158.68,1],"7":[148491.0,201089.96,1],"8":[207002.7,211121.55,1],"9":[218500,218518.68,1]}},{"id":"034","n":"Cabo Frio 1","m":{"1":[185748.41,154603.93,0],"2":[185601.0,143005.15,0],"3":[212447.75,174860.65,0],"4":[156633.58,121980.38,1],"5":[105792.3,143888.73,1],"6":[116372.0,133398.58,1],"7":[133443,147264.84,1],"8":[176314.5,149891.7,1],"9":[159903.9,160297.28,1]}},{"id":"009","n":"Mage","m":{"1":[195727.34,147942.64,0],"2":[160001,145546.71,0],"3":[191749.0,226746.65,0],"4":[175769.92,202120.7,1],"5":[204105.86,190497.03,1],"6":[225000.0,210925.65,1],"7":[203753.0,225911.44,1],"8":[207004.5,207898.29,1],"9":[205145.1,205665.31,1]}},{"id":"036","n":"São João de Mereti","m":{"1":[138144.41,144609.2,0],"2":[104141.0,81341.49,0],"3":[138402.0,159234.39,0],"4":[126868.5,127298.32,1],"5":[130000.0,148919.36,1],"6":[143000.0,155385.52,1],"7":[138396.0,152125.53,1],"8":[148502.7,148812.91,1],"9":[134733.5,121468.94,1]}},{"id":"013","n":"Saracuruna","m":{"1":[170820.47,138274.6,0],"2":[155001.0,169163.89,0],"3":[208424.0,226975.43,1],"4":[191055.33,151257.53,1],"5":[201392.44,177939.76,1],"6":[217504.0,144268.19,1],"7":[156741.0,232522.91,1],"8":[175502.7,188939.69,1],"9":[166294.0,116758.11,1]}},{"id":"030","n":"Barao1","m":{"1":[130001.0,138274.5,0],"2":[130001.0,134914.15,0],"3":[150602.0,160452.54,1],"4":[138052.75,97404.15,1],"5":[108000,115075.59,1],"6":[118800.0,129757.02,1],"7":[130000,144470.31,1],"8":[121502.7,103487.61,1],"9":[113367.7,150912.89,1]}},{"id":"012","n":"Piabeta","m":{"1":[153857.26,117363.42,0],"2":[135001,109566.34,0],"3":[146051.0,174245.13,0],"4":[133880.08,155722.93,1],"5":[161156.31,190696.88,1],"6":[185000.0,176863.95,1],"7":[170351.0,191252.72,1],"8":[173701.8,175800.3,1],"9":[175360.5,216757.27,1]}},{"id":"028","n":"Angra dos Reis","m":{"1":[110000.0,111318.08,0],"2":[111100.51,83384.07,0],"3":[110000.0,110694.91,0],"4":[100833.33,118203.83,1],"5":[105887.7,123710.55,1],"6":[124380.0,145209.27,1],"7":[131204.0,175869.21,1],"8":[132302.7,166781.31,1],"9":[148103.15,140703.27,1]}},{"id":"019","n":"Nilopolis","m":{"1":[100002.0,106204.5,0],"2":[100001.0,47901.87,0],"3":[112735.0,79950.8,0],"4":[103340.42,70917.96,1],"5":[100000.0,100146.3,1],"6":[110000.0,74846.73,1],"7":[100000,112910.09,1],"8":[100000.0,110024.27,1],"9":[121324.0,62308.37,1]}},{"id":"022","n":"Alto","m":{"1":[56179.24,89043.4,0],"2":[57241.0,103398.37,0],"3":[121458.0,86112.55,0],"4":[111336.5,87932.53,1],"5":[117000,117506.7,1],"6":[140000.0,94933.42,1],"7":[127000,99366.47,1],"8":[135001.8,92725.03,1],"9":[120662.1,108988.24,1]}},{"id":"021","n":"Queimados","m":{"1":[80437.9,77537.01,0],"2":[68401.0,76816.23,0],"3":[77211.25,98273.92,0],"4":[108887.17,92094.65,1],"5":[135000,92311.92,1],"6":[148500.0,114840.52,1],"7":[130000,118796.82,1],"8":[121502.7,128475.76,1],"9":[138954.0,90094.87,1]}},{"id":"025","n":"Belford Roxo","m":{"1":[135698.11,75626.43,0],"2":[136391.0,64632.31,0],"3":[113410.0,81964.67,0],"4":[103959.17,105981.45,1],"5":[110000.0,76910.91,1],"6":[121000.0,70866.18,1],"7":[100000,85489.02,1],"8":[100000.0,100161.21,1],"9":[116621.0,69100.57,1]}},{"id":"032","n":"Paraiso","m":{"1":[115262.28,69997.08,0],"2":[100001.0,112288.81,0],"3":[126048.0,72655.16,1],"4":[115544.92,74181.35,1],"5":[100000.0,102002.35,1],"6":[110000.0,77614.67,1],"7":[115000,118378.31,1],"8":[121502.7,104758.19,1],"9":[109707.0,79628.66,1]}},{"id":"008","n":"Friburgo","m":{"1":[120899.55,69535.12,0],"2":[100001.0,51775.9,0],"3":[126067.0,66885.22,0],"4":[115561.42,78716.88,1],"5":[101000.0,125958.9,1],"6":[117000.0,137478.9,1],"7":[129020.0,132178.32,1],"8":[148502.7,117906.44,1],"9":[124326.0,94809.96,1]}},{"id":"006","n":"Itaipava","m":{"1":[123248.96,67053.27,0],"2":[100001.0,70925.56,0],"3":[104322.0,66675.93,0],"4":[100000.0,100730.73,1],"5":[100000.0,103557.77,1],"6":[115000,116445.38,1],"7":[209000,217183.38,1],"8":[193502.7,251816.53,1],"9":[218847.65,288001.73,1]}},{"id":"018","n":"Nova Iguacu","m":{"1":[155334.11,61740.8,0],"2":[123413.23,64543.55,0],"3":[112509.0,54336.58,0],"4":[103133.25,82270.26,1],"5":[100000.0,70782.7,1],"6":[110000.0,58583.2,1],"7":[100000,58060.78,1],"8":[100000.0,52848.45,1],"9":[105289.0,47352.14,1]}},{"id":"035","n":"Taquara","m":{"1":[100002.0,60743.6,0],"2":[100002.0,71601.35,0],"3":[100002.0,76850.81,0],"4":[100001.0,73921.05,1],"5":[101000.0,96931.58,1],"6":[109890.0,123310.69,1],"7":[130000,143971.84,1],"8":[117002.7,118277.13,1],"9":[113038.8,142655.95,1]}},{"id":"023","n":"Varzea","m":{"1":[111950.06,56000.32,0],"2":[100000,48302.43,0],"3":[58589.05,39294.36,0],"4":[100000.0,59804.93,1],"5":[119656.14,49298.5,1],"6":[100340.0,46139.64,1],"7":[100000,87533.36,1],"8":[117001.8,48288.46,1],"9":[104729.0,48592.19,1]}}],"vend":[{"id":"852","n":"Nelton Velasco","l":"033","ln":"Macae 2","m":{"1":[189801.52,217344.42,0],"2":[226800,195332.66,0],"3":[178610.4,229416.12,0],"4":[180098.82,236715.82,1],"5":[176017.05,209064.0,0],"6":[180000.0,237018.67,0],"7":[207123.57,208112.07,0],"8":[190000.0,195541.87,0],"9":[150000.0,154591.35,0]}},{"id":"640","n":"Matheus de Souza","l":"033","ln":"Macae 2","m":{"1":[126534.35,160299.39,0],"2":[133200,81903.22,0],"3":[138919.2,102763.51,0],"4":[140076.86,161677.67,0],"5":[156459.6,159504.08,0],"6":[160647.21,138436.38,0],"7":[163818.14,176912.19,0],"8":[164000.0,93511.3,0],"9":[120000.0,99216.82,0]}},{"id":"456","n":"Monique Moraes","l":"007","ln":"Matriz","m":{"1":[106778.37,133005.81,0],"2":[126008.0,132271.13,0],"3":[113230.17,345931.34,0],"4":[137008.78,161124.37,0],"5":[139312.23,142501.67,0],"6":[143491.6,166116.14,0],"7":[157554.79,165951.18,0],"8":[160000.0,250401.57,0],"9":[187733.0,201253.88,0]}},{"id":"009","n":"Alfredo Pereira Gomes","l":"007","ln":"Matriz","m":{"1":[118642.63,103632.23,0],"2":[137408.0,111861.78,1],"3":[125811.3,129599.71,0],"4":[152231.98,146666.94,1],"5":[155076.05,137235.89,0],"6":[159728.33,98836.49,1],"7":[132936.16,167272.46,0],"8":[160000.0,134912.34,1],"9":[175090.0,122661.16,1]}},{"id":"275","n":"Felipe Olimpio","l":"007","ln":"Matriz","m":{"1":[90959.35,82123.08,1],"2":[110883.0,73686.4,0],"3":[96455.33,88273.39,0],"4":[116711.18,83201.54,0],"5":[111957.01,93346.26,0],"6":[114196.15,76385.26,0],"7":[91729.4,110304.06,0],"8":[100000.0,69403.33,0],"9":[126332.0,91730.59,0]}},{"id":"001","n":"Paulo Ramos","l":"002","ln":"Mais Tintas","m":{"1":[61083.48,46947.22,0],"2":[52200,56018.16,0],"3":[83305.2,88713.8,1],"4":[83999.66,93355.58,1],"5":[100382.94,100913.14,1],"6":[103394.43,57295.25,1],"7":[101060.84,92856.86,0],"8":[90000.0,50015.23,0],"9":[93815.0,47314.71,1]}},{"id":"886","n":"Bernardo Latini","l":"007","ln":"Matriz","m":{"1":[84267.37,65475.54,1],"2":[54000,57631.31,1],"3":[83874.2,66317.04,1],"4":[101487.98,92019.12,1],"5":[108639.63,70465.73,1],"6":[111898.82,69258.23,0],"7":[90511.23,97414.54,0],"8":[100000.0,100023.27,0],"9":[50430.0,31781.37,0]}},{"id":"442","n":"Benjamim Moreira","l":"017","ln":"Santa Cruz","m":{"1":[89326.3,98557.28,0],"2":[49780,53115.31,0],"3":[83111.1,91498.86,0],"4":[83804.0,111013.16,0],"5":[110753.76,111966.69,0],"6":[115000,85669.57,0],"7":[109782.38,116343.83,0],"8":[120755.74,116890.21,0],"9":[123771.0,127260.01,0]}},{"id":"565","n":"Hudllon Silva","l":"017","ln":"Santa Cruz","m":{"1":[89326.3,95180.41,0],"2":[91700,94802.71,0],"3":[83111.1,109352.45,0],"4":[83804.0,101926.92,0],"5":[126232.89,103199.05,0],"6":[115000,93095.29,0],"7":[106794.87,143039.19,0],"8":[110755.74,114164.5,0],"9":[135058.0,139291.98,0]}},{"id":"M17","n":"Mario Jorge","l":"017","ln":"Santa Cruz","m":{"1":[71461.04,49208.03,0],"2":[70740,51701.88,1],"3":[55407.4,61391.82,0],"4":[55869.33,57718.62,1],"5":[12000.0,9103.84,0],"6":[60000.0,48409.95,0],"7":[55000,73002.35,0],"8":[85755.74,86974.76,0],"9":[85999.0,87233.63,0]}},{"id":"627","n":"Fernanda Souza","l":"012","ln":"Piabeta","m":{"1":[47640.69,48117.78,0],"2":[49780,27876.25,0],"3":[55407.4,45571.99,0],"4":[55869.33,56278.09,0],"5":[76863.3,61162.3,1],"6":[60000.0,61959.95,0],"7":[66547.39,67527.07,1],"8":[70000.0,71260.84,1],"9":[50000.0,59504.82,0]}},{"id":"136","n":"Patrick Marinheiro","l":"002","ln":"Mais Tintas","m":{"1":[111986.37,122395.08,0],"2":[95700,104720.24,1],"3":[123291.7,147627.7,0],"4":[134399.46,184847.52,0],"5":[164882.92,158076.28,0],"6":[169829.41,97010.51,1],"7":[148901.99,169220.52,1],"8":[140000.0,210397.21,0],"9":[171403.0,179663.87,0]}},{"id":"455","n":"Rafael Pacheco","l":"002","ln":"Mais Tintas","m":{"1":[86534.92,66358.51,0],"2":[73950,74498.37,0],"3":[103298.45,122382.16,0],"4":[117599.53,139458.86,1],"5":[131169.24,124769.71,0],"6":[135104.32,97743.41,0],"7":[126470.4,126651.56,0],"8":[110000.0,78346.51,0],"9":[100000.0,100760.45,0]}},{"id":"774","n":"Luccas Brayan","l":"028","ln":"Angra dos Reis","m":{"1":[55000.0,37158.21,1],"2":[55000,40526.49,0],"3":[55000.0,52428.82,0],"4":[55458.33,57661.16,0],"5":[58826.5,41532.24,0],"6":[63200.0,63409.84,0],"7":[67094.0,75125.31,0],"8":[65000.0,91333.85,0],"9":[96436.0,36465.0,0]}},{"id":"861","n":"Priscila Motta","l":"010","ln":"Petropolis 1","m":{"1":[127419.48,127854.88,0],"2":[119000,120240.5,0],"3":[142289.0,296235.39,1],"4":[143474.74,236200.55,0],"5":[163656.69,97262.51,0],"6":[150000.0,206985.96,1],"7":[182751.96,136674.79,0],"8":[185000.0,111123.02,0],"9":[107787.0,112946.37,1]}},{"id":"046","n":"Victor Gabriel","l":"004","ln":"Petropolis 2","m":{"1":[127419.48,127428.49,0],"2":[119000,119525.19,0],"3":[142289.0,255555.36,1],"4":[143474.74,27217.13,1],"5":[163656.69,108047.04,0],"6":[150000.0,105108.74,1],"7":[101521.45,102215.85,0],"8":[95000.0,97958.82,0],"9":[120000.0,120006.13,1]}},{"id":"273","n":"Clayton Carvalho","l":"016","ln":"Marica","m":{"1":[155255.39,202765.32,0],"2":[223250,139928.34,0],"3":[195623.25,207830.11,0],"4":[139238.33,109208.56,0],"5":[137752.12,187916.79,0],"6":[159639.73,187216.63,0],"7":[181804.62,200613.93,0],"8":[140000.0,83916.13,0],"9":[237750.0,227768.4,0]}},{"id":"278","n":"Rodrigo José","l":"016","ln":"Marica","m":{"3":[34521.75,35223.03,0],"4":[92825.56,107497.57,0],"5":[81423.88,68599.98,0],"6":[81194.75,66275.56,0],"7":[94244.08,65415.39,0],"8":[135000.0,116658.86,0]}},{"id":"421","n":"Matheus de Oliveira","l":"006","ln":"Itaipava","m":{"1":[134348.65,148627.39,0],"2":[114000,97133.22,0],"3":[134227.8,175382.35,0],"4":[135346.97,150696.48,0],"5":[159038.68,191300.79,0],"6":[163809.84,176126.82,1],"7":[110000,138887.11,1],"8":[130000.0,157930.28,1],"9":[120000.0,120066.11,0]}},{"id":"829","n":"Mateus Martins","l":"015","ln":"Três Rios","m":{"1":[89565.77,94720.29,0],"2":[76000,46602.5,0],"3":[89485.2,64261.06,0],"4":[90231.31,65598.59,0],"5":[91872.54,79134.16,0],"6":[96466.17,74590.37,0],"7":[161416.26,142923.01,0],"8":[130000.0,108846.93,0],"9":[180772.0,106081.44,0]}},{"id":"714","n":"Gabriel Willian","l":"026","ln":"São Cristóvão","m":{"1":[97524.94,168514.08,0],"2":[115500,127489.41,0],"3":[126357.6,251091.64,0],"4":[159263.99,209997.73,0],"5":[185888.25,146762.53,0],"6":[169465.0,162829.2,0],"7":[199459.0,300930.46,0],"8":[250000.0,356907.84,0],"9":[185000.0,194043.36,0]}},{"id":"807","n":"Juan Lima","l":"038","ln":"Itaguai","m":{"1":[96750.0,103601.59,0],"2":[68450,48715.71,0],"3":[67172.44,80178.06,0],"4":[123931.38,134222.12,0],"5":[122448.95,118525.43,0],"6":[130000.0,124646.08,0],"7":[120033.0,170710.04,0],"8":[144668.0,145752.84,0],"9":[158102,183087.79,0]}},{"id":"048","n":"Ramon de Assis","l":"035","ln":"Taquara","m":{"1":[56310.0,61632.83,0],"2":[54054.15,99067.59,0],"3":[83200.0,41200.73,0],"4":[100000.0,83834.4,0],"5":[99000,48220.27,0],"6":[100000.0,85458.51,1],"7":[36820.39,-4173.72,0],"8":[83380.0,84488.08,1],"9":[85673.0,85791.6,1]}},{"id":"474","n":"Thaylan Melo","l":"018","ln":"Nova Iguacu","m":{"1":[56310.0,59923.11,1],"2":[37162.23,49085.24,1],"3":[38252.72,17118.7,0],"4":[50000.0,21996.09,0],"6":[112000.0,56352.58,0],"7":[54000,39710.47,0],"8":[55000.0,22433.04,0],"9":[55611.0,18556.09,0]}},{"id":"632","n":"Stephanie Santos","l":"024","ln":"Nova Iguacu 2","m":{"1":[16088.57,19012.54,0],"2":[30405.46,51522.43,0],"3":[31200.0,21733.57,0],"4":[27500.0,28987.18,0],"5":[50000.0,23707.33,0],"6":[54000.0,45653.37,0],"7":[60000,67736.73,0],"8":[50000.0,52462.04,0],"9":[65016.0,70680.09,0]}},{"id":"A18","n":"Suelen de Oliveira","l":"025","ln":"Belford Roxo","m":{"1":[36674.0,20509.32,1],"2":[41000,18690.79,0],"3":[37803.0,18691.66,0],"4":[57177.54,39027.41,0],"5":[50000.0,29358.34,0],"6":[62000.0,33129.43,0],"7":[54000,31025.46,0],"8":[55000.0,38081.39,0],"9":[85351.0,44676.43,0]}},{"id":"264","n":"Leandra Abreu","l":"024","ln":"Nova Iguacu 2","m":{"3":[57200.0,52231.02,0],"4":[61283.84,75152.89,0],"5":[91000.0,54977.8,1],"6":[94000.0,127776.62,0],"7":[111586.21,145541.59,0],"8":[91557.0,94080.16,0],"9":[80000.0,82707.63,0]}},{"id":"821","n":"Fernando Daniel","l":"027","ln":"Araruama","m":{"1":[95329.84,103698.82,0],"2":[91000,91649.86,0],"3":[88539.3,128726.4,0],"4":[109117.05,56921.98,0],"5":[89635.7,89901.25,0],"6":[94117.49,96665.26,0],"7":[90659.69,119227.91,0],"8":[90000.0,96140.24,0],"9":[25667.5,674.86,0]}},{"id":"391","n":"Felipe Rodrigues","l":"034","ln":"Cabo Frio 1","m":{"1":[63553.22,56187.15,0],"2":[49000,66390.37,0],"3":[78701.6,45398.94,0],"4":[89277.58,71410.29,0],"5":[73338.3,72169.17,0],"6":[79205.36,51732.55,0],"7":[72680.57,57786.17,0],"8":[75000.0,47613.47,1],"9":[50000.0,44055.87,1]}},{"id":"381","n":"Joao Rodrigues","l":"008","ln":"Friburgo","m":{"1":[72539.13,47871.56,1],"2":[60000,33084.28,0],"3":[126067.0,67205.5,0],"4":[127117.56,78416.77,0],"5":[110000.0,125459.23,0],"6":[130000.0,128133.73,0],"7":[129019.72,116479.64,0],"8":[165000.0,117837.44,0],"9":[80869.0,57947.04,0]}},{"id":"916","n":"Jonathan Vieira","l":"034","ln":"Cabo Frio 1","m":{"1":[95625.0,109947.33,0],"2":[84000,93433.84,0],"3":[170872.0,171134.99,0],"4":[120607.86,86912.61,0],"5":[64650.85,92021.64,0],"6":[74348.48,91211.6,0],"7":[100554.58,107556.14,0],"8":[95902.0,96932.91,0],"9":[97415.0,106162.78,0]}},{"id":"831","n":"Kesia Regina","l":"034","ln":"Cabo Frio 1","m":{"1":[58247.41,30315.17,1],"2":[45600,34645.62,1],"3":[41574.75,46530.67,1],"4":[51689.08,38779.04,1],"5":[52896.15,51442.04,0],"6":[60830.57,41774.98,0],"7":[60000,39648.7,0],"8":[50000.0,29934.05,0],"9":[50000.0,32135.35,0]}},{"id":"057","n":"Renan Lopes","l":"009","ln":"Mage","m":{"1":[97863.17,70423.42,0],"2":[52800,60779.61,0],"3":[76699.2,117987.4,0],"4":[77338.76,114673.61,0],"5":[106008.0,96971.97,0],"6":[116608.8,88623.43,0],"7":[100000,112929.45,0],"8":[70000.0,84386.98,0],"9":[85000.0,86189.98,1]}},{"id":"451","n":"Jessé de Souza","l":"009","ln":"Mage","m":{"1":[58717.9,59015.25,0],"2":[62400,46602.98,0],"3":[63276.84,73828.29,0],"4":[63804.48,58949.29,0],"5":[69507.56,56387.3,0],"6":[77848.47,69736.17,1],"7":[75412.93,67872.6,0],"8":[90000.0,71807.6,0],"9":[81361.0,72453.3,0]}},{"id":"630","n":"Vitor Siqueira","l":"009","ln":"Mage","m":{"1":[39145.27,18328.81,0],"2":[44800,38164.12,0],"3":[51771.96,34930.96,0],"4":[52203.67,28497.8,0],"5":[51268.73,37137.76,0],"6":[57420.98,52572.05,0],"7":[59492.0,45099.07,0],"8":[70000.0,51703.71,0],"9":[60097.0,47059.03,0]}},{"id":"642","n":"Luciano Farias","l":"036","ln":"São João de Mereti","m":{"1":[82886.05,87639.36,0],"2":[47200,49090.83,0],"3":[63664.46,84308.15,0],"4":[50000.0,51240.59,0],"5":[75000.0,93482.56,0],"6":[81000.0,86088.12,0],"7":[86421.53,87228.69,0],"8":[90000.0,97419.55,0],"9":[87000.0,69921.06,0]}},{"id":"510","n":"Marlon Prata","l":"036","ln":"São João de Mereti","m":{"1":[55257.36,56182.0,0],"2":[38940,22818.15,0],"3":[45672.33,45714.63,0],"4":[50000.0,53026.13,0],"5":[65000.0,54310.6,0],"6":[68250.0,69297.4,0],"7":[65813.73,64896.84,0],"8":[75000.0,51393.36,0],"9":[69966,51547.88,0]}},{"id":"325","n":"Marcos Paulo","l":"013","ln":"Saracuruna","m":{"1":[111032.66,116140.69,0],"2":[93000,104456.61,0],"3":[125053.8,141125.2,0],"4":[126096.52,114983.61,0],"5":[144428.82,112592.75,0],"6":[151650.26,100087.27,0],"7":[114948.54,153322.59,0],"8":[147731.7,143039.87,0],"9":[130000.0,85713.66,0]}},{"id":"638","n":"Luan Pinto","l":"030","ln":"Barao1","m":{"1":[65000.0,87627.33,0],"2":[65000,91864.86,0],"3":[75301.0,125684.08,0],"4":[106300.62,78362.98,0],"5":[66000.0,88361.88,0],"6":[124000.0,126261.53,1],"7":[104081.16,144470.31,0],"8":[100000.0,103433.66,0],"9":[101477.0,150912.89,0]}},{"id":"229","n":"Leonardo Oliveira","l":"012","ln":"Piabeta","m":{"1":[76928.13,59788.13,1],"2":[60750,61161.5,0],"3":[21907.5,31726.78,0],"4":[73634.05,83026.62,0],"5":[93926.88,99557.15,0],"6":[98623.22,82799.04,0],"7":[98481.0,177908.34,0],"8":[123000.0,138358.78,0],"9":[155100.0,156203.95,0]}},{"id":"784","n":"Murylo Henrique","l":"028","ln":"Angra dos Reis","m":{"1":[55000.0,75376.03,0],"2":[56100.51,42530.01,0],"3":[55000.0,57353.61,0],"4":[55458.33,60491.5,0],"5":[58826.5,82178.31,0],"6":[75000.0,81794.48,0],"7":[83791,100743.9,0],"8":[82000.0,75447.46,0],"9":[92054.0,103972.36,0]}},{"id":"518","n":"Luiz Costa","l":"019","ln":"Nilopolis","m":{"1":[50000.0,52778.84,0],"2":[50000,28161.06,0],"3":[56367.0,48766.13,0],"4":[56837.23,45091.27,0],"6":[56000.0,39317.21,0],"7":[55000,57081.92,0],"8":[55000.0,57291.32,0],"9":[64679.0,29199.56,0]}},{"id":"820","n":"Thiago Rodrigo","l":"019","ln":"Nilopolis","m":{"1":[50000.0,52048.59,0],"2":[50000,19684.49,0],"3":[56367.0,31184.67,0],"4":[56837.23,25826.69,0],"5":[50000.0,76500.55,0],"6":[56000.0,35468.74,0],"7":[55000,54955.72,0],"8":[55000.0,52947.55,0],"9":[70125.0,32039.91,0]}},{"id":"625","n":"Abner Roberto","l":"021","ln":"Queimados","m":{"1":[58247.41,32483.13,0],"2":[45600,23801.39,0],"3":[41574.75,27073.85,0],"4":[59887.94,35472.57,0],"5":[50000.0,33212.51,0],"6":[52500.0,34926.19,0],"7":[60000,36830.15,0],"8":[67500.0,54989.16,0],"9":[67081.0,32965.04,0]}},{"id":"A36","n":"Joao Victor Rocha","l":"018","ln":"Nova Iguacu","m":{"1":[22189.49,13848.36,0],"2":[22800,18308.98,0],"3":[35635.5,24515.69,0],"4":[59887.94,25507.62,0],"5":[50000.0,23060.42,0],"6":[52500.0,27296.38,1],"7":[50000,25664.03,1],"8":[55000.0,30313.79,0],"9":[55219.0,28343.63,0]}},{"id":"808","n":"Raphael Barbosa","l":"025","ln":"Belford Roxo","m":{"1":[36674.0,33649.99,0],"2":[41000,28627.78,0],"3":[37803.0,38530.16,0],"4":[57177.54,59574.59,0],"5":[60000.0,43943.12,0],"6":[62000.0,37736.75,0],"7":[54000,43724.63,0],"8":[55000.0,62248.85,0],"9":[44228.0,24219.34,0]}},{"id":"841","n":"Leonardo Rodrigues","l":"032","ln":"Paraiso","m":{"1":[57630.64,39544.82,0],"2":[50000,57280.73,0],"3":[63024.0,35308.1,0],"4":[63549.71,42974.01,1],"5":[50997.5,52997.11,0],"6":[55077.3,42114.21,0],"7":[70000,70006.11,0],"8":[70000.0,64751.41,0],"9":[65177.0,34370.08,0]}},{"id":"368","n":"Paulo Cesar","l":"032","ln":"Paraiso","m":{"1":[57630.64,30432.26,0],"2":[50000,55008.08,0],"3":[63024.0,37347.06,0],"4":[63549.71,31223.6,0],"5":[50997.5,49005.24,0],"6":[55077.3,35500.46,0],"7":[60000,48335.38,0],"8":[65000.0,39998.68,0],"9":[56720.0,45258.58,0]}},{"id":"980","n":"Wellington Carvalho","l":"023","ln":"Varzea","m":{"1":[78364.34,30217.03,0],"2":[60000,16330.82,0],"3":[58589.05,22078.0,0],"4":[66000.0,29412.08,0],"5":[82714.63,26550.3,0],"6":[80000.0,43824.27,0],"7":[54000,83019.22,0],"8":[80000.0,47892.26,0],"9":[59064,48504.8,0]}},{"id":"A09","n":"Rafael Peixoto","l":"023","ln":"Varzea","m":{"1":[33584.72,25390.48,0],"2":[40000,23738.14,0],"7":[54000,613.35,0],"8":[50000.0,131.28,0],"9":[51177.0,87.39,0]}},{"id":"A41","n":"Franklin Willian","l":"022","ln":"Alto","m":{"2":[14040,16875.3,0],"3":[60728.5,67866.5,0],"4":[123694.85,87783.84,0],"5":[65000.0,70730.79,0],"6":[75000.0,60784.86,0],"7":[77003.91,99302.97,0],"8":[75000.0,78870.6,0],"9":[83966.0,65630.4,0]}},{"id":"458","n":"Leonardo Pinheiro","l":"033","ln":"Macae 2","m":{"8":[110000.0,0,0],"9":[50000.0,57662.51,0]}},{"id":"A50","n":"Gabriel de Oliveira","l":"029","ln":"Itaipu","m":{"3":[19846.1,14760.92,0],"4":[80046.34,35245.16,0],"5":[58569.28,50516.73,0],"6":[82021.94,65719.65,0],"7":[53986.01,77499.04,0],"8":[75000.0,126493.68,0],"9":[109688.0,123998.8,0]}},{"id":"A56","n":"Fabrício Brito","l":"021","ln":"Queimados","m":{"4":[20000.0,27160.18,0],"5":[50000.0,35811.26,0],"6":[52500.0,52144.41,0],"7":[60000,64848.38,0],"8":[67500.0,73360.82,0],"9":[87312.0,57129.83,0]}},{"id":"A67","n":"Cristhian Rodrigues","l":"002","ln":"Mais Tintas","m":{"5":[50000.0,22841.27,0],"6":[50000.0,36350.29,0],"7":[50000,65325.56,0],"8":[75000.0,62937.97,0],"9":[75334.0,62607.45,0]}},{"id":"A68","n":"Ketlen Vitoria","l":"033","ln":"Macae 2","m":{"5":[19557.45,31210.51,0],"6":[55000.0,85962.46,0],"7":[87500,72115.42,0],"8":[94000,63548.57,0],"9":[75965.0,25424.04,0]}},{"id":"452","n":"Bruno Uberaba","l":"010","ln":"Petropolis 1","m":{"6":[76967.0,78454.01,0],"7":[75000,87962.48,0],"8":[150000.0,130611.39,0],"9":[155660.0,105178.69,1]}},{"id":"A61","n":"Bernardo Alves","l":"029","ln":"Itaipu","m":{"5":[51248.12,7372.21,0],"6":[72943.7,35937.48,0],"7":[52500,54527.23,0],"8":[60000.0,53767.57,0],"9":[77711.0,56881.48,0]}},{"id":"A83","n":"Mariane Barbosa","l":"035","ln":"Taquara","m":{"8":[65000.0,72926.26,0],"9":[91981.0,134839.19,0]}},{"id":"A89","n":"Marcello Santoro","l":"026","ln":"São Cristóvão","m":{"8":[50000.0,69371.99,0],"9":[75000.0,38262.21,1]}},{"id":"A84","n":"Vinícius Moreira","l":"004","ln":"Petropolis 2","m":{"8":[50000.0,52254.66,0],"9":[65000.0,62488.53,1]}},{"id":"041","n":"Jocimar Pego de Araujo - Branc","l":"038","ln":"Itaguai","m":{"7":[53000,38698.02,0],"8":[50000.0,45016.66,0],"9":[65238.0,47546.67,0]}},{"id":"A75","n":"Diego Paiva","l":"006","ln":"Itaipava","m":{"7":[50000,50740.86,0],"8":[85000.0,88883.87,0],"9":[95636.0,167845.03,0]}},{"id":"551","n":"Pedro Ramos","l":"027","ln":"Araruama","m":{"7":[50000,19659.97,0],"8":[65000.0,66892.85,0],"9":[204332.5,191936.7,0]}},{"id":"906","n":"Luiz Matheus","l":"013","ln":"Saracuruna","m":{"9":[30000.0,31044.45,0]}},{"id":"A93","n":"Thais Moura","l":"022","ln":"Alto","m":{"9":[65000.0,43267.82,0]}},{"id":"A96","n":"Marcelo Silva","l":"008","ln":"Friburgo","m":{"9":[50000.0,36862.92,0]}}]};
+const MES=['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+const brl=v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0});
+const tr=(v,d)=>Math.floor(v*100*10**d+1e-9)/10**d;
+const pc=v=>tr(v,2).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
+function pts(p){return p>=1.30?3:p>=1.00?2:p>=0.95?1:0}
+function mesesComDados(){ var s={}; (DATA.lojas||[]).concat(DATA.vend||[]).forEach(function(e){ for(var k in e.m) s[+k]=1; }); var a=Object.keys(s).map(Number).sort(function(x,y){return x-y;}); return a.length?a:[1,2,3,4,5,6,7,8,9]; }
+let st={tab:'l',sel:new Set(mesesComDados()),q:'',full:false};
+try{const s=JSON.parse(localStorage.getItem('rk')||'null');if(s){st.tab=s.tab||'l';if(s.sel&&s.sel.length)st.sel=new Set(s.sel);st.full=!!s.full}}catch(e){}
+function save(){try{localStorage.setItem('rk',JSON.stringify({tab:st.tab,sel:[...st.sel],full:st.full}))}catch(e){}}
+const $=id=>document.getElementById(id);
+function rank(list){
+  const ms=[...st.sel].sort((a,b)=>a-b);
+  let out=list.map(e=>{
+    let P=0,s=0,n=0,c=[0,0,0,0];
+    ms.forEach(m=>{const d=e.m[m];if(!d)return;const p=d[1]/d[0];const k=pts(p);P+=k;c[k]++;s+=p;n++});
+    return {e,P,avg:n?s/n:0,n,c};
+  }).filter(r=>r.n>0);
+  if(st.full) out=out.filter(r=>r.n===ms.length);
+  out.sort((a,b)=>b.P-a.P||b.avg-a.avg);
+  out.forEach((r,i)=>{r.pos=i+1;r.tie=(i>0&&out[i-1].P===r.P)||(i<out.length-1&&out[i+1].P===r.P)});
+  return {out,ms};
+}
+function cellsHTML(r,ms){
+  return '<div class="mm">'+ms.map(m=>{const d=r.e.m[m];
+    if(!d) return `<div class="cell na" data-t="${MES[m-1]}: sem meta">–</div>`;
+    const p=d[1]/d[0],k=pts(p);
+    const t=`${MES[m-1]} · ${pc(p)}|Meta ${brl(d[0])}|Faturado ${brl(d[1])}`+(st.tab==='v'&&d[2]?'|Inclui vendas em outra loja':'')+(st.tab==='l'?(d[2]?'|Meta própria da loja':'|Soma das metas dos vendedores'):'');
+    return `<div class="cell${st.tab==='v'&&d[2]?' x':''}" style="background:var(--p${k});color:var(--p${k}-ink)" data-t="${t}">${pc(p)}</div>`}).join('')+'</div>';
+}
+function render(){
+  const L=st.tab==='l', src=L?DATA.lojas:DATA.vend;
+  $('tab-l').setAttribute('aria-selected',L);$('tab-v').setAttribute('aria-selected',!L);
+  $('ttl').textContent=L?'Ranking de Lojas':'Ranking de Vendedores';
+  $('h-nm').textContent=L?'Loja':'Vendedor';
+  $('lg-x').hidden=L; $('full').checked=st.full;
+  document.querySelectorAll('#months .chip[data-m]').forEach(b=>b.setAttribute('aria-pressed',st.sel.has(+b.dataset.m)));
+  const {out,ms}=rank(src);
+  const sub=r=>L?`Loja ${r.e.id}`:`${r.e.id} · ${r.e.l} ${r.e.ln}`;
+  const nm=r=>L?`${r.e.id} · ${r.e.n}`:r.e.n;
+  const cols=['var(--gold)','var(--silver)','var(--bronze)'];
+  $('podium').innerHTML=out.slice(0,3).map((r,i)=>`<div class="pd r${i+1}" style="--c:${cols[i]}"><div class="pos">${i+1}º</div><div class="nm">${nm(r)}</div><div class="sub">${sub(r)}</div><div class="pts">${r.P} <small>pontos · ${pc(r.avg)} médio</small></div></div>`).join('');
+  $('mh').innerHTML=ms.map(m=>`<span>${MES[m-1]}</span>`).join('');
+  const q=st.q.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  const rows=out.filter(r=>!q||(nm(r)+' '+sub(r)).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').includes(q));
+  $('tb').innerHTML=rows.length?rows.map(r=>`<tr class="${r.tie?'tie':''}"><td class="pos">${r.pos}</td><td class="nm"><b>${nm(r)}</b><span>${sub(r)}</span></td><td class="num pts">${r.P}</td>
+    <td><span class="bd"><i style="background:var(--p3);color:var(--p3-ink)">M3 ${r.c[3]}</i><i style="background:var(--p2);color:var(--p2-ink)">M2 ${r.c[2]}</i><i style="background:var(--p1);color:var(--p1-ink)">M1 ${r.c[1]}</i></span></td>
+    <td class="num">${pc(r.avg)}</td><td class="num">${r.n}/${ms.length}</td><td>${cellsHTML(r,ms)}</td></tr>`).join('')
+    :`<tr><td colspan="7" class="empty">Nenhum resultado para esse filtro. Limpe a busca ou selecione mais meses.</td></tr>`;
+  save();
+}
+function montarMeses(){
+  const mb=$('months'); mb.querySelectorAll('.chip').forEach(b=>b.remove());
+  const disp=mesesComDados();
+  disp.forEach(m=>{const b=document.createElement('button');b.className='chip';b.dataset.m=m;b.textContent=MES[m-1];b.onclick=()=>{if(st.sel.has(m)){if(st.sel.size>1)st.sel.delete(m)}else st.sel.add(m);render()};mb.appendChild(b)});
+  const ano=disp;
+  [['Ano',ano],['1º tri',[1,2,3]],['2º tri',[4,5,6]],['3º tri',[7,8,9]],['4º tri',[10,11,12]]].forEach(([t,a])=>{const al=a.filter(m=>disp.indexOf(m)>=0);if(!al.length)return;const b=document.createElement('button');b.className='chip link';b.textContent=t;b.onclick=()=>{st.sel=new Set(al);render()};mb.appendChild(b)});
+}
+montarMeses();
+$('tab-l').onclick=()=>{st.tab='l';render()};$('tab-v').onclick=()=>{st.tab='v';render()};
+$('q').oninput=e=>{st.q=e.target.value;render()};
+$('full').onchange=e=>{st.full=e.target.checked;render()};
+const tip=$('tip');
+document.addEventListener('mouseover',e=>{const c=e.target.closest('[data-t]');if(!c){tip.hidden=true;return}tip.innerHTML=c.dataset.t.split('|').join('<br>');tip.hidden=false});
+document.addEventListener('mousemove',e=>{if(tip.hidden)return;const x=Math.min(e.clientX+12,innerWidth-250);tip.style.left=x+'px';tip.style.top=(e.clientY+14)+'px'});
+render();
+
+/* ============================================================
+   Atualização — mesmo esquema dos demais painéis
+   (coordenador sobe META + INDICADORES; publica p/ todos via backend)
+   ============================================================ */
+(function(){
+  /* ====== CONFIG — cole aqui a URL /exec do Apps Script do Ranking ====== */
+  var BACKEND_RANK = '';                 // ex.: https://script.google.com/macros/s/AKfy.../exec
+  var RANK_TOKEN   = 'sotintas-ranking-2026';
+  /* ====================================================================== */
+  function sess(){ try{ return JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); }catch(e){ return null; } }
+  function ehGestor(){ var s=sess(); if(!s) return false; return ((s.papel||'').toLowerCase()).indexOf('coorden')>=0; }
+
+  function setAtz(val){
+    var el=$('atzVal'); if(!el) return;
+    if(!val){ el.textContent='base setembro/2026'; return; }
+    var d=(typeof val==='number')?new Date(val):new Date(String(val));
+    if(isNaN(d.getTime())){ el.textContent=String(val); return; }
+    var p=function(n){return (n<10?'0':'')+n;};
+    el.textContent=p(d.getDate())+'/'+p(d.getMonth()+1)+'/'+d.getFullYear()+' às '+p(d.getHours())+':'+p(d.getMinutes());
+  }
+  setAtz(null);
+
+  function aplicar(d){
+    if(d && Array.isArray(d.lojas) && Array.isArray(d.vend)){
+      DATA=d; st.sel=new Set(mesesComDados()); montarMeses(); render(); return true;
+    }
+    return false;
+  }
+  if(BACKEND_RANK){
+    fetch(BACKEND_RANK).then(function(r){return r.json();}).then(function(j){
+      if(j && j.ok && j.data) aplicar(j.data);
+      if(j && j.atualizado) setAtz(j.atualizado);
+    }).catch(function(){});
+  }
+
+  /* ---- leitura de planilha (mesmos helpers do painel de Níveis) ---- */
+  function norm(s){ return String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/\$/g,'').replace(/\s+/g,' ').trim(); }
+  function headerRow(aoa){ for(var i=0;i<Math.min(aoa.length,25);i++){ var r=aoa[i]||[]; if(r.some(function(c){return norm(c)==='filial';})) return i; } return 0; }
+  function toObjs(aoa){ var hi=headerRow(aoa); var h=(aoa[hi]||[]).map(function(c){return String(c==null?'':c).trim();}); var o=[]; for(var i=hi+1;i<aoa.length;i++){ var r=aoa[i]; if(!r||r.every(function(c){return c==null||c==='';})) continue; var e={}; for(var j=0;j<h.length;j++) e[h[j]]=r[j]; o.push(e);} return {rows:o,head:h}; }
+  function getBy(o,test){ for(var k in o){ if(test(norm(k))) return o[k]; } return undefined; }
+  function gHas(o){ var frs=[].slice.call(arguments,1); return getBy(o,function(n){ return frs.some(function(f){return n.indexOf(f)>=0;}); }); }
+  function readFile(file){ return file.arrayBuffer().then(function(buf){ var wb=XLSX.read(buf,{type:'array',cellDates:true}); var ws=wb.Sheets[wb.SheetNames[0]]; return XLSX.utils.sheet_to_json(ws,{header:1,raw:true}); }); }
+  function code(f){ f=String(f||''); var m=f.match(/\d{1,3}/); return m?('00'+m[0]).slice(-3):f.trim(); }
+  function numf(v){ if(typeof v==='number') return v; var n=parseFloat(String(v).replace(/[^\d.,-]/g,'').replace(/\.(?=\d{3}(\D|$))/g,'').replace(',','.')); return isNaN(n)?0:n; }
+  /* meta e faturado do mês: tenta várias nomenclaturas de coluna */
+  function getMeta(o){ var v=gHas(o,'meta de faturamento','meta faturamento','meta mes','meta do mes','meta'); return numf(v); }
+  function getFat(o){ var v=gHas(o,'faturamento','faturado','realizado','venda','vendas','total vendido'); return numf(v); }
+
+  var card=$('updCard'), toggle=$('btnUpdToggle');
+  var uMes=$('uMes');
+  for(var mi=1;mi<=12;mi++){ var op=document.createElement('option'); op.value=mi; op.textContent=MES[mi-1]; uMes.appendChild(op); }
+  uMes.value = Math.min((mesesComDados().slice(-1)[0]||9)+1, 12);  // sugere o próximo mês
+  toggle.addEventListener('click', function(){ card.classList.toggle('show'); });
+  if(ehGestor()){ toggle.classList.add('show'); }
+
+  var PREV=null;
+  function montarLoja(meta){
+    var out={}, flagProp=1;
+    meta.rows.forEach(function(r){
+      var fil=gHas(r,'filial'); if(fil==null||String(fil).indexOf('-')<0) return;
+      var id=code(fil), m=getMeta(r), f=getFat(r);
+      if(!m) return;
+      out[id]=[m,f,flagProp];
+    });
+    return out;
+  }
+  function montarVend(ind){
+    var out={};
+    ind.rows.forEach(function(r){
+      var vend=gHas(r,'vendedor'); if(vend==null) return;
+      var m=getMeta(r), f=getFat(r);
+      if(!m || m<1000) return;                 // ignora metas simbólicas
+      var id=null;
+      DATA.vend.forEach(function(v){ if(norm(v.n)===norm(String(vend).replace(/^\d+\s*-\s*/,''))) id=v.id; });
+      out[id||('?'+norm(vend))]={meta:m,fat:f,nome:String(vend).replace(/^\d+\s*-\s*/,'').trim(),fil:code(gHas(r,'filial'))};
+    });
+    return out;
+  }
+  $('btnCalc').onclick=function(){
+    var fm=$('fMeta').files[0], fi=$('fInd').files[0], mes=+uMes.value, msg=$('uMsg'); msg.textContent='';
+    if(!fm||!fi){ msg.innerHTML='<span class="u-warn">Envie META e INDICADORES.</span>'; return; }
+    msg.textContent='Lendo arquivos…';
+    Promise.all([readFile(fm),readFile(fi)]).then(function(res){
+      var meta=toObjs(res[0]), ind=toObjs(res[1]);
+      var ML=montarLoja(meta), MV=montarVend(ind);
+      var nl=Object.keys(ML).length, nv=Object.keys(MV).filter(function(k){return k.indexOf('?')<0;}).length, semId=Object.keys(MV).filter(function(k){return k.indexOf('?')===0;}).length;
+      if(!nl){ msg.innerHTML='<span class="u-warn">Não achei metas de loja. Colunas lidas: '+meta.head.join(', ')+'</span>'; return; }
+      PREV={mes:mes, ML:ML, MV:MV};
+      var p=$('uPrev'); p.classList.add('show');
+      p.innerHTML='<div class="u-row">Mês: <b>'+MES[mes-1]+'</b></div>'+
+        '<div class="u-row">Lojas lidas: <b>'+nl+'</b> · Vendedores casados: <b>'+nv+'</b>'+(semId?' · <b class="u-warn">'+semId+' sem correspondência</b>':'')+'</div>'+
+        '<div class="u-row" style="margin-top:6px">Colunas META: '+meta.head.join(', ')+'</div>'+
+        '<div class="u-row">Colunas INDICADORES: '+ind.head.join(', ')+'</div>'+
+        '<div class="u-row" style="margin-top:6px">Confira se Meta e Faturamento foram lidos certos (passe o mouse nas fichas após publicar). Ao publicar, o mês '+MES[mes-1]+' é adicionado/atualizado para todos.</div>';
+      $('btnPub').classList.add('show');
+      msg.textContent='';
+    }).catch(function(e){ msg.innerHTML='<span class="u-warn">Erro ao ler: '+e.message+'</span>'; });
+  };
+  function aplicarMes(){
+    var mes=PREV.mes, ML=PREV.ML, MV=PREV.MV;
+    DATA.lojas.forEach(function(l){ if(ML[l.id]) l.m[mes]=ML[l.id]; });
+    DATA.vend.forEach(function(v){ if(MV[v.id]){ var e=MV[v.id]; v.m[mes]=[e.meta,e.fat,0]; } });
+  }
+  $('btnPub').onclick=function(){
+    if(!PREV){ return; }
+    aplicarMes(); st.sel=new Set(mesesComDados()); montarMeses(); render();
+    var msg=$('uMsg');
+    if(!BACKEND_RANK){ msg.innerHTML='<span class="u-warn">Mês aplicado só neste aparelho. Configure BACKEND_RANK para publicar a todos.</span>'; return; }
+    var s=sess();
+    msg.textContent='Publicando…';
+    fetch(BACKEND_RANK,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({token:RANK_TOKEN,por:(s&&s.nome)||'',data:DATA})})
+      .then(function(r){return r.json();}).then(function(j){
+        if(j&&j.ok){ setAtz(j.atualizado||Date.now()); msg.innerHTML='<span style="color:#128a52">Publicado! Todos já veem o ranking novo.</span>'; }
+        else msg.innerHTML='<span class="u-warn">Falhou: '+((j&&j.erro)||'erro')+'</span>';
+      }).catch(function(e){ msg.innerHTML='<span class="u-warn">Sem conexão: '+e.message+'</span>'; });
+  };
+})();
+</script>
+</body></html>
