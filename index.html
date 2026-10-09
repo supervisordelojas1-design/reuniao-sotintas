@@ -2746,6 +2746,47 @@ function renderHoje(){
   ligarBotoesAgenda();
 }
 
+/* Resumo dos compromissos do dia — mostrado na barra da tela inicial. */
+function resumoHoje(){
+  var box=document.getElementById('iniHoje'); if(!box) return;
+  var hoje=hojeISO();
+  function pinta(itens){
+    itens=itens.filter(function(a){return a.data===hoje;});
+    itens.sort(function(a,b){ return ((a.hora||'99:99')+'') < ((b.hora||'99:99')+'') ? -1 : 1; });
+    var h;
+    if(!itens.length){
+      h='<div class="ih-h">📅 Agenda de hoje</div><div class="ih-empty">Nada marcado para hoje — bom momento para adiantar a rotina.</div>';
+    } else {
+      var top=itens.slice(0,4);
+      h='<div class="ih-h">📅 Compromissos de hoje<span class="ih-n">'+itens.length+'</span></div><div class="ih-list">';
+      top.forEach(function(a){
+        h+='<div class="ih-item ih-'+a.k+'"><span class="ih-hora">'+(a.hora||'—')+'</span><span class="ih-dot"></span>'+
+           '<span class="ih-t">'+esc(a.titulo||'')+(a.sub?' <span class="ih-sub">· '+esc(a.sub)+'</span>':'')+'</span></div>';
+      });
+      h+='</div>';
+      if(itens.length>top.length) h+='<div class="ih-mais">+'+(itens.length-top.length)+' na agenda · toque para abrir</div>';
+      else h+='<div class="ih-mais">Toque para abrir a agenda</div>';
+    }
+    box.innerHTML=h; box.classList.add('show');
+  }
+  if(typeof ENVIO_URL==='undefined' || !ENVIO_URL || typeof SESSAO==='undefined' || !SESSAO){ box.classList.remove('show'); return; }
+  box.innerHTML='<div class="ih-h">📅 Agenda de hoje</div><div class="ih-empty">Carregando…</div>'; box.classList.add('show');
+  var sup=(!ehGestor()&&!ehGerente()&&souQuem())?'&supervisor='+encodeURIComponent(souQuem()):'';
+  var ps=[
+    fetch(ENVIO_URL+'?acao=visitas&de='+hoje+'&ate='+hoje+sup+paramEscopo()+souEu()).then(function(r){return r.json();}).catch(function(){return null;}),
+    fetch(ENVIO_URL+'?acao=agendamentos&de='+hoje+'&ate='+hoje+souEu()+(travaEscopo()?'&quem='+encodeURIComponent(travaEscopo()):'')).then(function(r){return r.json();}).catch(function(){return null;}),
+    (ehCoordenador()?fetch(ENVIO_URL+'?acao=calendario&de='+hoje+'&ate='+hoje).then(function(r){return r.json();}).catch(function(){return null;}):Promise.resolve(null))
+  ];
+  Promise.all(ps).then(function(res){
+    var itens=[];
+    ((res[1]&&res[1].ok)?(res[1].itens||[]):[]).forEach(function(a){ itens.push({k:'reuniao',data:a.data,hora:a.hora||'',titulo:a.titulo,sub:a.modelo||''}); });
+    ((res[0]&&res[0].itens)||[]).forEach(function(v){ var t=(typeof ehTarefa==='function')&&ehTarefa(v); itens.push({k:t?'tarefa':'visita',data:v.data,hora:v.hora||'',titulo:(v.loja||(t?'Tarefa':'Visita')),sub:(v.supervisor||'')}); });
+    ((res[2]&&res[2].itens)||[]).forEach(function(e){ itens.push({k:'google',data:e.data,hora:e.hora||'',titulo:e.titulo||'(sem título)',sub:e.local||''}); });
+    pinta(itens);
+  }).catch(function(){ box.classList.remove('show'); });
+}
+window.resumoHoje=resumoHoje;
+
 /* Aba Agenda: TUDO o que está marcado — reuniões, visitas e tarefas — num só lugar,
    agrupado por dia. É a visão que responde "o que a equipe tem pela frente". */
 function renderAgendaCompleta(){
@@ -8867,6 +8908,7 @@ syncNav();
     <button type="button" id="btnTemaApp" class="ini-theme" aria-label="Alternar tema claro/escuro"><span id="temaAppIc">🌙</span> <span id="temaAppTx">Escuro</span></button>
   </div>
   <div class="ini-body" id="iniBody">
+    <div id="iniHoje" class="ini-hoje" role="button" tabindex="0" aria-label="Compromissos de hoje"></div>
     <div class="ini-sec">Gestão</div>
     <div class="ini-feat">
       <button type="button" class="ini-card feat" data-act="painel" data-gate="1">
@@ -8980,6 +9022,27 @@ html[data-theme="dark"] #ovInicio .ini-card[data-ac=vermelho] .ini-ic{background
 html[data-theme="dark"] #ovInicio .ini-card[data-ac=ambar] .ini-ic{background:#2e2410;color:#e6b24a}
 html[data-theme="dark"] #ovInicio .ini-card[data-ac=roxo] .ini-ic{background:#241a36;color:#b596ef}
 html[data-theme="dark"] #ovInicio .ini-card[data-ac=cinza] .ini-ic{background:#1f2636;color:#9aa5bb}
+/* resumo de compromissos do dia */
+#ovInicio .ini-hoje{display:none;background:var(--surface);border:1px solid var(--line,#e4e9f3);
+  border-left:5px solid var(--yellow,#FFD100);border-radius:16px;padding:13px 15px;margin-top:2px;cursor:pointer;
+  box-shadow:0 1px 2px rgba(20,35,70,.05);transition:box-shadow .14s,transform .08s}
+#ovInicio .ini-hoje.show{display:block}
+#ovInicio .ini-hoje:hover{box-shadow:0 8px 22px rgba(20,35,70,.12);transform:translateY(-1px)}
+#ovInicio .ih-h{font-size:12.5px;font-weight:800;color:var(--ink,#16233d);display:flex;align-items:center;gap:8px;margin-bottom:2px}
+#ovInicio .ih-h .ih-n{margin-left:auto;background:var(--navy,#1C3F8F);color:#fff;font-size:11px;font-weight:800;min-width:20px;height:20px;border-radius:999px;display:inline-grid;place-items:center;padding:0 6px}
+#ovInicio .ih-empty{color:var(--muted,#67728c);font-size:12.5px;font-weight:600;margin-top:4px}
+#ovInicio .ih-list{display:flex;flex-direction:column;gap:5px;margin-top:8px}
+#ovInicio .ih-item{display:flex;align-items:baseline;gap:9px;font-size:12.5px;line-height:1.3}
+#ovInicio .ih-hora{flex:0 0 auto;font-weight:800;color:var(--navy,#1C3F8F);font-variant-numeric:tabular-nums;min-width:40px}
+#ovInicio .ih-dot{flex:0 0 auto;width:7px;height:7px;border-radius:50%;background:var(--muted,#67728c);align-self:center}
+#ovInicio .ih-item.ih-reuniao .ih-dot{background:var(--navy,#1C3F8F)}
+#ovInicio .ih-item.ih-visita .ih-dot{background:#128a52}
+#ovInicio .ih-item.ih-tarefa .ih-dot{background:#b7791f}
+#ovInicio .ih-item.ih-google .ih-dot{background:#7a46c9}
+#ovInicio .ih-t{flex:1;min-width:0;color:var(--ink,#16233d);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#ovInicio .ih-t .ih-sub{color:var(--muted,#67728c);font-weight:600}
+#ovInicio .ih-mais{margin-top:8px;font-size:11.5px;font-weight:800;color:var(--navy,#1C3F8F)}
+html[data-theme="dark"] #ovInicio .ini-hoje{border-left-color:var(--yellow,#FFD100)}
 #ovInicio .ini-foot{text-align:center;color:var(--muted,#67728c);font-size:11px;font-weight:700;
   letter-spacing:.3px;padding:14px 16px 26px}
 #btnInicio{display:none}
@@ -9019,8 +9082,12 @@ body.foco .wrap{padding-bottom:40px}
       d.textContent=dia+', '+dt.getDate()+' de '+meses[dt.getMonth()];
     }catch(e){} }
   }
-  function abrirInicio(){ aplicarGate(); saudar(); ov.classList.add('aberto'); ov.setAttribute('aria-hidden','false');
+  function abrirInicio(){ aplicarGate(); saudar(); try{ if(window.resumoHoje) window.resumoHoje(); }catch(e){}
+    ov.classList.add('aberto'); ov.setAttribute('aria-hidden','false');
     document.body.style.overflow='hidden'; window.scrollTo(0,0); }
+  (function(){ var ih=document.getElementById('iniHoje');
+    if(ih) ih.addEventListener('click', function(){ fecharInicio(); document.body.classList.add('foco'); if(typeof setModo==='function'){ setModo('agenda'); window.scrollTo(0,0); } });
+  })();
   function fecharInicio(){ ov.classList.remove('aberto'); ov.setAttribute('aria-hidden','true');
     document.body.style.overflow=''; }
   window.abrirInicio=abrirInicio; window.fecharInicio=fecharInicio;
