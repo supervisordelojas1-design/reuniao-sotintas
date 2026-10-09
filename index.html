@@ -8918,7 +8918,8 @@ body:not(.travado) #btnInicio{display:inline-flex}
   function abrirNiveis(){
     if(!ovN||!ifrN) return;
     var s=sessao(); var u=(s&&s.nome)?s.nome:'';
-    if(!ifrN.getAttribute('src')){ ifrN.setAttribute('src','niveis.html'+(u?('?u='+encodeURIComponent(u)):'')); }
+    /* sempre com versão nova no endereço: nunca serve o Níveis em cache antigo */
+    ifrN.setAttribute('src','niveis.html?v='+Date.now()+(u?('&u='+encodeURIComponent(u)):''));
     ovN.style.display='flex'; document.body.style.overflow='hidden';
   }
   if(xN){ xN.addEventListener('click', function(){ ovN.style.display='none'; document.body.style.overflow=''; }); }
