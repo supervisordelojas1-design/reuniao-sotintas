@@ -125,7 +125,8 @@ select.perfil option{background:var(--navy);color:#fff}
 .bl .tag{font-size:9.5px;font-weight:800;color:var(--tx3);width:36px;letter-spacing:.4px}
 .bar{flex:1;height:7px;background:var(--panel2);border-radius:4px;overflow:hidden;position:relative}
 .bar i{display:block;height:100%;border-radius:4px;transition:width .5s cubic-bezier(.4,0,.2,1)}
-.bar .mk{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--tx3);opacity:.55}
+.bar .mk{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--tx3);opacity:.55;z-index:2}
+.bar .wk{position:absolute;top:0;bottom:0;width:1px;background:var(--tx3);opacity:.30;z-index:1}
 .bl .pc{font-size:12px;font-weight:800;width:50px;text-align:right;letter-spacing:-.3px}
 .rt{text-align:right;min-width:88px}
 .rt .v{font-size:14.5px;font-weight:800;letter-spacing:-.4px}
@@ -183,7 +184,11 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
 .ppbar .tag{color:#8FA9C2;width:44px;font-size:10px}
 .ppbar .bar{height:11px;background:rgba(255,255,255,.15);border-radius:6px}
 .ppbar .bar i{border-radius:6px}
-.ppbar .mk{background:var(--card);opacity:.75;width:2px;top:-3px;bottom:-3px}
+.ppbar .mk{background:var(--card);opacity:.75;width:2px;top:-3px;bottom:-3px;z-index:2}
+.ppbar .wk{position:absolute;top:-3px;bottom:-3px;width:1px;background:rgba(255,255,255,.22);z-index:1}
+.wkruler{position:relative;height:13px;margin:0 68px 5px 52px}
+.wkruler .wl{position:absolute;transform:translateX(-50%);font-size:9px;font-weight:800;color:#8FA9C2;letter-spacing:.3px}
+.wkruler .wl.on{color:#FFD100}
 .ppbar .pc{color:#fff;width:60px;font-size:14px}
 .ppleg{font-size:10.5px;color:#8FA9C2;margin-top:11px;line-height:1.5}
 .ppleg b{color:#C9DAE9}
@@ -591,6 +596,20 @@ const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 // ritmo esperado ate hoje
 const RE = D.periodo.utDecorridos / D.periodo.utTotal;
 
+/* ---------- semanas (5 dias úteis cada) ---------- */
+const SEMUT=5;                                   // dias úteis por semana
+const SEM=(function(){var a=[];for(var k=SEMUT;k<UT;k+=SEMUT)a.push(k/UT);return a;})(); // fração de cada fim de semana
+const SEMATUAL=Math.min(Math.ceil(UD/SEMUT)||1, SEM.length+1);   // semana corrente
+/* tracinhos de fim de semana dentro de uma barra */
+function wkTicks(){ return SEM.map(function(f){return '<span class="wk" style="left:'+(f*100).toFixed(1)+'%"></span>';}).join(''); }
+/* régua com os números das semanas (S1, S2… com a semana atual em destaque) */
+function wkRuler(){
+ var b=[0].concat(SEM,[1]), h='';
+ for(var i=0;i<b.length-1;i++){ var c=(b[i]+b[i+1])/2, on=(i+1===SEMATUAL);
+  h+='<span class="wl'+(on?' on':'')+'" style="left:'+(c*100).toFixed(1)+'%">S'+(i+1)+'</span>'; }
+ return '<div class="wkruler">'+h+'</div>';
+}
+
 /* farol: compara % atingido com o % do mes ja decorrido */
 function farol(pct){
  if(pct==null) return {c:'y',t:'sem meta'};
@@ -654,7 +673,7 @@ function ritmoBox(o){
 
 function barras(o){
  const fL=farol(o.pctLoja), fT=farol(o.pctTime);
- const mk=`<span class="mk" style="left:${(RE*100).toFixed(1)}%"></span>`;
+ const mk=`${wkTicks()}<span class="mk" style="left:${(RE*100).toFixed(1)}%"></span>`;
  return `<div class="bars">
   <div class="bl"><span class="tag">LOJA</span><span class="bar">${mk}<i style="width:${Math.min((o.pctLoja||0)*100,100)}%;background:${cor(fL.c)}"></i></span><span class="pc" style="color:${cor(fL.c)}">${PC(o.pctLoja)}</span></div>
   <div class="bl"><span class="tag">TIME</span><span class="bar">${mk}<i style="width:${Math.min((o.pctTime||0)*100,100)}%;background:${cor(fT.c)};opacity:.62"></i></span><span class="pc" style="color:var(--tx2)">${PC(o.pctTime)}</span></div>
@@ -673,7 +692,7 @@ function linha(o,i,meta,click,bd){
  </div>`;
 }
 function miniBar(o){
- const f=farol(o.pct), mk=`<span class="mk" style="left:${(RE*100).toFixed(1)}%"></span>`;
+ const f=farol(o.pct), mk=`${wkTicks()}<span class="mk" style="left:${(RE*100).toFixed(1)}%"></span>`;
  return `<div class="bars"><div class="bl"><span class="tag">META</span><span class="bar">${mk}<i style="width:${Math.min((o.pct||0)*100,100)}%;background:${cor(f.c)}"></i></span><span class="pc" style="color:${cor(f.c)}">${PC(o.pct)}</span></div></div>`;
 }
 
@@ -742,9 +761,11 @@ function painelPrincipal(){
    <div class="ppc"><div class="l">Ritmo</div><div class="v">${g.ritmoReal>=g.ritmoNec?'No ritmo':'Abaixo'}</div><div class="f">${g.ritmoReal>=g.ritmoNec?'folga de ':'déficit de '}${BRL(Math.abs(g.ritmoReal-g.ritmoNec))}/dia</div></div>
   </div>`;
  h+=`<div class="ppbar">
-  <div class="bl"><span class="tag">LOJA</span><span class="bar"><span class="mk" style="left:${(RE*100).toFixed(1)}%"></span><i style="width:${Math.min(g.pctLoja*100,100)}%;background:${g.pctLoja>=RE?'#2FD08E':'#FF6B70'}"></i></span><span class="pc">${PPCT(g.pctLoja)}</span></div>
-  <div class="bl"><span class="tag">TIME</span><span class="bar"><span class="mk" style="left:${(RE*100).toFixed(1)}%"></span><i style="width:${Math.min(g.pctTime*100,100)}%;background:${g.pctTime>=RE?'#2FD08E':'#FF6B70'};opacity:.65"></i></span><span class="pc">${PPCT(g.pctTime)}</span></div>
-  <div class="ppleg">A marca branca está em <b>${PPCT(RE)}</b> — o quanto do mês já passou (${UD} de ${UT} dias úteis).
+  ${wkRuler()}
+  <div class="bl"><span class="tag">LOJA</span><span class="bar">${wkTicks()}<span class="mk" style="left:${(RE*100).toFixed(1)}%"></span><i style="width:${Math.min(g.pctLoja*100,100)}%;background:${g.pctLoja>=RE?'#2FD08E':'#FF6B70'}"></i></span><span class="pc">${PPCT(g.pctLoja)}</span></div>
+  <div class="bl"><span class="tag">TIME</span><span class="bar">${wkTicks()}<span class="mk" style="left:${(RE*100).toFixed(1)}%"></span><i style="width:${Math.min(g.pctTime*100,100)}%;background:${g.pctTime>=RE?'#2FD08E':'#FF6B70'};opacity:.65"></i></span><span class="pc">${PPCT(g.pctTime)}</span></div>
+  <div class="ppleg">Os tracinhos marcam o fim de cada semana (${SEMUT} dias úteis) — estamos na <b>S${SEMATUAL}</b>.
+   A marca branca está em <b>${PPCT(RE)}</b> — o quanto do mês já passou (${UD} de ${UT} dias úteis).
    Barra além da marca = no ritmo. Barra aquém = atrasado.</div>
  </div></div>`;
  h+=gaugeBox(g,'Atingimento da rede');
