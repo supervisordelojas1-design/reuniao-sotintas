@@ -303,7 +303,9 @@ render();
   function sess(){ try{ return JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); }catch(e){ return null; } }
   function ehGestor(){ var s=sess(); if(!s) return false; return ((s.papel||'').toLowerCase()).indexOf('coorden')>=0; }
 
-  /* ===== Carteira oficial (loja -> supervisor) e trava por gestão ===== */
+  /* ===== Carteira: FONTE ÚNICA = EQUIPE do App (planilha).
+     O mapa abaixo é só reserva, usado se a planilha não responder. ===== */
+  var APP_EQUIPE_URL = 'https://script.google.com/macros/s/AKfycbxC916U8rNw_-HFTW7vtFZz4AC_B1bHcTLE3bvMDWji6E5lAqkXgC0EIgQFtjHYTp8I/exec';
   var SUPMAP = {
     '010':'BRUNO','004':'BRUNO','006':'BRUNO','007':'BRUNO','002':'BRUNO','022':'BRUNO','023':'BRUNO','009':'BRUNO','012':'BRUNO','017':'BRUNO','013':'BRUNO',
     '033':'DANILO','034':'DANILO','027':'DANILO','029':'DANILO','016':'DANILO','032':'DANILO','030':'DANILO','028':'DANILO','038':'DANILO',
@@ -311,21 +313,41 @@ render();
     '015':'CARLOS EDUARDO','008':'CARLOS EDUARDO'
   };
   function remapSup(a){ if(a) a.forEach(function(r){ var s=SUPMAP[r.id]; if(s) r.sup=s; }); return a; }
-  var VIEW=(function(){
+  function up(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().trim(); }
+  function code3(s){ var m=String(s||'').match(/\d+/); return m?('00'+m[0]).slice(-3):''; }
+  function codesDoSup(sup){ var c={}; for(var k in SUPMAP){ if(SUPMAP[k]===sup) c[k]=1; } return c; }
+  function viewFallback(){
     var s=sess(); if(!s) return {all:true};
-    var p=((s.papel||'')).toLowerCase(); if(p.indexOf('coorden')>=0) return {all:true};
-    var nome=String(s.nome||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().trim();
-    var sups=['BRUNO','DANILO','RAMON','CARLOS EDUARDO'];
-    var m=sups.filter(function(S){ var f=S.split(' ')[0]; return nome.indexOf(S)>=0 || nome.split(' ')[0]===f; })[0];
-    return m?{all:false,sup:m}:{all:true};
-  })();
+    if(up(s.papel).indexOf('COORDEN')>=0) return {all:true};
+    var nome=up(s.nome), sups=['BRUNO','DANILO','RAMON','CARLOS EDUARDO'];
+    var m=sups.filter(function(S){ return nome.indexOf(S)>=0 || nome.split(' ')[0]===S.split(' ')[0]; })[0];
+    if(!m) return {all:true};
+    return {all:false, codes:codesDoSup(m)};
+  }
+  var VIEW=viewFallback();
   var LOJAS_FULL=LOJAS.slice(), VENDS_FULL=VENDS.slice();
   function scopeApply(){
     remapSup(LOJAS_FULL); remapSup(VENDS_FULL);
     if(VIEW.all){ LOJAS=LOJAS_FULL.slice(); VENDS=VENDS_FULL.slice(); }
-    else { LOJAS=LOJAS_FULL.filter(function(l){return SUPMAP[l.id]===VIEW.sup;});
-           VENDS=VENDS_FULL.filter(function(v){return SUPMAP[v.id]===VIEW.sup;}); }
+    else { LOJAS=LOJAS_FULL.filter(function(l){return VIEW.codes[l.id];});
+           VENDS=VENDS_FULL.filter(function(v){return VIEW.codes[v.id];}); }
     if(typeof render==='function') render();
+  }
+  /* aplica a carteira vinda da planilha do App (acao=equipe) */
+  function aplicarEquipe(eq){
+    if(!eq || typeof eq!=='object') return;
+    var map={};
+    Object.keys(eq).forEach(function(nome){ var e=eq[nome]||{}; (e.lojas||[]).forEach(function(l){ var c=code3(l); if(c) map[c]=up(nome); }); });
+    if(Object.keys(map).length) SUPMAP=map;           // passa a mandar a planilha
+    var s=sess();
+    if(s){
+      var alvo=null, nomeU=up(s.nome);
+      Object.keys(eq).forEach(function(nome){ var u=up(nome); if(u===nomeU || nomeU.indexOf(u)>=0 || u.split(' ')[0]===nomeU.split(' ')[0]) alvo=nome; });
+      var papel=(alvo && eq[alvo].papel)?up(eq[alvo].papel):up(s.papel);
+      if(papel.indexOf('COORDEN')>=0 || !alvo){ VIEW={all:true}; }
+      else { var c={}; (eq[alvo].lojas||[]).forEach(function(l){ var k=code3(l); if(k) c[k]=1; }); VIEW = Object.keys(c).length?{all:false,codes:c}:{all:true}; }
+    }
+    scopeApply();
   }
 
   /* ---------- carregar dados publicados (todos veem o mesmo) ---------- */
@@ -337,6 +359,12 @@ render();
     return false;
   }
   scopeApply();
+  /* busca a carteira na MESMA fonte do App (planilha EQUIPE) */
+  if(APP_EQUIPE_URL){
+    fetch(APP_EQUIPE_URL+'?acao=equipe').then(function(r){return r.json();}).then(function(j){
+      if(j && j.ok && j.equipe) aplicarEquipe(j.equipe);
+    }).catch(function(){ /* sem rede: usa o mapa reserva */ });
+  }
   if(BACKEND_NIVEIS){
     fetch(BACKEND_NIVEIS).then(function(r){return r.json();}).then(function(j){
       if(j && j.ok && j.data) aplicar(j.data);
