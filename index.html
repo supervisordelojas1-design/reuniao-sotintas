@@ -873,7 +873,7 @@ html[data-fonte="grande"] .btn{font-size:15.5px}
       <button class="tab" id="tabRotina"><svg class="ic" aria-hidden="true"><use href="#i-car"/></svg> Rotina</button>
       <button class="tab" id="tabAgora"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg> Reunião</button>
       <button class="tab" id="tabDespesas"><svg class="ic" aria-hidden="true"><use href="#i-wallet"/></svg> Despesas</button>
-      <button class="tab" id="tabHistorico"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg> Histórico</button>
+      <button class="tab" id="tabHistorico" style="display:none"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg> Histórico</button>
      <button class="tab" id="tabPainel" style="display:none;box-shadow:inset 0 -3px 0 #FFD100;font-weight:700"><svg class="ic" aria-hidden="true"><use href="#i-chart"/></svg> Painel</button>
     </div>
 
@@ -1961,7 +1961,7 @@ html[data-fonte="grande"] .btn{font-size:15.5px}
   <button data-nav="rotina"><span class="bi"><svg class="ic" aria-hidden="true"><use href="#i-car"/></svg></span>Rotina</button>
   <button data-nav="agora"><span class="bi"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg></span>Reunião</button>
   <button data-nav="despesas"><span class="bi"><svg class="ic" aria-hidden="true"><use href="#i-wallet"/></svg></span>Despesas</button>
-  <button data-nav="historico"><span class="bi"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg></span>Histórico</button><button data-nav="painel" id="bnavPainel" style="display:none"><span class="bi"><svg class="ic" aria-hidden="true"><use href="#i-chart"></use></svg></span>Painel</button>
+  <button data-nav="historico" style="display:none"><span class="bi"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg></span>Histórico</button><button data-nav="painel" id="bnavPainel" style="display:none"><span class="bi"><svg class="ic" aria-hidden="true"><use href="#i-chart"></use></svg></span>Painel</button>
 </nav>
 
 <!-- avançar/voltar fixos durante a reunião (só no celular) -->
@@ -6842,6 +6842,8 @@ function abrirApp(sessao){
     setTimeout(function(){ toast('Seu PIN ainda é 1234 — toque no seu nome, no topo, para trocar.'); }, 1500);
   }
   carregarEquipe();
+  /* a tela inicial (cards) é a primeira coisa após o login */
+  try{ if(window.abrirInicio) window.abrirInicio(); }catch(e){}
 }
 
 /* Aplica a regra que você escolheu: cada um vê o seu; o coordenador vê tudo. */
@@ -8788,10 +8790,12 @@ syncNav();
   var p=((s&&s.papel)||'').trim().toLowerCase();
   if(!p) return true;                      /* sessao antiga sem papel: mostra e deixa o servidor decidir */
   return p.indexOf('coorden')>=0 || p.indexOf('supervis')>=0; }
- function sincronizarAba(){ var ver=podeVerPainel(); b.style.display = ver ? '' : 'none'; if(!ver){ ov.style.display='none'; document.body.style.overflow=''; } }
+ /* Painel saiu da barra de abas — acesso passa a ser só pela tela inicial (cards).
+    Mantemos a aba oculta como gatilho do overlay (a tela inicial a aciona por .click()). */
+ function sincronizarAba(){ var ver=podeVerPainel(); b.style.display='none'; if(!ver){ ov.style.display='none'; document.body.style.overflow=''; } }
  var b2=document.getElementById("bnavPainel");
- if(b2){ b2.addEventListener("click", function(ev){ ev.preventDefault(); ev.stopPropagation(); b.click(); }, true); }
- function sincronizarTudo(){ sincronizarAba(); if(b2){ b2.style.display = podeVerPainel() ? "" : "none"; } }
+ if(b2){ b2.addEventListener("click", function(ev){ ev.preventDefault(); ev.stopPropagation(); b.click(); }, true); b2.style.display='none'; }
+ function sincronizarTudo(){ sincronizarAba(); if(b2){ b2.style.display='none'; } }
  sincronizarTudo(); setInterval(sincronizarTudo, 1500);
  /* na primeira vez, rola a barra ate a aba nova para ela ser vista */
  try{ if(!localStorage.getItem('painel_visto_v1')){ var t0=setInterval(function(){ if(b.offsetParent){ var bar=b.parentElement; if(bar&&bar.scrollWidth>bar.clientWidth){ bar.scrollTo({left:bar.scrollWidth,behavior:'smooth'}); } localStorage.setItem('painel_visto_v1','1'); clearInterval(t0); } },1000); setTimeout(function(){clearInterval(t0)},15000); } }catch(e){}
