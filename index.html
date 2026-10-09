@@ -8840,10 +8840,18 @@ syncNav();
 <!-- ===== NIVEIS (aba embutida, espelha o Painel) ===== -->
 <div id="ovNiveis" style="position:fixed;inset:0;z-index:99999;background:#0f1522;display:none;flex-direction:column">
  <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;color:#fff;font:600 14px system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
-  <button id="ovNivFechar" style="border:0;border-radius:8px;padding:9px 13px;background:#FFD100;color:#0F2B46;font:inherit;cursor:pointer">&larr; Voltar ao Assistente</button>
+  <button id="ovNivFechar" style="border:0;border-radius:8px;padding:9px 13px;background:#FFD100;color:#0F2B46;font:inherit;cursor:pointer">&larr; Voltar ao início</button>
   <span style="opacity:.85">Niveis de Lojas e Vendedores</span>
  </div>
  <iframe id="ifrNiveis" title="Niveis de Lojas e Vendedores" style="flex:1;width:100%;border:0;background:#0f1522"></iframe>
+</div>
+
+<div id="ovRanking" style="position:fixed;inset:0;z-index:99999;background:#0f1522;display:none;flex-direction:column">
+ <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;color:#fff;font:600 14px system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
+  <button id="ovRkFechar" style="border:0;border-radius:8px;padding:9px 13px;background:#FFD100;color:#0F2B46;font:inherit;cursor:pointer">&larr; Voltar ao início</button>
+  <span style="opacity:.85">Ranking · Premiação 2026</span>
+ </div>
+ <iframe id="ifrRanking" title="Ranking Só Tintas 2026" style="flex:1;width:100%;border:0;background:#0f1522"></iframe>
 </div>
 
 <!-- ===== TELA INICIAL (LAUNCHER DE CARDS) ===== -->
@@ -8899,10 +8907,10 @@ syncNav();
         <span class="ini-nm">Despesas</span>
         <span class="ini-ds">Lançar e exportar</span>
       </button>
-      <button type="button" class="ini-card" data-act="historico" data-ac="cinza">
-        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg></span>
-        <span class="ini-nm">Histórico</span>
-        <span class="ini-ds">Reuniões e atas</span>
+      <button type="button" class="ini-card" data-act="ranking" data-ac="ambar">
+        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-chart"/></svg></span>
+        <span class="ini-nm">Ranking</span>
+        <span class="ini-ds">Premiação · lojas e vendedores</span>
       </button>
     </div>
   </div>
@@ -8976,6 +8984,10 @@ html[data-theme="dark"] #ovInicio .ini-card[data-ac=cinza] .ini-ic{background:#1
   letter-spacing:.3px;padding:14px 16px 26px}
 #btnInicio{display:none}
 body:not(.travado) #btnInicio{display:inline-flex}
+/* modo foco: aberto por um card da tela inicial — mostra só aquela operação */
+body.foco .tabs{display:none!important}
+body.foco .bnav{display:none!important}
+body.foco .wrap{padding-bottom:40px}
 </style>
 
 <script>
@@ -9026,6 +9038,18 @@ body:not(.travado) #btnInicio{display:inline-flex}
   }
   if(xN){ xN.addEventListener('click', function(){ ovN.style.display='none'; document.body.style.overflow=''; try{ if(window.abrirInicio) window.abrirInicio(); }catch(e){} }); }
 
+  // overlay de Ranking (espelha o de Níveis)
+  var ovR=document.getElementById('ovRanking'), ifrR=document.getElementById('ifrRanking'),
+      xR=document.getElementById('ovRkFechar');
+  function abrirRanking(){
+    if(!ovR||!ifrR) return;
+    var s=sessao(); var u=(s&&s.nome)?s.nome:'';
+    var tema=(window.STtema?window.STtema.get():'light');
+    ifrR.setAttribute('src','ranking.html?tema='+tema+'&v='+Date.now()+(u?('&u='+encodeURIComponent(u)):''));
+    ovR.style.display='flex'; document.body.style.overflow='hidden';
+  }
+  if(xR){ xR.addEventListener('click', function(){ ovR.style.display='none'; document.body.style.overflow=''; try{ if(window.abrirInicio) window.abrirInicio(); }catch(e){} }); }
+
   grid.addEventListener('click', function(ev){
     var c=ev.target && ev.target.closest ? ev.target.closest('.ini-card') : null;
     if(!c) return;
@@ -9033,6 +9057,9 @@ body:not(.travado) #btnInicio{display:inline-flex}
     fecharInicio();
     if(act==='painel'){ var tp=document.getElementById('tabPainel'); if(tp) tp.click(); return; }
     if(act==='niveis'){ abrirNiveis(); return; }
+    if(act==='ranking'){ abrirRanking(); return; }
+    /* modo foco: ao abrir uma operação pelo card, mostra só ela (esconde as abas) */
+    document.body.classList.add('foco');
     if(typeof setModo==='function'){ setModo(act); window.scrollTo(0,0); }
   });
 
