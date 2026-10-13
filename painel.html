@@ -276,6 +276,12 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
 .grph .cnt{font-size:11px;color:var(--tx3);font-weight:600;margin-left:auto}
 .grph .selo{font-size:11px;font-weight:700;width:100%;margin-top:-1px}
 .ppselo{font-size:11px;font-weight:700;display:block;margin-top:3px}
+.novd{border-top:1px solid var(--line)}
+.novd summary{padding:10px 16px;font-size:12px;font-weight:700;color:var(--tx3);cursor:pointer}
+.novl{padding:0 16px 12px}
+.novi{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:12px}
+.novi i{color:var(--tx3);font-style:normal}
+.novi b{white-space:nowrap}
 .ind{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:1px;background:var(--line)}
 .indc{background:var(--card);padding:13px 15px}
 .indc .l{font-size:9.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--tx3);font-weight:800;line-height:1.3}
@@ -394,7 +400,7 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
   <div class="hdtop">
    <div class="brand">
     <div class="logo">ST</div>
-    <div><h1 id="hTit">Coordenação de Supervisão</h1><span id="hSub">Só Tintas · Painel de Performance · <b style="color:#FFD100">v34</b></span></div>
+    <div><h1 id="hTit">Coordenação de Supervisão</h1><span id="hSub">Só Tintas · Painel de Performance · <b style="color:#FFD100">v35</b></span></div>
    </div>
    <div class="per"><b id="hPer">—</b><span id="hDias">—</span><span id="btnUp" style="display:none" onclick="abrirUpload()"> · ⚙️ atualizar dados</span><span id="lnkSair" style="display:none" onclick="sairPainel()"> · sair</span></div>
   </div>
@@ -445,6 +451,7 @@ P.fechado=false;
  P.utDecorridos=P.utTotal; P.utRestantes=0; P.fechado=true;
 })();
 const UT=P.utTotal,UD=P.utDecorridos,UR=P.utRestantes;
+const FRAC=UT?UD/UT:1;
 const sm=(a,f)=>a.reduce((s,x)=>s+f(x),0);
 const _m=+P.dataBase.slice(5,7), NOVA=(P.ano>2026)||(P.ano==2026&&_m>=10);
 const LIMLJ=NOVA?[250000,150000]:[180000,100000];
@@ -499,13 +506,15 @@ function grupaCart(cli,n){return {meses:n,cli:cli,
   SUB:cli.filter(function(c){return c.grupo=='SUB'}).sort(function(a,b){return b.lacuna-a.lacuna}),
   CRE:cli.filter(function(c){return c.grupo=='CRE'}).sort(function(a,b){return (b.proj-b.media)-(a.proj-a.media)}),
   OK:cli.filter(function(c){return c.grupo=='OK'}),
-  REC:cli.filter(function(c){return c.grupo=='POS'&&c.perfil=='recorrente'}).sort(function(a,b){return b.media-a.media})}}
+  REC:cli.filter(function(c){return c.grupo=='POS'&&c.perfil=='recorrente'}).sort(function(a,b){return b.media-a.media}),
+  NOV:cli.filter(function(c){return c.ativos===0&&c.fat>0}).sort(function(a,b){return b.fat-a.fat})}}
 (function(){const K=_.K||{};
  Object.keys(K).forEach(function(cod){
   const n=K[cod].n||1, cli=K[cod].c.map(function(c){
    const perfil=c[2]>=5?'recorrente':c[2]>=2?'ocasional':'compra única';
    const pv=String(c[0]).split(/ - VEND\.?:\s*/i);
    const o={nome:pv[0].trim(),vend:pv.length>1?normVend(pv[1]):'',media:c[1],ativos:c[2],proj:c[3],perfil:perfil,meses:n};
+   o.fat=(c[4]!=null&&c[4]!=='')?Number(c[4]):Math.round(o.proj*FRAC);
    o.lacuna=Math.max(o.media-o.proj,0);
    o.var=o.media?o.proj/o.media-1:0;
    o.grupo = o.proj<=0 ? (o.media>0?'POS':null)
@@ -853,7 +862,7 @@ function vExp(v,i,ref){
   <div class="indc"><div class="l">$ Ticket Médio CPF</div><div class="v">${BRL(I.ticket)}</div>${delta(I.ticket,ref&&ref.I.ticket)}</div>
   <div class="indc"><div class="l">% Desconto CPF</div><div class="v">${PPCT(I.descCPF)}</div>${delta(I.descCPF,ref&&ref.I.descCPF,true)}</div>
   <div class="indc"><div class="l">Atendimentos</div><div class="v">${NUM(I.atend)}</div><div class="s">no mês</div></div>
- </div>${orcBox(((OL(ST.loja)||{}).V||{})[v.nome],'Orçamentos em aberto de '+v.nome,v.rest,v.nome)}${cartBox(((KL(ST.loja)||{}).V||{})[v.nome],'Carteira de clientes de '+v.nome,v.nome)}</div>`}
+ </div>${novBox(novDe(((KL(ST.loja)||{}).V||{})[v.nome]),'Clientes novos de '+v.nome,I.novos,v.fat,true)}${orcBox(((OL(ST.loja)||{}).V||{})[v.nome],'Orçamentos em aberto de '+v.nome,v.rest,v.nome)}${cartBox(((KL(ST.loja)||{}).V||{})[v.nome],'Carteira de clientes de '+v.nome,v.nome)}</div>`}
 
 /* bloco de orcamentos em aberto — rede, regiao, loja e vendedor */
 function orcBox(O,titulo,escopoFalta,chave){
@@ -942,6 +951,51 @@ function pdfOrc(){
 }
 
 /* bloco de carteira — o mesmo da loja, reaproveitado pelo vendedor */
+/* ---- Clientes de 1a compra: quantidade X valor ----
+   O INDICADORES conta cabecas (Clientes novos CNPJ) e nao traz o valor.
+   O valor sai da carteira: cliente com ZERO meses fechados ativos e
+   faturamento no mes corrente. As duas reguas ficam lado a lado de
+   proposito: a do sistema e a da cobranca; a da carteira mostra quanto
+   o cliente novo pesa no bolso - e inclui quem voltou depois de sumir. */
+function novMonta(nov,exF,exN){
+ nov.sort(function(a,b){return b.fat-a.fat});
+ var val=nov.reduce(function(a,c){return a+c.fat},0);
+ return {n:nov.length,val:val,ticket:nov.length?val/nov.length:0,tkEx:exN?exF/exN:0,lista:nov};
+}
+function novDe(box){
+ if(!box||!box.cli) return null;
+ var nov=[],exF=0,exN=0;
+ box.cli.forEach(function(c){ if(c.ativos===0&&c.fat>0) nov.push(c); else if(c.fat>0){exF+=c.fat;exN++} });
+ return novMonta(nov,exF,exN);
+}
+function novSoma(cods){
+ var nov=[],exF=0,exN=0;
+ cods.forEach(function(cod){ var Kx=KL(cod); if(!Kx||!Kx.cli) return;
+  Kx.cli.forEach(function(c){ if(c.ativos===0&&c.fat>0) nov.push(c); else if(c.fat>0){exF+=c.fat;exN++} }); });
+ return novMonta(nov,exF,exN);
+}
+function novBox(N,titulo,oficial,fatEscopo,comLista){
+ if(!N) return '';
+ var rel=fatEscopo?N.val/fatEscopo:0;
+ var dif=N.tkEx?N.ticket/N.tkEx-1:0;
+ var h='<div class="grp"><div class="grph"><span class="tg cnpj">NOVOS</span><h3>'+esc(titulo)+'</h3>'
+  +'<span class="cnt">'+NUM(N.n)+' de 1ª compra · '+BRL(N.val)+'</span>'+selo(ATZ.cart)+'</div><div class="ind">'
+  +'<div class="indc"><div class="l">Novos CNPJ (sistema)</div><div class="v">'+NUM(oficial||0)+'</div><div class="s">régua da cobrança</div></div>'
+  +'<div class="indc"><div class="l">1ª compra no ano</div><div class="v" style="color:#1E8E3E">'+NUM(N.n)+'</div><div class="s">pela carteira</div></div>'
+  +'<div class="indc"><div class="l">Valor que trouxeram</div><div class="v">'+BRL(N.val)+'</div><div class="s">'+(rel?PC(rel)+' do faturado':'—')+'</div></div>'
+  +'<div class="indc"><div class="l">Ticket do novo</div><div class="v">'+BRL(N.ticket)+'</div><div class="s" style="color:'+(dif>=0?'#1E8E3E':'#E53935')+'">'
+  +(N.tkEx?((dif>=0?'+':'')+(dif*100).toFixed(0)+'% vs cliente de casa '+BRL(N.tkEx)):'—')+'</div></div>'
+  +'</div>';
+ if(comLista&&N.lista.length){
+  h+='<details class="novd"><summary>ver os '+NUM(N.lista.length)+' clientes de 1ª compra</summary><div class="novl">';
+  N.lista.slice(0,60).forEach(function(c){
+   h+='<div class="novi"><span>'+esc(c.nome)+(c.vend?' · <i>'+esc(c.vend)+'</i>':'')+'</span><b>'+BRL(c.fat)+'</b></div>';
+  });
+  if(N.lista.length>60) h+='<div class="novi"><span>… e mais '+NUM(N.lista.length-60)+'</span><b></b></div>';
+  h+='</div></details>';
+ }
+ return h+'</div>';
+}
 function cartBox(K,titulo,vend){
  const alvo=vend?`goCartV('${esc(vend).replace(/'/g,"")}','`:`goCart('`;
  if(!K) return vend?`<div class="empty" style="margin-top:12px">Nenhum cliente com <b>${esc(vend)}</b> identificado na carteira desta loja.</div>`:'';
@@ -962,7 +1016,8 @@ function vGeral(){
  h+=indBloco(g,null)+ritmoBox(g);
  h+=`<div class="sec"><div class="sech"><h3>Regiões por supervisor</h3><span class="cnt">${g.nSups} supervisores · ${g.nLojas} lojas · ${g.nVend} vendedores</span></div>`;
  D.supervisores.forEach((s,i)=>h+=linha(s,i,`${s.nLojas} lojas · ${s.nVend} vendedores · falta ${K(s.restLoja)}`,`go('sup','${esc(s.nome)}')`));
- h+='</div>'+orcBox(OSoma(D.lojas.map(l=>l.cod)),'Orçamentos em aberto — rede',g.restLoja,null)
+ h+='</div>'+novBox(novSoma(D.lojas.map(l=>l.cod)),'Clientes novos — rede',g.I&&g.I.novos,g.fat,false)
+  +orcBox(OSoma(D.lojas.map(l=>l.cod)),'Orçamentos em aberto — rede',g.restLoja,null)
   +resumoBox('geral',g,'a rede');
  return h;
 }
@@ -973,7 +1028,8 @@ function vSup(nome){
  let h=kpiGrid(s,'da região')+gaugeBox(s,'Atingimento da região '+s.nome)+indBloco(s,D.geral)+ritmoBox(s);
  h+=`<div class="sec"><div class="sech"><h3>Lojas da região</h3><span class="cnt">${ls.length} lojas</span></div>`;
  ls.forEach((l,i)=>h+=linha(l,i,`Loja ${l.cod} · Méd.90d ${K(l.med90)} · ${l.vendedores.length} vendedores · falta ${K(l.restLoja)}`,`go('loja','${l.cod}')`,bdgL(l)));
- h+='</div>'+orcBox(OSoma(ls.map(l=>l.cod)),'Orçamentos em aberto — região '+nome,s.restLoja,null)
+ h+='</div>'+novBox(novSoma(ls.map(l=>l.cod)),'Clientes novos — região '+nome,s.I&&s.I.novos,s.fat,false)
+  +orcBox(OSoma(ls.map(l=>l.cod)),'Orçamentos em aberto — região '+nome,s.restLoja,null)
   +resumoBox('sup:'+nome,s,'a região de '+nome);
  return h;
 }
@@ -996,7 +1052,8 @@ function vLoja(cod){
   orf=CK.cli.filter(function(c){return !c.vend||!ativos[c.vend]});
   CK.V=CK.V||{}; CK.V[ORF]=grupaCart(orf,CK.meses);
  }
- h+='</div>'+orcBox(OL(cod),'Orçamentos em aberto',l.restLoja,null)
+ h+='</div>'+novBox(novDe(CK),'Clientes novos',l.I&&l.I.novos,l.fat,true)
+  +orcBox(OL(cod),'Orçamentos em aberto',l.restLoja,null)
   +cartBox(CK,'Carteira de clientes',null)
   +(orf.length?`<div class="alert"><span>👤</span><span><b>${orf.length} dos ${CK.cli.length} clientes estão sem vendedor ativo</b> — valem <b>${BRL(orf.reduce((a,c)=>a+c.media,0))}/mês</b>.
    Entram na base da loja, mas em vendedor nenhum: são contas de quem saiu, de cadastro genérico ou de quem está fora do painel. Redistribuir é venda que já existe.</span></div>`
