@@ -402,7 +402,7 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
   <div class="hdtop">
    <div class="brand">
     <div class="logo">ST</div>
-    <div><h1 id="hTit">Coordenação de Supervisão</h1><span id="hSub">Só Tintas · Painel de Performance · <b style="color:#FFD100">v36</b></span></div>
+    <div><h1 id="hTit">Coordenação de Supervisão</h1><span id="hSub">Só Tintas · Painel de Performance · <b style="color:#FFD100">v37</b></span></div>
    </div>
    <div class="per"><b id="hPer">—</b><span id="hDias">—</span><span id="btnUp" style="display:none" onclick="abrirUpload()"> · ⚙️ atualizar dados</span><span id="lnkSair" style="display:none" onclick="sairPainel()"> · sair</span></div>
   </div>
@@ -1045,7 +1045,26 @@ function alinhDados(tipo,chave){
   nov=novSoma(cods); orc=OSoma(cods);
  }
  vs.sort(function(a,b){return (b.pct||0)-(a.pct||0)});
- return {tipo:tipo,o:o,titulo:titulo,sub:sub,vs:vs,cods:cods,nov:nov,orc:orc};
+ /* A tabela mostra sempre o nivel IMEDIATAMENTE ABAIXO: a diretoria
+    cobra loja, o supervisor cobra as lojas da regiao dele e o gerente
+    cobra vendedor. Listar 68 vendedores na folha da rede nao e cobranca,
+    e papel gasto - ninguem conduz reuniao com uma lista que nao e sua. */
+ var linhas=[],colNome='Vendedor',colRef='Loja',rotulo='Nível dos vendedores';
+ function lin(nome,ref,meta,fat,pct,nvRot,falta){
+  return {nome:nome,ref:ref,meta:meta,fat:fat,pct:pct,nvRot:nvRot,falta:falta};
+ }
+ if(tipo==='geral'||tipo==='sup'){
+  var base=tipo==='sup'?D.lojas.filter(function(x){return x.sup===chave}):D.lojas;
+  linhas=base.map(function(l){return lin(l.cod+' '+l.nome,l.sup,l.metaLoja,l.fat,l.pctLoja,l.nvRot,l.prox&&l.prox.falta)});
+  colNome='Loja'; colRef='Supervisor';
+  rotulo=tipo==='sup'?('Lojas da região de '+chave):'Lojas da rede';
+ } else {
+  linhas=vs.map(function(v){return lin(v.nome,v.loja,v.meta,v.fat,v.pct,v.nvRot,v.prox&&v.prox.falta)});
+  rotulo=tipo==='vend'?'Nível do vendedor':'Vendedores da loja';
+ }
+ linhas.sort(function(a,b){return (b.pct||0)-(a.pct||0)});
+ return {tipo:tipo,o:o,titulo:titulo,sub:sub,vs:vs,cods:cods,nov:nov,orc:orc,
+         linhas:linhas,colNome:colNome,colRef:colRef,rotulo:rotulo};
 }
 /* As areas de oportunidade em frase. Cada uma carrega o numero que a
    sustenta e o comportamento a observar, porque "melhorar o ritmo" nao
@@ -1081,7 +1100,17 @@ function alinhOportunidades(d){
   else if(dif>=0.2) f.push('<b>Cliente novo entrando forte.</b> '+d.nov.n+' de 1ª compra com ticket de '+
    BRL(d.nov.ticket)+', <b>+'+(dif*100).toFixed(0)+'%</b> acima do cliente de casa. Vale entender com quem está vindo e repetir a receita.');
  }
- if(d.vs.length>2){
+ if((d.tipo==='geral'||d.tipo==='sup')&&d.linhas.length>2){
+  var totL=d.linhas.reduce(function(a,l){return a+l.fat},0);
+  var topL=d.linhas.slice().sort(function(a,b){return b.fat-a.fat})[0];
+  if(totL&&topL.fat/totL>=0.25) f.push('<b>Faturamento concentrado.</b> '+esc(topL.nome)+
+   ' sozinha responde por <b>'+PCT0(topL.fat/totL)+'</b> do faturado. O resultado do grupo está preso ao desempenho de uma loja.');
+  var frL=d.linhas.filter(function(l){return (l.pct||0)<0.6});
+  if(frL.length) f.push('<b>'+frL.length+' de '+d.linhas.length+' lojas abaixo de 60% da meta</b> — '+
+   frL.slice(0,3).map(function(l){return esc(l.nome)+' ('+PCT0(l.pct)+')'}).join(', ')+
+   (frL.length>3?' e mais '+(frL.length-3):'')+'. Comece por quem tem a maior meta em risco, não por quem tem o pior percentual.');
+ }
+ if(d.tipo!=='geral'&&d.tipo!=='sup'&&d.vs.length>2){
   var tot=d.vs.reduce(function(a,v){return a+v.fat},0);
   var top=d.vs.slice().sort(function(a,b){return b.fat-a.fat})[0];
   if(tot&&top.fat/tot>=0.4) f.push('<b>Apoiado numa perna só.</b> '+esc(top.nome)+' responde por <b>'+
@@ -1099,9 +1128,9 @@ function alinhOportunidades(d){
  return f.slice(0,6);
 }
 function alinhLinhaVend(v){
- var falta=v.prox&&v.prox.falta>0?BRL(v.prox.falta):'—';
+ var falta=v.falta>0?BRL(v.falta):'—';
  var cor=(v.pct||0)>=1?'#1E8E3E':((v.pct||0)>=0.8?'#D98B00':'#C62828');
- return '<tr><td>'+esc(v.nome)+'</td><td class="pq">'+esc(v.loja||'')+'</td>'+
+ return '<tr><td>'+esc(v.nome)+'</td><td class="pq">'+esc(v.ref||'')+'</td>'+
   '<td class="d">'+BRL(v.meta)+'</td><td class="d">'+BRL(v.fat)+'</td>'+
   '<td class="d" style="color:'+cor+';font-weight:700">'+PCT0(v.pct)+'</td>'+
   '<td class="c">'+esc(v.nvRot||'—')+'</td><td class="d">'+falta+'</td></tr>';
@@ -1113,7 +1142,7 @@ function alinhamento(tipo,chave){
  var o=d.o,I=o.I||{};
  var hoje=new Date().toLocaleDateString('pt-BR');
  var ops=alinhOportunidades(d);
- var vsTab=d.vs.slice(0,tipo==='vend'?1:16);
+ var vsTab=d.linhas.slice(0,tipo==='vend'?1:(tipo==='loja'?20:32));
 
  var num=function(l,v,s){return '<div class="n"><span>'+l+'</span><b>'+v+'</b>'+(s?'<i>'+s+'</i>':'')+'</div>'};
  var ind=function(l,v){return '<div class="i"><span>'+l+'</span><b>'+v+'</b></div>'};
@@ -1173,12 +1202,12 @@ function alinhamento(tipo,chave){
   ind('Funil em aberto',d.orc?BRL(d.orc.total):'—')+
  '</div>';
 
- h+='<h2>'+(d.tipo==='vend'?'Nível do vendedor':'Nível dos vendedores')+'</h2>'+
-  '<table><tr><th>Vendedor</th><th>Loja</th><th style="text-align:right">Meta</th>'+
+ h+='<h2>'+esc(d.rotulo)+'</h2>'+
+  '<table><tr><th>'+esc(d.colNome)+'</th><th>'+esc(d.colRef)+'</th><th style="text-align:right">Meta</th>'+
   '<th style="text-align:right">Faturado</th><th style="text-align:right">%</th>'+
   '<th style="text-align:center">Nível</th><th style="text-align:right">Falta p/ subir</th></tr>'+
   vsTab.map(alinhLinhaVend).join('')+'</table>'+
-  (d.vs.length>vsTab.length?'<div style="font-size:8.5px;color:#5A6B7D;margin-top:3px">… e mais '+(d.vs.length-vsTab.length)+' vendedores. Lista completa no painel.</div>':'');
+  (d.linhas.length>vsTab.length?'<div style="font-size:8.5px;color:#5A6B7D;margin-top:3px">… e mais '+(d.linhas.length-vsTab.length)+'. Lista completa no painel.</div>':'');
 
  h+='<h2>Áreas de oportunidade</h2><ol>'+ops.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ol>';
 
