@@ -143,7 +143,9 @@ html[data-theme="dark"] .bar .wc.on{background:rgba(224,165,58,.16)}
 .acao{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);margin-bottom:16px;overflow:hidden}
 .acao .ah{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px}
 .acao .ah h3{font-size:14px;font-weight:700}
-.acao .ab{padding:15px 16px}
+.acao .ab{padding:15px 16px;display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.ab .resumo{width:100%;margin-top:6px}
+.ab .ppleg{flex:1 1 100%;margin:0}
 .fg{margin-bottom:13px}
 .fg label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--tx3);font-weight:700;margin-bottom:6px}
 .fg input,.fg textarea,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;
@@ -400,7 +402,7 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
   <div class="hdtop">
    <div class="brand">
     <div class="logo">ST</div>
-    <div><h1 id="hTit">Coordenação de Supervisão</h1><span id="hSub">Só Tintas · Painel de Performance · <b style="color:#FFD100">v35</b></span></div>
+    <div><h1 id="hTit">Coordenação de Supervisão</h1><span id="hSub">Só Tintas · Painel de Performance · <b style="color:#FFD100">v36</b></span></div>
    </div>
    <div class="per"><b id="hPer">—</b><span id="hDias">—</span><span id="btnUp" style="display:none" onclick="abrirUpload()"> · ⚙️ atualizar dados</span><span id="lnkSair" style="display:none" onclick="sairPainel()"> · sair</span></div>
   </div>
@@ -862,7 +864,7 @@ function vExp(v,i,ref){
   <div class="indc"><div class="l">$ Ticket Médio CPF</div><div class="v">${BRL(I.ticket)}</div>${delta(I.ticket,ref&&ref.I.ticket)}</div>
   <div class="indc"><div class="l">% Desconto CPF</div><div class="v">${PPCT(I.descCPF)}</div>${delta(I.descCPF,ref&&ref.I.descCPF,true)}</div>
   <div class="indc"><div class="l">Atendimentos</div><div class="v">${NUM(I.atend)}</div><div class="s">no mês</div></div>
- </div>${novBox(novDe(((KL(ST.loja)||{}).V||{})[v.nome]),'Clientes novos de '+v.nome,I.novos,v.fat,true)}${orcBox(((OL(ST.loja)||{}).V||{})[v.nome],'Orçamentos em aberto de '+v.nome,v.rest,v.nome)}${cartBox(((KL(ST.loja)||{}).V||{})[v.nome],'Carteira de clientes de '+v.nome,v.nome)}</div>`}
+ </div>${novBox(novDe(((KL(ST.loja)||{}).V||{})[v.nome]),'Clientes novos de '+v.nome,I.novos,v.fat,true)}${orcBox(((OL(ST.loja)||{}).V||{})[v.nome],'Orçamentos em aberto de '+v.nome,v.rest,v.nome)}${cartBox(((KL(ST.loja)||{}).V||{})[v.nome],'Carteira de clientes de '+v.nome,v.nome)}${alinhBtnVend(v.nome)}</div>`}
 
 /* bloco de orcamentos em aberto — rede, regiao, loja e vendedor */
 function orcBox(O,titulo,escopoFalta,chave){
@@ -996,6 +998,213 @@ function novBox(N,titulo,oficial,fatEscopo,comLista){
  }
  return h+'</div>';
 }
+/* ================= RESUMO DE ALINHAMENTO =================
+   A folha que lider e liderado assinam. Uma pagina A4, os mesmos
+   numeros do painel, as oportunidades escritas em frase e espaco
+   para o compromisso ser escrito a mao - porque compromisso que
+   nao tem assinatura embaixo nao sobrevive ate a proxima reuniao. */
+function dePara(a){return ('de '+a).replace(/^de a /,'da ').replace(/^de o /,'do ')}
+function PCT0(p){return p==null?'—':(p*100).toFixed(1).replace('.',',')+'%'}
+
+function alinhDados(tipo,chave){
+ var o,titulo,sub,vs=[],cods=[],nov,orc;
+ if(tipo==='vend'){
+  var lv=D.lojas.filter(function(x){return x.cod==ST.loja})[0];
+  var v=lv&&lv.vendedores.filter(function(x){return x.nome==chave})[0];
+  if(!v) return null;
+  o={metaLoja:v.meta,metaTime:v.meta,fat:v.fat,proj:v.proj,
+     pctLoja:v.pct,pctTime:v.pct,pctProj:v.meta?v.proj/v.meta:null,
+     restLoja:v.rest,restTime:v.rest,ritmoNec:v.ritmoNec,
+     ritmoReal:UD?v.fat/UD:0,I:v.I};
+  titulo=v.nome; sub='Vendedor · '+lv.cod+' '+lv.nome+' · supervisor '+lv.sup;
+  vs=[{loja:lv.nome,nome:v.nome,meta:v.meta,fat:v.fat,pct:v.pct,nv:v.nv,nvRot:v.nvRot,prox:v.prox,I:v.I}];
+  cods=[lv.cod];
+  nov=novDe(((KL(ST.loja)||{}).V||{})[chave]);
+  orc=((OL(ST.loja)||{}).V||{})[chave]||null;
+ } else if(tipo==='loja'){
+  var l=D.lojas.filter(function(x){return x.cod==chave})[0]; if(!l) return null;
+  o=l; titulo=l.cod+' '+l.nome;
+  sub='Loja · supervisor '+l.sup+' · '+l.vendedores.length+' vendedores · nível '+l.nvRot;
+  vs=l.vendedores.map(function(v){return {loja:l.nome,nome:v.nome,meta:v.meta,fat:v.fat,pct:v.pct,nv:v.nv,nvRot:v.nvRot,prox:v.prox,I:v.I}});
+  cods=[l.cod]; nov=novDe(KL(l.cod)); orc=OL(l.cod);
+ } else if(tipo==='sup'){
+  var s=D.supervisores.filter(function(x){return x.nome==chave})[0]; if(!s) return null;
+  var ls=D.lojas.filter(function(x){return x.sup==chave});
+  o=s; titulo='Região '+chave;
+  sub='Supervisão · '+ls.length+' lojas · '+s.nVend+' vendedores';
+  ls.forEach(function(l){l.vendedores.forEach(function(v){
+   vs.push({loja:l.nome,nome:v.nome,meta:v.meta,fat:v.fat,pct:v.pct,nv:v.nv,nvRot:v.nvRot,prox:v.prox,I:v.I})})});
+  cods=ls.map(function(l){return l.cod});
+  nov=novSoma(cods); orc=OSoma(cods);
+ } else {
+  o=D.geral; titulo='Rede Só Tintas';
+  sub='Rede · '+D.geral.nLojas+' lojas · '+D.geral.nSups+' supervisores · '+D.geral.nVend+' vendedores';
+  D.lojas.forEach(function(l){l.vendedores.forEach(function(v){
+   vs.push({loja:l.nome,nome:v.nome,meta:v.meta,fat:v.fat,pct:v.pct,nv:v.nv,nvRot:v.nvRot,prox:v.prox,I:v.I})})});
+  cods=D.lojas.map(function(l){return l.cod});
+  nov=novSoma(cods); orc=OSoma(cods);
+ }
+ vs.sort(function(a,b){return (b.pct||0)-(a.pct||0)});
+ return {tipo:tipo,o:o,titulo:titulo,sub:sub,vs:vs,cods:cods,nov:nov,orc:orc};
+}
+/* As areas de oportunidade em frase. Cada uma carrega o numero que a
+   sustenta e o comportamento a observar, porque "melhorar o ritmo" nao
+   se executa - "ligar para os 12 orcamentos frios de ontem" se executa. */
+function alinhOportunidades(d){
+ var o=d.o,f=[],I=o.I||{};
+ var gap=(o.ritmoNec||0)-(o.ritmoReal||0);
+ if(gap>0&&UR>0) f.push('<b>Ritmo abaixo do necessário.</b> Está saindo '+BRL(o.ritmoReal)+
+  ' por dia útil e precisa de '+BRL(o.ritmoNec)+' — um gap de <b>'+BRL(gap)+' por dia</b> nos '+UR+
+  ' dias úteis que restam. Observe se o time começa o dia sabendo quanto precisa vender, ou se descobre isso no fechamento.');
+ else if(o.ritmoReal>0) f.push('<b>Ritmo dentro do necessário.</b> Saem '+BRL(o.ritmoReal)+
+  ' por dia útil contra '+BRL(o.ritmoNec)+' exigidos. O risco agora é relaxar: confirme se o esforço está distribuído ou concentrado em poucos dias fortes.');
+ if(d.orc&&d.orc.total){
+  var frio=d.orc.F.reduce(function(a,c){return a+c.valor},0), pf=frio/d.orc.total;
+  if(pf>=0.4) f.push('<b>Funil esfriando.</b> '+d.orc.F.length+' propostas somando '+BRL(frio)+
+   ' já passaram de 15 dias — <b>'+PCT0(pf)+' de tudo que está em aberto</b>. Observe se o vendedor retoma orçamento antigo por iniciativa própria ou só quando o cliente liga.');
+  if(d.orc.maior&&d.orc.maior.valor/d.orc.total>=0.25) f.push('<b>Mês apoiado em um cliente.</b> A maior proposta sozinha vale '+
+   BRL(d.orc.maior.valor)+', <b>'+PCT0(d.orc.maior.valor/d.orc.total)+' do funil</b>. Se ela cair, o mês cai junto: pergunte qual é o plano B.');
+  if(d.orc.Q.length) f.push('<b>'+d.orc.Q.length+' propostas quentes</b> somando '+
+   BRL(d.orc.Q.reduce(function(a,c){return a+c.valor},0))+' — feitas há menos de 7 dias, o cliente ainda lembra do preço. É o dinheiro mais fácil da mesa hoje.');
+ }
+ var K=d.cods.length===1?KL(d.cods[0]):null;
+ if(K&&K.POS&&K.POS.length){
+  var par=K.POS.reduce(function(a,c){return a+c.media},0);
+  if(par>0) f.push('<b>Carteira parada.</b> '+K.POS.length+' clientes que compravam não compraram este mês, '+
+   BRL(par)+'/mês em jogo. Observe se existe lista de quem ligar, ou se o vendedor espera o cliente aparecer.');
+ }
+ if(d.nov&&d.nov.n&&d.nov.tkEx){
+  var dif=d.nov.ticket/d.nov.tkEx-1;
+  if(dif<=-0.2) f.push('<b>Cliente novo entrando barato.</b> '+d.nov.n+' clientes de 1ª compra trouxeram '+
+   BRL(d.nov.val)+', ticket de '+BRL(d.nov.ticket)+' contra '+BRL(d.nov.tkEx)+' do cliente de casa (<b>'+
+   (dif*100).toFixed(0)+'%</b>). Abriu e não voltou: verifique quem fez a segunda visita.');
+  else if(dif>=0.2) f.push('<b>Cliente novo entrando forte.</b> '+d.nov.n+' de 1ª compra com ticket de '+
+   BRL(d.nov.ticket)+', <b>+'+(dif*100).toFixed(0)+'%</b> acima do cliente de casa. Vale entender com quem está vindo e repetir a receita.');
+ }
+ if(d.vs.length>2){
+  var tot=d.vs.reduce(function(a,v){return a+v.fat},0);
+  var top=d.vs.slice().sort(function(a,b){return b.fat-a.fat})[0];
+  if(tot&&top.fat/tot>=0.4) f.push('<b>Apoiado numa perna só.</b> '+esc(top.nome)+' responde por <b>'+
+   PCT0(top.fat/tot)+'</b> de tudo que foi faturado. Férias ou atestado dele viram queda de mês inteiro.');
+  var fracos=d.vs.filter(function(v){return (v.pct||0)<0.6});
+  if(fracos.length) f.push('<b>'+fracos.length+' de '+d.vs.length+' vendedores abaixo de 60% da meta</b> — '+
+   fracos.slice(0,3).map(function(v){return esc(v.nome)+' ('+PCT0(v.pct)+')'}).join(', ')+
+   (fracos.length>3?' e mais '+(fracos.length-3):'')+'. Trate um a um: a média da loja esconde o caso individual.');
+ }
+ if(I.descCPF!=null&&I.descCPF>0.14&&I.ticket!=null) f.push('<b>Desconto acima da régua.</b> '+
+  PCT0(I.descCPF)+' de desconto médio no CPF com ticket de '+BRL(I.ticket)+
+  '. Observe se o desconto está sendo usado para fechar venda que argumento fecharia.');
+ if(I.pctIdent!=null&&I.pctIdent<0.8) f.push('<b>Cliente não identificado.</b> apenas '+PCT0(I.pctIdent)+
+  ' das vendas saem com CPF. O que não é identificado não vira carteira e não dá para chamar de volta.');
+ return f.slice(0,6);
+}
+function alinhLinhaVend(v){
+ var falta=v.prox&&v.prox.falta>0?BRL(v.prox.falta):'—';
+ var cor=(v.pct||0)>=1?'#1E8E3E':((v.pct||0)>=0.8?'#D98B00':'#C62828');
+ return '<tr><td>'+esc(v.nome)+'</td><td class="pq">'+esc(v.loja||'')+'</td>'+
+  '<td class="d">'+BRL(v.meta)+'</td><td class="d">'+BRL(v.fat)+'</td>'+
+  '<td class="d" style="color:'+cor+';font-weight:700">'+PCT0(v.pct)+'</td>'+
+  '<td class="c">'+esc(v.nvRot||'—')+'</td><td class="d">'+falta+'</td></tr>';
+}
+
+function alinhamento(tipo,chave){
+ var d=alinhDados(tipo,chave);
+ if(!d){alert('Não consegui montar o resumo desta tela.');return}
+ var o=d.o,I=o.I||{};
+ var hoje=new Date().toLocaleDateString('pt-BR');
+ var ops=alinhOportunidades(d);
+ var vsTab=d.vs.slice(0,tipo==='vend'?1:16);
+
+ var num=function(l,v,s){return '<div class="n"><span>'+l+'</span><b>'+v+'</b>'+(s?'<i>'+s+'</i>':'')+'</div>'};
+ var ind=function(l,v){return '<div class="i"><span>'+l+'</span><b>'+v+'</b></div>'};
+
+ var h='<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Resumo de alinhamento — '+esc(d.titulo)+'</title><style>'+
+ '@page{size:A4 portrait;margin:10mm}'+
+ '*{box-sizing:border-box;margin:0;padding:0}'+
+ 'body{font:11px/1.35 Arial,Helvetica,sans-serif;color:#15243A}'+
+ '.hd{display:flex;align-items:center;gap:10px;border-bottom:3px solid #D03227;padding-bottom:7px;margin-bottom:9px}'+
+ '.lg{width:34px;height:34px;border-radius:8px;background:#D03227;color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center}'+
+ '.hd h1{font-size:16px;line-height:1.1}.hd .s{font-size:10px;color:#5A6B7D}'+
+ '.hd .r{margin-left:auto;text-align:right;font-size:10px;color:#5A6B7D}'+
+ 'h2{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:#D03227;margin:9px 0 5px;border-bottom:1px solid #DCE4EC;padding-bottom:2px}'+
+ '.g{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}'+
+ '.n{border:1px solid #DCE4EC;border-radius:5px;padding:5px 7px}'+
+ '.n span{display:block;font-size:8.5px;text-transform:uppercase;letter-spacing:.4px;color:#5A6B7D}'+
+ '.n b{display:block;font-size:13px;margin-top:1px}.n i{display:block;font-size:8.5px;color:#5A6B7D;font-style:normal}'+
+ '.gi{display:grid;grid-template-columns:repeat(6,1fr);gap:4px}'+
+ '.i{border:1px solid #DCE4EC;border-radius:5px;padding:4px 5px;text-align:center}'+
+ '.i span{display:block;font-size:8px;color:#5A6B7D}.i b{font-size:11px}'+
+ 'table{width:100%;border-collapse:collapse;font-size:9.5px}'+
+ 'th{background:#15243A;color:#fff;text-align:left;padding:3px 5px;font-size:8.5px;text-transform:uppercase}'+
+ 'td{padding:2.5px 5px;border-bottom:1px solid #EDF1F5}'+
+ 'td.d{text-align:right}td.c{text-align:center}td.pq{color:#5A6B7D}'+
+ 'ol{margin-left:15px}ol li{margin-bottom:3px}'+
+ '.cmp{border:1px solid #DCE4EC;border-radius:5px;padding:7px}'+
+ '.cmp .l{border-bottom:1px dotted #90A4B8;height:17px;margin-bottom:5px}'+
+ '.as{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:14px}'+
+ '.as div{border-top:1px solid #15243A;padding-top:3px;text-align:center;font-size:9px}'+
+ '.fo{margin-top:8px;font-size:8px;color:#8FA0B4;text-align:center}'+
+ '@media print{.np{display:none}}'+
+ '.np{position:fixed;right:10px;top:10px;background:#D03227;color:#fff;border:0;padding:8px 14px;border-radius:7px;font-weight:700;cursor:pointer}'+
+ '</style></head><body>'+
+ '<button class="np" onclick="window.print()">Imprimir / salvar PDF</button>'+
+ '<div class="hd"><div class="lg">ST</div><div><h1>'+esc(d.titulo)+'</h1>'+
+ '<div class="s">'+esc(d.sub)+'</div></div>'+
+ '<div class="r"><b>Resumo de alinhamento</b><br>'+P.mes+'/'+P.ano+' · '+UD+' de '+UT+' dias úteis<br>emitido em '+hoje+'</div></div>';
+ h+='<h2>Onde o mês está</h2><div class="g">'+
+  num('Meta Loja',BRL(o.metaLoja))+
+  num('Meta Time',BRL(o.metaTime))+
+  num('Faturado',BRL(o.fat),PCT0(o.pctLoja)+' da meta loja · '+PCT0(o.pctTime)+' da meta time')+
+  num('Falta para a meta',BRL(o.restLoja),UR+' dias úteis restantes')+
+  num('Restante por dia útil',BRL(o.ritmoNec),'ritmo necessário')+
+  num('Ritmo realizado',BRL(o.ritmoReal),'média por dia útil')+
+  num('Projeção de fechamento',BRL(o.proj),PCT0(o.pctProj)+' da meta')+
+  num('Clientes de 1ª compra',d.nov?NUM(d.nov.n):'—',d.nov?BRL(d.nov.val)+' · ticket '+BRL(d.nov.ticket):'')+
+ '</div>';
+
+ h+='<h2>Indicadores</h2><div class="gi">'+
+  ind('Ativos CNPJ',NUM(I.ativos||0))+ind('Positivados',NUM(I.posit||0))+
+  ind('Novos CNPJ',NUM(I.novos||0))+ind('Atendimentos',NUM(I.atend||0))+
+  ind('% Identificados',PCT0(I.pctIdent))+ind('Itens/atend.',(I.itens||0).toFixed(2).replace('.',','))+
+ '</div><div class="gi" style="margin-top:4px">'+
+  ind('Ticket CPF',BRL(I.ticket))+ind('% Desconto CPF',PCT0(I.descCPF))+
+  ind('Meta CNPJ',BRL(I.metaCNPJ))+ind('Fat. CNPJ',BRL(I.fatCNPJ))+
+  ind('% Meta CNPJ',PCT0(I.alcCNPJ))+
+  ind('Funil em aberto',d.orc?BRL(d.orc.total):'—')+
+ '</div>';
+
+ h+='<h2>'+(d.tipo==='vend'?'Nível do vendedor':'Nível dos vendedores')+'</h2>'+
+  '<table><tr><th>Vendedor</th><th>Loja</th><th style="text-align:right">Meta</th>'+
+  '<th style="text-align:right">Faturado</th><th style="text-align:right">%</th>'+
+  '<th style="text-align:center">Nível</th><th style="text-align:right">Falta p/ subir</th></tr>'+
+  vsTab.map(alinhLinhaVend).join('')+'</table>'+
+  (d.vs.length>vsTab.length?'<div style="font-size:8.5px;color:#5A6B7D;margin-top:3px">… e mais '+(d.vs.length-vsTab.length)+' vendedores. Lista completa no painel.</div>':'');
+
+ h+='<h2>Áreas de oportunidade</h2><ol>'+ops.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ol>';
+
+ h+='<h2>Compromissos até a próxima reunião</h2><div class="cmp">'+
+  '<div class="l"></div><div class="l"></div><div class="l"></div>'+
+  '<div style="font-size:8.5px;color:#5A6B7D">O que será feito · por quem · até quando</div></div>';
+
+ h+='<div class="as"><div>Liderado — nome e assinatura</div><div>Líder — nome e assinatura</div></div>'+
+  '<div class="fo">Só Tintas · Coordenação de Supervisão · dados de '+
+  (ATZ.num?esc(String(ATZ.num)):'—')+' (números), '+(ATZ.cart?esc(String(ATZ.cart)):'—')+' (carteira), '+
+  (ATZ.orc?esc(String(ATZ.orc)):'—')+' (orçamentos) · gerado em '+hoje+'</div>';
+
+ h+='</body></html>';
+
+ var w=window.open('','_blank');
+ if(!w){alert('O navegador bloqueou a janela. Libere o pop-up para este site.');return}
+ w.document.open(); w.document.write(h); w.document.close();
+}
+function alinhBtnVend(nome){
+ var n=String(nome).replace(/'/g,'');
+ return `<div class="acao"><div class="ah"><span>\u{1F4CB}</span><h3>Alinhamento individual</h3></div><div class="ab">
+  <button class="b pri" onclick="alinhamento('vend','${n}')">\u{1F4CB} Resumo de alinhamento de ${esc(nome)}</button>
+  <span class="ppleg" style="margin:0">Uma página A4 com meta, ritmo, indicadores, nível e espaço para os dois assinarem.</span></div></div>`;
+}
+window.alinhamento=alinhamento; window.alinhBtnVend=alinhBtnVend;
+
 function cartBox(K,titulo,vend){
  const alvo=vend?`goCartV('${esc(vend).replace(/'/g,"")}','`:`goCart('`;
  if(!K) return vend?`<div class="empty" style="margin-top:12px">Nenhum cliente com <b>${esc(vend)}</b> identificado na carteira desta loja.</div>`:'';
@@ -1292,7 +1501,8 @@ const V=i=>{const e=document.getElementById(i);return e?e.value:''};
 /* ---------- resumo automatico ---------- */
 function resumoBox(id,o,alvo){
  return `<div class="acao"><div class="ah"><span>🧠</span><h3>Leitura do desempenho</h3></div><div class="ab">
-  <button class="b sec" onclick="gerarResumo('${id}')">Gerar resumo de ${esc(alvo)}</button>
+  <button class="b pri" onclick="alinhamento('${id.indexOf('sup:')===0?'sup':(id.indexOf('loja:')===0?'loja':'geral')}','${(id.indexOf(':')>=0?id.split(':')[1]:'').replace(/'/g,'')}')">📋 Resumo de alinhamento</button>
+  <button class="b sec" onclick="gerarResumo('${id}')">Gerar resumo ${esc(dePara(alvo))}</button>
   <div class="resumo" id="r_${id.replace(/[^a-z0-9]/gi,'')}"></div>
   ${btnsOrient('r_'+id.replace(/[^a-z0-9]/gi,''),'Leitura do desempenho')}</div></div>`;
 }
