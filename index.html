@@ -10,6 +10,32 @@
 <link rel="manifest" href="./manifest.json">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="./icone-192.png">
+<script>
+/* ===== Tema claro/escuro compartilhado (App + Painel + Níveis) — aplicado antes do paint ===== */
+(function(){
+  function ls(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+  var sv=(ls('st_tema')||'').toLowerCase();
+  // padrão claro; escuro só quando salvo como escuro/dark
+  var t=(sv==='dark'||sv==='escuro')?'dark':'light';
+  window.STtema = {
+    get:function(){ return document.documentElement.getAttribute('data-theme')==='dark'?'dark':'light'; },
+    set:function(tema){
+      document.documentElement.setAttribute('data-theme',tema);
+      try{document.documentElement.style.colorScheme=tema;}catch(e){}
+      try{localStorage.setItem('st_tema',tema);}catch(e){}
+      var ic=document.getElementById('temaAppIc'), tx=document.getElementById('temaAppTx');
+      if(ic) ic.textContent = tema==='dark'?'🌙':'☀️';
+      if(tx) tx.textContent = tema==='dark'?'Escuro':'Claro';
+      var mt=document.querySelector('meta[name="theme-color"]'); if(mt) mt.setAttribute('content', tema==='dark'?'#0f1522':'#1C3F8F');
+      // repassa para os iframes abertos (Painel e Níveis)
+      try{ ['ifrPainel','ifrNiveis'].forEach(function(id){ var f=document.getElementById(id); if(f&&f.contentWindow) f.contentWindow.postMessage({st_tema:tema},'*'); }); }catch(e){}
+    },
+    toggle:function(){ this.set(this.get()==='dark'?'light':'dark'); }
+  };
+  document.documentElement.setAttribute('data-theme',t);
+  try{document.documentElement.style.colorScheme=t;}catch(e){}
+})();
+</script>
 <style>
 :root{
   /* identidade Só Tintas — inalterada */
@@ -28,6 +54,21 @@
   --e1:0 1px 2px rgba(20,35,70,.05);
   --e2:0 2px 8px rgba(20,35,70,.07);
   --e3:0 8px 28px rgba(20,35,70,.14);
+  /* superfícies e tons de alerta — variáveis para permitir tema escuro */
+  --surface:#ffffff; --surface-2:#f8faff;
+  --tint-red:#fdeaea; --tint-red-soft:#fff5f5; --tint-ok:#e3f6ec; --tint-warn:#FFF3CD; --tint-warn-soft:#FFF7E0;
+  --shadow-strong:rgba(20,35,70,.14);
+}
+/* ====== TEMA ESCURO (toggle do app; padrão continua claro) ====== */
+html[data-theme="dark"]{
+  --ink:#eef2fb; --muted:#9aa5bb; --line:#2c3850; --bg:#0f1522;
+  --navy:#4f7cf0; --navy-d:#3a63cc;
+  --navy-05:#172034; --navy-10:#1d2a44; --navy-20:#30406a;
+  --ok:#2ea36b; --warn:#e0a53a; --warn-bg:#241f10;
+  --surface:#1a2336; --surface-2:#141c2d;
+  --tint-red:#2c1a22; --tint-red-soft:#241418; --tint-ok:#10281c; --tint-warn:#241f10; --tint-warn-soft:#241f10;
+  --shadow-strong:rgba(0,0,0,.45);
+  color-scheme:dark;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -52,7 +93,7 @@ input,textarea,select{font-family:inherit;font-size:15px;color:var(--ink)}
 /* ---------- topo ---------- */
 .topbar{background:var(--navy);color:#fff;position:sticky;top:0;z-index:50;box-shadow:0 2px 10px rgba(0,0,0,.15);padding-top:env(safe-area-inset-top,0px)}
 .topbar-in{max-width:1040px;margin:0 auto;padding:8px 16px;display:flex;align-items:center;gap:12px}
-.topbar img{height:34px;background:#fff;border-radius:6px;padding:2px 6px}
+.topbar img{height:34px;background:var(--surface);border-radius:6px;padding:2px 6px}
 .topbar .tt{font-weight:bold;font-size:15px;line-height:1.1}
 .topbar .ts{font-size:11px;opacity:.8}
 .topbar .spacer{flex:1}
@@ -60,7 +101,7 @@ input,textarea,select{font-family:inherit;font-size:15px;color:var(--ink)}
 .chip-timer b{font-size:16px}
 
 /* ---------- cartões ---------- */
-.card{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);
   padding:var(--s5);margin:var(--s4) 0;box-shadow:var(--e1)}
 /* cartão dentro de cartão vira apenas uma área destacada, sem moldura dupla */
 .card .card{box-shadow:none;border-radius:var(--r-md);background:var(--navy-05);border-color:var(--navy-10)}
@@ -72,7 +113,7 @@ label{display:block;font-size:var(--fs-xs);font-weight:700;color:var(--muted);
   text-transform:uppercase;letter-spacing:.6px;margin:var(--s4) 0 var(--s1)}
 input[type=text],input[type=date],input[type=time],textarea,select{width:100%;
   padding:11px var(--s3);border:1px solid var(--line);border-radius:var(--r-sm);
-  background:#fff;outline:none;transition:border-color .12s,box-shadow .12s}
+  background:var(--surface);outline:none;transition:border-color .12s,box-shadow .12s}
 input:hover,textarea:hover,select:hover{border-color:var(--navy-20)}
 input:focus,textarea:focus,select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(28,63,143,.13)}
 ::placeholder{color:#7d879f}
@@ -90,7 +131,7 @@ textarea{resize:vertical;line-height:1.5}
 .btn-primary:hover{background:#b31a20}
 .btn-navy{background:var(--navy);color:#fff;box-shadow:var(--e1)}
 .btn-navy:hover{background:#16336f}
-.btn-ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}
+.btn-ghost{background:var(--surface);color:var(--navy);border:1px solid var(--line)}
 .btn-ghost:hover{border-color:var(--navy-20);background:var(--navy-05)}
 .btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
 .btn-sm{padding:8px var(--s3);font-size:var(--fs-sm);border-radius:var(--r-sm)}
@@ -98,9 +139,9 @@ textarea{resize:vertical;line-height:1.5}
 
 /* ---------- modelos ---------- */
 .models{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:12px}
-.model{border:2px solid var(--line);border-radius:12px;padding:14px;background:#fff;text-align:left;transition:.15s}
+.model{border:2px solid var(--line);border-radius:12px;padding:14px;background:var(--surface);text-align:left;transition:.15s}
 .model:hover{border-color:var(--navy);transform:translateY(-2px)}
-.model.sel{border-color:var(--red);background:#fff7f7}
+.model.sel{border-color:var(--red);background:var(--tint-red-soft)}
 .model .mi{font-size:22px}
 .model .mn{font-weight:bold;font-size:15px;margin:6px 0 4px;color:var(--navy)}
 .model .md{font-size:12px;color:var(--muted);line-height:1.45}
@@ -118,7 +159,7 @@ textarea{resize:vertical;line-height:1.5}
    conversa. Um mesário treinado olha para duas coisas: o que dizer agora e
    quanto tempo resta. O resto ele consulta quando precisa.               */
 .gaveta{border:1px solid var(--line);border-radius:var(--r-md);margin-bottom:var(--s3);
-  background:#fff;overflow:hidden}
+  background:var(--surface);overflow:hidden}
 .gaveta>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:var(--s2);
   padding:11px var(--s3);font-size:var(--fs-sm);font-weight:700;color:var(--navy);
   background:var(--navy-05);transition:background .12s}
@@ -128,9 +169,9 @@ textarea{resize:vertical;line-height:1.5}
 .gaveta[open]>summary:after{transform:rotate(180deg)}
 .gaveta>summary .gvc{font-weight:400;color:var(--muted);font-size:var(--fs-xs)}
 .gaveta .guia,.gaveta .capbar{margin:0;border:none;border-radius:0;padding:var(--s3)}
-.gaveta .guia{background:#fff}
+.gaveta .guia{background:var(--surface)}
 /* gravando: a gaveta fica destacada mesmo fechada, para ninguém esquecer */
-.gaveta.ativa>summary{background:#fff2f2;color:var(--red)}
+.gaveta.ativa>summary{background:var(--tint-red-soft);color:var(--red)}
 
 /* ---------- ata revisada ---------- */
 .rvb{border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px;margin-bottom:10px}
@@ -150,16 +191,16 @@ textarea{resize:vertical;line-height:1.5}
 .mesnav.hidden{display:none}
 
 /* ---------- progresso do dia ---------- */
-.prog{background:#fff;border:1px solid var(--line);border-left:4px solid var(--navy);
+.prog{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--navy);
   border-radius:var(--r-md);padding:12px 14px;margin-bottom:var(--s3);box-shadow:var(--e1)}
-.prog.completo{border-left-color:var(--ok);background:#f4fbf7}
+.prog.completo{border-left-color:var(--ok);background:var(--surface-2)}
 .prog .pt{font-size:var(--fs-md);font-weight:700;color:var(--navy)}
 .prog.completo .pt{color:var(--ok)}
 .prog .ps{font-size:var(--fs-sm);color:var(--muted);margin-top:3px}
 .prog .barra{margin-top:9px;height:7px}
 
 /* ---------- compromisso vindo do Google ---------- */
-.ag.gcal{border-left-style:dashed;background:#fbfcff}
+.ag.gcal{border-left-style:dashed;background:var(--surface-2)}
 .ag.gcal .agd{background:#67728c}
 
 /* ---------- seletor de visão ---------- */
@@ -168,7 +209,7 @@ textarea{resize:vertical;line-height:1.5}
 .verbar button{background:none;border:none;border-radius:var(--r-pill);padding:8px 16px;
   font-size:var(--fs-sm);font-weight:700;color:var(--muted);white-space:nowrap;
   display:inline-flex;align-items:center;gap:6px;transition:.12s}
-.verbar button.sel{background:#fff;color:var(--navy);box-shadow:var(--e1)}
+.verbar button.sel{background:var(--surface);color:var(--navy);box-shadow:var(--e1)}
 .verbar.hidden{display:none}
 
 /* ---------- sub-abas ---------- */
@@ -176,7 +217,7 @@ textarea{resize:vertical;line-height:1.5}
   border-radius:var(--r-pill);padding:3px;margin-bottom:var(--s4);width:fit-content;max-width:100%}
 .tab2{background:none;border:none;border-radius:var(--r-pill);padding:7px 16px;
   font-size:var(--fs-sm);font-weight:700;color:var(--muted);white-space:nowrap;transition:.12s}
-.tab2.sel{background:#fff;color:var(--navy);box-shadow:var(--e1)}
+.tab2.sel{background:var(--surface);color:var(--navy);box-shadow:var(--e1)}
 
 /* ---------- grupos de pendência ---------- */
 .grp{margin-bottom:var(--s4)}
@@ -191,7 +232,7 @@ textarea{resize:vertical;line-height:1.5}
   display:flex;align-items:center;justify-content:center;padding:20px;
   padding-top:calc(20px + env(safe-area-inset-top,0px))}
 .login.pronto{display:none}
-.lbox{background:#fff;border-radius:var(--r-lg);padding:var(--s5);max-width:380px;width:100%;
+.lbox{background:var(--surface);border-radius:var(--r-lg);padding:var(--s5);max-width:380px;width:100%;
   box-shadow:var(--e3);text-align:left}
 .lbox .llogo{height:44px;display:block;margin:0 auto var(--s3)}
 .lbox h2{text-align:center;margin-bottom:var(--s2)}
@@ -242,7 +283,7 @@ body.travado{overflow:hidden}
 .upbar{display:flex;gap:var(--s2);flex-wrap:wrap;margin-top:var(--s1)}
 .anexos{display:flex;gap:var(--s2);flex-wrap:wrap;margin-top:10px}
 .anx{position:relative;border:1px solid var(--line);border-radius:var(--r-md);
-  background:#fff;padding:6px;width:92px;text-align:center;box-shadow:var(--e1)}
+  background:var(--surface);padding:6px;width:92px;text-align:center;box-shadow:var(--e1)}
 .anx img{width:100%;height:64px;object-fit:cover;border-radius:var(--r-sm);display:block}
 .anx .pdfico{height:64px;display:flex;align-items:center;justify-content:center;
   font-size:26px;background:var(--navy-05);border-radius:var(--r-sm)}
@@ -259,9 +300,9 @@ body.travado{overflow:hidden}
 .leitura .lg b{color:var(--navy)}
 .conf{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
   padding:2px 8px;border-radius:var(--r-pill)}
-.conf.alta{background:#e3f6ec;color:var(--ok)}
+.conf.alta{background:var(--tint-ok);color:var(--ok)}
 .conf.media{background:var(--warn-bg);color:#8a6100}
-.conf.baixa{background:#fdeaea;color:var(--red)}
+.conf.baixa{background:var(--tint-red);color:var(--red)}
 
 /* ---------- dicas recolhíveis ----------
    As orientações continuam no app, mas guardadas. Manual aberto em cima da
@@ -306,8 +347,8 @@ body.semDicas .chip-dica{opacity:.6}
 .chip-dica.alerta{background:var(--red);border-color:var(--red)}
 
 /* ---------- cartões de reunião agendada ---------- */
-.ag{background:#fff;border:1px solid var(--line);border-left:5px solid var(--navy);border-radius:12px;padding:13px 16px;margin-bottom:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.ag.hoje{border-left-color:var(--red);background:#fff9f9}
+.ag{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--navy);border-radius:12px;padding:13px 16px;margin-bottom:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.ag.hoje{border-left-color:var(--red);background:var(--tint-red-soft)}
 .ag .agd{background:var(--navy);color:#fff;border-radius:9px;padding:6px 10px;text-align:center;flex:0 0 auto;line-height:1.15}
 .ag.hoje .agd{background:var(--red)}
 .ag .agd b{display:block;font-size:17px}
@@ -321,10 +362,10 @@ body.semDicas .chip-dica{opacity:.6}
 .ag .ags{font-size:12px;color:var(--muted);margin-top:2px}
 /* ---------- rotina de visitas ---------- */
 .badge{display:inline-block;font-size:10px;font-weight:bold;padding:3px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.4px}
-.b-plan{background:#eef3ff;color:var(--navy)}
-.b-and{background:#FFF3CD;color:#8a6100}
-.b-ok{background:#e3f6ec;color:var(--ok)}
-.b-nao{background:#fdeaea;color:var(--red)}
+.b-plan{background:var(--surface-2);color:var(--navy)}
+.b-and{background:var(--tint-warn);color:#8a6100}
+.b-ok{background:var(--tint-ok);color:var(--ok)}
+.b-nao{background:var(--tint-red);color:var(--red)}
 .pnl{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
 .pnl th{background:var(--navy-10);color:var(--navy);padding:9px var(--s2);text-align:left;
   font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.6px;font-weight:700;
@@ -334,19 +375,19 @@ body.semDicas .chip-dica{opacity:.6}
 .barra{height:8px;background:var(--line);border-radius:4px;overflow:hidden;min-width:70px}
 .barra>div{height:100%;border-radius:4px}
 .semana{display:grid;grid-template-columns:120px repeat(7,minmax(92px,1fr));gap:4px;min-width:760px}
-.semana .sc{background:#f8faff;border:1px solid var(--line);border-radius:8px;padding:6px;min-height:56px;font-size:11px;line-height:1.35}
+.semana .sc{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:6px;min-height:56px;font-size:11px;line-height:1.35}
 .semana .sh{font-size:10px;font-weight:bold;color:var(--muted);text-transform:uppercase;text-align:center;padding:4px 0}
 .semana .sn{display:flex;align-items:center;font-weight:bold;color:var(--navy);font-size:12px;padding:0 6px}
-.semana .chip{display:block;background:#fff;border-left:3px solid var(--navy);border-radius:4px;padding:3px 5px;margin-bottom:3px;color:var(--ink)}
+.semana .chip{display:block;background:var(--surface);border-left:3px solid var(--navy);border-radius:4px;padding:3px 5px;margin-bottom:3px;color:var(--ink)}
 .semana .chip.ok{border-left-color:var(--ok)}
 .semana .chip.nao{border-left-color:var(--red);text-decoration:line-through;color:var(--muted)}
 /* reunião não é visita: ocupa o dia, mas não cobre loja — por isso cor própria */
-.semana .chip.reu{border-left-color:#7A5AF8;background:#f6f4ff}
-.semana .chip.esc{border-left-color:#8a94a6;background:#f4f6f9}
+.semana .chip.reu{border-left-color:#7A5AF8;background:var(--surface-2)}
+.semana .chip.esc{border-left-color:#8a94a6;background:var(--surface-2)}
 .rolar{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px}
 /* ---------- cartões de indicador ---------- */
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-.kpi{background:#fff;border:1px solid var(--line);border-top:3px solid var(--navy);
+.kpi{background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--navy);
   border-radius:var(--r-md);padding:var(--s4);box-shadow:var(--e1)}
 .kpi .kv{font-size:26px;font-weight:700;color:var(--navy);line-height:1.1;letter-spacing:-.8px;
   font-variant-numeric:tabular-nums}
@@ -359,7 +400,7 @@ body.semDicas .chip-dica{opacity:.6}
 .cli{display:flex;gap:8px;align-items:center;margin-bottom:8px}
 .cli input[type=checkbox]{width:20px;height:20px;accent-color:var(--ok);flex:0 0 auto}
 .cli input[type=text]{flex:1}
-.cli.feito input[type=text]{text-decoration:line-through;color:var(--muted);background:#f8faff}
+.cli.feito input[type=text]{text-decoration:line-through;color:var(--muted);background:var(--surface-2)}
 
 /* ---------- alerta objetivo ---------- */
 .objbox{background:var(--warn-bg);border:1.5px solid #f0d48a;border-left:5px solid var(--yellow);border-radius:10px;padding:14px 16px}
@@ -368,7 +409,7 @@ body.semDicas .chip-dica{opacity:.6}
 
 /* ---------- passos ---------- */
 .steps{display:flex;gap:6px;overflow-x:auto;padding:12px 0 4px;-webkit-overflow-scrolling:touch}
-.step{flex:0 0 auto;border:1.5px solid var(--line);background:#fff;border-radius:20px;padding:7px 13px;font-size:13px;color:var(--muted);white-space:nowrap}
+.step{flex:0 0 auto;border:1.5px solid var(--line);background:var(--surface);border-radius:20px;padding:7px 13px;font-size:13px;color:var(--muted);white-space:nowrap}
 .step.done{border-color:var(--ok);color:var(--ok)}
 .step.cur{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:bold}
 .pbar{height:6px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:6px}
@@ -383,7 +424,7 @@ body.semDicas .chip-dica{opacity:.6}
 .btime .v{font-size:20px;font-weight:bold;color:var(--navy)}
 .btime .l{font-size:11px;color:var(--muted)}
 .btime.over .v{color:var(--red)}
-.guia{background:#f8faff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:14px}
+.guia{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:14px}
 .guia .gl{font-size:11px;font-weight:bold;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
 /* .gitem também é <label> — precisa anular o estilo de label de formulário */
 .gitem{display:flex;gap:9px;align-items:flex-start;padding:5px 0;font-size:14px;line-height:1.45;
@@ -404,15 +445,15 @@ body.semDicas .chip-dica{opacity:.6}
 .lc{display:none}   /* rótulo curto: só no celular */
 
 /* ---------- ações abertas da última reunião ---------- */
-.pend{background:#fff;border:1.5px solid #f0d48a;border-left:5px solid var(--yellow);
+.pend{background:var(--surface);border:1.5px solid #f0d48a;border-left:5px solid var(--yellow);
   border-radius:10px;padding:13px 15px;margin-bottom:14px}
 .pend .ph{font-weight:bold;color:#8a6100;font-size:13px;display:flex;align-items:center;
   gap:8px;flex-wrap:wrap;margin-bottom:4px}
 .pend .ph .cnt{background:#8a6100;color:#fff;border-radius:20px;padding:2px 9px;font-size:11px}
 .pend .ph .cnt.venc{background:var(--red)}
 .pend .pe{font-size:12px;color:#8a6100;line-height:1.5;margin-bottom:10px}
-.pi{border:1px solid var(--line);border-radius:9px;padding:10px 12px;margin-top:8px;background:#fff}
-.pi.venc{border-color:#f3c2c4;background:#fffafa}
+.pi{border:1px solid var(--line);border-radius:9px;padding:10px 12px;margin-top:8px;background:var(--surface)}
+.pi.venc{border-color:#f3c2c4;background:var(--tint-red-soft)}
 .pi .pt{font-size:14px;line-height:1.45}
 .pi .pm{font-size:11.5px;color:var(--muted);margin-top:4px}
 .pi .pm b{color:var(--navy)}
@@ -431,13 +472,13 @@ body.semDicas .chip-dica{opacity:.6}
 
 /* ---------- captura ---------- */
 .capbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-.cap{border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:9px 13px;font-size:13px;font-weight:bold;color:var(--navy);display:inline-flex;align-items:center;gap:7px}
+.cap{border:1.5px solid var(--line);background:var(--surface);border-radius:9px;padding:9px 13px;font-size:13px;font-weight:bold;color:var(--navy);display:inline-flex;align-items:center;gap:7px}
 .cap:hover{border-color:var(--navy)}
 .cap.on{background:var(--red);border-color:var(--red);color:#fff}
 .dot{width:9px;height:9px;border-radius:50%;background:#c9d1e4}
-.cap.on .dot{background:#fff;animation:pulse 1.1s infinite}
+.cap.on .dot{background:var(--surface);animation:pulse 1.1s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
-.livebox{border:1.5px dashed var(--red);background:#fff7f7;border-radius:10px;padding:10px 12px;font-size:14px;color:#8a2b2f;margin-bottom:10px;min-height:44px;line-height:1.5}
+.livebox{border:1.5px dashed var(--red);background:var(--tint-red-soft);border-radius:10px;padding:10px 12px;font-size:14px;color:#8a2b2f;margin-bottom:10px;min-height:44px;line-height:1.5}
 .livebox .int{color:#b98a8c;font-style:italic}
 .hint{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5}
 
@@ -451,11 +492,11 @@ table.acts input{border:none;border-radius:0;padding:10px;width:100%;box-shadow:
 /* O foco desenhava um contorno POR FORA do campo. Como a célula tem padding 0 e
    as bordas são coladas, esse contorno passava por cima da coluna vizinha e o
    campo parecia invadir o do lado. Agora o realce é desenhado por dentro. */
-table.acts input:focus{background:#f8faff;outline:none;
+table.acts input:focus{background:var(--surface-2);outline:none;
   box-shadow:inset 0 0 0 2px var(--navy)!important}
 table.acts td{overflow:hidden}
 table.acts{table-layout:fixed}
-tr.incompleto td{background:#fff5f5}
+tr.incompleto td{background:var(--tint-red-soft)}
 tr.incompleto input{background:transparent}
 .delrow{background:none;border:none;color:var(--muted);font-size:17px;padding:6px 10px;line-height:1}
 .delrow:hover{color:var(--red)}
@@ -476,7 +517,7 @@ tr.incompleto input{background:transparent}
 }
 
 /* ---------- ata ---------- */
-.ata{background:#fff;border:1px solid var(--line);border-radius:14px;padding:34px;line-height:1.6}
+.ata{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:34px;line-height:1.6}
 .ata .ahead{text-align:center;border-bottom:3px solid var(--navy);padding-bottom:14px;margin-bottom:20px}
 .ata .ahead img{height:64px}
 .ata .ahead .t{font-size:21px;font-weight:bold;color:var(--navy);margin-top:8px}
@@ -492,8 +533,8 @@ tr.incompleto input{background:transparent}
 .ata .foot{margin-top:28px;border-top:2px solid var(--line);padding-top:12px;text-align:center;font-size:12px;color:var(--muted)}
 .ata [contenteditable]:focus{outline:2px solid rgba(28,63,143,.25);border-radius:4px}
 .tag{display:inline-block;font-size:11px;font-weight:bold;padding:2px 8px;border-radius:20px;margin-left:6px}
-.tag.ok{background:#e3f6ec;color:var(--ok)}
-.tag.pend{background:#fdeaea;color:var(--red)}
+.tag.ok{background:var(--tint-ok);color:var(--ok)}
+.tag.pend{background:var(--tint-red);color:var(--red)}
 
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:var(--ink);
   color:#fff;padding:12px 20px;border-radius:var(--r-pill);font-size:var(--fs-md);z-index:200;
@@ -502,7 +543,7 @@ tr.incompleto input{background:transparent}
 .modal{position:fixed;inset:0;background:rgba(18,28,50,.55);display:none;align-items:center;justify-content:center;z-index:150;padding:16px}
 .modal.show{display:flex}
 #modalZap{z-index:170}
-.modal .mbox{background:#fff;border-radius:var(--r-lg);padding:var(--s5);max-width:620px;
+.modal .mbox{background:var(--surface);border-radius:var(--r-lg);padding:var(--s5);max-width:620px;
   width:100%;max-height:88vh;overflow:auto;box-shadow:var(--e3)}
 .hidden{display:none!important}
 
@@ -517,7 +558,7 @@ tr.incompleto input{background:transparent}
 @media(max-width:640px){
   .bnav{
     display:flex;position:fixed;left:0;right:0;bottom:0;z-index:120;
-    background:#fff;border-top:1px solid var(--line);
+    background:var(--surface);border-top:1px solid var(--line);
     box-shadow:0 -2px 14px rgba(20,35,70,.10);
     padding-bottom:env(safe-area-inset-bottom,0px);
   }
@@ -535,7 +576,7 @@ tr.incompleto input{background:transparent}
   .tabs{display:none}
   /* barra fixa de avançar/voltar dentro da reunião */
   .runbar{
-    position:fixed;left:0;right:0;bottom:0;z-index:120;background:#fff;
+    position:fixed;left:0;right:0;bottom:0;z-index:120;background:var(--surface);
     border-top:1px solid var(--line);box-shadow:0 -2px 14px rgba(20,35,70,.10);
     display:flex;gap:8px;padding:9px 10px;
     padding-bottom:calc(9px + env(safe-area-inset-bottom,0px));
@@ -666,14 +707,14 @@ tr.incompleto input{background:transparent}
   table.pnl.emp thead{display:none}
   table.pnl.emp, table.pnl.emp tbody, table.pnl.emp tr, table.pnl.emp td{display:block;width:100%}
   table.pnl.emp tr{border:1.5px solid var(--line);border-radius:10px;margin-bottom:9px;
-    padding:4px 0;background:#fff}
+    padding:4px 0;background:var(--surface)}
   table.pnl.emp tr:nth-child(even) td{background:transparent}
   table.pnl.emp td{border:none;border-bottom:1px solid var(--line);padding:7px 12px;
     display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13px}
   table.pnl.emp tr td:last-child{border-bottom:none}
   table.pnl.emp td:before{content:attr(data-l);font-size:10.5px;font-weight:bold;
     color:var(--muted);text-transform:uppercase;letter-spacing:.3px;flex:0 0 auto}
-  table.pnl.emp tr td:first-child{background:#f8faff;border-radius:8px 8px 0 0;font-size:14.5px}
+  table.pnl.emp tr td:first-child{background:var(--surface-2);border-radius:8px 8px 0 0;font-size:14.5px}
   .rolar{margin:0}
 
   /* escolha de modelo: cartão mais raso, o texto explicativo cabe */
@@ -687,7 +728,7 @@ tr.incompleto input{background:transparent}
 }
 
 @media print{
-  body{background:#fff}
+  body{background:var(--surface)}
   .topbar,.noprint,.btnrow{display:none!important}
   .wrap{padding:0;max-width:none}
   .ata{border:none;border-radius:0;padding:0;box-shadow:none}
@@ -708,7 +749,7 @@ html[data-tema="escuro"]{
   --e1:0 1px 2px rgba(0,0,0,.4); --e2:0 2px 8px rgba(0,0,0,.45); --e3:0 8px 28px rgba(0,0,0,.6);
 }
 html[data-tema="escuro"] .topbar{background:#152F69}
-html[data-tema="escuro"] .topbar img{background:#fff}
+html[data-tema="escuro"] .topbar img{background:var(--surface)}
 html[data-tema="escuro"] .btn-navy{background:#2a52b0;color:#fff}
 html[data-tema="escuro"] .btn-primary{color:#fff}
 html[data-tema="escuro"] .card,
@@ -742,7 +783,7 @@ html[data-tema="escuro"] .b-and{background:#382d10;color:#e8c56b}
 /* a ata é documento: fica clara, e os tokens voltam aos do papel dentro dela */
 html[data-tema="escuro"] .ata{
   --ink:#16233d; --navy:#1C3F8F; --muted:#67728c; --red:#D32027; --line:#e4e9f3;
-  background:#fff; color:#16233d;
+  background:var(--surface); color:#16233d;
 }
 
 /* =================== FONTE GRANDE ===================
@@ -765,11 +806,10 @@ html[data-fonte="grande"] .btn{font-size:15.5px}
 .dpq{flex-basis:100%;margin-top:4px;padding:9px 12px;border-radius:10px;background:var(--warn-bg);
   border:1px solid #efd9a0;color:var(--ink);font-size:13px;line-height:1.45;white-space:pre-wrap}
 .dpq b{color:var(--warn)}
-html[data-tema="escuro"] .dpq{border-color:#5a4a1c}
+html[data-tema="escuro"] .dpq, html[data-theme="dark"] .dpq{border-color:#5a4a1c}
 .dpAvisos{margin-bottom:14px}
 .dpAvisos h3{margin:0 0 6px;color:var(--warn);display:flex;align-items:center;gap:6px}
-.dpAvisos .ag{border-left-color:var(--warn);background:#fffdf6}
-html[data-tema="escuro"] .dpAvisos .ag{background:#201c12}
+.dpAvisos .ag{border-left-color:var(--warn);background:var(--warn-bg)}
 .dpAvisos .ag .agd{background:var(--warn)}
 @keyframes dpPisca{0%,60%{box-shadow:0 0 0 3px var(--warn)}100%{box-shadow:none}}
 .dpFlash{animation:dpPisca 2.4s ease-out 1}
@@ -815,7 +855,7 @@ html[data-tema="escuro"] .dpAvisos .ag{background:#201c12}
     <div class="btnrow">
       <button class="btn btn-primary" id="lgEntrar" style="flex:1">Entrar</button>
     </div>
-    <div id="lgErro" class="hidden" style="margin-top:12px;padding:10px 13px;border-radius:8px;background:#fdeaea;color:var(--red);font-size:13px;font-weight:700"></div>
+    <div id="lgErro" class="hidden" style="margin-top:12px;padding:10px 13px;border-radius:8px;background:var(--tint-red);color:var(--red);font-size:13px;font-weight:700"></div>
     <div id="lgVersao" style="margin-top:16px;text-align:center;font-size:11px;color:var(--muted);
       letter-spacing:.5px;font-weight:700"></div>
     <div class="hint" style="margin-top:10px">Primeiro acesso: o PIN e <b>1234</b>. Troque na aba
@@ -830,7 +870,7 @@ html[data-tema="escuro"] .dpAvisos .ag{background:#201c12}
 <section id="viewSetup">
 
   <!-- faixa de reunião interrompida -->
-  <div id="banRetomar" class="hidden" style="background:#FFF3CD;border:1.5px solid #f0d48a;border-left:5px solid var(--yellow);border-radius:12px;padding:14px 16px;margin:16px 0">
+  <div id="banRetomar" class="hidden" style="background:var(--tint-warn);border:1.5px solid #f0d48a;border-left:5px solid var(--yellow);border-radius:12px;padding:14px 16px;margin:16px 0">
     <div style="font-weight:bold;color:#8a6100;font-size:14px"><svg class="ic" aria-hidden="true"><use href="#i-pause"/></svg> Você tem uma reunião interrompida</div>
     <div id="banRetomarInfo" style="font-size:13px;color:#8a6100;margin:4px 0 10px"></div>
     <button class="btn btn-primary btn-sm" id="btnRetomar">Retomar de onde parei</button>
@@ -847,14 +887,15 @@ html[data-tema="escuro"] .dpAvisos .ag{background:#201c12}
       <button class="tab" id="tabRotina"><svg class="ic" aria-hidden="true"><use href="#i-car"/></svg> Rotina</button>
       <button class="tab" id="tabAgora"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg> Reunião</button>
       <button class="tab" id="tabDespesas"><svg class="ic" aria-hidden="true"><use href="#i-wallet"/></svg> Despesas</button>
-      <button class="tab" id="tabHistorico"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg> Histórico</button>
+      <button class="tab" id="tabHistorico" style="display:none"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg> Histórico</button>
+     <button class="tab" id="tabPainel" style="display:none;box-shadow:inset 0 -3px 0 #FFD100;font-weight:700"><svg class="ic" aria-hidden="true"><use href="#i-chart"/></svg> Painel</button>
     </div>
 
     <div id="viewDespesas" class="hidden">
       <h1>Despesas</h1>
       <p class="sub">Lance a despesa com a foto do comprovante. O relatório abaixo se atualiza no mesmo instante.</p>
 
-      <div class="card" style="margin:0 0 16px;background:#f8faff">
+      <div class="card" style="margin:0 0 16px;background:var(--surface-2)">
         <h3 style="margin-top:0">Novo lançamento</h3>
         <div class="grid3">
           <div><label>Data</label><input type="date" id="dpData"></div>
@@ -1138,7 +1179,7 @@ html[data-tema="escuro"] .dpAvisos .ag{background:#201c12}
 
       <details class="gaveta" id="ctPlanilha">
         <summary><svg class="ic" aria-hidden="true"><use href="#i-clipboard"/></svg> <span>Manter pela planilha</span> <span class="gvc">sem passar pelo app</span></summary>
-        <div class="dcorpo" style="border:none;background:#fff;border-radius:0">
+        <div class="dcorpo" style="border:none;background:var(--surface);border-radius:0">
           A agenda é a aba <b>CONTATOS</b> da sua planilha. Dá para colar linhas direto lá, de qualquer
           planilha que você já tenha, e o app enxerga na hora seguinte.<br><br>
           A ordem das colunas é: <b>Carimbo · Nome · Telefone · E-mail · Cargo · Loja/Empresa · Observação ·
@@ -1819,7 +1860,7 @@ html[data-tema="escuro"] .dpAvisos .ag{background:#201c12}
   <div class="mbox">
     <h2>Corrigir despesa</h2>
     <p class="sub" id="dpeSub"></p>
-    <div id="dpeAviso" class="hidden" style="background:#FFF7E0;border:1px solid #f0d48a;border-radius:10px;
+    <div id="dpeAviso" class="hidden" style="background:var(--tint-warn-soft);border:1px solid #f0d48a;border-radius:10px;
       padding:11px 14px;font-size:13px;color:#8a6100;margin-bottom:14px">
       Esta despesa já estava <b>aprovada</b>. Mudando o valor, a aprovação cai e ela volta para a fila —
       aprovar um valor e ficar com outro seria assinar em branco.
@@ -1848,7 +1889,7 @@ html[data-tema="escuro"] .dpAvisos .ag{background:#201c12}
   <div class="mbox">
     <h2>Minha conta</h2>
     <p class="sub" id="cnQuem"></p>
-    <div id="cnAviso" class="hidden" style="background:#FFF7E0;border:1px solid #f0d48a;border-radius:10px;
+    <div id="cnAviso" class="hidden" style="background:var(--tint-warn-soft);border:1px solid #f0d48a;border-radius:10px;
       padding:11px 14px;font-size:13px;color:#8a6100;margin-bottom:14px">
       <b>Seu PIN ainda é 1234.</b> Enquanto for, qualquer um da equipe entra no seu nome.
     </div>
@@ -1934,7 +1975,7 @@ html[data-tema="escuro"] .dpAvisos .ag{background:#201c12}
   <button data-nav="rotina"><span class="bi"><svg class="ic" aria-hidden="true"><use href="#i-car"/></svg></span>Rotina</button>
   <button data-nav="agora"><span class="bi"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg></span>Reunião</button>
   <button data-nav="despesas"><span class="bi"><svg class="ic" aria-hidden="true"><use href="#i-wallet"/></svg></span>Despesas</button>
-  <button data-nav="historico"><span class="bi"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg></span>Histórico</button>
+  <button data-nav="historico" style="display:none"><span class="bi"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg></span>Histórico</button><button data-nav="painel" id="bnavPainel" style="display:none"><span class="bi"><svg class="ic" aria-hidden="true"><use href="#i-chart"></use></svg></span>Painel</button>
 </nav>
 
 <!-- avançar/voltar fixos durante a reunião (só no celular) -->
@@ -1967,18 +2008,21 @@ var ENVIO_URL = 'https://script.google.com/macros/s/AKfycbxC916U8rNw_-HFTW7vtFZz
    ========================================================================== */
 var EQUIPE = {
   'Bruno': { papel:'Coordenador', lojas:[
-    '02 - Mais Tintas', '04 - Petrópolis 2', '06 - Itaipava', '07 - Matriz',
-    '08 - Friburgo', '09 - Magé', '10 - Petrópolis 1', '12 - Piabetá',
-    '13 - Saracuruna', '15 - Três Rios', '17 - Santa Cruz', '22 - Dep Alto',
-    '23 - Dep Várzea', '28 - Angra', '38 - Itaguaí'
-  ]},
-  'Ramon': { papel:'Supervisor', lojas:[
-    '19 - Nilópolis', '25 - Belford Roxo', '21 - Queimados', '18 - Nova Iguaçu 1',
-    '24 - Nova Iguaçu 2', '36 - São João', '26 - São Cristóvão', '35 - Taquara'
+    '10 - Petrópolis 1', '04 - Petrópolis 2', '06 - Itaipava', '07 - Matriz',
+    '02 - Mais Tintas', '22 - Dep Alto', '23 - Dep Várzea', '09 - Magé',
+    '12 - Piabetá', '17 - Santa Cruz', '13 - Saracuruna'
   ]},
   'Danilo': { papel:'Supervisor', lojas:[
-    '16 - Maricá', '27 - Araruama', '29 - Itaipu', '30 - Barão',
-    '32 - Paraíso', '33 - Macaé 2', '34 - Cabo Frio', '37 - Macaé 3'
+    '33 - Macaé 2', '34 - Cabo Frio', '27 - Araruama', '29 - Itaipu',
+    '16 - Maricá', '32 - Paraíso', '30 - Barão', '28 - Angra', '38 - Itaguaí',
+    '37 - Macaé 3'
+  ]},
+  'Ramon': { papel:'Supervisor', lojas:[
+    '26 - São Cristóvão', '35 - Taquara', '36 - São João', '18 - Nova Iguaçu 1',
+    '24 - Nova Iguaçu 2', '25 - Belford Roxo', '19 - Nilópolis', '21 - Queimados'
+  ]},
+  'Carlos Eduardo': { papel:'Supervisor', lojas:[
+    '15 - Três Rios', '08 - Friburgo'
   ]},
   /* Amanda não tem carteira de lojas: a rotina dela é de tarefas, não de visitas.
      Se precisar ir a uma loja, o campo aceita qualquer uma da rede. */
@@ -2717,6 +2761,47 @@ function renderHoje(){
   $('proximas').innerHTML=h; $('proximas').classList.remove('hidden');
   ligarBotoesAgenda();
 }
+
+/* Resumo dos compromissos do dia — mostrado na barra da tela inicial. */
+function resumoHoje(){
+  var box=document.getElementById('iniHoje'); if(!box) return;
+  var hoje=hojeISO();
+  function pinta(itens){
+    itens=itens.filter(function(a){return a.data===hoje;});
+    itens.sort(function(a,b){ return ((a.hora||'99:99')+'') < ((b.hora||'99:99')+'') ? -1 : 1; });
+    var h;
+    if(!itens.length){
+      h='<div class="ih-h">📅 Agenda de hoje</div><div class="ih-empty">Nada marcado para hoje — bom momento para adiantar a rotina.</div>';
+    } else {
+      var top=itens.slice(0,4);
+      h='<div class="ih-h">📅 Compromissos de hoje<span class="ih-n">'+itens.length+'</span></div><div class="ih-list">';
+      top.forEach(function(a){
+        h+='<div class="ih-item ih-'+a.k+'"><span class="ih-hora">'+(a.hora||'—')+'</span><span class="ih-dot"></span>'+
+           '<span class="ih-t">'+esc(a.titulo||'')+(a.sub?' <span class="ih-sub">· '+esc(a.sub)+'</span>':'')+'</span></div>';
+      });
+      h+='</div>';
+      if(itens.length>top.length) h+='<div class="ih-mais">+'+(itens.length-top.length)+' na agenda · toque para abrir</div>';
+      else h+='<div class="ih-mais">Toque para abrir a agenda</div>';
+    }
+    box.innerHTML=h; box.classList.add('show');
+  }
+  if(typeof ENVIO_URL==='undefined' || !ENVIO_URL || typeof SESSAO==='undefined' || !SESSAO){ box.classList.remove('show'); return; }
+  box.innerHTML='<div class="ih-h">📅 Agenda de hoje</div><div class="ih-empty">Carregando…</div>'; box.classList.add('show');
+  var sup=(!ehGestor()&&!ehGerente()&&souQuem())?'&supervisor='+encodeURIComponent(souQuem()):'';
+  var ps=[
+    fetch(ENVIO_URL+'?acao=visitas&de='+hoje+'&ate='+hoje+sup+paramEscopo()+souEu()).then(function(r){return r.json();}).catch(function(){return null;}),
+    fetch(ENVIO_URL+'?acao=agendamentos&de='+hoje+'&ate='+hoje+souEu()+(travaEscopo()?'&quem='+encodeURIComponent(travaEscopo()):'')).then(function(r){return r.json();}).catch(function(){return null;}),
+    (ehCoordenador()?fetch(ENVIO_URL+'?acao=calendario&de='+hoje+'&ate='+hoje).then(function(r){return r.json();}).catch(function(){return null;}):Promise.resolve(null))
+  ];
+  Promise.all(ps).then(function(res){
+    var itens=[];
+    ((res[1]&&res[1].ok)?(res[1].itens||[]):[]).forEach(function(a){ itens.push({k:'reuniao',data:a.data,hora:a.hora||'',titulo:a.titulo,sub:a.modelo||''}); });
+    ((res[0]&&res[0].itens)||[]).forEach(function(v){ var t=(typeof ehTarefa==='function')&&ehTarefa(v); itens.push({k:t?'tarefa':'visita',data:v.data,hora:v.hora||'',titulo:(v.loja||(t?'Tarefa':'Visita')),sub:(v.supervisor||'')}); });
+    ((res[2]&&res[2].itens)||[]).forEach(function(e){ itens.push({k:'google',data:e.data,hora:e.hora||'',titulo:e.titulo||'(sem título)',sub:e.local||''}); });
+    pinta(itens);
+  }).catch(function(){ box.classList.remove('show'); });
+}
+window.resumoHoje=resumoHoje;
 
 /* Aba Agenda: TUDO o que está marcado — reuniões, visitas e tarefas — num só lugar,
    agrupado por dia. É a visão que responde "o que a equipe tem pela frente". */
@@ -3770,9 +3855,9 @@ function cobertura(){
       /* loja coberta por outra pessoa continua coberta — mas você precisa saber
          que não foi o dono da carteira que foi lá */
       var outro = ok && visitadas[k] && !mesmaPessoa(visitadas[k], s);
-      var estilo = !ok ? 'background:#f1f3f8;color:var(--muted)'
+      var estilo = !ok ? 'background:var(--surface-2);color:var(--muted)'
                  : outro ? 'background:var(--navy-10);color:var(--navy);font-weight:bold'
-                 : 'background:#e3f6ec;color:var(--ok);font-weight:bold';
+                 : 'background:var(--tint-ok);color:var(--ok);font-weight:bold';
       h+='<span style="font-size:12px;padding:4px 9px;border-radius:20px;'+estilo+'"'+
          (outro?' title="Visitada por '+esc(visitadas[k])+'"':'')+'>'+
          (ok?'✓ ':'')+esc(l)+(outro?' <span style="font-weight:normal">· '+esc(chavePessoa(visitadas[k]))+'</span>':'')+'</span>';
@@ -5276,7 +5361,7 @@ function payloadGoogle(){
   var css='body{font-family:Arial,sans-serif;color:#16233d;line-height:1.6}'+
     'h4{color:#1C3F8F;font-size:14px;border-left:4px solid #D32027;padding-left:8px;text-transform:uppercase}'+
     'table{width:100%;border-collapse:collapse;font-size:13px}th{background:#1C3F8F;color:#fff;padding:7px;text-align:left}'+
-    'td{border:1px solid #dde3ef;padding:7px}.objfinal{background:#FFF3CD;border-left:4px solid #FFD100;padding:10px}'+
+    'td{border:1px solid #dde3ef;padding:7px}.objfinal{background:var(--tint-warn);border-left:4px solid #FFD100;padding:10px}'+
     '.ahead{text-align:center;border-bottom:3px solid #1C3F8F;padding-bottom:10px}.ahead .t{font-size:18px;font-weight:bold;color:#1C3F8F}'+
     '.meta{font-size:13px}.foot{margin-top:24px;border-top:1px solid #dde3ef;padding-top:10px;text-align:center;font-size:11px;color:#6b7690}';
   return {
@@ -5374,7 +5459,7 @@ function mostrarResumo(txt){
   if($('ataResumo')){ $('ataResumo').innerText=txt; return; }
   var bloco=document.createElement('div');
   bloco.innerHTML='<h4>Resumo da reunião</h4>'+
-    '<div id="ataResumo" contenteditable style="background:#f8faff;border-left:4px solid var(--navy);'+
+    '<div id="ataResumo" contenteditable style="background:var(--surface-2);border-left:4px solid var(--navy);'+
     'padding:12px 14px;border-radius:0 8px 8px 0;font-size:14.5px;white-space:pre-wrap">'+esc(txt)+'</div>';
   var alvo=$('ataBox').querySelector('h4');
   if(alvo) $('ataBox').insertBefore(bloco, alvo); else $('ataBox').appendChild(bloco);
@@ -5491,7 +5576,7 @@ function renderPedidos(){
        /* v41: a visita não fecha o dia, mas aparece aqui. Aceitar sem saber que
           tem estrada naquele dia é o que gera o desmarque de véspera. */
        ((p.rota && p.rota.length)
-         ? '<div style="margin-top:6px;background:#fff7e6;border-left:3px solid var(--warn);'+
+         ? '<div style="margin-top:6px;background:var(--tint-warn-soft);border-left:3px solid var(--warn);'+
            'border-radius:6px;padding:6px 8px;color:#8a5a00;font-size:12.5px">'+ICO('car')+
            ' <b>Nesse dia você tem visita:</b> '+
            p.rota.map(function(v){ return esc((v.hora?v.hora+' ':'')+v.loja); }).join(' · ')+
@@ -6646,7 +6731,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v50.1';
+var VERSAO_APP='v59';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
@@ -6828,6 +6913,8 @@ function abrirApp(sessao){
     setTimeout(function(){ toast('Seu PIN ainda é 1234 — toque no seu nome, no topo, para trocar.'); }, 1500);
   }
   carregarEquipe();
+  /* a tela inicial (cards) é a primeira coisa após o login */
+  try{ if(window.abrirInicio) window.abrirInicio(); }catch(e){}
 }
 
 /* Aplica a regra que você escolheu: cada um vê o seu; o coordenador vê tudo. */
@@ -7551,7 +7638,7 @@ $('dpLer').onclick=function(){
     .then(function(res){
       $('dpLer').disabled=false;
       if(!res || !res.ok){
-        $('dpLeitura').innerHTML='<div class="leitura" style="border-color:#f3c2c4;background:#fffafa">'+
+        $('dpLeitura').innerHTML='<div class="leitura" style="border-color:#f3c2c4;background:var(--tint-red-soft)">'+
           '<div class="lh" style="color:var(--red)">Não consegui ler</div><div class="lg">'+
           esc((res&&res.erro)||'erro desconhecido')+
           (res&&res.semChave ? '<br><br>Para ligar a leitura: <b>aistudio.google.com → Get API key</b>, '+
@@ -7563,7 +7650,7 @@ $('dpLer').onclick=function(){
     })
     .catch(function(){
       $('dpLer').disabled=false;
-      $('dpLeitura').innerHTML='<div class="leitura" style="border-color:#f3c2c4;background:#fffafa">'+
+      $('dpLeitura').innerHTML='<div class="leitura" style="border-color:#f3c2c4;background:var(--tint-red-soft)">'+
         '<div class="lh" style="color:var(--red)">Sem conexão</div>'+
         '<div class="lg">Preencha na mão; o anexo continua aqui.</div></div>';
     });
@@ -7795,7 +7882,7 @@ $('dpFiltro').onchange=carregarDespesas;
 $('dpPor').onchange=carregarDespesas;
 $('dpIncluir').onchange=carregarDespesas;
 function dpPor(){ var e=$('dpPor'); var v=e?e.value:''; return (v==='lancamento'||v==='aprovacao') ? v : ''; }
-/* v50: o rótulo da régua, para a tela e o WhatsApp dizerem a mesma coisa */
+/* v58: o rótulo da régua, para a tela e o WhatsApp dizerem a mesma coisa */
 function rotuloPor(por){ return por==='lancamento' ? ' (pela data de lançamento)' : por==='aprovacao' ? ' (pela data de aprovação)' : ''; }
 function dpIncluir(){ var e=$('dpIncluir'); var v=e?e.value:''; return (v==='aprovadas'||v==='aberto'||v==='acertadas')?v:''; }
 function rotuloIncluir(v){ return {aprovadas:'só aprovadas em aberto', aberto:'tudo em aberto', acertadas:'só as já acertadas'}[v]||''; }
@@ -8831,5 +8918,353 @@ var LS_ABA='sotintas_aba_v1';
 })();
 syncNav();
 </script>
+<!-- ===== PAINEL DE COORDENACAO (aba embutida) ===== -->
+<div id="ovPainel" style="position:fixed;inset:0;z-index:99999;background:#0F2B46;display:none;flex-direction:column">
+ <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;color:#fff;font:600 14px system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
+  <button id="ovFechar" style="border:0;border-radius:8px;padding:9px 13px;background:#FFD100;color:#0F2B46;font:inherit;cursor:pointer">&larr; Voltar ao início</button>
+  <span style="opacity:.85">Painel de Coordenacao</span>
+ </div>
+ <iframe id="ifrPainel" title="Painel de Coordenacao" style="flex:1;width:100%;border:0;background:#EEF1F5"></iframe>
+</div>
+<script>
+(function(){
+ var b=document.getElementById('tabPainel'), ov=document.getElementById('ovPainel'),
+     f=document.getElementById('ifrPainel'), x=document.getElementById('ovFechar');
+ if(!b||!ov||!f||!x) return;
+ function sessao(){ try{ return JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); }catch(e){ return null; } }
+ function nomeDaSessao(){ var s=sessao(); return (s&&s.nome)?s.nome:''; }
+ /* so Coordenador e Supervisor enxergam a aba */
+ function podeVerPainel(){ var s=sessao(); if(!s) return false;
+  var p=((s&&s.papel)||'').trim().toLowerCase();
+  if(!p) return true;                      /* sessao antiga sem papel: mostra e deixa o servidor decidir */
+  return p.indexOf('coorden')>=0 || p.indexOf('supervis')>=0; }
+ /* Painel saiu da barra de abas — acesso passa a ser só pela tela inicial (cards).
+    Mantemos a aba oculta como gatilho do overlay (a tela inicial a aciona por .click()). */
+ function sincronizarAba(){ var ver=podeVerPainel(); b.style.display='none'; if(!ver){ ov.style.display='none'; document.body.style.overflow=''; } }
+ var b2=document.getElementById("bnavPainel");
+ if(b2){ b2.addEventListener("click", function(ev){ ev.preventDefault(); ev.stopPropagation(); b.click(); }, true); b2.style.display='none'; }
+ function sincronizarTudo(){ sincronizarAba(); if(b2){ b2.style.display='none'; } }
+ sincronizarTudo(); setInterval(sincronizarTudo, 1500);
+ /* na primeira vez, rola a barra ate a aba nova para ela ser vista */
+ try{ if(!localStorage.getItem('painel_visto_v1')){ var t0=setInterval(function(){ if(b.offsetParent){ var bar=b.parentElement; if(bar&&bar.scrollWidth>bar.clientWidth){ bar.scrollTo({left:bar.scrollWidth,behavior:'smooth'}); } localStorage.setItem('painel_visto_v1','1'); clearInterval(t0); } },1000); setTimeout(function(){clearInterval(t0)},15000); } }catch(e){}
+ b.addEventListener('click', function(ev){
+  ev.preventDefault(); ev.stopPropagation();
+  var u=nomeDaSessao();
+  var tema=(window.STtema?window.STtema.get():'light');
+  if(f.getAttribute('data-u')!==u || f.getAttribute('data-tema')!==tema || !f.getAttribute('src')){
+   f.setAttribute('src','painel.html?tema='+tema+(u?('&u='+encodeURIComponent(u)):''));
+   f.setAttribute('data-u',u); f.setAttribute('data-tema',tema);
+  }
+  ov.style.display='flex'; document.body.style.overflow='hidden';
+ }, true);
+ x.addEventListener('click', function(){ ov.style.display='none'; document.body.style.overflow=''; try{ if(window.abrirInicio) window.abrirInicio(); }catch(e){} });
+ document.addEventListener('keydown', function(e){ if(e.key==='Escape' && ov.style.display!=='none') x.click(); });
+})();
+</script>
+
+<!-- ===== AUTO-ATUALIZACAO DO APP ===== -->
+<script>
+(function(){
+ try{
+  if(!("serviceWorker" in navigator)) return;
+  var recarregou=false;
+  navigator.serviceWorker.addEventListener("controllerchange", function(){
+   if(recarregou) return; recarregou=true; location.reload();
+  });
+  function checar(){ navigator.serviceWorker.getRegistration().then(function(r){ if(r) r.update(); }).catch(function(){}); }
+  setTimeout(checar, 1500);
+  document.addEventListener("visibilitychange", function(){ if(!document.hidden) checar(); });
+ }catch(e){}
+})();
+</script>
+
+<!-- ===== BARRA DE ABAS EM TELA ESTREITA ===== -->
+<style>
+@media (max-width:820px){
+  .tabs{flex-wrap:wrap !important; overflow-x:visible !important; row-gap:4px}
+  .tabs .tab{flex:1 1 auto}
+}
+</style>
+<!-- ===== NIVEIS (aba embutida, espelha o Painel) ===== -->
+<div id="ovNiveis" style="position:fixed;inset:0;z-index:99999;background:#0f1522;display:none;flex-direction:column">
+ <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;color:#fff;font:600 14px system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
+  <button id="ovNivFechar" style="border:0;border-radius:8px;padding:9px 13px;background:#FFD100;color:#0F2B46;font:inherit;cursor:pointer">&larr; Voltar ao início</button>
+  <span style="opacity:.85">Niveis de Lojas e Vendedores</span>
+ </div>
+ <iframe id="ifrNiveis" title="Niveis de Lojas e Vendedores" style="flex:1;width:100%;border:0;background:#0f1522"></iframe>
+</div>
+
+<div id="ovRanking" style="position:fixed;inset:0;z-index:99999;background:#0f1522;display:none;flex-direction:column">
+ <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;color:#fff;font:600 14px system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
+  <button id="ovRkFechar" style="border:0;border-radius:8px;padding:9px 13px;background:#FFD100;color:#0F2B46;font:inherit;cursor:pointer">&larr; Voltar ao início</button>
+  <span style="opacity:.85">Ranking · Premiação 2026</span>
+ </div>
+ <iframe id="ifrRanking" title="Ranking Só Tintas 2026" style="flex:1;width:100%;border:0;background:#0f1522"></iframe>
+</div>
+
+<!-- ===== TELA INICIAL (LAUNCHER DE CARDS) ===== -->
+<div id="ovInicio" aria-hidden="true">
+  <div class="ini-top">
+    <div class="ini-brand">
+      <div class="ini-logo">ST</div>
+      <div class="ini-tt">
+        <div class="ini-h" id="iniSaud">Olá 👋</div>
+        <div class="ini-s" id="iniData">Assistente ST · Só Tintas</div>
+      </div>
+    </div>
+    <button type="button" id="btnTemaApp" class="ini-theme" aria-label="Alternar tema claro/escuro"><span id="temaAppIc">🌙</span> <span id="temaAppTx">Escuro</span></button>
+  </div>
+  <div class="ini-body" id="iniBody">
+    <div id="iniHoje" class="ini-hoje" role="button" tabindex="0" aria-label="Compromissos de hoje"></div>
+    <div class="ini-sec">Gestão</div>
+    <div class="ini-feat">
+      <button type="button" class="ini-card feat" data-act="painel" data-gate="1">
+        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-chart"/></svg></span>
+        <span class="ini-txt"><span class="ini-nm">Painel de Metas e Indicadores</span><span class="ini-ds">Painel de Supervisão</span></span>
+        <span class="ini-go" aria-hidden="true">&rarr;</span>
+      </button>
+      <button type="button" class="ini-card feat" data-act="niveis" data-gate="1">
+        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-target"/></svg></span>
+        <span class="ini-txt"><span class="ini-nm">Níveis</span><span class="ini-ds">Lojas, vendedores e prazos</span></span>
+        <span class="ini-go" aria-hidden="true">&rarr;</span>
+      </button>
+    </div>
+    <div class="ini-sec">Operação</div>
+    <div class="ini-grid">
+      <button type="button" class="ini-card" data-act="agenda" data-ac="azul">
+        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-calendar-days"/></svg></span>
+        <span class="ini-nm">Agenda</span>
+        <span class="ini-ds">Seus compromissos</span>
+      </button>
+      <button type="button" class="ini-card" data-act="agendar" data-ac="verde">
+        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg></span>
+        <span class="ini-nm">Agendar</span>
+        <span class="ini-ds">Reunião, visita, tarefa</span>
+      </button>
+      <button type="button" class="ini-card" data-act="agora" data-ac="vermelho">
+        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg></span>
+        <span class="ini-nm">Reunião</span>
+        <span class="ini-ds">Conduzir e gerar a ata</span>
+      </button>
+      <button type="button" class="ini-card" data-act="rotina" data-ac="ambar">
+        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-car"/></svg></span>
+        <span class="ini-nm">Rotina</span>
+        <span class="ini-ds">Pendências e equipe</span>
+      </button>
+      <button type="button" class="ini-card" data-act="despesas" data-ac="roxo">
+        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-wallet"/></svg></span>
+        <span class="ini-nm">Despesas</span>
+        <span class="ini-ds">Lançar e exportar</span>
+      </button>
+      <button type="button" class="ini-card" data-act="ranking" data-ac="ambar">
+        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-chart"/></svg></span>
+        <span class="ini-nm">Ranking</span>
+        <span class="ini-ds">Premiação · lojas e vendedores</span>
+      </button>
+    </div>
+  </div>
+  <div class="ini-foot">Só Tintas · Colorindo Vidas e Realizando Sonhos</div>
+</div>
+
+<style>
+#ovInicio{position:fixed;inset:0;z-index:99998;background:var(--bg,#f5f7fb);display:none;
+  flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#ovInicio.aberto{display:flex}
+/* --- hero --- */
+#ovInicio .ini-top{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:18px 18px;background:linear-gradient(135deg,var(--navy,#1C3F8F),var(--navy-d,#152F69));color:#fff;
+  box-shadow:0 6px 22px rgba(20,35,70,.22)}
+#ovInicio .ini-brand{display:flex;align-items:center;gap:12px;min-width:0}
+#ovInicio .ini-logo{flex:0 0 auto;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;
+  background:var(--red,#D32027);color:#fff;font-weight:800;font-size:15px;letter-spacing:-.5px;box-shadow:0 3px 10px rgba(211,32,39,.45)}
+#ovInicio .ini-h{font-size:19px;font-weight:800;line-height:1.1}
+#ovInicio .ini-s{font-size:12.5px;opacity:.82;margin-top:2px;font-weight:600}
+#ovInicio .ini-theme{flex:0 0 auto;border:0;background:rgba(255,255,255,.14);color:#fff;font:700 13px inherit;
+  padding:9px 14px;border-radius:999px;cursor:pointer;white-space:nowrap}
+#ovInicio .ini-theme:hover{background:rgba(255,255,255,.24)}
+/* --- corpo --- */
+#ovInicio .ini-body{max-width:960px;margin:0 auto;width:100%;padding:16px 16px 4px}
+#ovInicio .ini-sec{font-size:11px;font-weight:800;letter-spacing:.9px;text-transform:uppercase;color:var(--muted,#67728c);margin:16px 4px 10px}
+#ovInicio .ini-sec:first-child{margin-top:4px}
+/* destaques */
+#ovInicio .ini-feat{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:620px){#ovInicio .ini-feat{grid-template-columns:1fr 1fr}}
+#ovInicio .ini-card.feat{display:flex;flex-direction:row;align-items:center;gap:14px;text-align:left;
+  background:linear-gradient(135deg,var(--navy,#1C3F8F),var(--navy-d,#152F69));border:0;border-radius:18px;padding:17px 18px;
+  cursor:pointer;color:#fff;box-shadow:0 8px 26px rgba(20,35,70,.20);overflow:hidden;position:relative;
+  transition:transform .1s,box-shadow .15s}
+#ovInicio .ini-card.feat::after{content:'';position:absolute;right:-32px;top:-32px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.06)}
+#ovInicio .ini-card.feat:hover{transform:translateY(-3px);box-shadow:0 14px 34px rgba(20,35,70,.30)}
+#ovInicio .ini-card.feat:active{transform:translateY(0)}
+#ovInicio .ini-card.feat .ini-ic{flex:0 0 auto;width:52px;height:52px;border-radius:14px;display:grid;place-items:center;background:rgba(255,255,255,.16);color:#FFD100;position:relative;z-index:1}
+#ovInicio .ini-card.feat .ini-ic .ic{width:27px;height:27px}
+#ovInicio .ini-card.feat .ini-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;position:relative;z-index:1}
+#ovInicio .ini-card.feat .ini-nm{font-size:16px;font-weight:800;line-height:1.15;color:#fff}
+#ovInicio .ini-card.feat .ini-ds{font-size:12.5px;color:rgba(255,255,255,.82);font-weight:600;line-height:1.3}
+#ovInicio .ini-card.feat .ini-go{flex:0 0 auto;font-size:20px;font-weight:800;color:#FFD100;opacity:.9;position:relative;z-index:1;transition:transform .15s}
+#ovInicio .ini-card.feat:hover .ini-go{transform:translateX(3px)}
+/* operação */
+#ovInicio .ini-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media(min-width:620px){#ovInicio .ini-grid{grid-template-columns:repeat(3,1fr)}}
+#ovInicio .ini-grid .ini-card{display:flex;flex-direction:column;align-items:flex-start;gap:9px;text-align:left;
+  background:var(--surface);border:1px solid var(--line,#e4e9f3);border-radius:16px;padding:15px 14px;cursor:pointer;
+  box-shadow:0 1px 2px rgba(20,35,70,.05);transition:transform .08s,box-shadow .14s,border-color .14s}
+#ovInicio .ini-grid .ini-card:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(20,35,70,.14);border-color:var(--navy-20,#c9d6f0)}
+#ovInicio .ini-grid .ini-card:active{transform:translateY(0)}
+#ovInicio .ini-grid .ini-ic{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:var(--navy-10,#e6ecf9);color:var(--navy,#1C3F8F)}
+#ovInicio .ini-grid .ini-ic .ic{width:23px;height:23px}
+#ovInicio .ini-grid .ini-nm{font-size:14.5px;font-weight:800;color:var(--ink,#16233d);line-height:1.15}
+#ovInicio .ini-grid .ini-ds{font-size:11.5px;color:var(--muted,#67728c);font-weight:600;line-height:1.3}
+/* acentos por card (claro) */
+#ovInicio .ini-card[data-ac=azul] .ini-ic{background:#e7efff;color:#2660d6}
+#ovInicio .ini-card[data-ac=verde] .ini-ic{background:#e3f6ec;color:#128a52}
+#ovInicio .ini-card[data-ac=vermelho] .ini-ic{background:#fdeaea;color:#D32027}
+#ovInicio .ini-card[data-ac=ambar] .ini-ic{background:#fff3d6;color:#b7791f}
+#ovInicio .ini-card[data-ac=roxo] .ini-ic{background:#efe7fb;color:#7a46c9}
+#ovInicio .ini-card[data-ac=cinza] .ini-ic{background:#eef1f6;color:#5a677f}
+/* acentos no escuro */
+html[data-theme="dark"] #ovInicio .ini-card[data-ac=azul] .ini-ic{background:#182a46;color:#6ea0ff}
+html[data-theme="dark"] #ovInicio .ini-card[data-ac=verde] .ini-ic{background:#133026;color:#4cc98a}
+html[data-theme="dark"] #ovInicio .ini-card[data-ac=vermelho] .ini-ic{background:#35191c;color:#ff7b7f}
+html[data-theme="dark"] #ovInicio .ini-card[data-ac=ambar] .ini-ic{background:#2e2410;color:#e6b24a}
+html[data-theme="dark"] #ovInicio .ini-card[data-ac=roxo] .ini-ic{background:#241a36;color:#b596ef}
+html[data-theme="dark"] #ovInicio .ini-card[data-ac=cinza] .ini-ic{background:#1f2636;color:#9aa5bb}
+/* resumo de compromissos do dia */
+#ovInicio .ini-hoje{display:none;background:var(--surface);border:1px solid var(--line,#e4e9f3);
+  border-left:5px solid var(--yellow,#FFD100);border-radius:16px;padding:13px 15px;margin-top:2px;cursor:pointer;
+  box-shadow:0 1px 2px rgba(20,35,70,.05);transition:box-shadow .14s,transform .08s}
+#ovInicio .ini-hoje.show{display:block}
+#ovInicio .ini-hoje:hover{box-shadow:0 8px 22px rgba(20,35,70,.12);transform:translateY(-1px)}
+#ovInicio .ih-h{font-size:12.5px;font-weight:800;color:var(--ink,#16233d);display:flex;align-items:center;gap:8px;margin-bottom:2px}
+#ovInicio .ih-h .ih-n{margin-left:auto;background:var(--navy,#1C3F8F);color:#fff;font-size:11px;font-weight:800;min-width:20px;height:20px;border-radius:999px;display:inline-grid;place-items:center;padding:0 6px}
+#ovInicio .ih-empty{color:var(--muted,#67728c);font-size:12.5px;font-weight:600;margin-top:4px}
+#ovInicio .ih-list{display:flex;flex-direction:column;gap:5px;margin-top:8px}
+#ovInicio .ih-item{display:flex;align-items:baseline;gap:9px;font-size:12.5px;line-height:1.3}
+#ovInicio .ih-hora{flex:0 0 auto;font-weight:800;color:var(--navy,#1C3F8F);font-variant-numeric:tabular-nums;min-width:40px}
+#ovInicio .ih-dot{flex:0 0 auto;width:7px;height:7px;border-radius:50%;background:var(--muted,#67728c);align-self:center}
+#ovInicio .ih-item.ih-reuniao .ih-dot{background:var(--navy,#1C3F8F)}
+#ovInicio .ih-item.ih-visita .ih-dot{background:#128a52}
+#ovInicio .ih-item.ih-tarefa .ih-dot{background:#b7791f}
+#ovInicio .ih-item.ih-google .ih-dot{background:#7a46c9}
+#ovInicio .ih-t{flex:1;min-width:0;color:var(--ink,#16233d);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#ovInicio .ih-t .ih-sub{color:var(--muted,#67728c);font-weight:600}
+#ovInicio .ih-mais{margin-top:8px;font-size:11.5px;font-weight:800;color:var(--navy,#1C3F8F)}
+html[data-theme="dark"] #ovInicio .ini-hoje{border-left-color:var(--yellow,#FFD100)}
+#ovInicio .ini-foot{text-align:center;color:var(--muted,#67728c);font-size:11px;font-weight:700;
+  letter-spacing:.3px;padding:14px 16px 26px}
+#btnInicio{display:none}
+body:not(.travado) #btnInicio{display:inline-flex}
+/* modo foco: aberto por um card da tela inicial — mostra só aquela operação */
+body.foco .tabs{display:none!important}
+body.foco .bnav{display:none!important}
+body.foco .wrap{padding-bottom:40px}
+</style>
+
+<script>
+(function(){
+  var ov=document.getElementById('ovInicio');
+  var grid=document.getElementById('iniBody');
+  if(!ov||!grid) return;
+
+  function sessao(){ try{ return JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); }catch(e){ return null; } }
+  function logado(){ var s=sessao(); return !!(s&&s.nome) && !document.body.classList.contains('travado'); }
+  function podeVer(){ var s=sessao(); if(!s) return false; var p=((s&&s.papel)||'').trim().toLowerCase();
+    if(!p) return true; return p.indexOf('coorden')>=0 || p.indexOf('supervis')>=0; }
+
+  function aplicarGate(){
+    var ver=podeVer();
+    Array.prototype.forEach.call(grid.querySelectorAll('[data-gate]'),function(c){
+      c.style.display = ver ? '' : 'none';
+    });
+  }
+  function saudar(){
+    var s=sessao(), nome=(s&&s.nome)?String(s.nome).trim().split(' ')[0]:'';
+    var h=new Date().getHours(), cumpr=h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
+    var el=document.getElementById('iniSaud'); if(el) el.textContent=cumpr+(nome?', '+nome:'')+' 👋';
+    var d=document.getElementById('iniData');
+    if(d){ try{ var dt=new Date();
+      var dias=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+      var meses=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+      var dia=dias[dt.getDay()]; dia=dia.charAt(0).toUpperCase()+dia.slice(1);
+      d.textContent=dia+', '+dt.getDate()+' de '+meses[dt.getMonth()];
+    }catch(e){} }
+  }
+  function abrirInicio(){ aplicarGate(); saudar(); try{ if(window.resumoHoje) window.resumoHoje(); }catch(e){}
+    ov.classList.add('aberto'); ov.setAttribute('aria-hidden','false');
+    document.body.style.overflow='hidden'; window.scrollTo(0,0); }
+  (function(){ var ih=document.getElementById('iniHoje');
+    if(ih) ih.addEventListener('click', function(){ fecharInicio(); document.body.classList.add('foco'); if(typeof setModo==='function'){ setModo('agenda'); window.scrollTo(0,0); } });
+  })();
+  function fecharInicio(){ ov.classList.remove('aberto'); ov.setAttribute('aria-hidden','true');
+    document.body.style.overflow=''; }
+  window.abrirInicio=abrirInicio; window.fecharInicio=fecharInicio;
+
+  // overlay de Niveis (espelha o do Painel)
+  var ovN=document.getElementById('ovNiveis'), ifrN=document.getElementById('ifrNiveis'),
+      xN=document.getElementById('ovNivFechar');
+  function abrirNiveis(){
+    if(!ovN||!ifrN) return;
+    var s=sessao(); var u=(s&&s.nome)?s.nome:'';
+    /* sempre com versão nova no endereço: nunca serve o Níveis em cache antigo */
+    var tema=(window.STtema?window.STtema.get():'light');
+    ifrN.setAttribute('src','niveis.html?tema='+tema+'&v='+Date.now()+(u?('&u='+encodeURIComponent(u)):''));
+    ovN.style.display='flex'; document.body.style.overflow='hidden';
+  }
+  if(xN){ xN.addEventListener('click', function(){ ovN.style.display='none'; document.body.style.overflow=''; try{ if(window.abrirInicio) window.abrirInicio(); }catch(e){} }); }
+
+  // overlay de Ranking (espelha o de Níveis)
+  var ovR=document.getElementById('ovRanking'), ifrR=document.getElementById('ifrRanking'),
+      xR=document.getElementById('ovRkFechar');
+  function abrirRanking(){
+    if(!ovR||!ifrR) return;
+    var s=sessao(); var u=(s&&s.nome)?s.nome:'';
+    var tema=(window.STtema?window.STtema.get():'light');
+    ifrR.setAttribute('src','ranking.html?tema='+tema+'&v='+Date.now()+(u?('&u='+encodeURIComponent(u)):''));
+    ovR.style.display='flex'; document.body.style.overflow='hidden';
+  }
+  if(xR){ xR.addEventListener('click', function(){ ovR.style.display='none'; document.body.style.overflow=''; try{ if(window.abrirInicio) window.abrirInicio(); }catch(e){} }); }
+
+  grid.addEventListener('click', function(ev){
+    var c=ev.target && ev.target.closest ? ev.target.closest('.ini-card') : null;
+    if(!c) return;
+    var act=c.getAttribute('data-act');
+    fecharInicio();
+    if(act==='painel'){ var tp=document.getElementById('tabPainel'); if(tp) tp.click(); return; }
+    if(act==='niveis'){ abrirNiveis(); return; }
+    if(act==='ranking'){ abrirRanking(); return; }
+    /* modo foco: ao abrir uma operação pelo card, mostra só ela (esconde as abas) */
+    document.body.classList.add('foco');
+    if(typeof setModo==='function'){ setModo(act); window.scrollTo(0,0); }
+  });
+
+  var _iniFechar=document.getElementById('iniFechar'); if(_iniFechar) _iniFechar.addEventListener('click', fecharInicio);
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape' && ov.classList.contains('aberto')) fecharInicio(); });
+
+  // toggle de tema (claro/escuro) — muda App + repassa para Painel e Níveis
+  (function(){ var bt=document.getElementById('btnTemaApp');
+    if(bt && window.STtema){ window.STtema.set(window.STtema.get()); bt.addEventListener('click', function(){ window.STtema.toggle(); }); }
+  })();
+
+  // botao "Inicio" no topo, para reabrir o menu a qualquer momento
+  (function(){
+    var barra=document.querySelector('.topbar-in'); var user=document.getElementById('btnUser');
+    if(!barra||!user) return;
+    var b=document.createElement('button');
+    b.id='btnInicio'; b.className='chip-dica'; b.type='button'; b.title='Tela inicial';
+    b.innerHTML='<svg class="ic" aria-hidden="true"><use href="#i-compass"/></svg><span class="ct"> Início</span>';
+    b.addEventListener('click', abrirInicio);
+    barra.insertBefore(b, user);
+  })();
+
+  // mostrar o menu como primeira tela apos o login (uma vez por carregamento)
+  var jaMostrou=false;
+  var t=setInterval(function(){
+    if(jaMostrou) return;
+    if(logado()){ jaMostrou=true; abrirInicio(); }
+  }, 400);
+  setTimeout(function(){ clearInterval(t); }, 20000);
+})();
+</script>
+
 </body>
 </html>
