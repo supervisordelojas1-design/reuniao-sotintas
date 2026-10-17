@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Proposta Vendedor · Só Tintas</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+(function(){try{var q=new URLSearchParams(location.search);var t=q.get('tema');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t);}
+if(q.get('app')==='1'||window.self!==window.top){document.documentElement.classList.add('no-app');}
+window.addEventListener('message',function(ev){var d=ev&&ev.data;if(d&&(d.st_tema==='light'||d.st_tema==='dark'))document.documentElement.setAttribute('data-theme',d.st_tema);});}catch(e){}})();
+</script>
+<style>
+:root{
+  --navy:#1C3F8F; --navy2:#152F6B; --navy3:#0F2250;
+  --red:#D32027; --yellow:#FFD400; --green:#1DB954;
+  --cream:#F6F4EE; --ink:#0E1A33; --muted:#6B7590; --line:#E3E6EE;
+  --card:#FFFFFF;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--ink);line-height:1.45}
+h1,h2,h3,.num{font-family:'Archivo',sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+section{padding:56px 0}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--red)}
+.eyebrow::before{content:"";width:28px;height:3px;background:var(--red);border-radius:2px}
+h2{font-size:34px;font-weight:800;letter-spacing:-.5px;margin:10px 0 8px;line-height:1.1}
+.lead{color:var(--muted);font-size:16px;max-width:720px}
+
+/* HERO */
+.hero{background:radial-gradient(900px 500px at 85% -10%,rgba(255,212,0,.18),transparent 60%),radial-gradient(700px 400px at -10% 100%,rgba(211,32,39,.25),transparent 60%),linear-gradient(160deg,var(--navy) 0%,var(--navy3) 100%);color:#fff;padding:64px 0 48px;position:relative;overflow:hidden}
+.hero .brand{display:flex;align-items:center;gap:12px;font-family:'Archivo';font-weight:900;letter-spacing:2px;font-size:14px;text-transform:uppercase}
+.hero .brand .dot{width:14px;height:14px;background:var(--red);border-radius:50%;box-shadow:0 0 0 4px rgba(255,255,255,.15)}
+.hero .brand small{color:var(--yellow);font-weight:700;letter-spacing:3px}
+.hero h1{font-size:64px;line-height:1;font-weight:900;margin:28px 0 14px;letter-spacing:-1.5px}
+.hero h1 em{font-style:normal;color:var(--yellow)}
+.hero p{font-size:18px;color:rgba(255,255,255,.82);max-width:640px}
+.hero .pills{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.pill{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);border-radius:40px;padding:8px 16px;font-weight:600;font-size:14px}
+.stripes{position:absolute;right:-60px;top:0;bottom:0;width:260px;background:repeating-linear-gradient(115deg,rgba(255,255,255,.05) 0 10px,transparent 10px 34px);pointer-events:none}
+
+/* INTRO */
+.intro{background:#fff;border-bottom:1px solid var(--line)}
+.fontes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:26px}
+.fonte{display:grid;grid-template-columns:44px 1fr auto;gap:14px;align-items:center;background:var(--cream);border:1px solid var(--line);border-radius:14px;padding:12px 16px}
+.fonte.fixa{background:#EEF2FB;border-color:#C9D5F2}
+.fonte .ic{width:44px;height:44px;border-radius:12px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:22px}
+.fonte .t b{display:block;font-family:'Archivo';font-size:15px}
+.fonte .t small{display:block;font-size:12.5px;color:var(--muted);line-height:1.35;margin-top:2px}
+.fonte .v{text-align:right;font-family:'Archivo';font-weight:900;color:var(--navy);font-size:15px;white-space:nowrap}
+.fonte .v em{display:block;font:600 11px 'Inter';color:var(--red);font-style:normal;letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+.introsum{margin-top:18px;display:grid;grid-template-columns:1fr auto 1fr auto 1.2fr;gap:12px;align-items:center}
+.introsum>div{background:var(--navy);color:#fff;border-radius:14px;padding:14px 18px}
+.introsum>div span{display:block;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--yellow);font-weight:700}
+.introsum>div b{font-family:'Archivo';font-size:18px}
+.introsum .plus{background:none;color:var(--red);font-family:'Archivo';font-size:36px;font-weight:900;padding:0;text-align:center}
+.introsum .hl{background:var(--red)}.introsum .hl span{color:#fff;opacity:.85}
+@media (max-width:900px){.fontes{grid-template-columns:1fr}.introsum{grid-template-columns:1fr}.introsum .plus{display:none}}
+
+/* CONTROLS */
+.controls{position:sticky;top:0;z-index:50;background:#fff;border-bottom:3px solid var(--yellow);box-shadow:0 6px 24px rgba(14,26,51,.08)}
+.controls .wrap{display:flex;gap:22px;align-items:flex-end;flex-wrap:wrap;padding-top:14px;padding-bottom:14px}
+.ctl{display:flex;flex-direction:column;gap:6px}
+.ctl label{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.seg{display:flex;border:2px solid var(--navy);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:#fff;color:var(--navy);font-family:'Archivo';font-weight:800;font-size:14px;padding:9px 14px;cursor:pointer;transition:.15s}
+.seg button+button{border-left:2px solid var(--navy)}
+.seg button.on{background:var(--navy);color:#fff}
+.seg.red{border-color:var(--red)}.seg.red button{color:var(--red)}.seg.red button+button{border-left-color:var(--red)}.seg.red button.on{background:var(--red);color:#fff}
+.ctl input{border:2px solid var(--line);border-radius:10px;padding:9px 12px;font:600 15px 'Inter';width:170px}
+.ctl .hint{font-size:11px;color:var(--muted)}
+.total-chip{margin-left:auto;background:var(--navy);color:#fff;border-radius:14px;padding:10px 18px;display:flex;flex-direction:column;align-items:flex-end}
+.total-chip span{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--yellow);font-weight:700}
+.total-chip b{font-family:'Archivo';font-size:26px;font-weight:900;line-height:1.1}
+
+/* CARDS */
+.grid{display:grid;gap:18px}
+.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}.g2{grid-template-columns:repeat(2,1fr)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;position:relative}
+.card .k{font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.card .big{font-family:'Archivo';font-size:38px;font-weight:900;color:var(--navy);margin:6px 0 2px;letter-spacing:-.5px}
+.card .sub{color:var(--muted);font-size:14px}
+.card.sel{border:2px solid var(--red);box-shadow:0 10px 28px rgba(211,32,39,.14)}
+.card.sel::after{content:"SELECIONADO";position:absolute;top:-11px;right:16px;background:var(--red);color:#fff;font:800 10px 'Archivo';letter-spacing:2px;padding:4px 10px;border-radius:30px}
+.card.click{cursor:pointer;transition:.15s}.card.click:hover{transform:translateY(-2px)}
+.comp{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;gap:14px}
+.comp .op{font-family:'Archivo';font-size:44px;color:var(--red);font-weight:900;text-align:center}
+.comp .card{text-align:center;padding:28px 18px}
+.comp .card .ic{font-size:30px}
+.comp .card h3{font-size:20px;margin:8px 0 4px}
+.comp .card p{color:var(--muted);font-size:14px}
+
+/* LINHAS */
+.linhas{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.linha{border-radius:16px;padding:20px;color:#fff;position:relative;overflow:hidden}
+.linha .n{font-size:12px;letter-spacing:2px;text-transform:uppercase;font-weight:700;opacity:.85}
+.linha .p{font-family:'Archivo';font-size:46px;font-weight:900;line-height:1;margin:8px 0 4px}
+.linha .d{font-size:13px;opacity:.85}
+.linha.prem{background:linear-gradient(135deg,#B8151C,var(--red))}
+.linha.ferr{background:linear-gradient(135deg,#1C3F8F,#2B5BC9)}
+.linha.std{background:linear-gradient(135deg,#2F3B5C,#4A5A86)}
+.linha.eco{background:linear-gradient(135deg,#7A8399,#9AA3B8)}
+.linha .ex{margin-top:12px;border-top:1px solid rgba(255,255,255,.3);padding-top:10px;font-size:13px}
+.linha .ex b{font-family:'Archivo';font-size:16px}
+.avgbox{margin-top:18px;background:var(--navy);color:#fff;border-radius:16px;padding:20px 24px;display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center}
+.avgbox .big{font-family:'Archivo';font-size:44px;font-weight:900;color:var(--yellow);line-height:1}
+.avgbox table{width:100%;border-collapse:collapse;font-size:14px}
+.avgbox th,.avgbox td{padding:6px 10px;text-align:center;border-bottom:1px solid rgba(255,255,255,.15)}
+.avgbox th{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--yellow);font-weight:700}
+.avgbox td.num{font-weight:800;font-size:16px}
+
+/* CHART */
+.chartbox{background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px}
+.chartbox svg{width:100%;height:auto;display:block}
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:10px;font-size:13px;font-weight:600}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i{width:14px;height:14px;border-radius:4px;display:inline-block}
+.lvl-table{width:100%;border-collapse:separate;border-spacing:0;margin-top:18px;font-size:14px;background:#fff;border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+.lvl-table th{background:var(--navy);color:#fff;padding:12px 10px;font-size:11px;letter-spacing:2px;text-transform:uppercase;text-align:center}
+.lvl-table th:first-child,.lvl-table td:first-child{text-align:left;padding-left:16px}
+.lvl-table td{padding:12px 10px;text-align:center;border-bottom:1px solid var(--line)}
+.lvl-table tr.sel td{background:#FFF7CC;font-weight:700}
+.lvl-table td.num{font-family:'Archivo';font-weight:800;font-size:16px;color:var(--navy)}
+.lvl-table td.tot{color:var(--red)}
+.tag{display:inline-block;background:var(--line);border-radius:30px;padding:2px 10px;font-size:12px;font-weight:700;color:var(--muted)}
+
+/* BONUS TABLE */
+.bonus-table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border-radius:14px;overflow:hidden;border:1px solid var(--line);font-size:14px}
+.bonus-table th{background:var(--navy);color:#fff;padding:12px 10px;font-size:11px;letter-spacing:2px;text-transform:uppercase;text-align:center}
+.bonus-table td{padding:12px 10px;border-bottom:1px solid var(--line);text-align:center}
+.bonus-table td:first-child,.bonus-table th:first-child{text-align:left;padding-left:16px}
+.bonus-table td.num{font-family:'Archivo';font-weight:800;font-size:17px;color:var(--navy)}
+.bonus-table tr.sel td{background:#FFF7CC}
+.bonus-table tr.sel td.num{color:var(--red)}
+.indic{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}
+.indic .card{padding:18px 20px}
+.indic h3{font-size:16px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+.indic h3 b{font-family:'Archivo';color:var(--red);font-size:18px}
+.indic ul{list-style:none;font-size:13px;color:var(--muted)}
+.indic li{padding:3px 0;border-top:1px dashed var(--line)}
+.indic li:first-child{border-top:0}
+.indic li span{float:right;font-weight:700;color:var(--ink)}
+
+/* CENARIO */
+.cen{display:grid;grid-template-columns:1.1fr .9fr;gap:22px}
+.ledger{background:#fff;border:1px solid var(--line);border-radius:18px;padding:0;overflow:hidden}
+.ledger .row{display:flex;justify-content:space-between;align-items:center;padding:13px 22px;border-bottom:1px solid var(--line);font-size:15px}
+.ledger .row small{display:block;color:var(--muted);font-size:12px}
+.ledger .row b{font-family:'Archivo';font-size:18px;color:var(--navy)}
+.ledger .row.head{background:var(--navy);color:#fff;font-weight:800;font-family:'Archivo';letter-spacing:1px;font-size:14px;text-transform:uppercase}
+.ledger .row.total{background:#FFF7CC;border-top:2px solid var(--yellow)}
+.ledger .row.total b{font-size:28px;color:var(--red)}
+.teto{background:linear-gradient(160deg,var(--navy),var(--navy3));color:#fff;border-radius:18px;padding:26px;display:flex;flex-direction:column;gap:14px}
+.teto .k{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--yellow);font-weight:700}
+.teto .big{font-family:'Archivo';font-size:52px;font-weight:900;line-height:1;letter-spacing:-1px}
+.teto ul{list-style:none;font-size:14px}
+.teto li{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.14)}
+.teto li b{font-family:'Archivo'}
+.teto .note{font-size:12px;color:rgba(255,255,255,.7)}
+
+/* PIX */
+.pix{background:radial-gradient(800px 400px at 90% 0%,rgba(255,212,0,.16),transparent 60%),linear-gradient(160deg,var(--navy2),var(--navy3));color:#fff}
+.pix .eyebrow::before{background:var(--yellow)}
+.pixgrid{display:grid;grid-template-columns:.8fr 1.2fr;gap:22px;margin-top:26px;align-items:start}
+.pixhow{display:flex;flex-direction:column;gap:12px}
+.ph{display:flex;gap:12px;align-items:flex-start;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:14px 16px}
+.ph .n{flex:0 0 30px;height:30px;border-radius:50%;background:var(--yellow);color:var(--navy3);display:flex;align-items:center;justify-content:center;font:900 14px 'Archivo'}
+.ph b{display:block;font-family:'Archivo';font-size:15px}.ph small{display:block;font-size:13px;color:rgba(255,255,255,.72);margin-top:2px}
+.pixbig{background:var(--yellow);color:var(--navy3);border-radius:14px;padding:14px 18px;display:flex;flex-direction:column}
+.pixbig span{font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:700}
+.pixbig b{font-family:'Archivo';font-size:38px;font-weight:900;line-height:1.05}
+.pix-table{width:100%;border-collapse:separate;border-spacing:0;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);border-radius:14px;overflow:hidden;font-size:14px}
+.pix-table th{background:rgba(255,255,255,.1);padding:12px 8px;font-size:12px;letter-spacing:2px;text-transform:uppercase;text-align:center;color:#fff}
+.pix-table th:first-child,.pix-table td:first-child{text-align:left;padding-left:16px}
+.pix-table td{padding:12px 8px;text-align:center;border-top:1px solid rgba(255,255,255,.12)}
+.pix-table td.num{font-family:'Archivo';font-weight:800;font-size:17px;white-space:nowrap}
+.pix-table .tag{background:rgba(255,255,255,.14);color:#fff}
+.pix-table th.pixsel,.pix-table td.pixsel{background:var(--yellow);color:var(--navy3)}
+.pix-table tr.totrow td{background:rgba(255,212,0,.14);border-top:2px solid var(--yellow)}
+.pix-table tr.totrow td.pixsel{background:var(--yellow)}
+
+/* STEPS */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.step{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px}
+.step .n{width:34px;height:34px;border-radius:50%;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Archivo';font-weight:900;margin-bottom:10px}
+.step h3{font-size:16px;margin-bottom:4px}.step p{font-size:13px;color:var(--muted)}
+footer{background:var(--navy3);color:#fff;padding:36px 0;text-align:center}
+footer .slogan{font-family:'Archivo';font-size:22px;font-weight:800}
+footer .slogan em{color:var(--yellow);font-style:normal}
+footer p{color:rgba(255,255,255,.6);font-size:12px;margin-top:8px}
+.note{font-size:12px;color:var(--muted);margin-top:10px}
+@media (max-width:900px){
+  .hero h1{font-size:42px} h2{font-size:28px}
+  .g3,.g4,.g2,.linhas,.indic,.steps,.cen{grid-template-columns:1fr 1fr}
+  .pixgrid{grid-template-columns:1fr}
+  .comp{grid-template-columns:1fr;gap:6px}.comp .op{font-size:30px}
+  .total-chip{margin-left:0;width:100%;align-items:flex-start}
+  .avgbox{grid-template-columns:1fr}
+}
+@media (max-width:560px){.g3,.g4,.g2,.linhas,.indic,.steps,.cen{grid-template-columns:1fr}}
+@media print{.controls{position:static}section{padding:28px 0;break-inside:avoid}}
+
+
+/* ===== TEMA ESCURO (app) ===== */
+html[data-theme="dark"]{--cream:#0f1522;--ink:#EEF1F7;--muted:#A3ACC2;--line:#283149;--card:#161D2E;--navy3:#0a0f1c}
+html[data-theme="dark"] body{background:var(--cream);color:var(--ink)}
+html[data-theme="dark"] .intro,html[data-theme="dark"] section[style*="background:#fff"]{background:#121a2b!important;border-color:var(--line)!important}
+html[data-theme="dark"] .controls{background:#161D2E;box-shadow:0 6px 24px rgba(0,0,0,.4)}
+html[data-theme="dark"] .seg button{background:#161D2E;color:#9fb4ff}html[data-theme="dark"] .seg.red button{color:#ff7b80}
+html[data-theme="dark"] .seg{border-color:#9fb4ff}html[data-theme="dark"] .seg button+button{border-left-color:#9fb4ff}html[data-theme="dark"] .seg button.on{background:#2B5BC9;color:#fff}
+html[data-theme="dark"] .seg.red{border-color:#ff7b80}html[data-theme="dark"] .seg.red button+button{border-left-color:#ff7b80}html[data-theme="dark"] .seg.red button.on{background:var(--red);color:#fff}
+html[data-theme="dark"] .ctl input{background:#0f1522;color:var(--ink);border-color:var(--line)}
+html[data-theme="dark"] .toggle-vals{background:#161D2E;color:#9fb4ff;border-color:#9fb4ff}
+html[data-theme="dark"] .fonte{background:#0f1522}html[data-theme="dark"] .fonte.fixa{background:#15233f;border-color:#2b3f6b}
+html[data-theme="dark"] .fonte .ic{background:#161D2E;border-color:var(--line)}html[data-theme="dark"] .fonte .v{color:#9fb4ff}
+html[data-theme="dark"] .card .big,html[data-theme="dark"] .lvl-table td.num,html[data-theme="dark"] .bonus-table td.num,html[data-theme="dark"] .ledger .row b{color:#9fb4ff}
+html[data-theme="dark"] .lvl-table,html[data-theme="dark"] .bonus-table,html[data-theme="dark"] .chartbox,html[data-theme="dark"] .ledger,html[data-theme="dark"] .step{background:#161D2E;border-color:var(--line)}
+html[data-theme="dark"] .lvl-table tr.sel td,html[data-theme="dark"] .bonus-table tr.sel td,html[data-theme="dark"] .ledger .row.total{background:#3a3310}
+html[data-theme="dark"] .tag{background:#283149;color:#C9D0E0}html[data-theme="dark"] .valhint{background:#3a3310;color:#fff}
+html[data-theme="dark"] #chart line{stroke:#283149}html[data-theme="dark"] #chart text{fill:#C9D0E0}
+html[data-theme="dark"] .indic li span{color:var(--ink)}
+/* ===== EMBUTIDO NO APP: sem capa, abre na introdução ===== */
+html.no-app .hero{display:none}
+html.no-app .intro{padding-top:28px}
+
+/* OCULTAR VALORES */
+.toggle-vals{display:inline-flex;align-items:center;gap:8px;border:2px solid var(--navy);background:#fff;color:var(--navy);border-radius:10px;padding:9px 14px;font:800 13px 'Archivo';cursor:pointer;white-space:nowrap}
+.toggle-vals .sw{width:34px;height:18px;border-radius:20px;background:#C9D0E0;position:relative;transition:.2s}
+.toggle-vals .sw::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:.2s}
+body.hide-vals .toggle-vals{background:var(--red);border-color:var(--red);color:#fff}
+body.hide-vals .toggle-vals .sw{background:rgba(255,255,255,.4)}
+body.hide-vals .toggle-vals .sw::after{left:18px}
+body.hide-vals .fonte .v, body.hide-vals .card .big, body.hide-vals .linha .p, body.hide-vals .linha .ex,
+body.hide-vals .avgbox, body.hide-vals #chart, body.hide-vals .lvl-table td:nth-child(n+4), body.hide-vals .lvl-table th:nth-child(n+4),
+body.hide-vals .bonus-table td:nth-child(n+3), body.hide-vals .indic h3 b, body.hide-vals .indic li span,
+body.hide-vals .pix-table td.num, body.hide-vals .pixbig b, body.hide-vals .ledger .row b, body.hide-vals .teto .big, body.hide-vals .teto li b,
+body.hide-vals .total-chip b, body.hide-vals .vtxt, body.hide-vals #fatHint, body.hide-vals #fat{
+  filter:blur(7px);opacity:.55;user-select:none;pointer-events:none;transition:filter .2s}
+body.hide-vals .lvl-table .tag{filter:none}
+body.hide-vals .valhint{display:inline-flex}
+.valhint{display:none;align-items:center;gap:8px;background:#FFF7CC;border:1px solid var(--yellow);color:var(--ink);border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="stripes"></div>
+  <div class="wrap">
+    <div class="brand"><span class="dot"></span> SÓ TINTAS <small>· PROPOSTA DE TRABALHO</small></div>
+    <h1>Vendedor(a)<br>Só Tintas: <em>quanto você<br>pode ganhar</em></h1>
+    <p>Fixo de acordo com a sua experiência, comissão sobre tudo o que vender e bônus por resultado que crescem com o seu nível. Aqui está o caminho inteiro, do primeiro mês ao topo.</p>
+    <div class="pills">
+      <span class="pill">💼 Fixo por experiência</span>
+      <span class="pill vtxt">💰 Comissão de 0,50% a 1,00%</span>
+      <span class="pill">🏆 Bônus por meta e indicadores</span>
+      <span class="pill">⚡ Pix Semanal</span>
+      <span class="pill">📈 5 níveis de carreira</span>
+    </div>
+  </div>
+</div>
+
+<!-- INTRODUÇÃO: DE ONDE VEM O DINHEIRO -->
+<section class="intro">
+  <div class="wrap">
+    <span class="eyebrow">Antes de simular</span>
+    <h2>De onde vem o seu dinheiro</h2>
+    <p class="lead">São 11 fontes de ganho no mês. Duas são garantidas (fixo e comissão) e as outras nove dependem do seu resultado. Abaixo, cada uma em uma linha; depois você simula tudo no seu nível.</p>
+    <div class="fontes">
+      <div class="fonte fixa"><div class="ic">💼</div><div class="t"><b>Fixo</b><small>Salário garantido, definido pela sua experiência.</small></div><div class="v">R$ 2.000 a 2.800<em>todo mês</em></div></div>
+      <div class="fonte fixa"><div class="ic">💰</div><div class="t"><b>Comissão</b><small>Percentual sobre tudo o que vender, por linha de produto.</small></div><div class="v">0,50% a 1,00%<em>todo mês</em></div></div>
+      <div class="fonte"><div class="ic">🎯</div><div class="t"><b>Bônus de Meta de Faturamento</b><small>Bateu 95%, 100% ou 130% da sua meta. Valor cresce com o seu nível e o da loja.</small></div><div class="v">R$ 100 a 1.500<em>até o 5º dia útil</em></div></div>
+      <div class="fonte"><div class="ic">⚡</div><div class="t"><b>Pix Semanal</b><small>Bateu o % da semana, cai um Pix. 5 chances por mês, valor pelo seu nível.</small></div><div class="v">R$ 30 a 275<em>por semana</em></div></div>
+      <div class="fonte"><div class="ic">📈</div><div class="t"><b>Bônus de Performance</b><small>Valor fixo pelo seu nível na loja. Exige a contagem de estoque em dia.</small></div><div class="v">R$ 250 a 800<em>dia 20</em></div></div>
+      <div class="fonte"><div class="ic">🤝</div><div class="t"><b>Meta de Time</b><small>A loja inteira bate a meta, todo mundo ganha. Você precisa estar em ≥ 90% da sua.</small></div><div class="v">R$ 75 a 200<em>dia 10</em></div></div>
+      <div class="fonte"><div class="ic">🧾</div><div class="t"><b>Indicadores CPF</b><small>% identificadas, itens por venda, ticket e desconto. R$ 20 por indicador batido.</small></div><div class="v">até R$ 80<em>dia 10</em></div></div>
+      <div class="fonte"><div class="ic">🏢</div><div class="t"><b>Indicadores CNPJ</b><small>Faturamento, positivados, clientes novos e desconto na carteira de empresas.</small></div><div class="v">até R$ 500<em>dia 10</em></div></div>
+      <div class="fonte"><div class="ic">🏁</div><div class="t"><b>Meta CNPJ</b><small>Bateu 100% da meta de vendas para empresas no mês.</small></div><div class="v">R$ 100<em>dia 10</em></div></div>
+      <div class="fonte"><div class="ic">🪵</div><div class="t"><b>Bônus Eucatex</b><small>Bateu 100% da meta de litragem Eucatex. Tudo ou nada.</small></div><div class="v">R$ 50<em>até o 5º dia útil</em></div></div>
+      <div class="fonte"><div class="ic">🏆</div><div class="t"><b>Elite das Vendas CPF</b><small>Ranking mensal e trimestral dos indicadores CPF entre todos os vendedores.</small></div><div class="v">até R$ 200 / 500<em>dia 15</em></div></div>
+    </div>
+    <div class="introsum">
+      <div><span>Garantido</span><b>Fixo + Comissão</b></div>
+      <div class="plus">+</div>
+      <div><span>Por resultado</span><b>9 bônus que você destrava</b></div>
+      <div class="plus">=</div>
+      <div class="hl"><span>Seu ganho do mês</span><b>simule abaixo ↓</b></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTROLES -->
+<div class="controls">
+  <div class="wrap">
+    <div class="ctl"><label>Nível da loja</label>
+      <div class="seg red" id="segLoja">
+        <button data-v="2">N1 Bronze</button><button data-v="1" class="on">N2 Prata</button><button data-v="0">N3 Ouro</button>
+      </div></div>
+    <div class="ctl"><label>Nível do vendedor</label>
+      <div class="seg" id="segVend">
+        <button data-v="0">V1</button><button data-v="1">V2</button><button data-v="2" class="on">V3</button><button data-v="3">V4</button><button data-v="4">V5</button>
+      </div></div>
+    <div class="ctl"><label>Experiência (fixo)</label>
+      <div class="seg" id="segExp">
+        <button data-v="0" class="on">3 anos</button><button data-v="1">5 anos</button><button data-v="2">7 anos</button><button data-v="3">10 anos</button>
+      </div></div>
+    <div class="ctl"><label>Faturamento mensal (R$)</label>
+      <input id="fat" type="text" inputmode="numeric" value="">
+      <span class="hint" id="fatHint"></span></div>
+    <div class="ctl"><label>Valores</label>
+      <button class="toggle-vals" id="toggleVals" type="button"><span class="sw"></span><span id="toggleTxt">Ocultar valores</span></button></div>
+    <div class="total-chip"><span>Ganho estimado batendo 100%</span><b id="chipTotal">R$ 0</b></div>
+  </div>
+</div>
+
+<div class="wrap" style="padding-top:14px"><span class="valhint">🔒 Valores ocultos — a apresentação mostra só as fontes de ganho. Clique em "Mostrar valores" para reexibir.</span></div>
+<!-- COMPOSIÇÃO -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow">Como o ganho é formado</span>
+    <h2>Três fontes. Uma só folha.</h2>
+    <p class="lead">O salário do vendedor Só Tintas não depende de uma coisa só. Cada parte tem a sua regra e você controla todas.</p>
+    <div class="comp" style="margin-top:26px">
+      <div class="card"><div class="ic">💼</div><h3>Fixo</h3><p>Garantido todo mês, definido pela sua experiência na área.</p><div class="big" id="cFixo">R$ 0</div></div>
+      <div class="op">+</div>
+      <div class="card"><div class="ic">💰</div><h3>Comissão</h3><p>Percentual sobre toda a linha vendida. Média de 0,80%.</p><div class="big" id="cCom">R$ 0</div></div>
+      <div class="op">+</div>
+      <div class="card"><div class="ic">🏆</div><h3>Bônus</h3><p>Meta de faturamento, performance, time e indicadores.</p><div class="big" id="cBon">R$ 0</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FIXO -->
+<section style="background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <span class="eyebrow">1 · Fixo</span>
+    <h2>Sua experiência já vale dinheiro</h2>
+    <p class="lead">O fixo é definido pelo tempo de experiência comprovada na área comercial. Clique para simular.</p>
+    <div class="grid g4" style="margin-top:26px" id="fixoCards">
+      <div class="card click" data-v="0"><div class="k">3 anos de experiência</div><div class="big">R$ 2.000</div><div class="sub">por mês</div></div>
+      <div class="card click" data-v="1"><div class="k">5 anos de experiência</div><div class="big">R$ 2.200</div><div class="sub">por mês</div></div>
+      <div class="card click" data-v="2"><div class="k">7 anos de experiência</div><div class="big">R$ 2.400</div><div class="sub">por mês</div></div>
+      <div class="card click" data-v="3"><div class="k">10 anos de experiência</div><div class="big">R$ 2.800</div><div class="sub">por mês</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- COMISSÃO -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow">2 · Comissão</span>
+    <h2>Quanto melhor a linha, maior o percentual</h2>
+    <p class="lead">A comissão incide sobre <b>toda</b> a venda. Vender bem (linha premium e ferramentas) paga mais do que vender barato.</p>
+    <div class="linhas" style="margin-top:26px">
+      <div class="linha prem"><div class="n">Linha Premium</div><div class="p">1,00%</div><div class="d">Coral Premium, acabamentos de alto padrão</div><div class="ex">A cada R$ 10.000 vendidos: <b>R$ 100</b></div></div>
+      <div class="linha ferr"><div class="n">Ferramentas</div><div class="p">1,00%</div><div class="d">Rolos, pincéis, lixas, acessórios</div><div class="ex">A cada R$ 10.000 vendidos: <b>R$ 100</b></div></div>
+      <div class="linha std"><div class="n">Linha Standard</div><div class="p">0,75%</div><div class="d">Linha intermediária</div><div class="ex">A cada R$ 10.000 vendidos: <b>R$ 75</b></div></div>
+      <div class="linha eco"><div class="n">Linha Econômica</div><div class="p">0,50%</div><div class="d">Linha de entrada</div><div class="ex">A cada R$ 10.000 vendidos: <b>R$ 50</b></div></div>
+    </div>
+    <div class="avgbox">
+      <div><div class="k" style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--yellow);font-weight:700">Média do mix</div><div class="big">0,80%</div><div style="font-size:13px;color:rgba(255,255,255,.75);margin-top:4px">sobre tudo o que vender</div></div>
+      <table>
+        <thead><tr><th>Faturamento no mês</th><th>R$ 30 mil</th><th>R$ 50 mil</th><th>R$ 80 mil</th><th>R$ 120 mil</th></tr></thead>
+        <tbody><tr><td style="text-align:left">Comissão (0,80%)</td><td class="num">R$ 240</td><td class="num">R$ 400</td><td class="num">R$ 640</td><td class="num">R$ 960</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- CURVA -->
+<section style="background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <span class="eyebrow">3 · Curva de evolução</span>
+    <h2>Do V1 ao V5: cada degrau paga mais</h2>
+    <p class="lead">Seu nível vem da média de faturamento dos últimos 90 dias. Subiu de nível, sobe o bônus. A curva abaixo mostra o ganho mensal estimado em cada degrau para a loja selecionada.</p>
+    <div class="chartbox" style="margin-top:26px">
+      <div class="legend">
+        <span><i style="background:#C9D0E0"></i>Fixo + comissão</span>
+        <span><i style="background:var(--navy)"></i>Batendo 100% da meta (+ 3 semanas de Pix)</span>
+        <span><i style="background:var(--red)"></i>Super Meta (130%) + todos os indicadores + 5 semanas de Pix</span>
+      </div>
+      <svg id="chart" viewBox="0 0 1100 420"></svg>
+    </div>
+    <table class="lvl-table" id="lvlTable">
+      <thead><tr><th>Nível</th><th>Tempo esperado</th><th>Média 90 dias</th><th>Fat. referência</th><th>Fixo + comissão</th><th>Bônus 100%</th><th>Total 100%</th><th>Teto Super Meta</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <p class="note">Tempo esperado contado após os 3 meses iniciais de treinamento. Faturamento de referência = ponto médio da faixa do nível (ajuste no campo acima para simular outro valor). Valores de bônus pelo regulamento vigente; vale sempre o fechamento oficial.</p>
+  </div>
+</section>
+
+<!-- BÔNUS -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow">4 · Bonificações por faixa</span>
+    <h2 id="bonusTitle">Bônus de Meta de Faturamento</h2>
+    <p class="lead">Três gatilhos no mês: <b>95%</b> (Meta 1), <b>100%</b> (Meta 2) e <b>130%</b> (Super Meta). O prêmio muda com o nível do vendedor e o nível da loja. Pago até o 5º dia útil.</p>
+    <table class="bonus-table" style="margin-top:26px" id="bonusTable">
+      <thead><tr><th>Nível do vendedor</th><th>Média 90 dias</th><th>Meta 1 · 95%</th><th>Meta 2 · 100%</th><th>Super Meta · 130%</th><th>Performance (dia 20)</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="indic">
+      <div class="card"><h3>Meta de Time <b id="iTime">até R$ 200</b></h3><ul><li>Loja bate 95% <span>R$ 75</span></li><li>Loja bate 100% <span>R$ 150</span></li><li>Loja bate 130% <span>R$ 200</span></li><li style="color:var(--muted)">Pré-requisito: ≥ 90% da sua meta</li></ul></div>
+      <div class="card"><h3>Indicadores CPF <b>R$ 20 cada</b></h3><ul><li>% Identificadas <span>≥ 80%</span></li><li>Itens por venda CPF <span>≥ 2,5</span></li><li>Ticket CPF <span>≥ R$ 200</span></li><li>Desconto CPF <span>&lt; 7%</span></li></ul></div>
+      <div class="card"><h3>Indicadores CNPJ <b>até R$ 500</b></h3><ul><li>Faturamento CNPJ <span>R$ 50 a 200</span></li><li>Clientes positivados <span>R$ 50 a 150</span></li><li>Clientes novos CNPJ <span>R$ 50 a 100</span></li><li>Desconto CNPJ &lt; 17% <span>R$ 50</span></li></ul></div>
+      <div class="card"><h3>Meta CNPJ <b>R$ 100</b></h3><ul><li>≥ 100% da meta CNPJ do mês <span>R$ 100</span></li><li style="color:var(--muted)">Pré-requisito: ≥ 95% da meta geral</li></ul></div>
+      <div class="card"><h3>Eucatex (litragem) <b>R$ 50</b></h3><ul><li>≥ 100% da meta de litragem <span>R$ 50</span></li><li style="color:var(--muted)">Tudo ou nada, sem faixa parcial</li></ul></div>
+      <div class="card"><h3>Elite das Vendas CPF <b>até R$ 200</b></h3><ul><li>Ranking mensal dos 4 indicadores CPF <span>1º R$ 200</span></li><li>2º / 3º / 4º <span>150 / 100 / 75</span></li><li>Trimestral <span>até R$ 500</span></li></ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- PIX SEMANAL -->
+<section class="pix">
+  <div class="wrap">
+    <span class="eyebrow" style="color:var(--yellow)">5 · Pix Semanal</span>
+    <h2 style="color:#fff">Toda semana pode cair um Pix</h2>
+    <p class="lead" style="color:rgba(255,255,255,.78)">Além do bônus do mês, a campanha Pix Semanal paga a cada semana em que você bate o percentual da sua meta mensal. O valor segue o seu nível: quanto mais alto, maior o Pix. Vale para quem tem meta mensal a partir de R$ 50 mil.</p>
+    <div class="pixgrid">
+      <div class="pixhow">
+        <div class="ph"><span class="n">1</span><div><b>Semana a semana</b><small>5 semanas no mês, cada uma com um % da meta mensal para destravar.</small></div></div>
+        <div class="ph"><span class="n">2</span><div><b>Bateu, recebeu</b><small>Pix na conta na semana seguinte ao fechamento. Não precisa esperar o mês.</small></div></div>
+        <div class="ph"><span class="n">3</span><div><b>Seu nível manda</b><small class="vtxt">V1 ganha R$ 55 por semana cheia; V5 ganha R$ 275. Subiu de nível, subiu o Pix.</small></div></div>
+        <div class="pixbig"><span>Teto do mês para o seu nível</span><b id="pixBig">R$ 0</b></div>
+      </div>
+      <table class="pix-table" id="pixTable">
+        <thead><tr><th>Semana</th><th>Gatilho</th><th data-v="0">V1</th><th data-v="1">V2</th><th data-v="2">V3</th><th data-v="3">V4</th><th data-v="4">V5</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- CENÁRIO -->
+<section style="background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <span class="eyebrow">6 · Um mês na prática</span>
+    <h2 id="cenTitle">Seu mês como V3 em loja Prata</h2>
+    <p class="lead">Exemplo com o faturamento de referência do nível, batendo 100% da meta, os indicadores básicos e 3 semanas do Pix. Ao lado, o teto do mês se tudo fechar no máximo.</p>
+    <div class="cen" style="margin-top:26px">
+      <div class="ledger" id="ledger"></div>
+      <div class="teto" id="teto"></div>
+    </div>
+  </div>
+</section>
+
+<!-- REGRA 90 DIAS / PRÓXIMOS PASSOS -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow">7 · Como você sobe de nível</span>
+    <h2>A regra dos 90 dias</h2>
+    <p class="lead">Seu nível de um mês é a média de faturamento dos 3 meses anteriores. Consistência vale mais do que um mês isolado: três meses bons te colocam no degrau de cima, e o bônus acompanha.</p>
+    <div class="steps" style="margin-top:26px">
+      <div class="step"><div class="n">1</div><h3>Treinamento</h3><p>3 primeiros meses: produto, sistema, escada de produtos e atendimento ao pintor.</p></div>
+      <div class="step"><div class="n">2</div><h3>V1 → V2</h3><p>1 a 12 meses após o treino. Foco em bater 100% e nos 4 indicadores CPF.</p></div>
+      <div class="step"><div class="n">3</div><h3>V3 → V4</h3><p>12 a 36 meses. Carteira CNPJ ativa, positivação e clientes novos entram no jogo.</p></div>
+      <div class="step"><div class="n">4</div><h3>V5 Elite</h3><p>Acima de 36 meses. Maior bônus da tabela e referência para o time.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="slogan">Só Tintas · <em>Colorindo vidas e realizando sonhos</em></div>
+    <p>Proposta ilustrativa. Valores de bônus conforme regulamento vigente; o pagamento segue o fechamento oficial mensal.</p>
+  </div>
+</footer>
+
+<script>
+// ===== REGRAS (colunas: [N3 Ouro, N2 Prata, N1 Bronze]) =====
+const LOJA_NOME=["N3 Ouro","N2 Prata","N1 Bronze"];
+const LOJA_APELIDO=["Ouro","Prata","Bronze"];
+const VN=["V1 Iniciante","V2 Júnior","V3 Pleno","V4 Sênior","V5 Elite"];
+const TEMPO=["1 a 6 meses","6 a 12 meses","12 a 24 meses","24 a 36 meses","acima de 36 meses"];
+// limites inferiores da faixa (R$) por loja; V1 = abaixo do primeiro valor
+const LIM=[[50000,65000,85000,130000],[40000,55000,70000,95000],[30000,45000,60000,80000]];
+const M1=[[250,280,350,420,500],[220,250,280,320,380],[100,120,150,180,220]];
+const M2=[[330,380,450,550,750],[290,330,380,440,530],[280,300,330,380,440]];
+const SUP=[[480,550,750,850,1500],[420,480,550,650,800],[480,500,530,550,650]];
+const PERF=[[0,250,400,600,800],[0,0,300,500,600],[0,0,0,350,500]];
+const FIXO=[2000,2200,2400,2800];
+const EXP=["3 anos","5 anos","7 anos","10 anos"];
+const COM=0.008;
+const TIME100=150, TIME130=200, CPF=80, CNPJ=500, METACNPJ=100, EUC=50, ELITE=200;
+// Pix Semanal: linhas = semanas S1..S5, colunas = V1..V5 (regra vigente set/2026)
+const PIX=[[45,90,135,180,225],[55,110,165,220,275],[55,110,165,220,275],[55,110,165,220,275],[30,60,90,120,150]];
+const PIX_PCT=["27,5%","30%","30%","30%","17,5%"];
+const pixSemanas=(v,sem)=>sem.reduce((s,i)=>s+PIX[i][v],0);
+const PIX100=v=>pixSemanas(v,[1,2,3]);   // cenário 100%: 3 semanas cheias (S2–S4)
+const PIXTETO=v=>pixSemanas(v,[0,1,2,3,4]); // teto: 5 semanas
+
+let loja=1, vend=2, exp=0, fatUser=null;
+
+const brl=v=>"R$ "+Math.round(v).toLocaleString("pt-BR");
+const brlK=v=>"R$ "+(v/1000).toLocaleString("pt-BR",{maximumFractionDigits:0})+" mil";
+function faixa(l,v){const L=LIM[l];if(v===0)return"até "+brlK(L[0]);if(v===4)return"acima de "+brlK(L[3]);return brlK(L[v-1])+" a "+brlK(L[v]);}
+function fatRef(l,v){const L=LIM[l];if(v===0)return L[0]*0.85;if(v===4)return L[3]*1.15;return (L[v-1]+L[v])/2;}
+function base(l,v,e,fat){return FIXO[e]+fat*COM;}
+function bonus100(l,v){return M2[l][v]+PERF[l][v]+TIME100+CPF+PIX100(v);}
+function bonusTeto(l,v){return SUP[l][v]+PERF[l][v]+TIME130+CPF+CNPJ+METACNPJ+EUC+ELITE+PIXTETO(v);}
+
+function parseFat(s){const n=parseFloat(String(s).replace(/\./g,"").replace(",","."));return isNaN(n)?null:n;}
+
+function render(){
+  const fat=fatUser??fatRef(loja,vend);
+  document.getElementById("fatHint").textContent="Referência "+VN[vend].split(" ")[0]+" em loja "+LOJA_APELIDO[loja]+": "+brl(fatRef(loja,vend));
+  // seg states
+  document.querySelectorAll("#segLoja button").forEach(b=>b.classList.toggle("on",+b.dataset.v===loja));
+  document.querySelectorAll("#segVend button").forEach(b=>b.classList.toggle("on",+b.dataset.v===vend));
+  document.querySelectorAll("#segExp button").forEach(b=>b.classList.toggle("on",+b.dataset.v===exp));
+  document.querySelectorAll("#fixoCards .card").forEach(c=>c.classList.toggle("sel",+c.dataset.v===exp));
+
+  const fx=FIXO[exp], cm=fat*COM, bn=bonus100(loja,vend);
+  document.getElementById("cFixo").textContent=brl(fx);
+  document.getElementById("cCom").textContent=brl(cm);
+  document.getElementById("cBon").textContent=brl(bn);
+  document.getElementById("chipTotal").textContent=brl(fx+cm+bn);
+
+  // tabela de níveis + gráfico
+  const tb=document.querySelector("#lvlTable tbody");tb.innerHTML="";
+  const pts=[];
+  for(let v=0;v<5;v++){
+    const f=(v===vend)?fat:fatRef(loja,v);
+    const b=base(loja,v,exp,f), t100=b+bonus100(loja,v), tteto=b+bonusTeto(loja,v);
+    pts.push({b,t100,tteto});
+    tb.innerHTML+=`<tr class="${v===vend?"sel":""}"><td><b>${VN[v]}</b></td><td><span class="tag">${TEMPO[v]}</span></td><td>${faixa(loja,v)}</td><td>${brl(f)}</td><td class="num">${brl(b)}</td><td class="num">${brl(bonus100(loja,v))}</td><td class="num tot">${brl(t100)}</td><td class="num">${brl(tteto)}</td></tr>`;
+  }
+  drawChart(pts);
+
+  // tabela de bônus
+  document.getElementById("bonusTitle").textContent="Bônus de Meta de Faturamento · loja "+LOJA_NOME[loja];
+  const bt=document.querySelector("#bonusTable tbody");bt.innerHTML="";
+  for(let v=0;v<5;v++){
+    bt.innerHTML+=`<tr class="${v===vend?"sel":""}"><td><b>${VN[v]}</b></td><td>${faixa(loja,v)}</td><td class="num">${brl(M1[loja][v])}</td><td class="num">${brl(M2[loja][v])}</td><td class="num">${brl(SUP[loja][v])}</td><td class="num">${PERF[loja][v]?brl(PERF[loja][v]):"—"}</td></tr>`;
+  }
+
+  // pix semanal
+  const pt=document.querySelector("#pixTable tbody");pt.innerHTML="";
+  const semNome=["Semana 1","Semana 2","Semana 3","Semana 4","Semana 5"];
+  for(let s=0;s<5;s++){
+    pt.innerHTML+=`<tr><td><b>${semNome[s]}</b></td><td><span class="tag">${PIX_PCT[s]} da meta mensal</span></td>`+[0,1,2,3,4].map(v=>`<td class="num ${v===vend?"pixsel":""}">${brl(PIX[s][v])}</td>`).join("")+`</tr>`;
+  }
+  pt.innerHTML+=`<tr class="totrow"><td><b>Mês cheio · 5 semanas</b></td><td><span class="tag">135%</span></td>`+[0,1,2,3,4].map(v=>`<td class="num tot ${v===vend?"pixsel":""}">${brl(PIXTETO(v))}</td>`).join("")+`</tr>`;
+  document.querySelectorAll("#pixTable thead th[data-v]").forEach(th=>th.classList.toggle("pixsel",+th.dataset.v===vend));
+  document.getElementById("pixBig").textContent=brl(PIXTETO(vend));
+
+  // cenário
+  document.getElementById("cenTitle").textContent="Seu mês como "+VN[vend].split(" ")[0]+" em loja "+LOJA_APELIDO[loja];
+  const rows=[
+    ["Fixo","Experiência de "+EXP[exp],fx],
+    ["Comissão","0,80% sobre "+brl(fat)+" faturados",cm],
+    ["Meta de Faturamento · 100%","Meta 2, "+VN[vend].split(" ")[0]+" em "+LOJA_APELIDO[loja],M2[loja][vend]],
+    ["Bônus de Performance","Pago dia 20"+(PERF[loja][vend]?"":" (a partir de nível superior)"),PERF[loja][vend]],
+    ["Meta de Time","Loja bate 100%",TIME100],
+    ["Indicadores CPF","4 indicadores × R$ 20",CPF],
+    ["Pix Semanal","3 semanas premiadas (S2, S3 e S4) como "+VN[vend].split(" ")[0],PIX100(vend)]
+  ];
+  const tot=rows.reduce((s,r)=>s+r[2],0);
+  document.getElementById("ledger").innerHTML=`<div class="row head"><span>Composição do mês</span><span>Valor</span></div>`+rows.map(r=>`<div class="row"><span>${r[0]}<small>${r[1]}</small></span><b>${brl(r[2])}</b></div>`).join("")+`<div class="row total"><span><b style="color:var(--ink);font-size:16px">Total do mês batendo 100%</b></span><b>${brl(tot)}</b></div>`;
+
+  const teto=base(loja,vend,exp,fat*1.3)+bonusTeto(loja,vend);
+  document.getElementById("teto").innerHTML=`<div class="k">Teto do mês · Super Meta</div><div class="big">${brl(teto)}</div>
+  <ul>
+    <li><span>Fixo + comissão sobre ${brl(fat*1.3)} (130%)</span><b>${brl(base(loja,vend,exp,fat*1.3))}</b></li>
+    <li><span>Super Meta 130%</span><b>${brl(SUP[loja][vend])}</b></li>
+    <li><span>Performance</span><b>${brl(PERF[loja][vend])}</b></li>
+    <li><span>Meta de Time (130%)</span><b>${brl(TIME130)}</b></li>
+    <li><span>Indicadores CPF</span><b>${brl(CPF)}</b></li>
+    <li><span>Indicadores CNPJ (teto)</span><b>${brl(CNPJ)}</b></li>
+    <li><span>Meta CNPJ + Eucatex</span><b>${brl(METACNPJ+EUC)}</b></li>
+    <li><span>1º no Elite das Vendas CPF</span><b>${brl(ELITE)}</b></li>
+    <li><span>Pix Semanal · 5 semanas premiadas</span><b>${brl(PIXTETO(vend))}</b></li>
+  </ul>
+  <div class="note">É o cenário de tudo fechando no máximo no mesmo mês: serve para mostrar até onde a régua vai.</div>`;
+}
+
+function drawChart(pts){
+  const W=1100,H=420,L=90,R=40,T=30,B=70;
+  const maxY=Math.max(...pts.map(p=>p.tteto))*1.12;
+  const n=5, x=i=>L+i*((W-L-R)/(n-1)), y=v=>T+(H-T-B)*(1-v/maxY);
+  let s=`<defs><linearGradient id="gfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1C3F8F" stop-opacity=".18"/><stop offset="1" stop-color="#1C3F8F" stop-opacity="0"/></linearGradient></defs>`;
+  // gridlines
+  const steps=5;
+  for(let i=0;i<=steps;i++){const v=maxY/steps*i;s+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="#E3E6EE"/><text x="${L-10}" y="${y(v)+4}" text-anchor="end" font-size="12" fill="#6B7590" font-family="Inter">${brl(v)}</text>`;}
+  // area + lines
+  const path=k=>pts.map((p,i)=>(i?"L":"M")+x(i)+" "+y(p[k])).join(" ");
+  s+=`<path d="${path("t100")} L${x(4)} ${y(0)} L${x(0)} ${y(0)} Z" fill="url(#gfill)"/>`;
+  s+=`<path d="${path("b")}" fill="none" stroke="#C9D0E0" stroke-width="3" stroke-dasharray="6 5"/>`;
+  s+=`<path d="${path("tteto")}" fill="none" stroke="#D32027" stroke-width="3"/>`;
+  s+=`<path d="${path("t100")}" fill="none" stroke="#1C3F8F" stroke-width="5" stroke-linejoin="round"/>`;
+  pts.forEach((p,i)=>{
+    const sel=i===vend;
+    s+=`<circle cx="${x(i)}" cy="${y(p.tteto)}" r="5" fill="#D32027"/><text x="${x(i)}" y="${y(p.tteto)-12}" text-anchor="middle" font-size="12" font-weight="700" fill="#D32027" font-family="Archivo">${brl(p.tteto)}</text>`;
+    s+=`<circle cx="${x(i)}" cy="${y(p.t100)}" r="${sel?10:7}" fill="${sel?"#FFD400":"#1C3F8F"}" stroke="#1C3F8F" stroke-width="3"/><text x="${x(i)}" y="${y(p.t100)+26}" text-anchor="middle" font-size="14" font-weight="900" fill="#1C3F8F" font-family="Archivo">${brl(p.t100)}</text>`;
+    s+=`<circle cx="${x(i)}" cy="${y(p.b)}" r="4" fill="#9AA3B8"/><text x="${x(i)}" y="${y(p.b)+22}" text-anchor="middle" font-size="11" fill="#6B7590" font-family="Inter">${brl(p.b)}</text>`;
+    s+=`<text x="${x(i)}" y="${H-32}" text-anchor="middle" font-size="16" font-weight="900" fill="${sel?"#D32027":"#0E1A33"}" font-family="Archivo">${VN[i]}</text><text x="${x(i)}" y="${H-14}" text-anchor="middle" font-size="11" fill="#6B7590" font-family="Inter">${TEMPO[i]}</text>`;
+  });
+  document.getElementById("chart").innerHTML=s;
+}
+
+document.getElementById("segLoja").addEventListener("click",e=>{if(e.target.dataset.v!==undefined){loja=+e.target.dataset.v;fatUser=null;document.getElementById("fat").value="";render();}});
+document.getElementById("segVend").addEventListener("click",e=>{if(e.target.dataset.v!==undefined){vend=+e.target.dataset.v;fatUser=null;document.getElementById("fat").value="";render();}});
+document.getElementById("segExp").addEventListener("click",e=>{if(e.target.dataset.v!==undefined){exp=+e.target.dataset.v;render();}});
+document.getElementById("fixoCards").addEventListener("click",e=>{const c=e.target.closest(".card");if(c){exp=+c.dataset.v;render();}});
+document.getElementById("fat").addEventListener("input",e=>{fatUser=parseFat(e.target.value);render();});
+document.getElementById("toggleVals").addEventListener("click",()=>{
+  const on=document.body.classList.toggle("hide-vals");
+  document.getElementById("toggleTxt").textContent=on?"Mostrar valores":"Ocultar valores";
+});
+document.getElementById("fat").addEventListener("blur",e=>{if(fatUser)e.target.value=Math.round(fatUser).toLocaleString("pt-BR");});
+render();
+</script>
+</body>
+</html>
