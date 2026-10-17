@@ -773,24 +773,6 @@ html[data-tema="escuro"] .dpAvisos .ag{background:#201c12}
 .dpAvisos .ag .agd{background:var(--warn)}
 @keyframes dpPisca{0%,60%{box-shadow:0 0 0 3px var(--warn)}100%{box-shadow:none}}
 .dpFlash{animation:dpPisca 2.4s ease-out 1}
-/* v50.2: as três abas de Despesas e a mesa de aprovação */
-#dpAbas{margin-bottom:12px}
-.dpBadge{background:var(--red);color:#fff;margin-left:6px;font-size:10px;padding:2px 7px;vertical-align:1px}
-#dpAp.dpEsperando > *{opacity:.45;pointer-events:none}
-.dpSec{margin:22px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.dpSec .badge{font-size:11px}
-.dpSec .dpSecTot{font-size:13px;font-weight:normal;color:var(--muted);margin-left:auto}
-.dpMini{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.5}
-.dpMini b{color:var(--ink);font-weight:600}
-.dpVazio{padding:12px 14px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);font-size:13.5px}
-.dpBanner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:10px 12px;border-radius:10px;
-  background:var(--warn-bg);border:1px solid #efd9a0;font-size:13.5px}
-.dpBanner b{color:var(--warn)}
-html[data-tema="escuro"] .dpBanner{border-color:#5a4a1c}
-.kpis.dpk{grid-template-columns:repeat(3,1fr);gap:8px}
-.kpis.dpk .kpi{padding:12px}
-.kpis.dpk .kv{font-size:22px}
-@media (max-width:480px){ .kpis.dpk .kl{font-size:10px} .kpis.dpk .kv{font-size:20px} }
 #dpAtualizando{position:sticky;top:calc(64px + env(safe-area-inset-top,0px));z-index:5;margin:0 0 10px;text-align:center}
 #dpAtualizando span{display:inline-block;background:var(--navy);color:#fff;font-weight:700;font-size:13px;padding:6px 14px;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
 </style>
@@ -870,18 +852,7 @@ html[data-tema="escuro"] .dpBanner{border-color:#5a4a1c}
 
     <div id="viewDespesas" class="hidden">
       <h1>Despesas</h1>
-      <!-- v50.2: três abas, uma por etapa — lançar, decidir, analisar. A tela
-           antiga misturava as três e o fluxo do dia (aprovar e mandar o recibo)
-           ficava escondido atrás de cinco filtros. -->
-      <div class="tabs2" id="dpAbas">
-        <button class="tab2" data-dpaba="lancar">Lançar</button>
-        <button class="tab2" data-dpaba="aprovacao"><span id="dpAbaNome">Aprovação</span><span class="badge dpBadge hidden" id="dpAbaBadge"></span></button>
-        <button class="tab2" data-dpaba="relatorio">Relatório</button>
-      </div>
-
-      <div id="dpAbaLancar">
-      <p class="sub">Lance a despesa com a foto do comprovante. Ela entra na hora na fila de aprovação.</p>
-      <div id="dpAvisoLancar" class="hidden"></div>
+      <p class="sub">Lance a despesa com a foto do comprovante. O relatório abaixo se atualiza no mesmo instante.</p>
 
       <div class="card" style="margin:0 0 16px;background:#f8faff">
         <h3 style="margin-top:0">Novo lançamento</h3>
@@ -932,19 +903,8 @@ html[data-tema="escuro"] .dpBanner{border-color:#5a4a1c}
         </div>
         <div id="dpStatus" class="hidden" style="margin-top:12px;padding:11px 14px;border-radius:10px;font-size:14px"></div>
       </div>
-      </div><!-- /dpAbaLancar -->
 
-      <!-- v50.2: a mesa de decisão. Tudo o que está em aberto, do mês que for,
-           em três blocos na ordem do trabalho: decidir → fechar o recibo →
-           cobrar resposta. Sem De/Até: pendência não tem período. -->
-      <div id="dpAbaAprovacao" class="hidden">
-        <p class="sub" id="dpApSub">Tudo o que está em aberto, do mês que for. Decida, e depois mande o recibo de cada pessoa.</p>
-        <div id="dpApCaixa"></div>
-        <div id="dpAp"></div>
-      </div>
-
-      <div id="dpAbaRelatorio" class="hidden">
-      <p class="sub">Histórico e análise por período — totais, custo por visita, planilha e documentos.</p>
+      <h3>Relatório</h3>
       <div class="grid3">
         <div><label>De</label><input type="date" id="dpDe"></div>
         <div><label>Até</label><input type="date" id="dpAte"></div>
@@ -976,9 +936,8 @@ html[data-tema="escuro"] .dpBanner{border-color:#5a4a1c}
         <button class="btn btn-ghost btn-sm" id="dpRecibo">🧾 Recibo de reembolso (PDF)</button>
         <button class="btn btn-navy btn-sm" id="dpPdfZap"><svg class="ic" aria-hidden="true"><use href="#i-file"/></svg> Resumo do período (PDF) → WhatsApp</button>
       </div>
-      <div id="dpRelCaixa"><div id="dpReciboBox" class="hidden" style="margin-top:12px;padding:11px 14px;border-radius:10px;font-size:14px"></div></div>
+      <div id="dpReciboBox" class="hidden" style="margin-top:12px;padding:11px 14px;border-radius:10px;font-size:14px"></div>
       <div id="dpRel" style="margin-top:16px"></div>
-      </div><!-- /dpAbaRelatorio -->
     </div>
 
     <div id="viewRotina" class="hidden">
@@ -2057,10 +2016,7 @@ function carregarEquipe(){
       if(typeof montarFiltroAgenda==='function') montarFiltroAgenda();
       montarLogin();
       if(typeof iniciarDespesas==='function' && DP_PRONTO){
-        /* v50.2: a equipe chegou depois de a tela abrir — só remonta o
-           seletor de pessoas e a trava. Reabrir a tela inteira (como antes)
-           disparava um SEGUNDO pedido pesado de despesas a cada abertura. */
-        montarFiltroDespesas(); aplicarEscopo();
+        DP_PRONTO=false; iniciarDespesas();
       }
     })
     .catch(function(){ /* offline: segue com a semente */ });
@@ -6690,7 +6646,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v50.2';
+var VERSAO_APP='v50.1';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
@@ -6858,7 +6814,6 @@ function carregarNomes(){
 
 function abrirApp(sessao){
   SESSAO=sessao;
-  DP_ABA=''; DP_AP=null;   /* v50.2: cada papel abre Despesas na sua aba */
   try{ localStorage.setItem(LS_SESSAO, JSON.stringify(sessao)); }catch(e){}
   $('telaLogin').classList.add('pronto');
   document.body.classList.remove('travado');
@@ -6884,7 +6839,6 @@ function aplicarEscopo(){
   if(typeof aplicarPermissaoContatos==='function') aplicarPermissaoContatos();
   if(typeof montarFiltroAgenda==='function') montarFiltroAgenda();
   if(typeof montarFiltroDespesas==='function') montarFiltroDespesas();
-  if(typeof montarAbasDespesas==='function') montarAbasDespesas();
   /* quem lança a despesa é sempre a própria pessoa — vale para todo mundo
      menos a coordenação, e por isso vem ANTES do corte de escopo abaixo */
   var meuNome=travaDespesa();
@@ -7040,7 +6994,7 @@ function filaEnviar(silencioso){
       if(res && res.ok){
         var g=filaLer(); g.shift(); filaGravar(g);
         if(!silencioso) toast('Lançamento enviado.');
-        if(g.length) filaEnviar(silencioso); else if(modo==='despesas') recarregarDespesas();
+        if(g.length) filaEnviar(silencioso); else if(modo==='despesas') carregarDespesas();
       } else if(!silencioso){
         toast('O Google recusou: '+((res&&res.erro)||'erro'));
       }
@@ -7475,237 +7429,8 @@ function iniciarDespesas(){
   /* reaplica depois de montar o filtro — senão a lista completa volta e a
      trava de escopo vira enfeite */
   aplicarEscopo();
-  /* v50.2: abre na aba do papel — quem decide cai na Aprovação, quem lança
-     cai em Lançar. A mesa de aprovação é carregada de qualquer jeito: é ela
-     que alimenta o contador da aba e o aviso em Lançar. */
-  montarAbasDespesas();
-  var aba = DP_ABA || dpAbaPadrao();
-  dpTrocarAba(aba);
-  if(aba!=='aprovacao') carregarAprovacao(true);
+  carregarDespesas();
 }
-
-/* ============ v50.2: AS TRÊS ABAS E A MESA DE APROVAÇÃO ============
-   Lançar → Aprovação → Relatório, na ordem em que o trabalho acontece.
-   A mesa mostra TUDO o que está em aberto, do mês que for, em três blocos:
-   o que espera decisão, o que já foi aprovado (pronto para o recibo) e o
-   que está questionado. Pendência não tem período — por isso não há De/Até
-   aqui; quem quer histórico vai ao Relatório.                           */
-var DP_ABA='', DP_AP=null, DP_AP_PEDIDO=0, DP_GERANDO=false;
-function dpAbaPadrao(){ return ehCoordenador() ? 'aprovacao' : 'lancar'; }
-function montarAbasDespesas(){
-  var n=$('dpAbaNome'); if(n) n.textContent = ehCoordenador() ? 'Aprovação' : 'Minhas despesas';
-  var sub=$('dpApSub'); if(sub) sub.textContent = ehCoordenador()
-    ? 'Tudo o que está em aberto, do mês que for. Decida, e depois mande o recibo de cada pessoa.'
-    : 'Suas despesas em aberto, do mês que for: o que espera o de acordo, o que já foi aprovado e o que tem pergunta.';
-}
-delegar('viewDespesas', {'data-dpaba': function(v){ dpTrocarAba(v); }});
-function dpTrocarAba(v){
-  if(v!=='lancar' && v!=='aprovacao' && v!=='relatorio') v=dpAbaPadrao();
-  DP_ABA=v;
-  Array.prototype.forEach.call(document.querySelectorAll('[data-dpaba]'),function(b){
-    if(b.classList.contains('tab2')) b.className='tab2'+(b.getAttribute('data-dpaba')===v?' sel':'');
-  });
-  $('dpAbaLancar').classList.toggle('hidden', v!=='lancar');
-  $('dpAbaAprovacao').classList.toggle('hidden', v!=='aprovacao');
-  $('dpAbaRelatorio').classList.toggle('hidden', v!=='relatorio');
-  dpPosicionarCaixa();
-  if(v==='aprovacao') carregarAprovacao(false);
-  if(v==='relatorio') carregarDespesas();
-  if(v==='lancar') renderAvisoLancar(DP_AP);
-}
-/* a caixa dos documentos prontos (recibo/resumo) acompanha a aba que pediu;
-   ao trocar de aba ela se recolhe — o arquivo continua no Drive */
-function dpPosicionarCaixa(){
-  var cx=$('dpReciboBox'); if(!cx) return;
-  var alvo = DP_ABA==='aprovacao' ? $('dpApCaixa') : $('dpRelCaixa');
-  if(alvo && cx.parentNode!==alvo){ cx.classList.add('hidden'); alvo.appendChild(cx); }
-}
-/* o que a mesa precisa: todo lançamento NÃO acertado de quem eu enxergo */
-function carregarAprovacao(silencioso){
-  var box=$('dpAp'); if(!box) return;
-  if(!ENVIO_URL){ box.innerHTML='<p class="sub">Indisponível: o envio para o Google não está configurado.</p>'; return; }
-  var meu=++DP_AP_PEDIDO;
-  if(DP_ABA==='aprovacao'){
-    if(DP_AP && DP_AP.ok) box.classList.add('dpEsperando');
-    else box.innerHTML='<p class="sub">Carregando…</p>';
-  }
-  fetch(ENVIO_URL+'?acao=despesas&de=&ate=&incluir=aberto'+souEu())
-    .then(function(r){ return r.json(); })
-    .then(function(res){
-      if(meu!==DP_AP_PEDIDO) return;      /* resposta velha: já pedimos outra */
-      box.classList.remove('dpEsperando');
-      if(!res || !res.ok){
-        if(DP_ABA==='aprovacao' && !silencioso) box.innerHTML='<p class="sub">Não consegui carregar'+(res&&res.erro?': '+esc(res.erro):'')+
-          '. Confira se o Apps Script está na versão nova.</p>';
-        return;
-      }
-      DP_AP=res;
-      atualizarBadgeDespesas(res);
-      renderAvisoLancar(res);
-      if(DP_ABA==='aprovacao') renderAprovacao(res);
-    })
-    .catch(function(){
-      if(meu!==DP_AP_PEDIDO) return;
-      box.classList.remove('dpEsperando');
-      if(DP_ABA==='aprovacao' && !silencioso) box.innerHTML='<p class="sub">Sem conexão com o Google agora.</p>';
-    });
-}
-/* depois de qualquer ação (lançar, aprovar, corrigir, reembolsar): a mesa se
-   atualiza sempre — é ela que tem o contador — e o Relatório só se estiver aberto */
-function recarregarDespesas(){
-  if(modo!=='despesas') return;
-  carregarAprovacao(true);
-  if(DP_ABA==='relatorio') carregarDespesas();
-}
-function dpSplit(r){
-  var it=(r&&r.itens)||[];
-  var pend=it.filter(function(i){ return !i.aprovacao && !i.reembolsada; });
-  var aprov=it.filter(function(i){ return i.aprovacao==='Aprovada' && !i.reembolsada; });
-  var quest=it.filter(function(i){ return i.aprovacao==='Questionada' && !i.reembolsada; });
-  var soma=function(l){ return l.reduce(function(a,i){ return a+(+i.valor||0); },0); };
-  return {pend:pend, aprov:aprov, quest:quest, tPend:soma(pend), tAprov:soma(aprov), tQuest:soma(quest)};
-}
-/* o número na aba é o que pede a SUA ação: decisão para quem aprova,
-   pergunta sem resposta para quem gastou */
-function atualizarBadgeDespesas(r){
-  var b=$('dpAbaBadge'); if(!b) return;
-  var d=dpSplit(r);
-  var n = ehCoordenador() ? d.pend.length
-        : d.quest.filter(function(i){ return mesmaPessoaApp(i.responsavel, euSou()); }).length;
-  b.textContent=n; b.classList.toggle('hidden', !n);
-}
-function renderAvisoLancar(r){
-  var el=$('dpAvisoLancar'); if(!el) return;
-  var h='';
-  if(r && r.ok){
-    var d=dpSplit(r);
-    if(ehCoordenador()){
-      if(d.pend.length) h='<b>'+d.pend.length+' despesa'+(d.pend.length>1?'s':'')+' esperando seu de acordo</b> · '+brl(d.tPend);
-    } else {
-      var q=d.quest.filter(function(i){ return mesmaPessoaApp(i.responsavel, euSou()); });
-      if(q.length) h='<b>'+q.length+' despesa'+(q.length>1?'s':'')+' sua'+(q.length>1?'s':'')+' com pergunta do aprovador</b>';
-    }
-  }
-  if(!h){ el.classList.add('hidden'); el.innerHTML=''; return; }
-  el.innerHTML='<div class="dpBanner">'+ICO('help')+'<span>'+h+'</span>'+
-    '<button class="btn btn-ghost btn-sm" data-dpaba="aprovacao" style="margin-left:auto">Ver</button></div>';
-  el.classList.remove('hidden');
-}
-function renderAprovacao(r){
-  var box=$('dpAp'); if(!box) return;
-  var d=dpSplit(r), coord=ehCoordenador();
-  var h='<div class="kpis dpk">'+
-    '<div class="kpi al"><div class="kv">'+d.pend.length+'</div><div class="kl">'+(coord?'esperando seu de acordo':'esperando o de acordo')+'</div><div class="kx">'+brl(d.tPend)+'</div></div>'+
-    '<div class="kpi ok"><div class="kv">'+d.aprov.length+'</div><div class="kl">'+(coord?'aprovadas, a pagar':'aprovadas, a receber')+'</div><div class="kx">'+brl(d.tAprov)+'</div></div>'+
-    '<div class="kpi ru"><div class="kv">'+d.quest.length+'</div><div class="kl">questionada'+(d.quest.length===1?'':'s')+'</div><div class="kx">'+brl(d.tQuest)+'</div></div>'+
-    '</div>';
-  /* 1) decidir */
-  h+='<h3 class="dpSec">'+(coord?'Esperando seu de acordo':'Esperando o de acordo')+' <span class="badge b-and">'+d.pend.length+'</span>'+
-     (d.pend.length?'<span class="dpSecTot">'+brl(d.tPend)+'</span>':'')+'</h3>';
-  if(!d.pend.length) h+='<div class="dpVazio">'+ICO('check')+' Nada esperando'+(coord?' o seu de acordo.':' de acordo.')+'</div>';
-  d.pend.forEach(function(i){ h+=cardDespesaAp(i,'pend'); });
-  /* 2) fechar o recibo, pessoa por pessoa */
-  h+='<h3 class="dpSec">Aprovadas — '+(coord?'prontas para o recibo':'a receber')+' <span class="badge b-ok">'+d.aprov.length+'</span>'+
-     (d.aprov.length?'<span class="dpSecTot">'+brl(d.tAprov)+'</span>':'')+'</h3>';
-  if(!d.aprov.length) h+='<div class="dpVazio">Nenhuma aprovada em aberto'+(coord?' — nada a pagar no momento.':'.')+'</div>';
-  grupoAprovadas(d.aprov).forEach(function(g){ h+=cardPessoaAp(g); });
-  /* 3) cobrar resposta */
-  h+='<h3 class="dpSec">Questionadas <span class="badge b-nao">'+d.quest.length+'</span>'+
-     (d.quest.length?'<span class="dpSecTot">'+brl(d.tQuest)+'</span>':'')+'</h3>';
-  if(!d.quest.length) h+='<div class="dpVazio">Nenhuma pergunta em aberto.</div>';
-  d.quest.forEach(function(i){ h+=cardDespesaAp(i,'quest'); });
-  h+='<p class="sub" style="margin-top:18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">As já reembolsadas e o histórico por período ficam no '+
-     '<button class="btn btn-ghost btn-sm" data-dpaba="relatorio">Relatório</button></p>';
-  box.innerHTML=h;
-}
-function cardDespesaAp(i, modo){
-  var temFoto = i.comprovante && i.comprovante.indexOf('http')===0;
-  var cor = modo==='quest' ? 'var(--red)' : (temFoto ? 'var(--warn)' : 'var(--red)');
-  var coord=ehCoordenador(), acoes='';
-  if(coord && modo==='pend')  acoes+='<button class="btn btn-primary btn-sm" data-apr="'+i.linha+'">'+ICO('check')+' Aprovar</button>'+
-                                     '<button class="btn btn-ghost btn-sm" data-que="'+i.linha+'">'+ICO('help')+' Questionar</button>';
-  if(coord && modo==='quest') acoes+='<button class="btn btn-primary btn-sm" data-apr="'+i.linha+'">'+ICO('check')+' Aprovar agora</button>';
-  if(podeCorrigir(i)) acoes+='<button class="btn btn-ghost btn-sm" data-dpedit="'+i.linha+'">'+ICO('pencil')+' Corrigir</button>';
-  var p=(i.data||'').split('-');
-  return '<div class="ag" data-dpl="'+i.linha+'" style="border-left-color:'+cor+'">'+
-    '<div class="agd" style="background:'+cor+'"><b>'+(p[2]||'--')+'</b><span>'+mesCurto(p[1])+'</span></div>'+
-    '<div class="agi"><div class="agt">'+brl(i.valor)+' · '+esc(i.tipo||'Outros')+'</div>'+
-    '<div class="ags">'+esc(i.responsavel)+(i.referencia?' · '+esc(i.referencia):'')+
-      (i.estabelecimento&&i.estabelecimento!==i.referencia?' · '+esc(i.estabelecimento):'')+
-      (i.obs?' · '+esc(i.obs):'')+(i.lidoIA?' · <b>lido do comprovante</b>':'')+
-      (i.lancadoEm && i.lancadoEm!==i.data ? ' · lançada em '+dataBr(i.lancadoEm) : '')+'</div></div>'+
-    (temFoto
-      ? '<a class="btn btn-ghost btn-sm" href="'+i.comprovante.split(' | ')[0]+'" target="_blank" rel="noopener noreferrer">'+ICO('clip')+' Ver'+((i.anexos||1)>1?' ('+i.anexos+')':'')+'</a>'
-      : '<span class="badge b-nao">sem comprovante</span>')+
-    (modo==='quest' ? linhaPergunta(i) : '')+
-    (acoes ? '<div class="agb" style="width:100%">'+acoes+'</div>' : '')+
-    '</div>';
-}
-/* uma linha por PESSOA, com a mesma régua de grafia do resto do app */
-function grupoAprovadas(lista){
-  var g={}, ordem=[];
-  lista.forEach(function(i){
-    var k=null;
-    for(var j=0;j<ordem.length;j++){ if(mesmaPessoaApp(ordem[j], i.responsavel)){ k=ordem[j]; break; } }
-    if(!k){ k=i.responsavel||'—'; ordem.push(k); g[k]={nome:k, itens:[], total:0}; }
-    g[k].itens.push(i); g[k].total+=(+i.valor||0);
-  });
-  return ordem.map(function(k){ return g[k]; }).sort(function(a,b){ return b.total-a.total; });
-}
-function cardPessoaAp(g){
-  var coord=ehCoordenador();
-  var linhas=g.itens.slice().sort(function(a,b){ return a.data<b.data?-1:1; }).map(function(i){
-    var foto=i.comprovante && i.comprovante.indexOf('http')===0;
-    return '<div>'+dataBr(i.data).slice(0,5)+' · '+esc(i.referencia||i.tipo||'')+
-      (i.referencia && i.tipo && i.tipo!=='Outros' ? ' ('+esc(i.tipo)+')' : '')+' · <b>'+brl(i.valor)+'</b>'+
-      (foto ? '' : ' · <span style="color:var(--red)">sem comprovante</span>')+'</div>';
-  }).join('');
-  var datas=g.itens.map(function(i){ return i.data; }).sort();
-  var periodo=dataBr(datas[0])+(datas.length>1 && datas[datas.length-1]!==datas[0] ? ' a '+dataBr(datas[datas.length-1]) : '');
-  return '<div class="ag" style="border-left-color:var(--ok)" data-dpgrupo="'+esc(g.nome)+'">'+
-    '<div class="agd" style="background:var(--ok)"><b>'+g.itens.length+'</b><span>desp.</span></div>'+
-    '<div class="agi"><div class="agt">'+esc(g.nome)+' · '+brl(g.total)+'</div>'+
-    '<div class="ags">'+periodo+'</div>'+
-    '<div class="dpMini">'+linhas+'</div></div>'+
-    '<div class="agb" style="width:100%">'+
-      '<button class="btn btn-navy btn-sm" data-dprecibo="'+esc(g.nome)+'">🧾 Recibo (PDF) → WhatsApp</button>'+
-      (coord ? '<button class="btn btn-ghost btn-sm" data-dpall="'+esc(g.nome)+'">'+ICO('check')+' Marcar reembolsadas</button>' : '')+
-    '</div></div>';
-}
-/* o recibo da pessoa sai daqui com a régua certa, sem ninguém escolher
-   período: só as aprovadas em aberto dela, da primeira à última data */
-function reciboDaPessoa(nome){
-  var d=dpSplit(DP_AP);
-  var itens=d.aprov.filter(function(i){ return mesmaPessoaApp(i.responsavel, nome); });
-  if(!itens.length){ toast('Nada aprovado em aberto para '+nome+'.'); return; }
-  var datas=itens.map(function(i){ return i.data; }).sort();
-  gerarRecibos(datas[0], datas[datas.length-1], nome, 'aprovadas', '');
-}
-/* a despesa pode estar na mesa (DP_AP) ou no relatório (DP_DADOS) */
-function acharDespesa(linha){
-  var fontes=[DP_AP&&DP_AP.itens, DP_DADOS&&DP_DADOS.itens, DP_DADOS&&DP_DADOS.acertados];
-  for(var f=0;f<fontes.length;f++){
-    var l=fontes[f]||[];
-    for(var i=0;i<l.length;i++){ if(String(l[i].linha)===String(linha)) return l[i]; }
-  }
-  return null;
-}
-function perguntarDespesa(linha){
-  var i=acharDespesa(linha);
-  var dono=(i&&i.responsavel)||'quem lançou';
-  /* v50.1: a pergunta vai para a tela do dono e por e-mail — o texto diz isso
-     antes de a pessoa escrever, para ela escrever para o dono, não para si */
-  var m=prompt('Pergunta para '+dono+' — aparece na tela de Despesas dele(a) e vai por e-mail:');
-  if(m===null) return;
-  decidir(linha,'questionada',m);
-}
-delegar('dpAp', {
-  'data-apr':      function(linha){ decidir(linha,'aprovada',''); },
-  'data-que':      function(linha){ perguntarDespesa(linha); },
-  'data-dpedit':   function(l){ abrirCorrigir(l); },
-  'data-dpall':    function(nome){ acertarTudo(nome); },
-  'data-dprecibo': function(nome){ reciboDaPessoa(nome); }
-});
 
 /* ---------- ANEXOS: fotos e PDFs ----------
    Foto sai do celular com 4 MB. Reduzida para 1000px e JPEG 70% fica com
@@ -7951,8 +7676,8 @@ function lancarLote(){
       $('dpSalvar').disabled=false;
       dpLimparForm();
       dpBox('ok', ICO('check')+' <b>'+enviados+' despesa(s) lançada(s).</b>'+
-        (guardados? ' '+guardados+' ficaram na fila esperando sinal.' : '')+' Já está na fila de aprovação.');
-      recarregarDespesas();
+        (guardados? ' '+guardados+' ficaram na fila esperando sinal.' : '')+' Relatório atualizado.');
+      carregarDespesas();
       return;
     }
     var doc = fila.shift();
@@ -8051,8 +7776,8 @@ $('dpSalvar').onclick=function(){
       dpLimparForm();
       dpBox('ok',ICO('check')+' '+brl(v.replace(/\./g,'').replace(',','.'))+' lançado com '+
         (n ? n+' comprovante'+(n>1?'s':'') : '<b>nenhum comprovante</b>')+
-        (lido?' · dados lidos do comprovante':'')+'. Já está na fila de aprovação.');
-      recarregarDespesas();
+        (lido?' · dados lidos do comprovante':'')+'. Relatório atualizado.');
+      carregarDespesas();
     })
     .catch(function(){
       /* sem sinal: guarda no aparelho em vez de perder */
@@ -8392,23 +8117,21 @@ function reembolsar(linhas, desfazer){
         toast(desfazer
           ? 'Acerto desfeito — voltou para a lista em aberto.'
           : res.feitas+' despesa(s) · '+brl(res.valor)+' foram para o resumo do que já foi acertado.');
-        recarregarDespesas();
+        carregarDespesas();
       } else toast('Não consegui: '+((res&&res.erro)||'erro'));
     })
     .catch(function(){ toast('Sem sinal — nada foi alterado.'); });
 }
 
 function acertarTudo(nome){
-  /* v50.2: vale na mesa de aprovação (DP_AP) e no relatório (DP_DADOS) */
-  var fonte = (DP_ABA==='aprovacao' && DP_AP && DP_AP.ok) ? DP_AP : DP_DADOS;
-  var itens=(fonte&&fonte.itens||[]).filter(function(i){
-      return mesmaPessoa(i.responsavel, nome) && i.aprovacao==='Aprovada' && !i.reembolsada;
-    });
-  var linhas=itens.map(function(i){ return i.linha; });
-  var total=itens.reduce(function(a,i){ return a+(+i.valor||0); },0);
+  var p=(DP_DADOS&&DP_DADOS.pessoas||[]).filter(function(x){ return x.nome===nome; })[0];
+  if(!p){ toast('Não encontrei essa pessoa no relatório.'); return; }
+  var linhas=(DP_DADOS.itens||[]).filter(function(i){
+      return mesmaPessoa(i.responsavel, nome) && i.aprovacao==='Aprovada';
+    }).map(function(i){ return i.linha; });
   if(!linhas.length){ toast('Nada aprovado e em aberto para '+nome+'.'); return; }
   if(!confirm('Marcar como reembolsadas '+linhas.length+' despesa(s) de '+nome+
-      ', no total de '+brl(total)+'?\n\nElas saem da lista em aberto e vão para o resumo do que já foi acertado.')) return;
+      ', no total de '+brl(p.aPagar||0)+'?\n\nElas saem da lista em aberto e vão para o resumo do que já foi acertado.')) return;
   reembolsar(linhas, false);
 }
 
@@ -8426,7 +8149,7 @@ function podeCorrigir(i){
 delegar('dpRel', {'data-dpedit': function(l){ abrirCorrigir(l); }});
 
 function abrirCorrigir(linha){
-  var i=acharDespesa(linha);
+  var i=(DP_DADOS&&DP_DADOS.itens||[]).filter(function(x){ return String(x.linha)===String(linha); })[0];
   if(!i) return;
   DP_EDIT=i;
   $('dpeSub').textContent='Lançada em '+dataBr(i.data)+' por '+i.responsavel+'.';
@@ -8463,7 +8186,7 @@ $('dpeSalvar').onclick=function(){
       if(!res || !res.ok){ dpeBox('erro',(res&&res.erro)||'Não consegui salvar.'); return; }
       $('modalDpEdit').classList.remove('show');
       toast(res.reabriu ? 'Corrigida — voltou a aguardar aprovação.' : 'Corrigida.');
-      recarregarDespesas();
+      carregarDespesas();
     })
     .catch(function(){ $('dpeSalvar').disabled=false; dpeBox('erro','Sem sinal — nada foi alterado.'); });
 };
@@ -8479,7 +8202,7 @@ $('dpeExcluir').onclick=function(){
       if(res && res.ok){
         $('modalDpEdit').classList.remove('show');
         toast('Estornada. Sai do relatório, fica no registro da planilha.');
-        recarregarDespesas();
+        carregarDespesas();
       } else toast('Não consegui estornar: '+((res&&res.erro)||'erro'));
     })
     .catch(function(){ toast('Sem sinal.'); });
@@ -8508,7 +8231,15 @@ function selo(i){
    fato consumado e a conversa acontece fora do app — ou não acontece. */
 delegar('dpRel', {
   'data-apr': function(linha){ decidir(linha,'aprovada',''); },
-  'data-que': function(linha){ perguntarDespesa(linha); },
+  'data-que': function(linha){
+    var i=(DP_DADOS&&DP_DADOS.itens||[]).filter(function(x){ return String(x.linha)===String(linha); })[0];
+    var dono=(i&&i.responsavel)||'quem lançou';
+    /* v50.1: a pergunta vai para a tela do dono e por e-mail — o texto diz isso
+       antes de a pessoa escrever, para ela escrever para o dono, não para si */
+    var m=prompt('Pergunta para '+dono+' — aparece na tela de Despesas dele(a) e vai por e-mail:');
+    if(m===null) return;
+    decidir(linha,'questionada',m);
+  },
   'data-dpver': function(linha){ dpVerLinha(linha); }
 });
 function decidir(linha, decisao, motivo){
@@ -8523,7 +8254,7 @@ function decidir(linha, decisao, motivo){
         toast(decisao==='aprovada' ? 'Aprovada.'
           : res.emailEnviado ? 'Questionada — '+(dono||'a pessoa')+' vê a pergunta no app e recebeu por e-mail.'
           : 'Questionada — fica na tela de Despesas'+(dono?' de '+dono:'')+' (sem e-mail cadastrado para avisar).');
-        recarregarDespesas();
+        carregarDespesas();
       }
       else toast('Não consegui gravar: '+((res&&res.erro)||'erro'));
     })
@@ -8651,26 +8382,15 @@ function reciboBox(cor,html){
   var e={info:['#eef3ff','#1C3F8F'],ok:['#e9f7ef','#1a8f5a'],erro:['#fdeaea','#D32027']}[cor];
   b.style.background=e[0]; b.style.color=e[1]; b.style.border='1.5px solid '+e[1];
   b.innerHTML=html; b.classList.remove('hidden');
-  /* v50.2: na mesa de aprovação o botão fica no meio da lista e a caixa no
-     topo — rola até ela, senão a pessoa toca e acha que nada aconteceu */
-  if(DP_ABA==='aprovacao'){ try{ b.scrollIntoView({behavior:'smooth', block:'center'}); }catch(err){} }
 }
 $('dpRecibo').onclick=function(){
-  gerarRecibos($('dpDe').value, $('dpAte').value, $('dpFiltro').value, dpIncluir(), dpPor());
-};
-/* v50.2: uma função só. O Relatório chama com a régua dos filtros; a mesa de
-   aprovação chama por pessoa, com "só aprovadas em aberto" e o período das
-   próprias despesas — sem ninguém escolher De/Até. */
-function gerarRecibos(de, ate, responsavel, incluir, por){
+  var de=$('dpDe').value, ate=$('dpAte').value;
   if(!de || !ate){ reciboBox('erro','Escolha o período (De / Até) antes de gerar o recibo.'); return; }
-  if(DP_GERANDO){ toast('Já estou gerando um documento — aguarde terminar.'); return; }
-  DP_GERANDO=true;
-  var bt=$('dpRecibo'); if(bt) bt.disabled=true;
-  reciboBox('info','Gerando o(s) recibo(s)'+(responsavel?' de '+esc(responsavel):'')+' com o detalhamento e as notas originais dentro… pode levar um ou dois minutos.');
-  enviar({ tipo:'reciboReembolso', de:de, ate:ate, por:por||'', incluir:incluir||'',
-           responsavel:responsavel||'', quem:euSou() }, function(res){
-    DP_GERANDO=false;
-    if(bt) bt.disabled=false;
+  var bt=$('dpRecibo'); bt.disabled=true;
+  reciboBox('info','Gerando o(s) recibo(s) com o detalhamento e as notas originais dentro… pode levar um ou dois minutos.');
+  enviar({ tipo:'reciboReembolso', de:de, ate:ate, por:dpPor(), incluir:dpIncluir(),
+           responsavel:$('dpFiltro').value, quem:euSou() }, function(res){
+    bt.disabled=false;
     if(!res || !res.ok){
       reciboBox('erro','Não consegui gerar: '+((res&&res.erro)||'sem conexão'));
       return;
@@ -8699,7 +8419,7 @@ function gerarRecibos(de, ate, responsavel, incluir, por){
                   : '"Recibos de reembolso"')+'.</div>';
     reciboBox('ok',h);
   });
-}
+};
 
 
 /* ============ O PDF NA MÃO, NÃO O LINK ============
