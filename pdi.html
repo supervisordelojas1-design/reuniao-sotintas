@@ -1,0 +1,715 @@
+<!doctype html><html lang="pt-BR" data-theme="dark" style="color-scheme:dark"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>PDI Comercial · Só Tintas</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Mesmo visual do Níveis (tema escuro padrão, claro opcional) */
+:root{
+  --bg:#0f1522; --surface:#1a2336; --surface2:#222d44; --ink:#eef2fb; --muted:#9aa5bb; --line:#2c3850;
+  --accent:#ff3b47; --navy:#4f7cf0; --ok:#3fbf7f; --bad:#ff6b6b; --warn:#ffab5e;
+  --p1:#ff6b6b; --p1bg:#3a1a20; --p2:#ffab5e; --p2bg:#3a2717; --p3:#E6B935; --p3bg:#352f15; --p4:#3fbf7f; --p4bg:#12301f; --pi:#8fb0ff; --pibg:#1e2b4d;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Public Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+html[data-theme="light"]{
+  --bg:#f5f7fb; --surface:#ffffff; --surface2:#eef2f8; --ink:#16233d; --muted:#5a677f; --line:#e4e9f3;
+  --navy:#1C3F8F; --ok:#178048; --bad:#c42a22; --warn:#b35600;
+  --p1:#c42a22; --p1bg:#fdeceb; --p2:#b35600; --p2bg:#ffefdd; --p3:#7d6300; --p3bg:#fbf3d2; --p4:#178048; --p4bg:#e1f3e8; --pi:#1C3F8F; --pibg:#e7edf9;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45;transition:background .18s,color .18s}
+.wrap{max-width:1180px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-right,0px)) 48px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:16px}
+.topbar{height:8px;background:var(--accent);border-radius:0 0 6px 6px;margin:-20px 0 4px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(24px,4vw,36px);line-height:1.05;margin:4px 0 0;color:var(--accent)}
+.sub{color:var(--muted);font-size:13px}
+.hd-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.themebtn{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:700 13px var(--f-body);padding:7px 12px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;line-height:1}
+.themebtn:hover{border-color:var(--navy)}
+.status{font-size:12px;color:var(--muted)}
+.status b{color:var(--ink)}
+.cardx{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:grid;gap:10px}
+.cardx h3{font-family:var(--f-display);margin:0;font-size:18px}
+.cardx.info{border-left:6px solid var(--navy)}
+.cardx.erro{border-left:6px solid var(--bad)}
+.row-f{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.row-f label{display:grid;gap:4px;font-size:12px;font-weight:700;color:var(--muted)}
+.row-f input{font:500 14px var(--f-body);padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);min-width:0}
+.btn{border:0;border-radius:9px;padding:9px 14px;font:700 13px var(--f-body);cursor:pointer;background:var(--navy);color:#fff}
+.btn.pequeno{padding:7px 12px;font-size:12.5px}
+.btn.contorno{background:transparent;border:1px solid var(--line);color:var(--ink)}
+.btn.verde{background:var(--ok);color:#0b1a12}
+.btn.azul{background:var(--navy);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.mt-1{margin-top:8px}
+
+/* ===== PDI ===== */
+.pdi{container-type:inline-size;display:grid;gap:12px}
+.pdi-meta{color:var(--muted);font-size:12.5px;margin:4px 0}
+.pdi-ok{color:var(--ok);font-weight:700}.pdi-bad{color:var(--bad);font-weight:700}.pdi-warn{color:var(--warn);font-weight:700}
+.pdi-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.pdi-kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:left;font:inherit;color:inherit;min-width:0}
+button.pdi-kpi{cursor:pointer}
+.pdi-kpi b{display:block;font-family:var(--f-display);font-weight:800;font-size:24px;line-height:1.05;font-variant-numeric:tabular-nums}
+.pdi-kpi span{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.pdi-kpi.k-P1{border-left:6px solid var(--p1)}.pdi-kpi.k-P2{border-left:6px solid var(--p2)}.pdi-kpi.k-P3{border-left:6px solid var(--p3)}.pdi-kpi.k-P4{border-left:6px solid var(--p4)}
+.pdi-kpi.on{outline:2px solid var(--navy)}
+.pdi-tabs{display:inline-flex;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px;gap:4px;justify-self:start}
+.pdi-tabs button{border:0;background:transparent;color:var(--muted);font:700 13px var(--f-body);padding:8px 16px;border-radius:999px;cursor:pointer}
+.pdi-tabs button[aria-selected="true"]{background:var(--navy);color:#fff}
+.pdi-filtros{display:flex;flex-wrap:wrap;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.pdi select,.pdi textarea,.pdi input[type=text],.pdi input[type=date],.pdi input[type=search]{font:500 13px var(--f-body);padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);min-width:0}
+.pdi-filtros input{flex:1 1 180px}
+.pdi textarea{width:100%;min-height:58px;resize:vertical}
+.pdi-lista{display:flex;flex-direction:column;gap:8px}
+.pdi-row{display:grid;grid-template-columns:36px 54px minmax(0,1.5fr) minmax(0,1fr) 150px 110px 16px;gap:12px;align-items:center;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;font:inherit;color:inherit}
+.pdi-row:hover{border-color:var(--navy)}
+.pdi-row.l-P1{border-left-color:var(--p1)}.pdi-row.l-P2{border-left-color:var(--p2)}.pdi-row.l-P3{border-left-color:var(--p3)}.pdi-row.l-P4{border-left-color:var(--p4)}.pdi-row.l-PI{border-left-color:var(--pi)}
+.pdi-pos{font-family:var(--f-display);font-weight:800;font-size:20px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pdi-quem{min-width:0}.pdi-nm{font-weight:700;font-size:15px}
+.pdi-prog{display:block;font-size:11px;font-weight:700;color:var(--navy);margin-top:2px}
+html[data-theme="dark"] .pdi-prog{color:#8fb0ff}
+.pdi-score{font-family:var(--f-display);font-weight:800;font-size:24px;font-variant-numeric:tabular-nums;line-height:1}.pdi-score small{font-size:12px;color:var(--muted);font-family:var(--f-body)}
+.pdi-stack{display:flex;height:7px;border-radius:4px;overflow:hidden;background:var(--surface2);margin-top:4px}
+.pdi-stack i{display:block;height:100%}.s-res{background:#ff3b47}.s-cpf{background:#f59e2a}.s-cnpj{background:#4f7cf0}.s-cur{background:#8a93a2}
+.pdi-chev{color:var(--muted);transition:transform .2s}.pdi-row[aria-expanded="true"] .pdi-chev{transform:rotate(90deg)}
+.pdi-spark{display:block}
+.pdi-badge{display:inline-block;font-family:var(--f-display);font-weight:800;font-size:12px;letter-spacing:.03em;padding:3px 9px;border-radius:7px;text-align:center}
+.b-P1{background:var(--p1bg);color:var(--p1)}.b-P2{background:var(--p2bg);color:var(--p2)}.b-P3{background:var(--p3bg);color:var(--p3)}.b-P4{background:var(--p4bg);color:var(--p4)}.b-PI{background:var(--pibg);color:var(--pi)}
+.pdi-ficha{background:var(--surface);border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;margin-top:-10px;padding:16px;display:grid;gap:18px}
+.pdi-ficha h4,.pdi-box h4{margin:0 0 8px;font-family:var(--f-display);font-size:16px}
+.pdi-ficha p,.pdi-box p{font-size:13px;margin:0 0 6px;max-width:85ch}
+.pdi-facts{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.pdi-fact{background:var(--surface2);border-radius:10px;padding:8px 10px;min-width:0}
+.pdi-fact span{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700}
+.pdi-fact b{font-family:var(--f-display);font-weight:800;font-size:20px;font-variant-numeric:tabular-nums}
+.pdi-fact.money{background:var(--p1bg)}.pdi-fact.money b{color:var(--p1)}
+.pdi-grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.pdi-tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.pdi-t{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+.pdi-t th,.pdi-t td{padding:7px 9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.pdi-t th{background:var(--bg);font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);font-weight:700}
+.pdi-metas{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.pdi-metas li{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px;background:var(--surface2);border-radius:10px;padding:8px 10px;font-size:13px}
+.pdi-metas li b{font-family:var(--f-display)}.pdi-metas li.minha{outline:2px solid var(--ok)}
+.pdi-mods{display:flex;flex-wrap:wrap;gap:6px}.pdi-mods span{background:var(--pibg);color:var(--pi);border-radius:7px;padding:4px 9px;font-size:12px;font-weight:700}
+.pdi-acoes{display:grid;gap:10px}
+.pdi-acao{border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.pdi-acao-t{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;font-size:14px}
+.pdi-lbl{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-right:6px}
+.pdi-track{display:flex;gap:8px;flex-wrap:wrap;border-top:1px dashed var(--line);padding-top:8px;margin-top:6px}.pdi-track input{flex:1 1 220px}
+.pdi-box{background:var(--surface2);border-radius:12px;padding:12px 14px;display:grid;gap:8px;align-content:start}
+.pdi-q{display:grid;gap:4px;font-size:12.5px;font-weight:700}.pdi-q.pdi-inline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pdi-scale{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;align-items:center;font-size:12.5px}
+.pdi-pts{display:flex;gap:4px}
+.pdi-pt{width:30px;height:30px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-weight:800;cursor:pointer}
+.pdi-pt[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+.pdi-diag{font-weight:700;font-size:12.5px;padding:8px 10px;border-radius:9px}.pdi-diag.treinar{background:var(--p2bg);color:var(--p2)}.pdi-diag.cobrar{background:var(--p1bg);color:var(--p1)}.pdi-diag.ok{background:var(--p4bg);color:var(--p4)}
+.pdi-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.pdi-dist{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--surface2)}.pdi-dist i{display:block;height:100%}.d-P1{background:var(--p1)}.d-P2{background:var(--p2)}.d-P3{background:var(--p3)}.d-P4{background:var(--p4)}
+.pdi-link{background:none;border:0;padding:0;color:var(--navy);font-weight:700;cursor:pointer;text-align:left;font:inherit}
+html[data-theme="dark"] .pdi-link{color:#8fb0ff}
+.pdi-metodo p{font-size:13px;max-width:80ch}
+.pdi-toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 15px;border-radius:9px;font-weight:700;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:60}
+.pdi-toast.on{opacity:1}
+.pdi-copia{position:fixed;inset:20% 5% auto;height:50%;z-index:70}
+.pdi :focus-visible,.btn:focus-visible,.themebtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@container (max-width:720px){
+  .pdi-row{grid-template-columns:28px 48px minmax(0,1fr) 64px 14px;gap:8px}
+  .pdi-row .pdi-c-num,.pdi-row .pdi-c-spark{display:none}
+  .pdi-grid2{grid-template-columns:minmax(0,1fr)}
+  .pdi-facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pdi-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pdi-kpis>:last-child{grid-column:1/-1}
+  .pdi-tabs{border-radius:14px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body>
+<div class="wrap">
+  <div class="topbar"></div>
+  <header>
+    <div><div class="eyebrow">Só Tintas · Gestão</div><h1>PDI Comercial</h1><div class="sub" id="sub">Prioridade de desenvolvimento e acompanhamento dos vendedores</div></div>
+    <div class="hd-actions">
+      <span class="status" id="status"></span>
+      <button type="button" class="btn pequeno" id="btnBase" hidden>Atualizar base do mês</button>
+      <button type="button" class="themebtn" id="btnTema"><span id="temaIc">🌙</span> <span id="temaTx">Escuro</span></button>
+    </div>
+  </header>
+  <section class="cardx" id="cardBase" hidden>
+    <h3>Atualizar a base do mês</h3>
+    <p class="pdi-meta" style="margin:0">Escolha o arquivo <b>PDI_dados_&lt;mês&gt;.json</b> gerado pela rotina do PDI (todo dia 5, na pasta Downloads). A base nova vale para toda a rede; cada supervisor continua vendo só as lojas dele. O acompanhamento já registrado é mantido.</p>
+    <div class="row-f">
+      <label>Arquivo da base<input type="file" id="arqBase" accept=".json,application/json"></label>
+      <label>Rótulo (aparece para os supervisores)<input type="text" id="rotBase" placeholder="base setembro/2026 · parcial de outubro" style="width:300px;max-width:100%"></label>
+      <button type="button" class="btn verde" id="btnPublicar" disabled>Publicar base</button>
+    </div>
+    <div id="previa" class="pdi-meta"></div>
+  </section>
+  <div id="pdi-root"><p class="pdi-meta">Carregando o PDI…</p></div>
+</div>
+<script>
+/* ===== Tema claro/escuro (compartilhado: ?tema=... ou localStorage 'st_tema'; padrão escuro) ===== */
+(function(){
+  function qp(n){try{return new URLSearchParams(location.search).get(n);}catch(e){return null;}}
+  function ls(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+  var p=(qp('tema')||'').toLowerCase();
+  var t = (p==='claro'||p==='light') ? 'light' : (p==='escuro'||p==='dark') ? 'dark' : null;
+  if(!t){ var s=(ls('st_tema')||'').toLowerCase(); t=(s==='light'||s==='claro')?'light':'dark'; }
+  window.__setTema=function(tema){
+    var ic=document.getElementById('temaIc'), tx=document.getElementById('temaTx');
+    document.documentElement.setAttribute('data-theme',tema);
+    document.documentElement.style.colorScheme = tema;
+    if(ic) ic.textContent = tema==='light' ? '☀️' : '🌙';
+    if(tx) tx.textContent = tema==='light' ? 'Claro' : 'Escuro';
+    try{localStorage.setItem('st_tema',tema);}catch(e){}
+    try{ if(window.parent && window.parent!==window) window.parent.postMessage({st_tema:tema},'*'); }catch(e){}
+  };
+  window.__setTema(t);
+  window.addEventListener('message',function(ev){ var d=ev&&ev.data; if(d&&(d.st_tema==='light'||d.st_tema==='dark')) window.__setTema(d.st_tema); });
+  document.getElementById('btnTema').onclick=function(){ var cur=document.documentElement.getAttribute('data-theme')==='light'?'light':'dark'; window.__setTema(cur==='light'?'dark':'light'); };
+})();
+</script>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   MENTOR ST PRO — PDI Comercial (Plano de Desenvolvimento Individual)
+   Ranking de prioridade, ficha de PDI e acompanhamento por vendedor.
+   Usado no app (aba Equipe → PDI) e no Painel do Gestor (seção PDI).
+
+   Quem vê: gerente (a loja), supervisor (as lojas da região) e
+   coordenador (a rede). Os dados chegam já recortados pelo escopo:
+   no Supabase a RLS garante isso no servidor; na demo, o filtro é local.
+
+   Base mensal: JSON gerado pela rotina do PDI (PDI_dados_<mês>.json),
+   importado pelo coordenador no Painel do Gestor → PDI.
+   ═══════════════════════════════════════════════════════════════ */
+(function (global) {
+  'use strict';
+
+  const FX = { 3: [50000, 70000, 100000, 150000], 2: [40000, 60000, 90000, 110000], 1: [30000, 50000, 65000, 85000] };
+  const NL = { 3: 'Ouro', 2: 'Prata', 1: 'Bronze' }, NV = { 1: 'Iniciante', 2: 'Júnior', 3: 'Pleno', 4: 'Sênior', 5: 'Elite' };
+  const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set'];
+  const DU = 26;
+  const TN = { P1: 'P1 Crítico', P2: 'P2 Alta', P3: 'P3 Desenvolver', P4: 'P4 Potencializar', PI: 'Integração' };
+  const hojeIso = () => new Date().toISOString().slice(0, 10);
+
+  const brl = v => v == null ? '—' : 'R$ ' + Math.round(v).toLocaleString('pt-BR');
+  const pct = v => v == null ? '—' : (v * 100).toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + '%';
+  const pct1 = v => v == null ? '—' : (v * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+  const n1 = v => v == null ? '—' : Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+  const dt = s => s ? String(s).slice(0, 10).split('-').reverse().join('/') : '—';
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const tc = s => String(s || '').toLowerCase().replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toUpperCase()).replace(/\b(De|Da|Do|Dos|Das|E)\b/g, w => w.toLowerCase());
+  const limpaNome = n => tc(String(n).replace(/\s+N\s?\d+$/, '').replace(/\s+\d+$/, ''));
+  const chaveDe = (c, n) => (String(c) + '-' + n).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '-').toLowerCase();
+  const tierDe = v => v.m < 3 ? 'PI' : v.sc.final >= 65 ? 'P1' : v.sc.final >= 50 ? 'P2' : v.sc.final >= 35 ? 'P3' : 'P4';
+  const primeiro = v => v.nome.split(' ')[0];
+
+  /* ---------- Trilha MENTOR ST PRO por gap ---------- */
+  const MOD = {
+    res: ['Jornada dos 30 dias', 'Assessor · Calculadora de Materiais'],
+    ident: ['Módulo 8 · Ficha de Vistoria de Obra', 'Assessor · Checklist Rápido da Parede'],
+    itens: ['Módulo 6 · Checklist Pré-Pintura', 'Módulo 1 · Pintura sem Retrabalho', 'Calculadora · complementos'],
+    ticket: ['Módulo 1 · Pintura sem Retrabalho', 'Assessor · Produtos e Especificador', 'Módulo 5 · 100 Combinações de Cores'],
+    desc: ['Módulo 3 · Atlas das Patologias', 'Assessor · Especificador'],
+    cnpj: ['Módulo 8 · Ficha de Vistoria de Obra', 'Módulo 2 · Superfície × Preparação'],
+    curva: ['Minha Evolução (níveis V1→V5)'],
+    integ: ['Trilha EAD completa (8 módulos)', 'Avaliação final', 'Perfil DISC', 'Jornada dos 30 dias']
+  };
+  /* ---------- DISC: como conduzir a conversa ---------- */
+  const DISC = {
+    D: { n: 'Executor (D)', t: 'Vá direto ao número e ao desafio. Dê a meta e deixe que ele escolha o caminho. Elogie resultado, não esforço. Evite reuniões longas.', ex: '"Faltam R$ 1.200 por dia. Como você vai buscar?"', an: 'Como o Romário: quer saber onde está o gol, não a teoria do esquema tático.' },
+    I: { n: 'Comunicador (I)', t: 'Comece pela relação e pelo reconhecimento. Transforme a meta em desafio público ou campanha. Combine poucas coisas por vez e confira com frequência, porque ele dispersa.', ex: '"Você é o melhor da loja no balcão; vamos mostrar isso no CPF?"', an: 'Como a Anitta: rende mais no palco, com plateia. Dê palco ao progresso dele.' },
+    S: { n: 'Planejador (S)', t: 'Explique o passo a passo e o porquê de cada mudança. Uma mudança por vez, com apoio por perto nos primeiros dias. Não cobre em público.', ex: '"Nesta semana, só o CPF no começo do atendimento. Eu fico perto para ajudar."', an: 'Como o Bernardinho montando o time: treino repetido, rotina, segurança antes da pressão.' },
+    C: { n: 'Analista (C)', t: 'Mostre os dados e a regra. Ele precisa entender a lógica do indicador e ver a evolução em números. Dê tempo para pensar antes de cobrar resposta.', ex: '"Seu ticket médio é R$ 129; a média da loja é R$ 180. Veja de onde vem a diferença."', an: 'Como o Senna estudando a telemetria: melhora quando entende o dado de cada curva.' }
+  };
+  /* ---------- Observação em campo ---------- */
+  const CAMPO = [['abord', 'Abordagem em até 1 minuto, com cumprimento e pergunta aberta'], ['diag', 'Diagnóstico da obra (ambiente, superfície, estado da parede)'], ['premium', 'Apresenta a linha premium primeiro, com custo por ano'], ['kit', 'Oferece o kit completo (fundo, massa, rolo, fita, lona)'], ['obje', 'Trata objeção de preço com valor e benefício antes de desconto'], ['fech', 'Fecha a venda e pede o CPF / cadastro']];
+
+  /* ═════════════ Preparação da base ═════════════ */
+  function preparar(base) {
+    const V = (base && base.V || []).map(x => Object.assign({}, x));
+    V.forEach(v => { v.nome = limpaNome(v.n); v.tier = tierDe(v); v.id = chaveDe(v.c, v.n); v.loja_id = Number(v.c); });
+    const RANK = V.filter(v => v.tier !== 'PI').sort((a, b) => b.sc.final - a.sc.final); RANK.forEach((v, i) => { v.pos = i + 1; });
+    const INTEG = V.filter(v => v.tier === 'PI').sort((a, b) => b.sc.final - a.sc.final);
+    return { base, RANK, INTEG, ALL: RANK.concat(INTEG), REST: Math.max(1, Math.round(DU * (1 - (base.fator || 0.5)))) };
+  }
+
+  /* ═════════════ Biblioteca de ações (ação · comportamento · exemplo · analogia) ═════════════ */
+  function acoesDe(v, REST) {
+    const A = [], falta = Math.max(0, v.mo - v.fo), dia = falta / REST, P = primeiro(v);
+    const res = v.a3 == null ? v.pj : v.a3;
+    if (res != null && res < 0.95) A.push({ k: 'res', peso: (1 - res) * 6 + 0.5, t: 'Ritmo diário de meta',
+      a: `Abrir o dia com o número de ${P}: faltam ${brl(falta)} para a meta do mês em ${REST} dias úteis, o que dá ${brl(dia)} por dia. Fechar o dia comparando o feito com esse número.`,
+      c: `${P} sabe dizer de cabeça, às 12h e às 16h, quanto já vendeu no dia e quanto falta. Quando está abaixo do ritmo, procura o gerente antes das 16h para combinar a reação, e não no fechamento.`,
+      e: `Média de ${pct(res)} da meta nos últimos 3 meses e ${v.ab} de ${v.n6} meses abaixo de 95%. O ritmo do mês atual projeta ${pct(v.pj)}.`,
+      an: 'É o Brasileirão de pontos corridos: ninguém é campeão na última rodada. Quem perde ponto em casa toda semana chega em dezembro fazendo conta.' });
+    if (v.td != null && v.td < -0.1) A.push({ k: 'queda', peso: -v.td * 2, t: 'Recuperar a consistência',
+      a: `Entender com ${P}, em conversa individual de 20 minutos, o que mudou de um trimestre para o outro (${pct(res - v.td)} → ${pct(res)}): mix, clientes que pararam, rotina, motivação. Sair da conversa com 1 compromisso escrito.`,
+      c: `Nas duas semanas seguintes, ${P} traz ao gerente, sem ser cobrado, o retorno dos clientes que deixaram de comprar.`,
+      e: `Queda de ${Math.round(-v.td * 100)} pontos percentuais de atingimento de um trimestre para o outro.`,
+      an: 'É o jogador que perdeu ritmo de jogo: não adianta só cobrar gol, ele precisa de pré-temporada, treino de fundamento e minutos em campo.' });
+    const cp = v.cpk, cv = v.cpf;
+    if (!cp.ident) A.push({ k: 'ident', peso: 1.2, t: 'Identificar o cliente (CPF ≥ 80%)',
+      a: 'Pedir o CPF no começo do atendimento, junto com a pergunta "é para que ambiente?", e não no caixa.',
+      c: `Em 10 atendimentos observados no balcão, ${P} pede o CPF antes de começar a cotar em pelo menos 8. O gerente confere o % do dia no sistema no fechamento.`,
+      e: `Média de ${pct(cv.ident)} de vendas identificadas nos últimos 3 meses; no mês atual, ${pct(v.oi.ident)}. Meta: 80%.`,
+      an: 'É o garçom do boteco que anota o nome do cliente fiel: na próxima vez ele já sabe a cerveja e o tira-gosto. Sem nome, todo cliente é desconhecido.' });
+    if (!cp.itens) A.push({ k: 'itens', peso: 1.3, t: 'Venda do kit completo (itens ≥ 2,5)',
+      a: 'Usar o checklist da pintura em toda venda de tinta: fundo/selador, massa, lixa, rolo, fita, lona. Oferecer no mínimo 2 complementos antes de fechar.',
+      c: `Antes de imprimir o orçamento, ${P} pergunta pela preparação da parede e mostra os acessórios na mão. O gerente olha 5 cupons por dia e conta itens por venda.`,
+      e: `Média de ${n1(cv.itens)} itens por venda CPF. Meta: 2,5.`,
+      an: 'É como servir feijoada: ninguém leva só o feijão. Vem arroz, couve, farofa e laranja, e é isso que faz o prato completo.' });
+    if (!cp.ticket) A.push({ k: 'ticket', peso: 1.3, t: 'Subir o ticket CPF (≥ R$ 200)',
+      a: 'Apresentar primeiro a linha premium e mostrar o custo por ano de pintura (Super Lavável dura até 8 anos, a econômica dura 1). Só descer um degrau depois que o cliente confirmar que o valor está fora da realidade dele.',
+      c: `${P} abre a conversa pela linha de maior valor em toda venda acompanhada. O gerente nunca ouve "a mais barata é essa" como primeira frase.`,
+      e: `Ticket médio CPF de ${brl(cv.ticket)}; no mês atual, ${brl(v.oi.ticket)}. Meta: R$ 200.`,
+      an: 'É o feirante esperto: oferece a caixa fechada de manga antes da dúzia. Quem já veio comprar, compra mais se você mostrar a opção.' });
+    if (!cp.desccpf) A.push({ k: 'desc', peso: 1.1, t: 'Desconto CPF abaixo de 7%',
+      a: 'Trocar desconto por benefício: entrega, tingimento, brinde, parcelamento. Todo desconto acima de 7% precisa ser justificado ao gerente no momento da venda.',
+      c: `Ao ouvir "faz um precinho?", ${P} responde com valor (durabilidade, rendimento) e benefício antes de mexer no preço. O gerente audita os descontos acima de 7% no fim do dia.`,
+      e: `Desconto médio CPF de ${pct1(cv.desccpf)}. Meta: abaixo de 7%.`,
+      an: 'Desconto é como pênalti: às vezes não tem jeito, mas o zagueiro que comete um por jogo não termina o campeonato como titular.' });
+    const cn = v.cn, ck = v.cnk_aj || v.cnk, nCN = Object.values(ck).filter(x => !x).length;
+    if (!ck.posit || !ck.fatcnpj || !ck.novos || !ck.pposit) {
+      const lista = (v.cart || []).slice(0, 3).map(c => c.cli).join(', ');
+      A.push({ k: 'cnpj', peso: nCN * 0.3 + (v.cart || []).length * 0.1, t: 'Carteira CNPJ ativa',
+        a: `${lista ? `Começar pelos clientes que sumiram ou caíram (lista acima): ${esc(lista)}. ` : ''}Montar a lista de 20 clientes CNPJ (construtoras, condomínios, comércios, escolas, igrejas) e ligar para 10 por semana, de preferência na segunda-feira. Pedir aos pintores da carteira CPF a indicação de obras e síndicos.`,
+        c: `Toda segunda, ${P} mostra ao gerente a lista com data e retorno de cada ligação. Na reunião mensal, cita pelo nome os clientes que voltaram a comprar.`,
+        e: `Média de ${Math.round(cn.posit || 0)} clientes CNPJ positivados por mês (meta 10${v.cnloja ? `, média da loja ${n1(v.cnloja.posit)}` : ''}), ${brl(cn.fatcnpj)} de faturamento CNPJ (meta R$ 30 mil) e ${n1(cn.novos)} cliente(s) novo(s) por mês (meta 4). Carteira atribuída: ${v.cart_n || 0} cliente(s) com compra média acima de R$ 300.`,
+        an: 'Carteira é horta: não adianta plantar mais se você não rega toda semana. O cliente que ninguém liga em 60 dias secou.' });
+    }
+    if (ck.posit && !ck.desccnpj) A.push({ k: 'desccnpj', peso: 0.6, t: 'Desconto CNPJ abaixo de 17%',
+      a: 'Negociar volume com prazo de entrega e programação de obra, não com preço. Desconto acima de 17% só com aprovação do gerente.',
+      c: `${P} chega à negociação com a condição de entrega definida e registra no pedido o motivo de cada desconto especial.`,
+      e: `Desconto médio CNPJ de ${pct1(cn.desccnpj)}. Meta: abaixo de 17%.`,
+      an: 'É negociar passe de jogador: o clube bom troca valor por bônus de desempenho, e não baixa o preço na primeira ligação.' });
+    if (v.ve > v.v) {
+      const prox = Math.min(5, v.v + 1), min = FX[v.nl][prox - 2], f = Math.max(0, min - v.md);
+      A.push({ k: 'curva', peso: (v.ve - v.v) * 0.8, t: `Plano de evolução para V${prox} · ${NV[prox]}`,
+        a: `${P} está em V${v.v} · ${NV[v.v]} com ${v.t} meses de casa; pela curva já deveria estar em V${v.ve} · ${NV[v.ve]}. Para chegar ao V${prox} na loja ${NL[v.nl]}, a média de 90 dias precisa subir de ${brl(v.md)} para ${brl(min)}: mais ${brl(f)} por mês, cerca de ${brl(f / DU)} por dia útil.`,
+        c: `${P} acompanha o próprio nível na tela "Minha evolução" do MENTOR ST PRO e conta ao gerente, toda semana, quanto falta para o próximo degrau.`,
+        e: `Atraso de ${v.ve - v.v} nível(is) na curva de evolução${v.tf === 'estimado' ? ' (tempo de casa estimado)' : ''}.`,
+        an: 'É a faixa no jiu-jitsu: tempo de tatame conta, mas só troca de faixa quem mostra a técnica na hora do treino.' });
+    }
+    A.sort((a, b) => b.peso - a.peso);
+    if (v.tier === 'PI') A.unshift({ k: 'integ', peso: 9, t: 'Trilha de integração com padrinho',
+      a: `Concluir a trilha do MENTOR ST PRO (8 módulos e avaliação final) em 30 dias, com um padrinho P4 da loja ou da região acompanhando 2 atendimentos por semana.`,
+      c: `${P} usa o Checklist Rápido da Parede com o cliente e pede ao padrinho para revisar o orçamento antes de fechar nas primeiras semanas.`,
+      e: `${v.m} mês(es) fechado(s) com meta; o mês atual projeta ${pct(v.pj)}.`,
+      an: 'É a base do clube: antes de subir para o profissional, o garoto treina com os titulares e aprende o jeito do time.' });
+    if (v.tier === 'P4' || A.length === 0) A.push({ k: 'mult', peso: 0, t: 'Multiplicador da loja',
+      a: `Tornar ${P} padrinho de um vendedor P1 ou P2 da mesma loja ou região: 2 atendimentos por semana em dupla, mostrando como faz o que dá certo.`,
+      c: `${P} explica o próprio método (abordagem, kit, identificação) sem precisar do gerente, e o afilhado melhora pelo menos 1 indicador em 30 dias.`,
+      e: `Atingimento médio de ${pct(v.a3)} nos últimos 3 meses, ${v.bt} mês(es) batendo 100% no ano.`,
+      an: 'É o camisa 10 que, além de fazer gol, organiza o meio-campo e faz o time inteiro jogar melhor.' });
+    return A;
+  }
+  function metasDe(v) {
+    const M = [], res = v.a3 == null ? v.pj : v.a3;
+    if (res != null && res < 1) M.push(['meta', 'Atingimento da meta', pct(res), '100% por 3 meses seguidos']);
+    const cv = v.cpf, ck = v.cpk;
+    const g = [['ident', pct(cv.ident), '80%', 'Vendas identificadas', (0.8 - (cv.ident || 0)) / 0.8], ['itens', n1(cv.itens), '2,5', 'Itens por venda CPF', (2.5 - (cv.itens || 0)) / 2.5], ['ticket', brl(cv.ticket), 'R$ 200', 'Ticket CPF', (200 - (cv.ticket || 0)) / 200], ['desccpf', pct1(cv.desccpf), 'abaixo de 7%', 'Desconto CPF', ((cv.desccpf || 0) - 0.07) / 0.07]].filter(x => !ck[x[0]]).sort((a, b) => b[4] - a[4]);
+    g.slice(0, 2).forEach(x => M.push([x[0], x[3], x[1], x[2]]));
+    const cj = v.cnk_aj || v.cnk;
+    if (!cj.posit) M.push(['posit', 'Positivados CNPJ/mês', Math.round(v.cn.posit || 0), '10']);
+    else if (!cj.fatcnpj) M.push(['fatcnpj', 'Faturamento CNPJ/mês', brl(v.cn.fatcnpj), 'R$ 30 mil']);
+    if (v.ve > v.v) { const p = v.v + 1; M.push(['nivel', `Méd. 90 dias (subir a V${p})`, brl(v.md), brl(FX[v.nl][p - 2])]); }
+    if (!M.length) M.push(['meta', 'Atingimento da meta', pct(res), 'manter acima de 110% e puxar a loja']);
+    return M.slice(0, 4);
+  }
+  function modulosDe(v, REST) { const ks = new Set(acoesDe(v, REST).map(a => a.k)); const out = []; ['integ', 'res', 'ident', 'itens', 'ticket', 'desc', 'cnpj', 'curva'].forEach(k => { if (ks.has(k) || (k === 'desc' && ks.has('desccnpj'))) MOD[k].forEach(m => { if (!out.includes(m)) out.push(m); }); }); return out.slice(0, 5); }
+
+  /* ═════════════ Gráficos pequenos ═════════════ */
+  function spark(v) {
+    const w = 140, h = 34, pts = MESES.map((m, i) => [i, v.alc[m]]).filter(p => p[1] != null);
+    if (!pts.length) return '';
+    const y = a => h - 4 - Math.min(1.6, Math.max(0, a)) / 1.6 * (h - 8), x = i => 4 + i * (w - 8) / 8;
+    const d = pts.map((p, j) => (j ? 'L' : 'M') + x(p[0]).toFixed(1) + ' ' + y(p[1]).toFixed(1)).join(' ');
+    const last = pts[pts.length - 1];
+    return `<svg class="pdi-spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="Atingimento mensal"><line x1="4" x2="${w - 4}" y1="${y(1)}" y2="${y(1)}" stroke="var(--muted)" stroke-dasharray="3 3" stroke-width="1"/><path d="${d}" fill="none" stroke="var(--ink)" stroke-width="1.6"/><circle cx="${x(last[0])}" cy="${y(last[1])}" r="3" fill="${last[1] >= 1 ? 'var(--ok)' : 'var(--bad)'}"/></svg>`;
+  }
+  function histChart(v) {
+    const KS = ['jul', 'ago', 'set', 'out'], ks = KS.filter(k => v.hist && v.hist[k] != null);
+    if (ks.length < 2) return '<p class="pdi-meta">Sem histórico suficiente para a curva da nota.</p>';
+    const w = 300, h = 110, L = 34, R = 12, T = 12, B = 22, x = i => L + i * (w - L - R) / 3, y = s => T + (100 - s) / 100 * (h - T - B);
+    const d = ks.map((k, j) => (j ? 'L' : 'M') + x(KS.indexOf(k)).toFixed(1) + ' ' + y(v.hist[k]).toFixed(1)).join(' ');
+    const grid = [0, 35, 50, 65, 100].map(s => `<line x1="${L}" x2="${w - R}" y1="${y(s)}" y2="${y(s)}" stroke="var(--line)" stroke-width="1"/><text x="${L - 6}" y="${y(s) + 4}" text-anchor="end" font-size="10" fill="var(--muted)">${s}</text>`).join('');
+    const pts = ks.map(k => { const i = KS.indexOf(k); return `<circle cx="${x(i)}" cy="${y(v.hist[k])}" r="3.5" fill="var(--ink)"/><text x="${x(i)}" y="${y(v.hist[k]) - 8}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ink)">${Math.round(v.hist[k])}</text><text x="${x(i)}" y="${h - 6}" text-anchor="middle" font-size="11" fill="var(--muted)">${k}</text>`; }).join('');
+    return `<svg width="100%" viewBox="0 0 ${w} ${h}" style="max-width:${w}px" role="img" aria-label="Evolução da nota de prioridade">${grid}<path d="${d}" fill="none" stroke="var(--ink)" stroke-width="2"/>${pts}</svg><p class="pdi-meta">Nota de prioridade mês a mês (mais baixa = melhor). Linhas em 35, 50 e 65 marcam as faixas.</p>`;
+  }
+  const stack = sc => `<div class="pdi-stack" title="Resultado ${sc.res} · CPF ${sc.cpf} · CNPJ ${sc.cnpj} · Curva ${sc.curva}"><i class="s-res" style="width:${sc.res}%"></i><i class="s-cpf" style="width:${sc.cpf}%"></i><i class="s-cnpj" style="width:${sc.cnpj}%"></i><i class="s-cur" style="width:${sc.curva}%"></i></div>`;
+
+  /* ═════════════ Montagem da tela ═════════════
+     PdiUI.montar(el, {
+       base,            // JSON do mês (V, L, ORF, M, fator, medMeta, rotulo)
+       acomp,           // { chave: estado } — acompanhamento salvo
+       salvar,          // async (v, estado) => void — grava o acompanhamento
+       pode,            // true se o usuário pode registrar
+       regiaoDe,        // (loja_id) => 'Região 2 · Danilo'
+       lojaNome,        // (loja_id) => '034 · Cabo Frio'
+       nivel,           // 'rede' | 'regiao' | 'loja'
+       usuario,         // nome de quem está registrando
+     }) */
+  function montar(el, opts) {
+    const P = preparar(opts.base);
+    const S = { tab: 'ranking', reg: 'TODAS', pri: 'TODAS', q: '', abertos: new Set(), REG: Object.assign({}, opts.acomp || {}) };
+    const regs = [...new Set(P.ALL.map(v => opts.regiaoDe(v.loja_id)))].sort();
+    const vPor = id => P.ALL.find(x => x.id === id);
+    const A = v => acoesDe(v, P.REST);
+    const filtra = arr => { const q = S.q.trim().toLowerCase(); return arr.filter(v => (S.reg === 'TODAS' || opts.regiaoDe(v.loja_id) === S.reg) && (S.pri === 'TODAS' || v.tier === S.pri) && (!q || (v.nome + ' ' + v.l + ' ' + v.c).toLowerCase().includes(q))); };
+    const progresso = v => { const r = S.REG[v.id]; if (!r) return null; const AA = A(v); return { feitas: AA.filter(a => r.acoes && r.acoes[a.k] && r.acoes[a.k].s === 'feito').length, total: AA.length, ult: (r.revisoes || []).slice(-1)[0], prox: r.prox }; };
+    const dis = opts.pode ? '' : 'disabled';
+    let toastT = null;
+    function toast(m) { let t = el.querySelector('.pdi-toast'); if (!t) { t = document.createElement('div'); t.className = 'pdi-toast'; t.setAttribute('role', 'status'); el.appendChild(t); } t.textContent = m; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 1800); }
+    async function salvar(v, patch) {
+      if (!opts.pode) { toast('Somente leitura'); return false; }
+      const novo = Object.assign({}, S.REG[v.id] || {}, patch, { atualizado: hojeIso(), por: opts.usuario || '' });
+      S.REG[v.id] = novo;
+      try { await opts.salvar(v, novo); toast('Salvo'); return true; } catch (e) { toast('Não foi possível salvar: ' + (e.message || e)); return false; }
+    }
+
+    function row(v) {
+      const pg = progresso(v);
+      return `<button type="button" class="pdi-row l-${v.tier}" aria-expanded="${S.abertos.has(v.id)}" data-id="${v.id}">
+        <span class="pdi-pos">${v.pos || '·'}</span><span class="pdi-badge b-${v.tier}">${v.tier === 'PI' ? 'Novo' : v.tier}</span>
+        <span class="pdi-quem"><span class="pdi-nm">${esc(v.nome)}</span><br><span class="pdi-meta">${esc(opts.lojaNome(v.loja_id))} · V${v.v} ${NV[v.v]}</span>${pg ? `<span class="pdi-prog">PDI: ${pg.feitas}/${pg.total} ações concluídas${pg.prox ? ` · revisão ${dt(pg.prox)}${pg.prox < hojeIso() ? ' (vencida)' : ''}` : ''}</span>` : ''}</span>
+        <span class="pdi-c-num pdi-meta">3 meses <b>${pct(v.a3)}</b> · mês <b>${pct(v.pj)}</b><br>na mesa: <b class="pdi-bad">${brl(v.perda_tot)}</b></span>
+        <span class="pdi-c-spark">${spark(v)}</span>
+        <span><span class="pdi-score">${Math.round(v.sc.final)}<small>/100</small></span>${stack(v.sc)}</span>
+        <span class="pdi-chev" aria-hidden="true">›</span></button>
+        <div class="pdi-fwrap" ${S.abertos.has(v.id) ? '' : 'hidden'}>${S.abertos.has(v.id) ? ficha(v) : ''}</div>`;
+    }
+
+    function acompHTML(v) {
+      const r = S.REG[v.id] || {}, M = metasDe(v);
+      const au = r.auto || {}, cp = r.campo || {}, it = cp.itens || {};
+      const notas = CAMPO.map(c => it[c[0]]).filter(x => x), med = notas.length ? notas.reduce((a, b) => a + b, 0) / notas.length : null;
+      const ruim = Object.values(v.cpk).filter(x => !x).length + (v.a3 != null && v.a3 < 0.95 ? 1 : 0);
+      const diag = med == null ? null : med < 3 ? ['treinar', 'Não sabe fazer: o problema é de técnica. Treinar no balcão, com demonstração do gerente ou do padrinho, e repetir a observação em 15 dias.'] : ruim >= 2 ? ['cobrar', 'Sabe fazer, mas não faz no dia a dia: o problema é de rotina e combinado. Firmar o compromisso por escrito e acompanhar a execução diária.'] : ['ok', 'Sabe e faz: manter o reconhecimento e usar como referência para a loja.'];
+      return `<div class="pdi-grid2">
+        <div class="pdi-box"><h4>Conversa de PDI</h4>
+          <label class="pdi-q">Perfil DISC do vendedor<select data-disc="${v.id}" ${dis}><option value="">Não informado</option>${Object.entries(DISC).map(([k, d]) => `<option value="${k}" ${r.disc === k ? 'selected' : ''}>${d.n}</option>`).join('')}</select></label>
+          ${r.disc ? `<p><span class="pdi-lbl">Como conduzir</span>${DISC[r.disc].t}</p><p><span class="pdi-lbl">Exemplo</span>${DISC[r.disc].ex}</p><p><span class="pdi-lbl">Analogia</span>${DISC[r.disc].an}</p>` : '<p class="pdi-meta">Use o resultado do Perfil DISC do vendedor (teste DISC do Bootcamp ou do MENTOR ST PRO) para ver como conduzir a conversa.</p>'}
+          <label class="pdi-q">1. Na sua visão, o que mais atrapalha seu resultado hoje?<textarea data-auto="q1" data-v="${v.id}" ${dis}>${esc(au.q1)}</textarea></label>
+          <label class="pdi-q">2. Em que você é bom e pode ensinar a um colega?<textarea data-auto="q2" data-v="${v.id}" ${dis}>${esc(au.q2)}</textarea></label>
+          <label class="pdi-q">3. Que ajuda você precisa do gerente ou do supervisor?<textarea data-auto="q3" data-v="${v.id}" ${dis}>${esc(au.q3)}</textarea></label>
+          <label class="pdi-q">Meta que o vendedor escolheu como "a minha"<select data-minha="${v.id}" ${dis}><option value="">Ainda não escolheu</option>${M.map(m => `<option value="${m[0]}" ${au.meta === m[0] ? 'selected' : ''}>${esc(m[1])}: ${esc(m[2])} → ${esc(m[3])}</option>`).join('')}</select></label>
+        </div>
+        <div class="pdi-box"><h4>Observação em campo</h4>
+          <p class="pdi-meta">Assistir 3 atendimentos e dar nota de 1 (não faz) a 5 (faz sempre, com qualidade).</p>
+          <div class="pdi-scale">${CAMPO.map(c => `<span>${c[1]}</span><span class="pdi-pts">${[1, 2, 3, 4, 5].map(n => `<button type="button" class="pdi-pt" aria-pressed="${it[c[0]] === n}" data-campo="${c[0]}" data-n="${n}" data-v="${v.id}" ${dis} aria-label="${c[1]}: nota ${n}">${n}</button>`).join('')}</span>`).join('')}</div>
+          ${diag ? `<div class="pdi-diag ${diag[0]}">Média ${n1(med)} · ${diag[1]}</div>` : ''}
+          <label class="pdi-q">Comportamento observado<textarea data-campoobs="${v.id}" ${dis} placeholder="Ex.: ofereceu rolo e fita em 2 de 3 atendimentos; não pediu CPF.">${esc(cp.obs)}</textarea></label>
+          ${cp.data ? `<p class="pdi-meta">Última observação: ${dt(cp.data)}</p>` : ''}
+        </div></div>
+        <div class="pdi-box"><h4>Revisões</h4>
+          <label class="pdi-q pdi-inline">Próxima revisão <input type="date" data-prox="${v.id}" value="${esc(r.prox || '')}" ${dis}>${r.prox && r.prox < hojeIso() ? '<span class="pdi-bad">vencida</span>' : ''}</label>
+          ${(r.revisoes || []).length ? `<div class="pdi-tw"><table class="pdi-t"><thead><tr><th>Data</th><th>Registro</th><th>Por</th></tr></thead><tbody>${r.revisoes.slice().reverse().map(x => `<tr><td>${dt(x.d)}</td><td>${esc(x.t)}</td><td>${esc(x.por || '')}</td></tr>`).join('')}</tbody></table></div>` : '<p class="pdi-meta">Nenhuma revisão registrada ainda.</p>'}
+          <label class="pdi-q">Nova revisão: o que mudou no comportamento e nos números?<textarea id="pdi-rv-${v.id}" ${dis} placeholder="Ex.: pediu CPF antes de cotar em 7 de 10 atendimentos; identificadas subiram de 60% para 74%."></textarea></label>
+          <button type="button" class="btn pequeno azul" data-rev="${v.id}" ${dis}>Registrar revisão</button>
+        </div>`;
+    }
+
+    function ficha(v) {
+      const L = (opts.base.L || {})[v.c] || {}, AA = A(v), M = metasDe(v), r = S.REG[v.id] || {}, top = (['P1', 'P2', 'PI'].includes(v.tier)) ? AA.slice(0, 4) : AA.slice(0, 2);
+      const ind = (lab, val, meta, ok, out) => `<tr><td>${lab}</td><td class="${ok ? 'pdi-ok' : 'pdi-bad'}">${val}</td><td>${out}</td><td>${meta}</td></tr>`;
+      const cv = v.cpf, cn = v.cn, ck = v.cnk, oi = v.oi, p = v.perda || {}, orf = (opts.base.ORF || {})[v.c] || [], cart = v.cart || [];
+      return `<div class="pdi-ficha">
+        <div class="pdi-facts">
+          <div class="pdi-fact"><span>Média 3 meses</span><b>${pct(v.a3)}</b></div>
+          <div class="pdi-fact"><span>Mês atual (proj.)</span><b>${pct(v.pj)}</b></div>
+          <div class="pdi-fact"><span>Meses ≥ 100%</span><b>${v.bt} de ${v.m}</b></div>
+          <div class="pdi-fact"><span>Nível · esperado</span><b>V${v.v} · V${v.ve || '—'}</b></div>
+          <div class="pdi-fact money"><span>Deixou de ganhar (3 meses)</span><b>${brl(v.perda_tot)}</b></div>
+        </div>
+        <div class="pdi-grid2">
+          <div><h4>Dinheiro na mesa</h4><div class="pdi-tw"><table class="pdi-t"><tbody>
+            <tr><td>Bônus de meta de faturamento (até a Meta 2, 100%)</td><td class="pdi-bad">${brl(p.meta)}</td></tr>
+            <tr><td>Indicadores CPF não atingidos</td><td class="pdi-bad">${brl(p.cpf_ind)}</td></tr>
+            <tr><td>Indicadores CPF atingidos, mas travados pela meta abaixo de 95%</td><td class="pdi-warn">${brl(p.cpf_pre)}</td></tr>
+            <tr><td>Indicadores CNPJ (faixa mínima não atingida ou travada)</td><td class="pdi-bad">${brl(p.cnpj)}</td></tr>
+            <tr><td>Meta CNPJ</td><td class="pdi-bad">${brl(p.metacnpj)}</td></tr>
+            <tr><td>Meta de time perdida por ficar abaixo de 90% individual</td><td class="pdi-bad">${brl(p.time)}</td></tr></tbody></table></div>
+            <p class="pdi-meta">Por mês: ${Object.keys(v.perda_m || {}).map(m => m + ' ' + brl(v.perda_m[m])).join(' · ') || '—'}. Pelas Regras de Bonificação; vale sempre o fechamento oficial.</p></div>
+          <div><h4>Evolução da nota</h4>${histChart(v)}
+            <p class="pdi-meta">Nota ${Math.round(v.sc.total)} × peso da meta ${n1(v.sc.impacto)} = <b>${Math.round(v.sc.final)}</b> · resultado ${v.sc.res}/40 · CPF ${v.sc.cpf}/25 · CNPJ ${v.sc.cnpj}/20 · curva ${v.sc.curva}/15${v.tf === 'estimado' ? ' · tempo de casa estimado' : ''}.</p></div>
+        </div>
+        <div class="pdi-grid2">
+          <div><h4>Indicadores CPF e CNPJ</h4><div class="pdi-tw"><table class="pdi-t"><thead><tr><th>Indicador</th><th>3 meses</th><th>Mês</th><th>Meta</th></tr></thead><tbody>
+            ${ind('Vendas identificadas', pct(cv.ident), '≥ 80%', v.cpk.ident, pct(oi.ident))}
+            ${ind('Itens por venda', n1(cv.itens), '≥ 2,5', v.cpk.itens, n1(oi.itens))}
+            ${ind('Ticket CPF', brl(cv.ticket), '≥ R$ 200', v.cpk.ticket, brl(oi.ticket))}
+            ${ind('Desconto CPF', pct1(cv.desccpf), '< 7%', v.cpk.desccpf, pct1(oi.desccpf))}
+            ${ind('Faturamento CNPJ', brl(cn.fatcnpj), '≥ R$ 30 mil', ck.fatcnpj, brl(oi.fatcnpj))}
+            ${ind('Alcance meta CNPJ', pct(cn.alccnpj), '≥ 100%', ck.alccnpj, pct(oi.alccnpj))}
+            ${ind('Desconto CNPJ', pct1(cn.desccnpj), '< 17%', ck.desccnpj, pct1(oi.desccnpj))}
+            ${ind('Positivados CNPJ', Math.round(cn.posit || 0), '≥ 10', ck.posit, oi.posit == null ? '—' : Math.round(oi.posit))}
+            ${ind('% positivados', pct(cn.pposit), '≥ 50%', ck.pposit, '—')}
+            ${ind('Clientes novos CNPJ', n1(cn.novos), '≥ 4', ck.novos, oi.novos == null ? '—' : Math.round(oi.novos))}
+          </tbody></table></div>
+          ${v.cnloja ? `<p class="pdi-meta">Média dos colegas da loja: ${brl(v.cnloja.fat)} de fat. CNPJ, ${n1(v.cnloja.posit)} positivados e ${n1(v.cnloja.novos)} novos por mês. Quando o vendedor está na média da loja, o item não pesa na nota.</p>` : ''}</div>
+          <div><h4>Metas do PDI · 90 dias</h4><ul class="pdi-metas">${M.map(m => `<li class="${(r.auto || {}).meta === m[0] ? 'minha' : ''}"><span>${esc(m[1])}${(r.auto || {}).meta === m[0] ? ' <span class="pdi-ok">· a meta dele</span>' : ''}</span><b>${esc(m[2])} → ${esc(m[3])}</b></li>`).join('')}</ul>
+            <h4 class="mt-1">Trilha no MENTOR ST PRO</h4><div class="pdi-mods">${modulosDe(v, P.REST).map(m => `<span>${m}</span>`).join('')}</div>
+            <h4 class="mt-1">Contexto da loja</h4><p class="pdi-meta">${esc(opts.lojaNome(v.loja_id))} · loja ${NL[v.nl]} · último mês fechado ${pct(L.set && L.set.a)} · mês atual projeta ${pct(L.out && L.out.p)}. Histórico: ${MESES.filter(m => v.alc[m] != null).map(m => m + ' ' + pct(v.alc[m])).join(' · ')}.</p></div>
+        </div>
+        <div><h4>Clientes CNPJ para recuperar</h4>
+          ${cart.length ? `<div class="pdi-tw"><table class="pdi-t"><thead><tr><th>Cliente</th><th>Situação</th><th>Média</th><th>Último mês</th><th>Mês atual</th></tr></thead><tbody>${cart.map(c => `<tr><td>${esc(c.cli)}</td><td class="${c.g === 'sumiu' ? 'pdi-bad' : 'pdi-warn'}">${c.g === 'sumiu' ? 'Sumiu' : 'Caiu'}</td><td>${brl(c.med)}</td><td>${brl(c.set)}</td><td>${brl(c.out)}</td></tr>`).join('')}</tbody></table></div>`
+            : `<p class="pdi-meta">Nenhum cliente da carteira de ${esc(primeiro(v))} sumiu ou caiu. Carteira atribuída: ${v.cart_n || 0} cliente(s) CNPJ com compra média acima de R$ 300.</p>`}
+          ${(v.cart_n || 0) < 10 && orf.length ? `<p class="pdi-meta"><span class="pdi-lbl">Para redistribuir</span>Clientes da loja sem vendedor ativo que podem passar para ${esc(primeiro(v))}:</p><div class="pdi-tw"><table class="pdi-t"><thead><tr><th>Cliente</th><th>Vendedor antigo</th><th>Média</th><th>Situação</th></tr></thead><tbody>${orf.map(c => `<tr><td>${esc(c.cli)}</td><td>${esc(tc(String(c.vend).replace(/\s+N\s?\d+$/, '')))}</td><td>${brl(c.med)}</td><td>${c.g === 'sumiu' ? 'sumiu' : 'caiu'}</td></tr>`).join('')}</tbody></table></div>` : ''}
+        </div>
+        <div><h4>Plano de ação</h4><div class="pdi-acoes">${top.map((a, i) => { const s = ((r.acoes || {})[a.k] || {}); return `<div class="pdi-acao"><div class="pdi-acao-t"><b>${i + 1}. ${a.t}</b>${s.s === 'feito' ? '<span class="pdi-badge b-P4">Concluída</span>' : s.s === 'andamento' ? '<span class="pdi-badge b-P3">Em andamento</span>' : ''}</div>
+          <p><span class="pdi-lbl">Ação</span>${a.a}</p><p><span class="pdi-lbl">Comportamento a observar</span>${a.c}</p><p><span class="pdi-lbl">Exemplo do dado</span>${a.e}</p><p><span class="pdi-lbl">Analogia</span>${a.an}</p>
+          <div class="pdi-track"><select data-acao="${a.k}" data-v="${v.id}" ${dis} aria-label="Status da ação">${[['', 'Não iniciada'], ['andamento', 'Em andamento'], ['feito', 'Concluída']].map(o => `<option value="${o[0]}" ${(s.s || '') === o[0] ? 'selected' : ''}>${o[1]}</option>`).join('')}</select><input type="text" data-acaoobs="${a.k}" data-v="${v.id}" value="${esc(s.obs)}" placeholder="Evidência observada (opcional)" ${dis} aria-label="Evidência observada"></div></div>`; }).join('')}</div></div>
+        <div><h4>Acompanhamento</h4>${acompHTML(v)}</div>
+        <div><button type="button" class="btn pequeno" data-copy="${v.id}">Copiar PDI para o WhatsApp</button></div>
+      </div>`;
+    }
+
+    function texto(v) {
+      const AA = A(v).slice(0, 3), M = metasDe(v), r = S.REG[v.id] || {};
+      return `*PDI ${v.nome}* — ${opts.lojaNome(v.loja_id)}\nPrioridade: ${TN[v.tier]} (${Math.round(v.sc.final)}/100)\nDeixou de ganhar em bônus (3 meses): ${brl(v.perda_tot)}\n\n*Metas 90 dias*\n${M.map(m => `• ${m[1]}: ${m[2]} → ${m[3]}${(r.auto || {}).meta === m[0] ? ' (a minha meta)' : ''}`).join('\n')}\n\n*Ações*\n${AA.map((a, i) => `${i + 1}. ${a.t}\n   O que fazer: ${a.a}\n   O que vou observar: ${a.c}`).join('\n')}${(v.cart || []).length ? `\n\n*Clientes para ligar*\n${v.cart.slice(0, 5).map(c => `• ${c.cli} (média ${brl(c.med)}/mês)`).join('\n')}` : ''}\n\n*Trilha MENTOR ST PRO*: ${modulosDe(v, P.REST).join(' · ')}${r.prox ? `\n\nPróxima revisão: ${dt(r.prox)}` : ''}`;
+    }
+
+    function painelAcomp() {
+      const lst = filtra(P.ALL.filter(v => v.tier !== 'P4' || S.REG[v.id]));
+      return `<p class="pdi-meta">Situação de cada PDI: ações concluídas, meta escolhida, observação em campo e revisões. Revisão vencida aparece em vermelho.</p><div class="pdi-tw"><table class="pdi-t"><thead><tr><th>Vendedor</th><th>Faixa</th><th>Loja</th><th>Ações</th><th>Meta escolhida</th><th>Campo</th><th>Última revisão</th><th>Próxima</th></tr></thead><tbody>${lst.map(v => { const r = S.REG[v.id], pg = progresso(v), M = metasDe(v), mm = r && r.auto && M.find(m => m[0] === r.auto.meta), it = r && r.campo && r.campo.itens ? Object.values(r.campo.itens) : [], med = it.length ? it.reduce((a, b) => a + b, 0) / it.length : null;
+        return `<tr><td><button type="button" class="pdi-link" data-abrir="${v.id}">${esc(v.nome)}</button></td><td><span class="pdi-badge b-${v.tier}">${v.tier === 'PI' ? 'Novo' : v.tier}</span></td><td>${esc(opts.lojaNome(v.loja_id))}</td><td>${pg ? `${pg.feitas}/${pg.total}` : '<span class="pdi-meta">não iniciado</span>'}</td><td>${mm ? esc(mm[1]) : '—'}</td><td>${med != null ? n1(med) : '—'}</td><td>${pg && pg.ult ? dt(pg.ult.d) : '—'}</td><td class="${pg && pg.prox && pg.prox < hojeIso() ? 'pdi-bad' : ''}">${pg && pg.prox ? dt(pg.prox) : '—'}</td></tr>`; }).join('')}</tbody></table></div>`;
+    }
+    function painelLojas() {
+      const ids = [...new Set(P.ALL.map(v => v.c))];
+      const rows = ids.map(k => { const L = (opts.base.L || {})[k] || {}, vs = P.RANK.filter(v => v.c === k), c = { P1: 0, P2: 0, P3: 0, P4: 0 }; vs.forEach(v => c[v.tier]++); const med = ['jul', 'ago', 'set'].map(m => L[m] && L[m].a).filter(x => x != null); return { k, L, c, m3: med.length ? med.reduce((a, b) => a + b, 0) / med.length : null, p: L.out && L.out.p, orf: ((opts.base.ORF || {})[k] || []).length, mesa: vs.reduce((a, v) => a + (v.perda_tot || 0), 0) }; })
+        .sort((a, b) => (b.c.P1 * 2 + b.c.P2) - (a.c.P1 * 2 + a.c.P2) || (a.p || 0) - (b.p || 0));
+      const cel = a => a == null ? '<td>—</td>' : `<td class="${a >= 1 ? 'pdi-ok' : a < 0.95 ? 'pdi-bad' : ''}">${pct(a)}</td>`;
+      return `<p class="pdi-meta">Atingimento da loja (meta empresa), projeção do mês atual, faixas dos vendedores, bônus deixados na mesa e clientes CNPJ sem vendedor ativo.</p><div class="pdi-tw"><table class="pdi-t"><thead><tr><th>Loja</th><th>Região</th>${['abr', 'mai', 'jun', 'jul', 'ago', 'set'].map(m => `<th>${m}</th>`).join('')}<th>Méd. 3m</th><th>Mês proj.</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>Na mesa</th><th>CNPJ sem dono</th></tr></thead><tbody>
+        ${rows.map(r => `<tr><td><b>${esc(opts.lojaNome(Number(r.k)))}</b></td><td>${esc(opts.regiaoDe(Number(r.k)))}</td>${['abr', 'mai', 'jun', 'jul', 'ago', 'set'].map(m => cel(r.L[m] && r.L[m].a)).join('')}${cel(r.m3)}${cel(r.p)}${['P1', 'P2', 'P3', 'P4'].map(t => `<td>${r.c[t] ? `<span class="pdi-badge b-${t}">${r.c[t]}</span>` : '·'}</td>`).join('')}<td class="pdi-bad">${brl(r.mesa)}</td><td>${r.orf || '·'}</td></tr>`).join('')}</tbody></table></div>`;
+    }
+    function painelRegioes() {
+      return `<div class="pdi-cards">${regs.map(g => { const vs = P.RANK.filter(v => opts.regiaoDe(v.loja_id) === g), ni = P.INTEG.filter(v => opts.regiaoDe(v.loja_id) === g).length, tot = vs.length || 1, c = { P1: 0, P2: 0, P3: 0, P4: 0 }; vs.forEach(v => c[v.tier]++);
+        const p1 = vs.filter(v => v.tier === 'P1').map(v => `${v.nome} (${v.l})`), mesa = vs.reduce((a, v) => a + (v.perda_tot || 0), 0), ab = vs.filter(v => S.REG[v.id]).length;
+        return `<div class="pdi-box"><h4>${esc(g)}</h4><div class="pdi-meta">${vs.length} vendedores no ranking · ${ni} em integração · ${ab} PDI(s) em acompanhamento</div>
+          <div class="pdi-dist">${['P1', 'P2', 'P3', 'P4'].map(t => `<i class="d-${t}" style="width:${c[t] / tot * 100}%" title="${TN[t]}: ${c[t]}"></i>`).join('')}</div>
+          <div>${['P1', 'P2', 'P3', 'P4'].map(t => `<span class="pdi-badge b-${t}">${t} ${c[t]}</span>`).join(' ')}</div>
+          <p><span class="pdi-lbl">Bônus na mesa</span><b class="pdi-bad">${brl(mesa)}</b></p>
+          <p><span class="pdi-lbl">Começar por</span>${p1.length ? esc(p1.join(', ')) : 'Nenhum P1 — focar nos P2.'}</p>
+          <button type="button" class="btn pequeno contorno" data-goreg="${esc(g)}">Ver ranking da região</button></div>`; }).join('')}</div>`;
+    }
+    function painelMetodo() {
+      const b = opts.base;
+      return `<div class="pdi-metodo"><p>Cada vendedor recebe uma nota de 0 a 100. Quanto maior, mais urgente o PDI. A nota soma quatro pilares e é ajustada pelo tamanho da meta.</p>
+        <div class="pdi-tw"><table class="pdi-t"><thead><tr><th>Pilar</th><th>Peso</th><th>O que mede</th></tr></thead><tbody>
+        <tr><td>Resultado</td><td>40</td><td>Média de atingimento dos 3 últimos meses fechados (25), meses abaixo de 95% nos últimos 6 (10) e projeção do mês atual (5).</td></tr>
+        <tr><td>CPF</td><td>25</td><td>Identificadas ≥ 80%, itens ≥ 2,5, ticket ≥ R$ 200, desconto &lt; 7%. Cada indicador fora vale 6,25.</td></tr>
+        <tr><td>CNPJ</td><td>20</td><td>Fat. CNPJ ≥ R$ 30 mil, alcance meta CNPJ ≥ 100%, desconto &lt; 17%, positivados ≥ 10, % positivados ≥ 50%, novos ≥ 4. Faturamento, positivados e novos não pesam quando o vendedor está na média dos colegas da própria loja.</td></tr>
+        <tr><td>Curva</td><td>15</td><td>Nível V atual contra o esperado pelo tempo de casa (treino de 3 meses; V1 até 6 meses de atuação, V2 6–12, V3 12–24, V4 24–36, V5 acima de 36).</td></tr>
+        <tr><td>Peso da meta</td><td>× 0,85 a 1,15</td><td>Meta do mês comparada com a meta mediana da rede (${brl(b.medMeta)}).</td></tr></tbody></table></div>
+        <p><b>Faixas:</b> P1 Crítico ≥ 65 · P2 Alta 50–65 · P3 Desenvolver 35–50 · P4 Potencializar &lt; 35. Vendedores com menos de 3 meses fechados ficam em Integração.</p>
+        <p><b>Dinheiro na mesa:</b> soma dos 3 últimos meses fechados, pelas Regras de Bonificação. Meta de faturamento: diferença até a Meta 2 (100%). CPF: R$ 20 por indicador fora e o valor travado quando a meta ficou abaixo de 95%. CNPJ: faixa mínima de cada item não atingido, ou o valor inteiro quando travado. Meta CNPJ: R$ 100. Meta de time: só quando a loja bateu e o vendedor ficou abaixo de 90%. Performance e Eucatex não entram.</p>
+        <p><b>Carteira:</b> "Sumiu" = comprou em pelo menos 4 meses, média acima de R$ 300, e zerou no último mês fechado e no atual. "Caiu" = último mês abaixo de 50% da própria média.</p>
+        <p><b>Observação em campo:</b> média abaixo de 3 indica técnica a treinar; média 3 ou mais com indicadores ruins indica rotina a combinar e cobrar.</p>
+        <p><b>Base:</b> ${esc(b.rotulo || 'PDI do mês')}${b.atualizado_em ? ' · importada em ' + dt(b.atualizado_em) : ''}. Fontes: INDICADORES por vendedor, META das lojas, Evolução Mensal por Cliente (CNPJ) e base de admissões.</p></div>`;
+    }
+
+    function render() {
+      const y = global.scrollY;
+      const base = filtra(P.RANK), ni = P.INTEG.filter(v => S.reg === 'TODAS' || opts.regiaoDe(v.loja_id) === S.reg);
+      const universo = P.RANK.filter(v => S.reg === 'TODAS' || opts.regiaoDe(v.loja_id) === S.reg);
+      const mesa = universo.concat(ni).reduce((a, v) => a + (v.perda_tot || 0), 0);
+      const tabs = [['ranking', 'Ranking'], ['acomp', 'Acompanhamento']].concat(regs.length > 1 ? [['regioes', 'Por região']] : []).concat([['lojas', 'Lojas'], ['integ', `Integração (${ni.length})`], ['metodo', 'Método']]);
+      el.innerHTML = `<div class="pdi">
+        <div class="pdi-kpis">${['P1', 'P2', 'P3', 'P4'].map(t => `<button type="button" class="pdi-kpi k-${t} ${S.pri === t ? 'on' : ''}" data-pri="${S.pri === t ? 'TODAS' : t}"><b>${universo.filter(v => v.tier === t).length}</b><span>${TN[t]}</span></button>`).join('')}<div class="pdi-kpi"><b>${brl(mesa)}</b><span>Bônus na mesa · 3 meses</span></div></div>
+        ${opts.pode ? '' : '<p class="pdi-meta">Modo leitura: você vê o PDI, mas não registra o acompanhamento.</p>'}
+        <div class="pdi-tabs" role="tablist">${tabs.map(([k, l]) => `<button type="button" role="tab" aria-selected="${S.tab === k}" data-tab="${k}">${l}</button>`).join('')}</div>
+        <div class="pdi-filtros">${regs.length > 1 ? `<select data-reg aria-label="Região"><option value="TODAS">Todas as regiões</option>${regs.map(g => `<option ${S.reg === g ? 'selected' : ''}>${esc(g)}</option>`).join('')}</select>` : ''}
+          <select data-prisel aria-label="Faixa"><option value="TODAS">Todas as faixas</option>${['P1', 'P2', 'P3', 'P4'].map(t => `<option value="${t}" ${S.pri === t ? 'selected' : ''}>${TN[t]}</option>`).join('')}</select>
+          <input type="search" data-busca placeholder="Buscar vendedor ou loja" value="${esc(S.q)}" aria-label="Buscar vendedor ou loja"></div>
+        <div class="pdi-corpo">${
+          S.tab === 'ranking' ? `<p class="pdi-meta">${base.length} vendedor(es), da maior para a menor urgência. Barra: vermelho resultado · laranja CPF · azul CNPJ · cinza curva. Toque no nome para abrir a ficha.</p><div class="pdi-lista">${base.map(row).join('') || '<p class="pdi-meta">Nenhum vendedor com esses filtros.</p>'}</div>`
+          : S.tab === 'acomp' ? painelAcomp()
+          : S.tab === 'regioes' ? painelRegioes()
+          : S.tab === 'lojas' ? painelLojas()
+          : S.tab === 'integ' ? `<p class="pdi-meta">Vendedores com menos de 3 meses fechados: o PDI deles é a trilha de integração com acompanhamento semanal.</p><div class="pdi-lista">${filtra(P.INTEG).map(row).join('') || '<p class="pdi-meta">Ninguém em integração.</p>'}</div>`
+          : painelMetodo()}</div></div>`;
+      global.scrollTo(0, y);
+    }
+
+    /* ---------- eventos (delegados no próprio contêiner) ---------- */
+    el.onclick = async (e) => {
+      const t = e.target.closest('[data-tab],[data-pri],[data-goreg],.pdi-row,[data-copy],[data-campo],[data-rev],[data-abrir]'); if (!t || !el.contains(t)) return;
+      if (t.dataset.tab) { S.tab = t.dataset.tab; render(); return; }
+      if (t.dataset.pri) { S.pri = t.dataset.pri; S.tab = 'ranking'; render(); return; }
+      if (t.dataset.goreg) { S.reg = t.dataset.goreg; S.tab = 'ranking'; S.pri = 'TODAS'; render(); return; }
+      if (t.dataset.abrir) { S.abertos.add(t.dataset.abrir); S.tab = vPor(t.dataset.abrir).tier === 'PI' ? 'integ' : 'ranking'; S.pri = 'TODAS'; S.q = ''; render(); const b = el.querySelector(`.pdi-row[data-id="${t.dataset.abrir}"]`); if (b) b.scrollIntoView({ block: 'start' }); return; }
+      if (t.dataset.copy) { const txt = texto(vPor(t.dataset.copy)); try { await navigator.clipboard.writeText(txt); toast('PDI copiado'); } catch (err) { const ta = document.createElement('textarea'); ta.value = txt; ta.className = 'pdi-copia'; el.appendChild(ta); ta.select(); toast('Texto selecionado: copie com Ctrl+C'); setTimeout(() => ta.remove(), 15000); } return; }
+      if (t.dataset.campo) { const v = vPor(t.dataset.v), r = S.REG[v.id] || {}, cp = Object.assign({ itens: {} }, r.campo || {}); cp.itens = Object.assign({}, cp.itens, { [t.dataset.campo]: +t.dataset.n }); cp.data = hojeIso(); if (await salvar(v, { campo: cp })) render(); return; }
+      if (t.dataset.rev) { const v = vPor(t.dataset.rev), ta = el.querySelector('#pdi-rv-' + v.id), txt = ta ? ta.value.trim() : ''; if (!txt) { toast('Escreva o registro da revisão'); return; } const revs = ((S.REG[v.id] || {}).revisoes || []).concat([{ d: hojeIso(), t: txt.slice(0, 800), por: opts.usuario || '' }]).slice(-30); if (await salvar(v, { revisoes: revs })) render(); return; }
+      if (t.classList.contains('pdi-row')) { const id = t.dataset.id; if (S.abertos.has(id)) S.abertos.delete(id); else S.abertos.add(id); const w = t.nextElementSibling; t.setAttribute('aria-expanded', S.abertos.has(id)); if (S.abertos.has(id)) { w.innerHTML = ficha(vPor(id)); w.hidden = false; } else { w.hidden = true; w.innerHTML = ''; } }
+    };
+    el.onchange = async (e) => {
+      const t = e.target, v = t.dataset.v ? vPor(t.dataset.v) : null;
+      if (t.matches('[data-reg]')) { S.reg = t.value; render(); return; }
+      if (t.matches('[data-prisel]')) { S.pri = t.value; S.tab = 'ranking'; render(); return; }
+      if (t.dataset.acao) { const r = S.REG[v.id] || {}, ac = Object.assign({}, r.acoes || {}); ac[t.dataset.acao] = Object.assign({}, ac[t.dataset.acao] || {}, { s: t.value, em: hojeIso() }); if (await salvar(v, { acoes: ac })) render(); }
+      else if (t.dataset.acaoobs) { const r = S.REG[v.id] || {}, ac = Object.assign({}, r.acoes || {}); ac[t.dataset.acaoobs] = Object.assign({}, ac[t.dataset.acaoobs] || {}, { obs: t.value.slice(0, 300) }); await salvar(v, { acoes: ac }); }
+      else if (t.dataset.auto) { const r = S.REG[v.id] || {}; await salvar(v, { auto: Object.assign({}, r.auto || {}, { [t.dataset.auto]: t.value.slice(0, 600) }) }); }
+      else if (t.dataset.minha) { const w = vPor(t.dataset.minha), r = S.REG[w.id] || {}; if (await salvar(w, { auto: Object.assign({}, r.auto || {}, { meta: t.value }) })) render(); }
+      else if (t.dataset.disc) { const w = vPor(t.dataset.disc); if (await salvar(w, { disc: t.value })) render(); }
+      else if (t.dataset.prox) { const w = vPor(t.dataset.prox); if (await salvar(w, { prox: t.value })) render(); }
+      else if (t.dataset.campoobs) { const w = vPor(t.dataset.campoobs), r = S.REG[w.id] || {}; await salvar(w, { campo: Object.assign({ itens: {} }, r.campo || {}, { obs: t.value.slice(0, 600), data: hojeIso() }) }); }
+    };
+    el.oninput = (e) => { if (e.target.matches('[data-busca]')) { S.q = e.target.value; clearTimeout(S._qt); S._qt = setTimeout(() => { const pos = e.target.selectionStart; render(); const i = el.querySelector('[data-busca]'); if (i) { i.focus(); try { i.setSelectionRange(pos, pos); } catch (er) {} } }, 250); } };
+    render();
+    return { render, estado: S, preparado: P };
+  }
+
+  /* Resumo para cartões (aba Equipe / início): contagem por faixa e revisões vencidas */
+  function resumo(base, acomp) {
+    const P = preparar(base); const c = { P1: 0, P2: 0, P3: 0, P4: 0, PI: P.INTEG.length };
+    P.RANK.forEach(v => c[v.tier]++);
+    const vencidas = Object.values(acomp || {}).filter(r => r && r.prox && r.prox < hojeIso()).length;
+    const mesa = P.ALL.reduce((a, v) => a + (v.perda_tot || 0), 0);
+    return { c, vencidas, mesa, total: P.ALL.length };
+  }
+
+  /* Validação da base importada (JSON do mês) */
+  function validar(base) {
+    if (!base || typeof base !== 'object') throw new Error('O arquivo não é um JSON de PDI.');
+    if (!Array.isArray(base.V) || !base.V.length) throw new Error('O arquivo não tem a lista de vendedores ("V").');
+    const falta = base.V.find(v => !v.n || !v.c || !v.sc || v.sc.final == null);
+    if (falta) throw new Error('Vendedor sem nome, loja ou nota no arquivo: ' + (falta.n || '?'));
+    if (typeof base.fator !== 'number') throw new Error('O arquivo não tem o "fator" do mês atual.');
+    return true;
+  }
+
+  global.PdiUI = { montar, resumo, validar, preparar, chaveDe, acoesDe, metasDe, TN, brl };
+})(window);
+
+</script>
+<script>
+(function(){
+  /* ====== CONFIG — cole a URL /exec do Apps Script do PDI aqui (ver pdi-backend.gs.txt) ====== */
+  var BACKEND_PDI = '';
+  var PDI_TOKEN   = 'sotintas-pdi-2026';
+  /* ============================================================================================ */
+  var APP_EQUIPE_URL = 'https://script.google.com/macros/s/AKfycbxC916U8rNw_-HFTW7vtFZz4AC_B1bHcTLE3bvMDWji6E5lAqkXgC0EIgQFtjHYTp8I/exec';
+  var LS_BASE='st_pdi_base_v1', LS_ACOMP='st_pdi_acomp_v1';
+
+  function $(id){ return document.getElementById(id); }
+  function sess(){ try{ return JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); }catch(e){ return null; } }
+  function up(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().trim(); }
+  function code3(s){ var m=String(s||'').match(/\d+/); return m?('00'+m[0]).slice(-3):''; }
+  function lsGet(k){ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } }
+  function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); return true; }catch(e){ return false; } }
+  function ehCoord(){ var s=sess(); return !!s && (up(s.papel).indexOf('COORDEN')>=0 || s.escopo==='todos'); }
+
+  /* ===== Carteira de lojas por supervisor: FONTE = EQUIPE do App (mesma regra do Níveis). Reserva abaixo. ===== */
+  var SUPMAP = {
+    '010':'BRUNO','004':'BRUNO','006':'BRUNO','007':'BRUNO','002':'BRUNO','022':'BRUNO','023':'BRUNO','009':'BRUNO','012':'BRUNO','017':'BRUNO','013':'BRUNO',
+    '033':'DANILO','034':'DANILO','027':'DANILO','029':'DANILO','016':'DANILO','032':'DANILO','030':'DANILO','028':'DANILO','038':'DANILO',
+    '026':'RAMON','035':'RAMON','036':'RAMON','018':'RAMON','024':'RAMON','025':'RAMON','019':'RAMON','021':'RAMON',
+    '015':'CARLOS EDUARDO','008':'CARLOS EDUARDO'
+  };
+  function codesDoSup(sup){ var c={}; for(var k in SUPMAP){ if(SUPMAP[k]===sup) c[k]=1; } return c; }
+  function viewFallback(){
+    var s=sess(); if(!s) return {all:false, codes:{}, motivo:'sem-login'};
+    if(ehCoord()) return {all:true};
+    var nome=up(s.nome), sups=['BRUNO','DANILO','RAMON','CARLOS EDUARDO'];
+    var m=sups.filter(function(S){ return nome.indexOf(S)>=0 || nome.split(' ')[0]===S.split(' ')[0]; })[0];
+    if(!m) return {all:false, codes:{}, motivo:'sem-carteira'};
+    return {all:false, codes:codesDoSup(m), sup:m};
+  }
+  var VIEW=viewFallback();
+  function aplicarEquipe(eq){
+    if(!eq || typeof eq!=='object') return;
+    var map={};
+    Object.keys(eq).forEach(function(nome){ var e=eq[nome]||{}; (e.lojas||[]).forEach(function(l){ var c=code3(l); if(c) map[c]=up(nome); }); });
+    if(Object.keys(map).length) SUPMAP=map;
+    var s=sess(); if(!s) return;
+    var alvo=null, nomeU=up(s.nome);
+    Object.keys(eq).forEach(function(nome){ var u=up(nome); if(u===nomeU || nomeU.indexOf(u)>=0 || u.split(' ')[0]===nomeU.split(' ')[0]) alvo=nome; });
+    var papel=(alvo && eq[alvo].papel)?up(eq[alvo].papel):up(s.papel);
+    if(papel.indexOf('COORDEN')>=0){ VIEW={all:true}; }
+    else if(alvo){ var c={}; (eq[alvo].lojas||[]).forEach(function(l){ var k=code3(l); if(k) c[k]=1; }); VIEW = Object.keys(c).length?{all:false,codes:c,sup:up(alvo)}:VIEW; }
+  }
+
+  /* ===== Dados: base do mês + acompanhamento (servidor; sem servidor, ficam neste aparelho) ===== */
+  var BASE=null, ACOMP={}, ATZ=null, MODO=BACKEND_PDI?'servidor':'local';
+  function getJSON(url){ return fetch(url,{cache:'no-store'}).then(function(r){ return r.json(); }); }
+  function post(body){ return fetch(BACKEND_PDI,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)}).then(function(r){ return r.json(); }); }
+  function carregarBase(){
+    if(!BACKEND_PDI){ var b=lsGet(LS_BASE); BASE=b&&b.base||null; ATZ=b&&b.em||null; return Promise.resolve(); }
+    return getJSON(BACKEND_PDI+'?acao=base&token='+encodeURIComponent(PDI_TOKEN)).then(function(j){ if(j&&j.ok){ BASE=j.base||null; ATZ=j.atualizado||null; } else throw new Error((j&&j.erro)||'resposta inválida'); });
+  }
+  function carregarAcomp(){
+    if(!BACKEND_PDI){ ACOMP=lsGet(LS_ACOMP)||{}; return Promise.resolve(); }
+    return getJSON(BACKEND_PDI+'?acao=acomp&token='+encodeURIComponent(PDI_TOKEN)).then(function(j){ if(j&&j.ok) ACOMP=j.acomp||{}; else throw new Error((j&&j.erro)||'resposta inválida'); });
+  }
+  function salvarAcomp(v, estado){
+    var s=sess(); var por=(s&&s.nome)||'';
+    if(!podeVerLoja(v.c)) return Promise.reject(new Error('Este vendedor não está na sua carteira.'));
+    if(!BACKEND_PDI){ ACOMP[v.id]=estado; if(!lsSet(LS_ACOMP,ACOMP)) return Promise.reject(new Error('sem espaço no aparelho')); return Promise.resolve(); }
+    return post({acao:'salvar',token:PDI_TOKEN,chave:v.id,loja:v.c,estado:estado,por:por}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'o servidor não confirmou'); ACOMP[v.id]=estado; });
+  }
+  function publicarBase(base, rotulo){
+    var s=sess(); base.rotulo=rotulo||base.rotulo||'';
+    if(!BACKEND_PDI){ if(!lsSet(LS_BASE,{base:base,em:new Date().toISOString()})) return Promise.reject(new Error('A base não coube no armazenamento deste aparelho.')); return Promise.resolve(); }
+    return post({acao:'publicar',token:PDI_TOKEN,base:base,por:(s&&s.nome)||''}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'o servidor não confirmou'); });
+  }
+
+  /* ===== Escopo ===== */
+  function podeVerLoja(c){ return VIEW.all || !!(VIEW.codes && VIEW.codes[code3(c)]); }
+  function recortar(base){
+    if(!base) return null;
+    var V=(base.V||[]).filter(function(v){ return podeVerLoja(v.c); });
+    var L={},O={}; Object.keys(base.L||{}).forEach(function(k){ if(podeVerLoja(k)) L[k]=base.L[k]; }); Object.keys(base.ORF||{}).forEach(function(k){ if(podeVerLoja(k)) O[k]=base.ORF[k]; });
+    var out={}; for(var k in base) out[k]=base[k]; out.V=V; out.L=L; out.ORF=O; return out;
+  }
+  function tc(s){ return String(s||'').toLowerCase().replace(/(^|\s)(\S)/g,function(m,a,b){return a+b.toUpperCase();}); }
+  function lojaNomeDe(base){ return function(id){ var k=code3(id); var m=(base.M||{})[k]; var n=m?m[0]:((base.V||[]).filter(function(v){return v.c===k;})[0]||{}).l; return k+(n?' · '+n:''); }; }
+  function supDe(id){ var s=SUPMAP[code3(id)]; return s?'Supervisor '+tc(s):'Sem supervisor'; }
+
+  function fmtAtz(v){ if(!v) return ''; var d=new Date(v); if(isNaN(d.getTime())) return String(v); var p=function(n){return (n<10?'0':'')+n;}; return p(d.getDate())+'/'+p(d.getMonth()+1)+'/'+d.getFullYear(); }
+
+  function montar(){
+    var root=$('pdi-root'), s=sess();
+    $('btnBase').hidden=!ehCoord();
+    $('status').innerHTML = (MODO==='servidor'?'🟢 compartilhado':'💾 neste aparelho')+(ATZ?' · base de <b>'+fmtAtz(ATZ)+'</b>':'');
+    if(!s){ root.innerHTML='<div class="cardx erro"><h3>Entre no app primeiro</h3><p class="pdi-meta" style="margin:0">Abra o PDI pelo Só Tintas App, já logado. Cada supervisor vê só as lojas da carteira dele.</p></div>'; return; }
+    if(!VIEW.all && (!VIEW.codes || !Object.keys(VIEW.codes).length)){ root.innerHTML='<div class="cardx erro"><h3>Sem carteira de lojas</h3><p class="pdi-meta" style="margin:0">Seu login ('+(s.nome||'')+') não tem lojas na EQUIPE do app. Peça à coordenação para incluir suas lojas.</p></div>'; return; }
+    var b=recortar(BASE);
+    $('sub').textContent=(VIEW.all?'Rede Só Tintas':'Carteira de '+tc(VIEW.sup||s.nome))+(BASE&&BASE.rotulo?' · '+BASE.rotulo:'');
+    if(!b || !b.V.length){ root.innerHTML='<div class="cardx info"><h3>'+(BASE?'Nenhum vendedor da sua carteira na base':'Base do mês ainda não publicada')+'</h3><p class="pdi-meta" style="margin:0">'+(ehCoord()?'Toque em <b>Atualizar base do mês</b> e escolha o arquivo PDI_dados_&lt;mês&gt;.json gerado pela rotina mensal (pasta Downloads).':'A coordenação publica a base do mês. Quando ela publicar, seus vendedores aparecem aqui.')+(MODO==='local'?'<br><br>Atenção: o servidor do PDI ainda não está configurado; até lá a base e o acompanhamento ficam só no aparelho em que foram lançados.':'')+'</p></div>'; return; }
+    window.PdiUI.montar(root,{ base:b, acomp:ACOMP, pode:true, usuario:s.nome||'', regiaoDe:supDe, lojaNome:lojaNomeDe(BASE), nivel:VIEW.all?'rede':'regiao', salvar:function(v,estado){ return salvarAcomp(v,estado); } });
+  }
+
+  /* ===== Publicar base (só coordenação) ===== */
+  var PREVIA=null;
+  $('btnBase').onclick=function(){ $('cardBase').hidden=!$('cardBase').hidden; };
+  $('arqBase').onchange=function(){
+    var f=this.files&&this.files[0]; if(!f) return; var r=new FileReader();
+    r.onload=function(){ try{ var j=JSON.parse(String(r.result)); window.PdiUI.validar(j); PREVIA=j; var res=window.PdiUI.resumo(j,{});
+        $('previa').innerHTML='<b>Prévia:</b> '+j.V.length+' vendedores · '+res.c.P1+' P1 · '+res.c.P2+' P2 · '+res.c.P3+' P3 · '+res.c.P4+' P4 · '+res.c.PI+' em integração · '+window.PdiUI.brl(res.mesa)+' de bônus na mesa.';
+        if(!$('rotBase').value) $('rotBase').value=j.rotulo||('base '+f.name.replace(/^PDI_dados_|\.json$/gi,''));
+        $('btnPublicar').disabled=false;
+      }catch(e){ PREVIA=null; $('previa').innerHTML='<span class="pdi-bad">Não deu para ler o arquivo: '+e.message+'</span>'; $('btnPublicar').disabled=true; } };
+    r.readAsText(f,'utf-8');
+  };
+  $('btnPublicar').onclick=function(){
+    if(!PREVIA||!ehCoord()) return; var bt=this; bt.disabled=true; bt.textContent='Publicando…';
+    publicarBase(PREVIA,$('rotBase').value.trim()).then(function(){ BASE=PREVIA; ATZ=new Date().toISOString(); PREVIA=null; $('cardBase').hidden=true; $('previa').textContent=''; $('arqBase').value=''; bt.textContent='Publicar base'; montar(); })
+      .catch(function(e){ $('previa').innerHTML='<span class="pdi-bad">Não publicou: '+e.message+'</span>'; bt.disabled=false; bt.textContent='Publicar base'; });
+  };
+
+  /* ===== Início ===== */
+  var equipe = APP_EQUIPE_URL ? getJSON(APP_EQUIPE_URL+'?acao=equipe').then(function(j){ if(j&&j.ok&&j.equipe) aplicarEquipe(j.equipe); }).catch(function(){}) : Promise.resolve();
+  Promise.all([equipe, carregarBase(), carregarAcomp()]).then(montar).catch(function(e){
+    $('pdi-root').innerHTML='<div class="cardx erro"><h3>Não consegui carregar o PDI</h3><p class="pdi-meta" style="margin:0">'+e.message+'. Verifique a internet e toque em voltar e abrir de novo.</p></div>';
+  });
+  window.__PDI={VIEW:function(){return VIEW;},recarregar:function(){ return Promise.all([carregarBase(),carregarAcomp()]).then(montar); }};
+})();
+</script>
+</body></html>
