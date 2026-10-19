@@ -365,8 +365,14 @@ render();
   function up(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().trim(); }
   function code3(s){ var m=String(s||'').match(/\d+/); return m?('00'+m[0]).slice(-3):''; }
   function codesDoSup(sup){ var c={}; for(var k in SUPMAP){ if(SUPMAP[k]===sup) c[k]=1; } return c; }
+  /* v61 (Mentor): VENDEDOR vê só a própria linha e a loja dele */
+  function ehVendedor(s){ return !!(s && (s.vendedor || /VENDEDOR/.test(up(s.papel)))); }
+  function nomeChave(n){ return up(n).replace(/\s*-?\s*N\s*\d+\s*$/,'').replace(/\s+\d+\s*$/,'').replace(/[^A-Z0-9 ]+/g,' ').replace(/\s+/g,' ').trim(); }
+  function mesmoVendedor(a,b){ a=nomeChave(a); b=nomeChave(b); if(!a||!b) return false; if(a===b) return true;
+    var x=a.split(' '), y=b.split(' '); return x.length>1 && y.length>1 && x[0]===y[0] && x[x.length-1]===y[y.length-1]; }
   function viewFallback(){
     var s=sess(); if(!s) return {all:true};
+    if(ehVendedor(s)) return {vend:true, nome:s.nome, loja:code3(s.lotacao)};
     if(up(s.papel).indexOf('COORDEN')>=0) return {all:true};
     var nome=up(s.nome), sups=['BRUNO','DANILO','RAMON','CARLOS EDUARDO'];
     var m=sups.filter(function(S){ return nome.indexOf(S)>=0 || nome.split(' ')[0]===S.split(' ')[0]; })[0];
@@ -377,7 +383,19 @@ render();
   var LOJAS_FULL=LOJAS.slice(), VENDS_FULL=VENDS.slice();
   function scopeApply(){
     remapSup(LOJAS_FULL); remapSup(VENDS_FULL);
-    if(VIEW.all){ LOJAS=LOJAS_FULL.slice(); VENDS=VENDS_FULL.slice(); }
+    if(VIEW.vend){
+      var eu=VENDS_FULL.filter(function(v){ return mesmoVendedor(v.nome, VIEW.nome) && (!VIEW.loja || v.id===VIEW.loja); });
+      if(!eu.length) eu=VENDS_FULL.filter(function(v){ return mesmoVendedor(v.nome, VIEW.nome); }).slice(0,1);
+      VENDS=eu; var lj=eu.length?eu[0].id:VIEW.loja;
+      LOJAS=LOJAS_FULL.filter(function(l){ return l.id===lj; });
+      var aviso=document.getElementById('avisoVend');
+      if(!aviso){ aviso=document.createElement('div'); aviso.id='avisoVend';
+        aviso.style.cssText='margin:10px 0;padding:10px 14px;border-radius:10px;background:var(--surface,#fff);border:1px solid var(--line,#ddd);font-size:13px';
+        var alvo=document.querySelector('.controls'); if(alvo&&alvo.parentNode) alvo.parentNode.insertBefore(aviso, alvo); }
+      aviso.innerHTML = eu.length ? 'Você está vendo <b>o seu nível</b> e a sua loja.'
+        : 'Ainda não encontrei <b>'+String(VIEW.nome).replace(/</g,'&lt;')+'</b> na base de níveis deste mês. Ela é atualizada pela coordenação no começo do mês.';
+    }
+    else if(VIEW.all){ LOJAS=LOJAS_FULL.slice(); VENDS=VENDS_FULL.slice(); }
     else { LOJAS=LOJAS_FULL.filter(function(l){return VIEW.codes[l.id];});
            VENDS=VENDS_FULL.filter(function(v){return VIEW.codes[v.id];}); }
     if(typeof render==='function') render();
@@ -389,6 +407,7 @@ render();
     Object.keys(eq).forEach(function(nome){ var e=eq[nome]||{}; (e.lojas||[]).forEach(function(l){ var c=code3(l); if(c) map[c]=up(nome); }); });
     if(Object.keys(map).length) SUPMAP=map;           // passa a mandar a planilha
     var s=sess();
+    if(s && ehVendedor(s)){ VIEW=viewFallback(); scopeApply(); return; }
     if(s){
       var alvo=null, nomeU=up(s.nome);
       Object.keys(eq).forEach(function(nome){ var u=up(nome); if(u===nomeU || nomeU.indexOf(u)>=0 || u.split(' ')[0]===nomeU.split(' ')[0]) alvo=nome; });

@@ -542,6 +542,7 @@ tr.incompleto input{background:transparent}
 .toast.show{opacity:1;bottom:34px}
 .modal{position:fixed;inset:0;background:rgba(18,28,50,.55);display:none;align-items:center;justify-content:center;z-index:150;padding:16px}
 .modal.show{display:flex}
+#modalConta,#modalAcessos{z-index:100001}
 #modalZap{z-index:170}
 .modal .mbox{background:var(--surface);border-radius:var(--r-lg);padding:var(--s5);max-width:620px;
   width:100%;max-height:88vh;overflow:auto;box-shadow:var(--e3)}
@@ -6731,7 +6732,7 @@ function renderPainelPend(r){
    casual e deixa registro de quem lançou o quê.                          */
 /* Carimbo da versão. Existe para acabar com a dúvida "será que o arquivo
    novo subiu?" — agora dá para ver na tela em vez de adivinhar. */
-var VERSAO_APP='v60';
+var VERSAO_APP='v61';
 /* escreve a versão no cabeçalho assim que o app carrega — antes do login,
    antes de tudo. É o que responde "o que está rodando aqui?" sem depender
    de ninguém lembrar de olhar o rodapé. */
@@ -6770,6 +6771,8 @@ var LS_SESSAO='sotintas_sessao_v1';
 var SESSAO=null;
 
 function ehCoordenador(){ return !!(SESSAO && SESSAO.escopo==='todos'); }
+/* v61: vendedor — pelo servidor (vendedor:true) ou, em sessão antiga, pelo cargo */
+function ehVendedorSessao(s){ return !!(s && (s.vendedor || /vendedor/i.test(String(s.papel||'')))); }
 
 /* ---------- DIREITOS POR CARGO ----------
    A régua vem da aba PERMISSOES (uma linha por cargo) e chega no login.
@@ -6909,8 +6912,13 @@ function abrirApp(sessao){
   $('btnUser').title = sessao.nome+' · '+sessao.papel+' · Assistente ST '+VERSAO_APP;
   aplicarEscopo();
   $('btnUser').classList.toggle('alerta', !!sessao.pinPadrao);
-  if(sessao.pinPadrao){
-    setTimeout(function(){ toast('Seu PIN ainda é 1234 — toque no seu nome, no topo, para trocar.'); }, 1500);
+  /* v61: vendedor usa o app só pelos cards (Mentor, Ranking, Níveis) */
+  document.body.classList.toggle('modo-vendedor', ehVendedorSessao(sessao));
+  if(sessao.pinPadrao && ehVendedorSessao(sessao)){
+    /* PIN inicial dado pelo gerente: a troca é a primeira coisa */
+    setTimeout(function(){ abrirConta(); toast('Primeiro acesso: troque o PIN que o gerente te passou.'); }, 900);
+  } else if(sessao.pinPadrao){
+    setTimeout(function(){ toast(sessao.trocarPin ? 'Troque o PIN inicial — toque no seu nome, no topo.' : 'Seu PIN ainda é 1234 — toque no seu nome, no topo, para trocar.'); }, 1500);
   }
   carregarEquipe();
   /* a tela inicial (cards) é a primeira coisa após o login */
@@ -6970,7 +6978,11 @@ $('lgEntrar').onclick=function(){
       }
       $('lgPin').value='';
       abrirApp({nome:res.nome, papel:res.papel, escopo:res.escopo, pinPadrao:res.pinPadrao,
-                email:res.email||'', fone:res.fone||''});
+                email:res.email||'', fone:res.fone||'',
+                /* v61 (Mentor): loja, carteira e gerência vão para a sessão — o Mentor
+                   monta o perfil com isso; vendedor abre só os cards dele */
+                vendedor:!!res.vendedor, lotacao:res.lotacao||'', carteira:res.carteira||[],
+                gerencia:res.gerencia||[], trocarPin:!!res.trocarPin});
       if(res.novo) setTimeout(function(){ toast('Acesso criado. Confira seus dados em Minha conta.'); }, 900);
     })
     .catch(function(){
@@ -9010,6 +9022,35 @@ syncNav();
  <iframe id="ifrPdi" title="PDI Comercial Só Tintas" style="flex:1;width:100%;border:0;background:#0f1522"></iframe>
 </div>
 
+<div id="ovMentor" style="position:fixed;inset:0;z-index:99999;background:#f5f6f8;display:none;flex-direction:column">
+ <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#0F2B46;color:#fff;font:600 14px system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
+  <button id="ovMenFechar" style="border:0;border-radius:8px;padding:9px 13px;background:#FFD100;color:#0F2B46;font:inherit;cursor:pointer">&larr; Voltar ao início</button>
+  <span style="opacity:.85">Mentor ST PRO</span>
+ </div>
+ <iframe id="ifrMentor" title="Mentor ST PRO" style="flex:1;width:100%;border:0;background:#fff"></iframe>
+</div>
+
+<div class="modal" id="modalAcessos">
+ <div class="mbox" style="max-width:640px;width:100%;max-height:92vh;overflow:auto">
+  <h3 style="margin:0 0 4px">Acesso dos vendedores</h3>
+  <p class="sub" style="margin:0 0 10px">O vendedor entra no app com <b>nome e PIN</b> e vê só o Mentor, o Ranking e o próprio nível. Você libera os vendedores das lojas pelas quais responde.</p>
+  <div class="row" style="gap:8px;flex-wrap:wrap">
+   <label style="flex:1 1 200px">Loja<select id="acLoja"></select></label>
+   <label style="flex:1 1 140px">Seu PIN (confirma)<input id="acMeuPin" type="password" inputmode="numeric" maxlength="6" autocomplete="off"></label>
+  </div>
+  <div id="acLista" style="margin-top:10px"></div>
+  <div style="border-top:1px solid var(--line,#e3e8f2);margin-top:12px;padding-top:10px">
+   <b style="font-size:13px">Vendedor que não está na lista (recém-contratado)</b>
+   <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:6px">
+    <label style="flex:2 1 220px">Nome e sobrenome<input id="acNovoNome" placeholder="como no crachá"></label>
+    <button type="button" class="btn btn-primary" id="acNovoBtn" style="align-self:flex-end">Liberar</button>
+   </div>
+  </div>
+  <div id="acStatus" class="hint" style="margin-top:10px"></div>
+  <div style="text-align:right;margin-top:12px"><button type="button" class="btn btn-ghost" id="acFechar">Fechar</button></div>
+ </div>
+</div>
+
 <div id="ovProposta" style="position:fixed;inset:0;z-index:99999;background:#0f1522;display:none;flex-direction:column">
  <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;color:#fff;font:600 14px system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
   <button id="ovPrFechar" style="border:0;border-radius:8px;padding:9px 13px;background:#FFD100;color:#0F2B46;font:inherit;cursor:pointer">&larr; Voltar ao início</button>
@@ -9039,7 +9080,12 @@ syncNav();
         <span class="ini-txt"><span class="ini-nm">Painel de Metas e Indicadores</span><span class="ini-ds">Painel de Supervisão</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
-      <button type="button" class="ini-card feat" data-act="niveis" data-gate="1">
+      <button type="button" class="ini-card feat" data-act="mentor" data-vend="1">
+        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg></span>
+        <span class="ini-txt"><span class="ini-nm">Mentor ST PRO</span><span class="ini-ds">Treinamento, trilha, DISC e assessor técnico</span></span>
+        <span class="ini-go" aria-hidden="true">&rarr;</span>
+      </button>
+      <button type="button" class="ini-card feat" data-act="niveis" data-gate="1" data-vend="1">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-target"/></svg></span>
         <span class="ini-txt"><span class="ini-nm">Níveis</span><span class="ini-ds">Lojas, vendedores e prazos</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
@@ -9047,6 +9093,11 @@ syncNav();
       <button type="button" class="ini-card feat" data-act="pdi" data-gate="1">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-flag"/></svg></span>
         <span class="ini-txt"><span class="ini-nm">PDI Comercial</span><span class="ini-ds">Prioridade e desenvolvimento dos vendedores</span></span>
+        <span class="ini-go" aria-hidden="true">&rarr;</span>
+      </button>
+      <button type="button" class="ini-card feat" data-act="acessos" data-lider="1">
+        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
+        <span class="ini-txt"><span class="ini-nm">Acesso dos vendedores</span><span class="ini-ds">Liberar vendedor, novo PIN e desativar</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
       <button type="button" class="ini-card feat" data-act="proposta" data-gate="1">
@@ -9082,14 +9133,14 @@ syncNav();
         <span class="ini-nm">Despesas</span>
         <span class="ini-ds">Lançar e exportar</span>
       </button>
-      <button type="button" class="ini-card" data-act="ranking" data-ac="ambar">
+      <button type="button" class="ini-card" data-act="ranking" data-ac="ambar" data-vend="1">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-chart"/></svg></span>
         <span class="ini-nm">Ranking</span>
         <span class="ini-ds">Premiação · lojas e vendedores</span>
       </button>
     </div>
   </div>
-  <div class="ini-foot">Só Tintas · Colorindo Vidas e Realizando Sonhos</div>
+  <div class="ini-foot"><button type="button" id="iniConta" class="ini-conta">Minha conta · trocar PIN · sair</button><br>Só Tintas · Colorindo Vidas e Realizando Sonhos</div>
 </div>
 
 <style>
@@ -9176,6 +9227,11 @@ html[data-theme="dark"] #ovInicio .ini-card[data-ac=cinza] .ini-ic{background:#1
 #ovInicio .ih-t .ih-sub{color:var(--muted,#67728c);font-weight:600}
 #ovInicio .ih-mais{margin-top:8px;font-size:11.5px;font-weight:800;color:var(--navy,#1C3F8F)}
 html[data-theme="dark"] #ovInicio .ini-hoje{border-left-color:var(--yellow,#FFD100)}
+/* v61 — modo vendedor: só os cards dele, sem o resumo do dia */
+body.modo-vendedor #ovInicio .ini-card:not([data-vend]){display:none!important}
+body.modo-vendedor #ovInicio .ini-sec,body.modo-vendedor #ovInicio #iniHoje{display:none!important}
+body.modo-vendedor #ovInicio .ini-grid{margin-top:10px}
+#ovInicio .ini-conta{border:0;background:transparent;color:var(--navy,#1C3F8F);font:800 12.5px inherit;cursor:pointer;padding:6px 10px;margin-bottom:6px;text-decoration:underline}
 #ovInicio .ini-foot{text-align:center;color:var(--muted,#67728c);font-size:11px;font-weight:700;
   letter-spacing:.3px;padding:14px 16px 26px}
 #btnInicio{display:none}
@@ -9197,10 +9253,17 @@ body.foco .wrap{padding-bottom:40px}
   function podeVer(){ var s=sessao(); if(!s) return false; var p=((s&&s.papel)||'').trim().toLowerCase();
     if(!p) return true; return p.indexOf('coorden')>=0 || p.indexOf('supervis')>=0; }
 
+  function ehVend(){ var s=sessao(); return !!(s && (s.vendedor || /vendedor/i.test(String(s.papel||'')))); }
+  function ehLider(){ var s=sessao(); if(!s||ehVend()) return false; var p=String(s.papel||'').toLowerCase();
+    return s.escopo==='todos' || s.escopo==='lojas' || p.indexOf('coorden')>=0 || p.indexOf('supervis')>=0 || p.indexOf('gerente')>=0; }
   function aplicarGate(){
-    var ver=podeVer();
+    var ver=podeVer(), vend=ehVend();
+    document.body.classList.toggle('modo-vendedor', vend);
     Array.prototype.forEach.call(grid.querySelectorAll('[data-gate]'),function(c){
-      c.style.display = ver ? '' : 'none';
+      c.style.display = (ver || (vend && c.hasAttribute('data-vend'))) ? '' : 'none';
+    });
+    Array.prototype.forEach.call(grid.querySelectorAll('[data-lider]'),function(c){
+      c.style.display = ehLider() ? '' : 'none';
     });
   }
   function saudar(){
@@ -9221,7 +9284,8 @@ body.foco .wrap{padding-bottom:40px}
   (function(){ var ih=document.getElementById('iniHoje');
     if(ih) ih.addEventListener('click', function(){ fecharInicio(); document.body.classList.add('foco'); if(typeof setModo==='function'){ setModo('agenda'); window.scrollTo(0,0); } });
   })();
-  function fecharInicio(){ ov.classList.remove('aberto'); ov.setAttribute('aria-hidden','true');
+  function fecharInicio(){ if(ehVend()) return;   /* vendedor fica na tela inicial */
+    ov.classList.remove('aberto'); ov.setAttribute('aria-hidden','true');
     document.body.style.overflow=''; }
   window.abrirInicio=abrirInicio; window.fecharInicio=fecharInicio;
 
@@ -9262,6 +9326,113 @@ body.foco .wrap{padding-bottom:40px}
   }
   if(xD){ xD.addEventListener('click', function(){ ovD.style.display='none'; ifrD.removeAttribute('src'); document.body.style.overflow=''; try{ if(window.abrirInicio) window.abrirInicio(); }catch(e){} }); }
 
+  // overlay do Mentor ST PRO (v61): mesmo endereço do site, a sessão do app passa sozinha
+  var ovM=document.getElementById('ovMentor'), ifrM=document.getElementById('ifrMentor'),
+      xM=document.getElementById('ovMenFechar');
+  function fecharMentor(){ if(!ovM) return; ovM.style.display='none'; ifrM.removeAttribute('src'); document.body.style.overflow=''; try{ if(window.abrirInicio) window.abrirInicio(); }catch(e){} }
+  function abrirMentor(){
+    if(!ovM||!ifrM) return;
+    ifrM.setAttribute('src','mentor/index.html?v='+Date.now());
+    ovM.style.display='flex'; document.body.style.overflow='hidden';
+  }
+  if(xM){ xM.addEventListener('click', fecharMentor); }
+  window.addEventListener('message', function(ev){ var d=ev&&ev.data; if(d&&d.mentor==='fechar') fecharMentor(); });
+
+  // Minha conta a partir da tela inicial (o vendedor não tem a barra de cima)
+  (function(){ var bc=document.getElementById('iniConta');
+    if(bc) bc.addEventListener('click', function(){ try{ if(typeof abrirConta==='function') abrirConta(); }catch(e){} });
+  })();
+
+  // Acesso dos vendedores (v61): gerente/supervisor/coordenação liberam
+  var AC={dados:null};
+  function acEl(id){ return document.getElementById(id); }
+  function acEsc(t){ return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  function acStatus(t,cor){ var e=acEl('acStatus'); if(e){ e.innerHTML=t||''; e.style.color=cor||''; } }
+  function acRender(){
+    var d=AC.dados, box=acEl('acLista'); if(!box||!d) return;
+    var loja=acEl('acLoja').value, cod=(String(loja).match(/^\s*(\d+)/)||[])[1]; cod=cod?('00'+cod).slice(-3):'';
+    var vs=(d.vendedores||[]).filter(function(v){ return v.cod===cod; });
+    if(!vs.length){ box.innerHTML='<p class="sub">Nenhum vendedor desta loja no Níveis. Use o campo abaixo para liberar pelo nome.</p>'; return; }
+    box.innerHTML='<div class="rolar"><table class="pnl"><tr><th>Vendedor</th><th>Situação</th><th style="min-width:220px">Ação</th></tr>'+
+      vs.map(function(v,i){
+        var sit=!v.liberado?'<span style="color:var(--muted)">sem acesso</span>':!v.ativo?'<b style="color:#D32027">desativado</b>':v.trocarPin?'<b style="color:#B7791F">liberado · falta trocar o PIN</b>':'<b style="color:var(--ok,#177a4d)">com acesso</b>';
+        var acoes=(!v.liberado||!v.ativo)?'<input data-pin="'+i+'" placeholder="PIN inicial" inputmode="numeric" maxlength="6" style="width:96px"> <button type="button" class="btn btn-primary btn-sm" data-lib="'+i+'">Liberar</button>'
+          :'<input data-pin="'+i+'" placeholder="PIN novo" inputmode="numeric" maxlength="6" style="width:90px"> <button type="button" class="btn btn-ghost btn-sm" data-lib="'+i+'">Novo PIN</button> <button type="button" class="btn btn-ghost btn-sm" data-des="'+i+'">Desativar</button>';
+        return '<tr><td><b>'+acEsc(v.nome)+'</b></td><td>'+sit+'</td><td>'+acoes+'</td></tr>';
+      }).join('')+'</table></div>';
+    Array.prototype.forEach.call(box.querySelectorAll('[data-lib]'),function(b){ b.onclick=function(){
+      var v=vs[+b.getAttribute('data-lib')], pin=(box.querySelector('[data-pin="'+b.getAttribute('data-lib')+'"]')||{}).value||'';
+      acEnviar({nome:v.nome, loja:loja, pin:pin.trim(), acao:'liberar'}); }; });
+    Array.prototype.forEach.call(box.querySelectorAll('[data-des]'),function(b){ b.onclick=function(){
+      var v=vs[+b.getAttribute('data-des')];
+      if(!window.confirm('Desativar o acesso de '+v.nome+'?')) return;
+      acEnviar({nome:v.nome, loja:loja, acao:'desativar'}); }; });
+  }
+  function acEnviar(o){
+    var s=sessao(); if(!s) return;
+    var meu=(acEl('acMeuPin').value||'').trim();
+    if(!/^\d{4,6}$/.test(meu)){ acStatus('Digite <b>o seu PIN</b> no campo "Seu PIN (confirma)".','#D32027'); acEl('acMeuPin').focus(); return; }
+    if(o.acao!=='desativar' && !/^\d{4,6}$/.test(o.pin||'')){ acStatus('O PIN inicial do vendedor tem de 4 a 6 dígitos.','#D32027'); return; }
+    acStatus('Gravando…','');
+    fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({tipo:'liberarVendedor', eu:s.nome, pinEu:meu, nome:o.nome, loja:o.loja, pin:o.pin||'', acao:o.acao})})
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        if(!res||!res.ok){ acStatus('✕ '+acEsc((res&&res.erro)||'Não consegui gravar.'),'#D32027'); return; }
+        acStatus(o.acao==='desativar' ? '✓ Acesso de '+acEsc(res.nome)+' desativado.'
+          : '✓ '+acEsc(res.nome)+' liberado. Passe para ele: entrar no Assistente ST com o nome <b>'+acEsc(res.nome)+'</b> e o PIN <b>'+acEsc(o.pin)+'</b> — no primeiro acesso o app pede para trocar.','var(--ok,#177a4d)');
+        acEl('acNovoNome').value=''; acCarregar(true);
+      })
+      .catch(function(){ acStatus('Sem conexão — nada foi gravado.','#D32027'); });
+  }
+  function acCarregar(manterLoja){
+    var s=sessao(); if(!s) return;
+    var antes=manterLoja?acEl('acLoja').value:'';
+    acEl('acLista').innerHTML='<p class="sub">Buscando os vendedores…</p>';
+    fetch(ENVIO_URL+'?acao=acessosVendedores&eu='+encodeURIComponent(s.nome)).then(function(r){ return r.json(); })
+      .then(function(d){
+        if(!d||!d.ok){ acEl('acLista').innerHTML='<p class="sub">'+acEsc((d&&d.erro)||'Não consegui buscar.')+'</p>'; return; }
+        if(!d.pode||!d.lojas.length){ acEl('acLista').innerHTML='<p class="sub">Seu cadastro não responde por nenhuma loja. Fale com a coordenação.</p>'; return; }
+        AC.dados=d;
+        /* o Níveis ainda não foi publicado pelo servidor: as sugestões vêm da base do Mentor */
+        if(!d.sugestoesDoNiveis) acSugestoesMentor(d);
+        acEl('acLoja').innerHTML=d.lojas.map(function(l){ return '<option'+(l===antes?' selected':'')+'>'+acEsc(l)+'</option>'; }).join('');
+        acRender();
+      })
+      .catch(function(){ acEl('acLista').innerHTML='<p class="sub">Sem conexão.</p>'; });
+  }
+  function acNomeBonito(n){ return String(n||'').toLowerCase().replace(/\s*-?\s*n\s*\d+\s*$/,'').replace(/\s+\d+\s*$/,'').replace(/\s+/g,' ').trim()
+    .replace(/(^|\s)(\S)/g,function(m,a,b){return a+b.toUpperCase();}).replace(/ (De|Da|Do|Dos|Das|E) /g,function(m){return m.toLowerCase();}); }
+  function acChave(n){ return String(n||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim(); }
+  function acSugestoesMentor(d){
+    fetch('mentor/assets/conteudo-niveis.js').then(function(r){ return r.text(); }).then(function(t){
+      var m=/C\.niveis_vendedores\s*=\s*(\[[\s\S]*?\]);/.exec(t); if(!m) return;
+      var lista=JSON.parse(m[1]), cods={}, ja={};
+      (d.lojas||[]).forEach(function(l){ var c=(String(l).match(/^\s*(\d+)/)||[])[1]; if(c) cods[('00'+c).slice(-3)]=l; });
+      (d.vendedores||[]).forEach(function(v){ ja[acChave(v.nome)]=1; });
+      lista.forEach(function(v){ var c=('00'+v.loja_id).slice(-3), nome=acNomeBonito(v.nome);
+        if(!cods[c]||!nome||ja[acChave(nome)]) return; ja[acChave(nome)]=1;
+        d.vendedores.push({nome:nome, loja:cods[c], cod:c, liberado:false, ativo:false, trocarPin:false}); });
+      d.vendedores.sort(function(a,b){ return a.nome<b.nome?-1:1; });
+      if(AC.dados===d) acRender();
+    }).catch(function(){});
+  }
+  function abrirAcessos(){
+    var m=acEl('modalAcessos'); if(!m) return;
+    acStatus(''); m.classList.add('show'); acCarregar(false);
+  }
+  (function(){
+    var f=acEl('acFechar'); if(f) f.onclick=function(){ acEl('modalAcessos').classList.remove('show'); acEl('acMeuPin').value=''; };
+    var l=acEl('acLoja'); if(l) l.onchange=acRender;
+    var nb=acEl('acNovoBtn'); if(nb) nb.onclick=function(){
+      var nome=(acEl('acNovoNome').value||'').trim();
+      if(nome.split(/\s+/).length<2){ acStatus('Use nome e sobrenome do vendedor.','#D32027'); return; }
+      var pin=window.prompt('PIN inicial para '+nome+' (4 a 6 dígitos). Ele troca no primeiro acesso.','');
+      if(pin==null) return;
+      acEnviar({nome:nome, loja:acEl('acLoja').value, pin:String(pin).trim(), acao:'liberar'});
+    };
+  })();
+
   // overlay de Proposta de Vendedor (espelha o de Ranking)
   var ovP=document.getElementById('ovProposta'), ifrP=document.getElementById('ifrProposta'),
       xP=document.getElementById('ovPrFechar');
@@ -9283,6 +9454,9 @@ body.foco .wrap{padding-bottom:40px}
     if(act==='ranking'){ abrirRanking(); return; }
     if(act==='proposta'){ abrirProposta(); return; }
     if(act==='pdi'){ abrirPdi(); return; }
+    if(act==='mentor'){ abrirMentor(); return; }
+    if(act==='acessos'){ abrirAcessos(); return; }
+    if(ehVend()) return;      /* vendedor não entra nas operações da supervisão */
     /* modo foco: ao abrir uma operação pelo card, mostra só ela (esconde as abas) */
     document.body.classList.add('foco');
     if(typeof setModo==='function'){ setModo(act); window.scrollTo(0,0); }
