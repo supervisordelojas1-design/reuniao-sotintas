@@ -402,7 +402,7 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
   <div class="hdtop">
    <div class="brand">
     <div class="logo">ST</div>
-    <div><h1 id="hTit">Coordenação de Supervisão</h1><span id="hSub">Só Tintas · Painel de Performance · <b style="color:#FFD100">v37</b></span></div>
+    <div><h1 id="hTit">Coordenação de Supervisão</h1><span id="hSub">Só Tintas · Painel de Performance · <b style="color:#FFD100">v38</b></span></div>
    </div>
    <div class="per"><b id="hPer">—</b><span id="hDias">—</span><span id="btnUp" style="display:none" onclick="abrirUpload()"> · ⚙️ atualizar dados</span><span id="lnkSair" style="display:none" onclick="sairPainel()"> · sair</span></div>
   </div>
@@ -798,6 +798,17 @@ function delta(v,r,menorMelhor){
  const d=(v-r)/Math.abs(r), bom=menorMelhor?d<0:d>0;
  if(Math.abs(d)<.02) return '<div class="d eq">= média da rede</div>';
  return `<div class="d ${bom?'up':'dn'}">${d>0?'▲':'▼'} ${(Math.abs(d)*100).toFixed(0)}% vs rede</div>`}
+/* v38: metas do grupo CPF (campo meta em IND). b=1 bate com valor >= meta; b=0 (desconto) bate com <= meta.
+   O numero do card ganha a cor da meta e o chip "vs rede" vira o chip da meta. */
+const bateMeta=(m,v)=>(v==null||!m||m.meta==null)?null:(m.b?v>=m.meta:v<=m.meta);
+const corMeta=(k,v)=>{const m=IND.find(x=>x.k==k),ok=bateMeta(m,v);return ok==null?'':ok?'var(--ok)':'var(--bad)'};
+function chipMeta(k,v){
+ const m=IND.find(x=>x.k==k); if(!m||m.meta==null||v==null) return '<div class="s">—</div>';
+ const alvo=fmtI(m,m.meta);
+ if(bateMeta(m,v)) return `<div class="d up">✔ meta ${m.b?'':'até '}${alvo}</div>`;
+ const dif=Math.abs(v-m.meta);
+ const txt=m.t=='pct'?(dif*100).toFixed(1).replace('.',',')+' p.p.':m.t=='brl'?BRL(dif):DEC(dif,2);
+ return `<div class="d dn">${m.b?'faltam '+txt+' p/ '+alvo:txt+' acima de '+alvo}</div>`}
 function indBloco(o,ref,esc_){
  const I=o.I, R=ref?ref.I:null;
  let h=`<div class="grp"><div class="grph"><span class="tg cnpj">CNPJ</span><h3>Indicadores de performance CNPJ</h3>
@@ -810,10 +821,10 @@ function indBloco(o,ref,esc_){
  h+=`</div></div>`;
  h+=`<div class="grp"><div class="grph"><span class="tg cpf">CPF</span><h3>Indicadores de performance CPF</h3>
   <span class="cnt">${NUM(I.atend)} atendimentos</span></div><div class="ind">`;
- h+=`<div class="indc cl" onclick="goInd('pctIdent')"><div class="l">% Identificados</div><div class="v">${PPCT(I.pctIdent)}</div>${delta(I.pctIdent,R&&R.pctIdent)}<div class="s">${NUM(Math.round(I.atend*I.pctIdent))} de ${NUM(I.atend)}</div></div>`;
- h+=`<div class="indc cl" onclick="goInd('itens')"><div class="l">Itens CPF</div><div class="v">${DEC(I.itens,2)}</div>${delta(I.itens,R&&R.itens)}<div class="s">itens por atendimento</div></div>`;
- h+=`<div class="indc cl" onclick="goInd('ticket')"><div class="l">$ Ticket Médio CPF</div><div class="v">${BRL(I.ticket)}</div>${delta(I.ticket,R&&R.ticket)}<div class="s">por atendimento</div></div>`;
- h+=`<div class="indc cl" onclick="goInd('descCPF')"><div class="l">% Desconto CPF</div><div class="v" style="color:${R&&I.descCPF>R.descCPF?'var(--bad)':'var(--ok)'}">${PPCT(I.descCPF)}</div>${delta(I.descCPF,R&&R.descCPF,true)}<div class="s">quanto menor, melhor</div></div>`;
+ h+=`<div class="indc cl" onclick="goInd('pctIdent')"><div class="l">% Identificados</div><div class="v" style="color:${corMeta('pctIdent',I.pctIdent)}">${PPCT(I.pctIdent)}</div>${chipMeta('pctIdent',I.pctIdent)}<div class="s">${NUM(Math.round(I.atend*I.pctIdent))} de ${NUM(I.atend)}</div></div>`;
+ h+=`<div class="indc cl" onclick="goInd('itens')"><div class="l">Itens CPF</div><div class="v" style="color:${corMeta('itens',I.itens)}">${DEC(I.itens,2)}</div>${chipMeta('itens',I.itens)}<div class="s">itens por atendimento</div></div>`;
+ h+=`<div class="indc cl" onclick="goInd('ticket')"><div class="l">$ Ticket Médio CPF</div><div class="v" style="color:${corMeta('ticket',I.ticket)}">${BRL(I.ticket)}</div>${chipMeta('ticket',I.ticket)}<div class="s">por atendimento</div></div>`;
+ h+=`<div class="indc cl" onclick="goInd('descCPF')"><div class="l">% Desconto CPF</div><div class="v" style="color:${corMeta('descCPF',I.descCPF)}">${PPCT(I.descCPF)}</div>${chipMeta('descCPF',I.descCPF)}<div class="s">quanto menor, melhor</div></div>`;
  h+=`</div></div>`;
  return h}
 
@@ -859,10 +870,10 @@ function vExp(v,i,ref){
   <div class="indc"><div class="l">% Positivados CNPJ</div><div class="v">${PPCT(I.posCNPJ)}</div><div class="s">${NUM(I.posit)} de ${NUM(I.ativos)}</div></div>
   <div class="indc"><div class="l">Clientes Novos CNPJ</div><div class="v">${NUM(I.novos)}</div><div class="s">no mês</div></div>
  </div><div class="ind">
-  <div class="indc"><div class="l">% Identificados</div><div class="v">${PPCT(I.pctIdent)}</div>${delta(I.pctIdent,ref&&ref.I.pctIdent)}</div>
-  <div class="indc"><div class="l">Itens CPF</div><div class="v">${DEC(I.itens,2)}</div>${delta(I.itens,ref&&ref.I.itens)}</div>
-  <div class="indc"><div class="l">$ Ticket Médio CPF</div><div class="v">${BRL(I.ticket)}</div>${delta(I.ticket,ref&&ref.I.ticket)}</div>
-  <div class="indc"><div class="l">% Desconto CPF</div><div class="v">${PPCT(I.descCPF)}</div>${delta(I.descCPF,ref&&ref.I.descCPF,true)}</div>
+  <div class="indc"><div class="l">% Identificados</div><div class="v" style="color:${corMeta('pctIdent',I.pctIdent)}">${PPCT(I.pctIdent)}</div>${chipMeta('pctIdent',I.pctIdent)}</div>
+  <div class="indc"><div class="l">Itens CPF</div><div class="v" style="color:${corMeta('itens',I.itens)}">${DEC(I.itens,2)}</div>${chipMeta('itens',I.itens)}</div>
+  <div class="indc"><div class="l">$ Ticket Médio CPF</div><div class="v" style="color:${corMeta('ticket',I.ticket)}">${BRL(I.ticket)}</div>${chipMeta('ticket',I.ticket)}</div>
+  <div class="indc"><div class="l">% Desconto CPF</div><div class="v" style="color:${corMeta('descCPF',I.descCPF)}">${PPCT(I.descCPF)}</div>${chipMeta('descCPF',I.descCPF)}</div>
   <div class="indc"><div class="l">Atendimentos</div><div class="v">${NUM(I.atend)}</div><div class="s">no mês</div></div>
  </div>${novBox(novDe(((KL(ST.loja)||{}).V||{})[v.nome]),'Clientes novos de '+v.nome,I.novos,v.fat,true)}${orcBox(((OL(ST.loja)||{}).V||{})[v.nome],'Orçamentos em aberto de '+v.nome,v.rest,v.nome)}${cartBox(((KL(ST.loja)||{}).V||{})[v.nome],'Carteira de clientes de '+v.nome,v.nome)}${alinhBtnVend(v.nome)}</div>`}
 
@@ -1617,10 +1628,10 @@ const IND=[
  {k:'ativCNPJ',g:'CNPJ',n:'% Ativos CNPJ',t:'pct',b:1,i:1,d:o=>`${NUM(o.I.ativos)} ativos de ${NUM(o.I.cad)} cadastrados`},
  {k:'posCNPJ',g:'CNPJ',n:'% Positivados CNPJ',t:'pct',b:1,i:1,d:o=>`${NUM(o.I.posit)} de ${NUM(o.I.ativos)} ativos`},
  {k:'novos',g:'CNPJ',n:'Clientes Novos CNPJ',t:'num',b:1,i:1,d:o=>`${NUM(o.I.cad)} na carteira`},
- {k:'pctIdent',g:'CPF',n:'% Identificados',t:'pct',b:1,i:1,d:o=>`${NUM(Math.round(o.I.atend*o.I.pctIdent))} de ${NUM(o.I.atend)} atendimentos`},
- {k:'itens',g:'CPF',n:'Itens CPF',t:'dec',b:1,i:1,d:o=>`${NUM(o.I.atend)} atendimentos`},
- {k:'ticket',g:'CPF',n:'$ Ticket Médio CPF',t:'brl',b:1,i:1,d:o=>`${NUM(o.I.atend)} atendimentos`},
- {k:'descCPF',g:'CPF',n:'% Desconto CPF',t:'pct',b:0,i:1,d:o=>`sobre o faturamento CPF`}
+ {k:'pctIdent',g:'CPF',n:'% Identificados',t:'pct',b:1,i:1,meta:0.80,d:o=>`${NUM(Math.round(o.I.atend*o.I.pctIdent))} de ${NUM(o.I.atend)} atendimentos`},
+ {k:'itens',g:'CPF',n:'Itens CPF',t:'dec',b:1,i:1,meta:2.5,d:o=>`${NUM(o.I.atend)} atendimentos`},
+ {k:'ticket',g:'CPF',n:'$ Ticket Médio CPF',t:'brl',b:1,i:1,meta:200,d:o=>`${NUM(o.I.atend)} atendimentos`},
+ {k:'descCPF',g:'CPF',n:'% Desconto CPF',t:'pct',b:0,i:1,meta:0.07,d:o=>`sobre o faturamento CPF`}
 ];
 const gv=(o,m)=>o?(m.i?(o.I?o.I[m.k]:null):o[m.k]):null;
 function fmtI(m,v){if(v==null)return '—';
@@ -1642,10 +1653,11 @@ function vInd(){
  else {esc_=D.geral;filhos=D.supervisores;rot='região';nivel='Rede Só Tintas'}
  const vR=gv(D.geral,m), vE=gv(esc_,m);
  const vals=filhos.map(f=>gv(f,m)).filter(x=>x!=null&&isFinite(x));
- const mx=vals.length?Math.max(...vals,vR||0):1;
+ const mx=vals.length?Math.max(...vals,vR||0,m.meta||0):1;
  const ord=filhos.slice().sort((a,b)=>{const A=gv(a,m),B=gv(b,m);
   if(A==null)return 1;if(B==null)return -1;return m.b?B-A:A-B});
- const bom=v=>v==null?null:(m.b?v>=vR:v<=vR);
+ /* v38: quem tem meta e pintado pela meta; os demais seguem pela media da rede */
+ const bom=v=>v==null?null:m.meta!=null?bateMeta(m,v):(m.b?v>=vR:v<=vR);
 
  let h=btnVoltar()+indChips();
  h+=`<div class="pp"><div class="pph"><div>
@@ -1654,6 +1666,7 @@ function vInd(){
   <div class="ppg">
    <div class="ppc"><div class="l">Neste nível</div><div class="v">${fmtI(m,vE)}</div><div class="f">${esc_&&(m.i?esc_.I:1)?m.d(esc_):''}</div></div>
    <div class="ppc"><div class="l">Média da rede</div><div class="v">${fmtI(m,vR)}</div><div class="f">referência de comparação</div></div>
+   ${m.meta!=null?`<div class="ppc"><div class="l">Meta</div><div class="v">${m.b?'':'até '}${fmtI(m,m.meta)}</div><div class="f">${m.b?'a partir de':'até'} ${fmtI(m,m.meta)} fica verde</div></div>`:''}
    <div class="ppc"><div class="l">Melhor ${rot}</div><div class="v">${ord.length?fmtI(m,gv(ord[0],m)):'—'}</div><div class="f">${ord.length?esc(ord[0].nome):'—'}</div></div>
    <div class="ppc"><div class="l">Pior ${rot}</div><div class="v">${ord.length?fmtI(m,gv(ord[ord.length-1],m)):'—'}</div><div class="f">${ord.length?esc(ord[ord.length-1].nome):'—'}</div></div>
   </div></div>`;
@@ -1670,11 +1683,11 @@ function vInd(){
    <div><div class="nm">${esc(f.nome)}${f.nv&&f.cod?bdgL(f):f.nv?bdgV(f):''}</div>
     <div class="mt">${(m.i?f.I:1)?m.d(f):''}</div>
     <div class="bars"><div class="bl"><span class="tag">${m.g}</span>
-     <span class="bar"><span class="mk" style="left:${mx?Math.min((vR||0)/mx*100,100).toFixed(1):0}%"></span>
+     <span class="bar"><span class="mk" style="left:${mx?Math.min((m.meta!=null?m.meta:(vR||0))/mx*100,100).toFixed(1):0}%"></span>
      <i style="width:${Math.min(w,100)}%;background:${cl}"></i></span>
      <span class="pc" style="color:${cl}">${fmtI(m,v)}</span></div></div></div>
    <div class="rt"><div class="v" style="color:${cl}">${fmtI(m,v)}</div>
-    <div class="s ${v==null?'y':ok?'g':'r'}">${v==null?'sem dado':ok?'acima da rede':'abaixo da rede'}</div>
+    <div class="s ${v==null?'y':ok?'g':'r'}">${v==null?'sem dado':m.meta!=null?(ok?'meta batida':m.b?'abaixo da meta':'acima da meta'):(ok?'acima da rede':'abaixo da rede')}</div>
     ${clic?'<span class="chev">›</span>':''}</div></div>`});
  h+='</div>';
  h+=leituraInd(m,esc_,ord,rot,vR)+justBox();
@@ -1682,12 +1695,13 @@ function vInd(){
 
 function leituraInd(m,esc_,ord,rot,vR){
  if(!ord.length) return '';
- const acima=ord.filter(f=>{const v=gv(f,m);return v!=null&&(m.b?v>=vR:v<=vR)}).length;
+ const acima=ord.filter(f=>{const v=gv(f,m);return v!=null&&(m.meta!=null?bateMeta(m,v):(m.b?v>=vR:v<=vR))}).length;
  const pior=ord[ord.length-1], melhor=ord[0];
  const vp=gv(pior,m), vm=gv(melhor,m);
  const gap=(vm!=null&&vp!=null&&vp!=0)?Math.abs((vm-vp)/vp):null;
  let h=`<div class="acao"><div class="ah"><span>🧠</span><h3>Leitura de ${m.n}</h3></div><div class="ab"><div class="resumo on" id="r_ind">`;
- h+=`<p><b>${acima} de ${ord.length}</b> ${ord.length>1?plur(rot):rot} ${acima==1?'está':'estão'} ${m.b?'acima':'abaixo'} da média da rede (${fmtI(m,vR)}) — ou seja, ${ord.length-acima} ${ord.length-acima==1?'está':'estão'} do lado errado da linha.</p>`;
+ if(m.meta!=null) h+=`<p><b>${acima} de ${ord.length}</b> ${ord.length>1?plur(rot):rot} ${acima==1?'bateu':'bateram'} a meta (${m.b?'':'até '}${fmtI(m,m.meta)}) — ou seja, ${ord.length-acima} ${ord.length-acima==1?'está':'estão'} ${m.b?'abaixo':'acima'} da meta. Média da rede: ${fmtI(m,vR)}.</p>`;
+ else h+=`<p><b>${acima} de ${ord.length}</b> ${ord.length>1?plur(rot):rot} ${acima==1?'está':'estão'} ${m.b?'acima':'abaixo'} da média da rede (${fmtI(m,vR)}) — ou seja, ${ord.length-acima} ${ord.length-acima==1?'está':'estão'} do lado errado da linha.</p>`;
  h+=`<p>A distância entre <b>${esc(melhor.nome)}</b> (${fmtI(m,vm)}) e <b>${esc(pior.nome)}</b> (${fmtI(m,vp)}) é `;
  h+=gap==null?`relevante.`:gap>2?`de <b>mais de ${gap.toFixed(1)}x</b>. Uma diferença dessa ordem dentro da mesma rede raramente é talento — é processo. Alguém está fazendo algo que os outros não fazem, e isso é replicável.</p>`
    :gap>.5?`de <b>${(gap*100).toFixed(0)}%</b>. Há espaço real de nivelamento: o padrão existe, mas não está distribuído.</p>`
