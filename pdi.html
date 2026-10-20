@@ -800,7 +800,8 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
   var APP_EQUIPE_URL = 'https://script.google.com/macros/s/AKfycbxC916U8rNw_-HFTW7vtFZz4AC_B1bHcTLE3bvMDWji6E5lAqkXgC0EIgQFtjHYTp8I/exec';
 
   function $(id){ return document.getElementById(id); }
-  function sess(){ try{ return JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); }catch(e){ return null; } }
+  /* sessão efetiva: com "Ver como" ativo (coordenação), a da pessoa da visão */
+  function sess(){ try{ return (window.STDados&&STDados.sessaoVisao())||JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); }catch(e){ return null; } }
   function up(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().trim(); }
   function code3(s){ var m=String(s||'').match(/\d+/); return m?('00'+m[0]).slice(-3):''; }
   function ehCoord(){ var s=sess(); return !!s && (up(s.papel).indexOf('COORDEN')>=0 || s.escopo==='todos'); }
@@ -850,7 +851,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
     var pf=PERFIL||'', rot = pf==='coord' ? 'Rede Só Tintas' : pf==='ger' ? (lojas.length===1&&BASE?'Loja '+lojaNomeDe(BASE)(lojas[0]):'Suas lojas') : 'Carteira de '+tc(s.nome);
     $('sub').textContent=rot+(BASE&&BASE.rotulo?' · '+BASE.rotulo:'');
     if(!BASE || !BASE.V || !BASE.V.length){ root.innerHTML='<div class="cardx info"><h3>'+(BASE?'Nenhum vendedor do seu escopo na base':'Base do mês ainda não publicada')+'</h3><p class="pdi-meta" style="margin:0">'+(ehCoord()?'Toque em <b>Atualizar base do mês</b> e escolha o arquivo PDI_dados_&lt;mês&gt;.json gerado pela rotina mensal (pasta Downloads).':'A coordenação publica a base do mês. Quando ela publicar, seus vendedores aparecem aqui.')+'</p></div>'; return; }
-    window.PdiUI.montar(root,{ base:BASE, acomp:ACOMP, pode:true, usuario:s.nome||'', regiaoDe:supDe, lojaNome:lojaNomeDe(BASE), nivel: pf==='coord'?'rede':pf==='ger'?'loja':'regiao', salvar:function(v,estado){ return salvarAcomp(v,estado); } });
+    window.PdiUI.montar(root,{ base:BASE, acomp:ACOMP, pode:!(window.STDados&&STDados.visao()), usuario:s.nome||'', regiaoDe:supDe, lojaNome:lojaNomeDe(BASE), nivel: pf==='coord'?'rede':pf==='ger'?'loja':'regiao', salvar:function(v,estado){ return salvarAcomp(v,estado); } });
   }
 
   /* ===== Publicar base (só coordenação; o servidor confere pelo crachá) ===== */

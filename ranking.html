@@ -273,7 +273,7 @@ function render(){
   save();
 }
 function notaRecorte(){
-  let s=null; try{s=JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null')}catch(e){}
+  let s=null; try{s=(window.STDados&&STDados.sessaoVisao())||JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null')}catch(e){}
   const vend=!!(s&&(s.vendedor||/vendedor/i.test(String(s.papel||''))));
   return vend?'Você vê <b>a sua linha</b> e <b>a da sua loja</b>. A posição é na <b>rede toda</b> (ex.: 12 de 67).'
     :'Você vê <b>as lojas e os vendedores do seu escopo</b>. A posição é na <b>rede toda</b>.';
@@ -301,7 +301,7 @@ render();
 (function(){
   /* ====== Dados: Servidor de Dados ST (st-dados.js), recortados pelo crachá ====== */
   var CARREGOU=false;
-  function sess(){ try{ return JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); }catch(e){ return null; } }
+  function sess(){ try{ return (window.STDados&&STDados.sessaoVisao())||JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); }catch(e){ return null; } }
   function ehGestor(){ var s=sess(); if(!s) return false; return ((s.papel||'').toLowerCase()).indexOf('coorden')>=0; }
 
   function setAtz(val){

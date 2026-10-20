@@ -11,7 +11,7 @@
 (function (g) {
   'use strict';
   var URL_DADOS = 'https://script.google.com/macros/s/AKfycbznIM0I8T-wkPiOvRbO-uhJifdyQUXToIwYd8PtEf855I5pFxb5nz5kn1eDm8HEy2JyEA/exec';
-  var LS_SESSAO = 'sotintas_sessao_v1', LS_CRACHA = 'st_cracha_v1';
+  var LS_SESSAO = 'sotintas_sessao_v1', LS_CRACHA = 'st_cracha_v1', LS_VISAO = 'st_vercomo_v1';
 
   function ler(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
   function norm(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim(); }
@@ -21,9 +21,34 @@
       .then(function (r) { return r.json(); });
   }
   function guardar(r) { try { localStorage.setItem(LS_CRACHA, JSON.stringify({ nome: r.nome, tk: r.tk, ex: r.ex, perfil: r.perfil, lojas: r.lojas })); } catch (e) {} }
-  function esquecer() { try { localStorage.removeItem(LS_CRACHA); } catch (e) {} }
-  /* crachá válido e da MESMA pessoa logada no app */
-  function crachaGuardado() {
+  function esquecer() { try { localStorage.removeItem(LS_CRACHA); localStorage.removeItem(LS_VISAO); } catch (e) {} }
+  /* ── "Ver como" (só coordenação): crachá de visão, só leitura, 2 horas ── */
+  function ehCoordReal() { var s = sessao(); return !!s && (s.escopo === 'todos' || /coorden/i.test(String(s.papel || ''))); }
+  function visao() {
+    var v = ler(LS_VISAO), s = sessao();
+    if (!v || !v.tk || !s || norm(v.dono) !== norm(s.nome) || !(v.ex > Date.now() + 30000) || !ehCoordReal()) return null;
+    return v;
+  }
+  /* a sessão "como se fosse" a pessoa da visão — os painéis usam isto no lugar da sessão real */
+  function sessaoVisao() {
+    var s = sessao(), v = visao(); if (!v) return s;
+    var papel = { sup: 'Supervisor', ger: 'Gerente', vend: 'Vendedor' }[v.perfil] || 'Colaborador';
+    var lj = (v.lojas || []).map(function (c) { return c + ' - ' + (v.lojaNome || ''); });
+    return { nome: v.nome, papel: papel, escopo: v.perfil === 'ger' ? 'lojas' : 'equipe', vendedor: v.perfil === 'vend', lotacao: lj[0] || '', carteira: v.perfil === 'sup' ? lj : [], gerencia: v.perfil === 'ger' ? lj : [], visao: true };
+  }
+  function entrarVisao(pf, nome, lojas, rotulo, lojaNome) {
+    return chamar('verComo', { pf: pf, n: nome || '', lj: lojas || [] }, true).then(function (r) {
+      if (!r || !r.ok) throw new Error((r && r.erro) || 'Não consegui abrir a visão.');
+      var s = sessao();
+      try { localStorage.setItem(LS_VISAO, JSON.stringify({ tk: r.tk, ex: r.ex, perfil: r.perfil, lojas: r.lojas, nome: r.nome, rotulo: rotulo || r.nome, lojaNome: lojaNome || '', dono: s && s.nome })); } catch (e) {}
+      return r;
+    });
+  }
+  function sairVisao() { try { localStorage.removeItem(LS_VISAO); } catch (e) {} }
+
+  /* crachá válido e da MESMA pessoa logada no app (com "Ver como" ativo, o crachá da visão) */
+  function crachaGuardado(real) {
+    if (!real) { var v = visao(); if (v) return v; }
     var c = ler(LS_CRACHA), s = sessao();
     if (!c || !c.tk || !s || !s.nome) return null;
     if (norm(c.nome) !== norm(s.nome) || !(c.ex > Date.now() + 60000)) return null;
@@ -48,7 +73,7 @@
       var cor = escuro ? { bg: '#1a2336', ink: '#eef2fb', mut: '#9aa5bb', lin: '#2c3850', campo: '#222d44' } : { bg: '#ffffff', ink: '#16233d', mut: '#5a677f', lin: '#e4e9f3', campo: '#f5f7fb' };
       var ov = document.createElement('div');
       ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-labelledby', 'stdTit');
-      ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(6,10,20,.66);display:flex;align-items:center;justify-content:center;padding:16px;font-family:"Public Sans",system-ui,sans-serif';
+      ov.style.cssText = 'position:fixed;inset:0;z-index:2147483000;background:rgba(6,10,20,.66);display:flex;align-items:center;justify-content:center;padding:16px;font-family:"Public Sans",system-ui,sans-serif';
       ov.innerHTML = '<form style="width:100%;max-width:360px;background:' + cor.bg + ';color:' + cor.ink + ';border:1px solid ' + cor.lin + ';border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:10px">' +
         '<b id="stdTit" style="font-size:17px">Confirme seu PIN</b>' +
         '<span style="font-size:13px;color:' + cor.mut + '">Por segurança, os dados agora só abrem com o seu crachá. Digite o PIN do app uma vez; ele vale por 7 dias neste aparelho.</span>' +
@@ -73,22 +98,46 @@
     return pedindo;
   }
 
-  function cracha() {
-    var c = crachaGuardado(); if (c) return Promise.resolve(c.tk);
+  function cracha(real) {
+    var c = crachaGuardado(real); if (c) return Promise.resolve(c.tk);
     var s = sessao(); if (!s || !s.nome) return Promise.reject(new Error('Entre no Só Tintas App primeiro.'));
     return pedirPin();
   }
 
   /* pede dados ao servidor; se o crachá venceu ou não vale, pede o PIN e tenta de novo */
-  function chamar(acao, extra) {
+  function chamar(acao, extra, real) {
     function vai(tk) { var b = { acao: acao, tk: tk }; for (var k in (extra || {})) b[k] = extra[k]; return post(b); }
-    return cracha().then(vai).then(function (r) {
-      if (r && !r.ok && r.cracha) { esquecer(); return cracha().then(vai); }
+    return cracha(real).then(vai).then(function (r) {
+      if (r && !r.ok && r.cracha) {
+        if (!real && visao()) { sairVisao(); throw new Error('A visão expirou. Abra o "Ver como" de novo.'); }
+        try { localStorage.removeItem(LS_CRACHA); } catch (e) {}
+        return cracha(real).then(vai);
+      }
       return r;
     });
   }
 
   function perfil() { var c = crachaGuardado(); return c ? c.perfil : null; }
 
-  g.STDados = { URL: URL_DADOS, chamar: chamar, entrar: entrar, cracha: cracha, esquecer: esquecer, perfil: perfil, crachaGuardado: crachaGuardado };
+  /* faixa fixa avisando que a tela é a visão de outra pessoa (aparece em todas as páginas) */
+  function faixaVisao() {
+    var v = visao(), f = document.getElementById('stVisaoFaixa');
+    if (!v) { if (f) f.remove(); return; }
+    if (!f) {
+      f = document.createElement('div'); f.id = 'stVisaoFaixa'; f.setAttribute('role', 'status');
+      f.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:max(10px,env(safe-area-inset-bottom,0px));z-index:2147482999;max-width:calc(100% - 24px);display:flex;align-items:center;gap:10px;padding:8px 10px 8px 14px;border-radius:999px;background:#FFD200;color:#1d2433;font:700 12.5px "Public Sans",system-ui,sans-serif;box-shadow:0 6px 22px rgba(0,0,0,.35)';
+      document.body.appendChild(f);
+    }
+    f.innerHTML = '<span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">👁 Vendo como: ' + String(v.rotulo || v.nome).replace(/</g, '&lt;') + ' · só leitura</span><button type="button" style="flex:none;white-space:nowrap;border:0;border-radius:999px;padding:6px 12px;background:#1d2433;color:#fff;font:700 12px inherit;cursor:pointer">Sair da visão</button>';
+    f.querySelector('button').onclick = function () {
+      sairVisao();
+      try { if (g.top && g.top !== g) { g.top.location.reload(); return; } } catch (e) {}
+      g.location.reload();
+    };
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', faixaVisao); else faixaVisao();
+  g.addEventListener('storage', function (e) { if (e.key === LS_VISAO) faixaVisao(); });
+
+  g.STDados = { URL: URL_DADOS, chamar: chamar, entrar: entrar, cracha: cracha, esquecer: esquecer, perfil: perfil, crachaGuardado: crachaGuardado,
+    visao: visao, sessaoVisao: sessaoVisao, entrarVisao: entrarVisao, sairVisao: sairVisao, ehCoordReal: ehCoordReal, faixaVisao: faixaVisao };
 })(window);

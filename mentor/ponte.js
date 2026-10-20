@@ -29,7 +29,8 @@
   function loginDe(nome) { return 'st.' + norm(nome).replace(/[^a-z0-9 ]+/g, '').replace(/ /g, '.'); }
   function uuid() { return (global.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'id-' + Math.random().toString(36).slice(2) + Date.now().toString(36); }
 
-  var s = ler(CHAVE_APP);
+  /* com "Ver como" ativo (coordenação), o Mentor abre como a pessoa da visão — só leitura */
+  var s = (global.STDados && global.STDados.sessaoVisao()) || ler(CHAVE_APP);
   global.ST_PONTE = { sessao: s, ok: false };
   if (!s || !s.nome) return;                       /* sem sessão: ponte-fim.js mostra o aviso */
 

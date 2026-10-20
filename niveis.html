@@ -350,7 +350,7 @@ render();
      coordenação a rede, supervisor a carteira, gerente a loja, vendedor a própria linha. ====== */
 
   function $(id){ return document.getElementById(id); }
-  function sess(){ try{ return JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); }catch(e){ return null; } }
+  function sess(){ try{ return (window.STDados&&STDados.sessaoVisao())||JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); }catch(e){ return null; } }
   function ehGestor(){ var s=sess(); if(!s) return false; return ((s.papel||'').toLowerCase()).indexOf('coorden')>=0; }
 
   /* ===== Carteira: FONTE ÚNICA = EQUIPE do App (planilha).
