@@ -694,7 +694,19 @@ function farol(pct){
 const cor=c=>c=='g'?'var(--ok)':c=='y'?'var(--warn)':'var(--bad)';
 
 /* ---------- perfis ---------- */
-const LOCK=__L__;
+let LOCK=__L__;
+/* "Ver como" do app (só coordenação): ?visao=sup:NOME ou ?visao=loja:034 — a coordenação já recebe a rede
+   inteira, então o painel só se posiciona e se trava na região/loja escolhida, como a pessoa veria. */
+const VISAO=(function(){ try{ return new URLSearchParams(location.search).get('visao')||''; }catch(e){ return ''; } })();
+if(!LOCK&&VISAO){
+ const nn=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim();
+ if(VISAO.indexOf('loja:')==0){ const c=VISAO.slice(5); const l=D.lojas.find(x=>String(x.cod)==c||('00'+Number(x.cod)).slice(-3)==c); if(l) LOCK='loja:'+l.cod; }
+ else if(VISAO.indexOf('sup:')==0){ const n=nn(VISAO.slice(4)); const s=(D.supervisores||[]).find(x=>nn(x.nome)==n)||(D.supervisores||[]).find(x=>nn(x.nome).split(' ')[0]==n.split(' ')[0]); if(s) LOCK=s.nome; }
+ const fx=document.createElement('div'); fx.setAttribute('role','status');
+ fx.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:max(10px,env(safe-area-inset-bottom,0px));z-index:99999;max-width:calc(100% - 24px);padding:8px 14px;border-radius:999px;background:#FFD200;color:#1d2433;font:700 12.5px system-ui,sans-serif;box-shadow:0 6px 22px rgba(0,0,0,.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+ fx.textContent=LOCK?('👁 Vendo como: '+(String(LOCK).indexOf('loja:')==0?'Gerente · loja '+String(LOCK).slice(5):'Supervisor '+LOCK)+' · só leitura'):'👁 Não achei essa região/loja no painel deste mês: mostrando a rede';
+ document.body.appendChild(fx);
+}
 const PERFIS=[];
 if(!LOCK){PERFIS.push({v:'geral',t:'👑 Diretoria — visão geral'});
  D.supervisores.forEach(s=>PERFIS.push({v:'sup:'+s.nome,t:'🧭 Supervisor — '+s.nome}));}
@@ -2133,7 +2145,7 @@ function fazerLogin(){
    if(!res||!res.ok){er.textContent=(res&&res.erro)||'Falha no acesso.';bt.disabled=false;bt.textContent='Entrar';return}
    try{localStorage.setItem(PKEY,JSON.stringify({u:u,p:p}))}catch(e){}
    document.getElementById('pnlLogin').classList.add('hidden');
-   if(res.escopo==='todos') document.getElementById('btnUp').style.display='inline';
+   if(res.escopo==='todos'&&!/[?&]visao=/.test(location.search)) document.getElementById('btnUp').style.display='inline';
    iniciarSeguro(res.dados, res.lock||null);
  },function(msg){er.textContent=msg;bt.disabled=false;bt.textContent='Entrar'});
 }
@@ -2153,7 +2165,7 @@ function fazerLogin(){
  pedirDados(s.u,s.p,function(res){
   clearTimeout(aviso); clearTimeout(soquete);
    if(!res||!res.ok){ try{localStorage.removeItem(PKEY)}catch(e){}; lg.classList.remove('hidden'); return; }
-   if(res.escopo==='todos') document.getElementById('btnUp').style.display='inline';
+   if(res.escopo==='todos'&&!/[?&]visao=/.test(location.search)) document.getElementById('btnUp').style.display='inline';
    iniciarSeguro(res.dados, res.lock||null);
  },function(msg){ clearTimeout(aviso); clearTimeout(soquete); lg.classList.remove('hidden');
    document.getElementById('plErro').textContent=msg||'Sem conexão. Tente de novo.'; });
