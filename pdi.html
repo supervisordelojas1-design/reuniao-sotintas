@@ -203,11 +203,11 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
 @keyframes pdiTraco{from{transform:scaleY(0)}to{transform:none}}
 @keyframes pdiNo{from{opacity:0;translate:-8px 0}to{opacity:1;translate:0 0}}
 .pdi-linha li{position:relative;display:flex;gap:12px;align-items:flex-start;padding:6px 0}
-.pdi-linha li>div{min-width:0;font-size:13px}.pdi-linha li p{margin:2px 0 0;line-height:1.4;overflow-wrap:anywhere}
-.pdi-no{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:12.5px;background:#1C3F8F;color:#fff;position:relative;z-index:1;box-shadow:0 0 0 3px var(--card,#fff)}
-.pdi-linha li.futuro .pdi-no{background:var(--card,#fff);color:#1C3F8F;border:2px dashed #1C3F8F}
-.pdi-linha li.atrasada .pdi-no{border-color:#d9363e;color:#d9363e}
-.pdi-linha li.atrasada b{color:#d9363e}
+.pdi-linha li>div{min-width:0;font-size:13px;color:var(--ink)}.pdi-linha li p{margin:2px 0 0;line-height:1.4;overflow-wrap:anywhere}
+.pdi-no{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:12.5px;background:#1C3F8F;color:#fff;position:relative;z-index:1;box-shadow:0 0 0 3px var(--surface)}
+.pdi-linha li.futuro .pdi-no{background:var(--surface);color:var(--navy);border:2px dashed var(--navy)}
+.pdi-linha li.atrasada .pdi-no{border-color:var(--bad);color:var(--bad)}
+.pdi-linha li.atrasada b{color:var(--bad)}
 </style></head><body>
 <div class="wrap">
   <div class="topbar"></div>
