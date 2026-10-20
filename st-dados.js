@@ -156,6 +156,7 @@
     }, function (err) {
       /* sem rede (fetch falhou): usa a última cópia boa deste aparelho */
       if (c && c.r && !(err && /PIN/.test(String(err.message || '')))) { faixaOffline(c.em); return c.r; }
+      if (err && /fetch|network|Load failed|NetworkError/i.test(String(err.message || err))) throw new Error('Sem internet agora. Quando o sinal voltar, puxe a tela para baixo ou toque em Tentar de novo.');
       throw err;
     });
   }

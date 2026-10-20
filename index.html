@@ -1992,8 +1992,8 @@ html[data-tema="escuro"] .dpq, html[data-theme="dark"] .dpq{border-color:#5a4a1c
 </div>
 
 <div class="toast" id="toast"></div>
-<script src="st-dados.js?v=85"></script>
-<script src="st-anima.js?v=2"></script>
+<script src="st-dados.js?v=86"></script>
+<script src="st-anima.js?v=3"></script>
 <script>
 "use strict";
 
@@ -9681,6 +9681,7 @@ button[id^="ov"][id$="Fechar"]:hover{transform:translateY(-1px);box-shadow:0 6px
   var ov=document.getElementById('ovInicio');
   STAnima.puxar(ov, function(){ location.reload(); });
   STAnima.avisos('#toast');
+  if(STAnima.abertura){ STAnima.abertura(); STAnima.esqueletos(document.body); }
   function marcar(n){
     var card=document.querySelector('#ovInicio .ini-card[data-act="pdi"] .ini-txt'); if(!card) return;
     var b=card.querySelector('.st-badge'); if(!n){ if(b) b.remove(); return; }

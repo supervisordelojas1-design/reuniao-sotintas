@@ -343,7 +343,7 @@ render();
 #btnUpdToggle.show{display:inline-block}
 </style>
 
-<script src="st-dados.js?v=85"></script>
+<script src="st-dados.js?v=86"></script>
 <script>
 (function(){
   /* ====== Dados: Servidor de Dados ST (st-dados.js). O servidor devolve só o recorte do crachá:
@@ -632,10 +632,11 @@ render();
 })();
 </script>
 
-<script src="st-anima.js?v=2"></script>
+<script src="st-anima.js?v=3"></script>
 <script>
 (function(){ if(!window.STAnima) return;
   STAnima.observar(document.body,{ numeros:'.rcard .big,#podium .pts', barras:'#escada .bar', abas:'#tabs' });
+  if(STAnima.esqueletos){ STAnima.esqueletos(document.body); STAnima.deslizar(document.body,'#tabs'); }
   STAnima.puxar(document.scrollingElement, function(){ if(window.__niveisRecarregar) window.__niveisRecarregar(); });
 })();
 </script>

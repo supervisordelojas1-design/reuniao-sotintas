@@ -218,8 +218,8 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
   </section>
   <div id="pdi-root"><p class="pdi-meta">Carregando o PDI…</p></div>
 </div>
-<script src="st-dados.js?v=85"></script>
-<script src="st-anima.js?v=2"></script>
+<script src="st-dados.js?v=86"></script>
+<script src="st-anima.js?v=3"></script>
 <script>try{if(window.self!==window.top)document.documentElement.classList.add('embutido');}catch(e){document.documentElement.classList.add('embutido');}</script>
 <script>
 /* ===== Tema claro/escuro (compartilhado: ?tema=... ou localStorage 'st_tema'; padrão escuro) ===== */
@@ -884,6 +884,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
   if(window.STAnima){
     STAnima.observar($('pdi-root'),{ numeros:'.pdi-kpi b,.pdi-score,.pdi-fact b', barras:'.pdi-stack i', pulso:'.pdi-venc', pulsoTexto:true, sanfona:'.pdi-fwrap', abas:'.pdi-tabs' });
     STAnima.avisos('.pdi-toast');
+    if(STAnima.esqueletos){ STAnima.esqueletos($('pdi-root')); STAnima.deslizar($('pdi-root'),'.pdi-tabs'); }
     STAnima.puxar(document.scrollingElement, function(){ return iniciar(); });
   }
   getJSON(APP_EQUIPE_URL+'?acao=equipe').then(function(j){ if(j&&j.ok&&j.equipe) aplicarEquipe(j.equipe); }).catch(function(){});

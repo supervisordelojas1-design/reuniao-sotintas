@@ -38,7 +38,17 @@
     '.st-badge{display:inline-flex;align-items:center;gap:6px;margin-top:6px;padding:3px 9px 3px 7px;border-radius:999px;background:rgba(255,255,255,.16);color:#fff;font-size:11.5px;font-weight:800;width:max-content;max-width:100%}',
     '.st-badge i{width:8px;height:8px;border-radius:50%;background:#ff5a5f;box-shadow:0 0 0 0 rgba(255,90,95,.7);animation:stPonto 1.6s ease-out infinite}',
     '@keyframes stPonto{0%{box-shadow:0 0 0 0 rgba(255,90,95,.7)}80%,100%{box-shadow:0 0 0 9px rgba(255,90,95,0)}}',
-    '@media (prefers-reduced-motion: reduce){.st-pulso,.st-pulso-txt,.st-pop,.st-brilho,.st-seta,.st-badge i,.st-puxa.gira svg{animation:none!important}.st-check circle,.st-check path{animation:none!important;stroke-dashoffset:0!important}.st-aba-ind{transition:none!important}}'
+    '@media (prefers-reduced-motion: reduce){.st-pulso,.st-pulso-txt,.st-pop,.st-brilho,.st-seta,.st-badge i,.st-puxa.gira svg{animation:none!important}.st-check circle,.st-check path{animation:none!important;stroke-dashoffset:0!important}.st-aba-ind{transition:none!important}}',
+    /* etapa 3 · telas vazias com a latinha, blocos de carregamento, abertura do app */
+    '.empty::before,.st-vazio::before{content:"";display:block;width:58px;height:58px;margin:0 auto 10px;background:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Cellipse cx=%2732%27 cy=%2758%27 rx=%2718%27 ry=%273%27 fill=%27%2316233d%27 opacity=%27.12%27/%3E%3Cpath d=%27M14 18h36l-3 34a4 4 0 0 1-4 3.6H21a4 4 0 0 1-4-3.6z%27 fill=%27%231C3F8F%27/%3E%3Crect x=%2712%27 y=%2712%27 width=%2740%27 height=%278%27 rx=%273%27 fill=%27%23E30613%27/%3E%3Cpath d=%27M18 30h28%27 stroke=%27%23FFD200%27 stroke-width=%276%27/%3E%3Cpath d=%27M24 12c0-4 3.6-6.4 8-6.4S40 8 40 12%27 stroke=%27%235a677f%27 stroke-width=%273%27 fill=%27none%27/%3E%3Cpath d=%27M44 20c3 0 4 3 4 6s-2 5-2 8%27 stroke=%27%23FFD200%27 stroke-width=%273%27 fill=%27none%27 stroke-linecap=%27round%27/%3E%3C/svg%3E") center/contain no-repeat;opacity:.9}',
+    '@media (prefers-reduced-motion: no-preference){.empty::before,.st-vazio::before{animation:stBalanca 2.6s ease-in-out infinite;transform-origin:50% 90%}}',
+    '@keyframes stBalanca{0%,100%{transform:rotate(0)}25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}}',
+    '.st-carregando{color:transparent!important;position:relative;min-height:74px;display:block}',
+    '.st-carregando *{visibility:hidden}',
+    '.st-carregando::before,.st-carregando::after{content:"";position:absolute;left:12px;right:12px;height:14px;border-radius:8px;background:linear-gradient(90deg,rgba(120,135,165,.14) 25%,rgba(120,135,165,.30) 50%,rgba(120,135,165,.14) 75%);background-size:300% 100%;animation:stBrilhoEsq 1.3s linear infinite}',
+    '.st-carregando::before{top:16px;right:30%}.st-carregando::after{top:42px}',
+    '@keyframes stBrilhoEsq{from{background-position:100% 0}to{background-position:0 0}}',
+    '@media (prefers-reduced-motion: reduce){.empty::before,.st-vazio::before,.st-carregando::before,.st-carregando::after{animation:none!important}}',
   ].join('\n');
   function estilos() { if (document.getElementById('st-anima-css')) return; var s = document.createElement('style'); s.id = 'st-anima-css'; s.textContent = css; (document.head || document.documentElement).appendChild(s); }
   estilos();
@@ -216,7 +226,68 @@
     });
   }
 
+  /* ───────── 9. "Carregando…" vira blocos que brilham (esqueleto) ───────── */
+  var RE_CARR = /^\s*(carregando|buscando)\b[^]*?(…|\.\.\.)?\s*$/i;
+  function esqueletos(raiz) {
+    raiz = raiz || document.body; if (!raiz) return;
+    function marca(el) { if (el.nodeType === 1 && el.children.length === 0 && RE_CARR.test(el.textContent || '') && (el.textContent || '').length < 60) { el.classList.add('st-carregando'); el.setAttribute('aria-busy', 'true'); } }
+    function varre(n) { if (n.nodeType !== 1) return; marca(n); var q = n.querySelectorAll('p,td,div,span'); for (var i = 0; i < q.length; i++) marca(q[i]); }
+    varre(raiz);
+    new MutationObserver(function (ms) {
+      ms.forEach(function (m) { [].forEach.call(m.addedNodes, varre); if (m.type === 'characterData' && m.target.parentNode) marca(m.target.parentNode); });
+      [].forEach.call(raiz.querySelectorAll('.st-carregando'), function (el) { if (el.children.length || !RE_CARR.test(el.textContent || '')) { el.classList.remove('st-carregando'); el.removeAttribute('aria-busy'); } });
+    })
+      .observe(raiz, { childList: true, subtree: true, characterData: true });
+  }
+
+  /* ───────── 10. deslizar o dedo para trocar de aba ───────── */
+  function deslizar(area, abasSel, ehAtiva) {
+    if (!area || area.__stDesl || !('ontouchstart' in g)) return; area.__stDesl = 1;
+    var x0 = null, y0 = 0, t0 = 0;
+    area.addEventListener('touchstart', function (e) {
+      var t = e.target; if (t.closest && t.closest('input,textarea,select,.tbl,table,[data-sem-deslize],.mm,canvas')) { x0 = null; return; }
+      x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+    }, { passive: true });
+    area.addEventListener('touchend', function (e) {
+      if (x0 == null) return; var dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
+      if (Math.abs(dx) < 70 || Math.abs(dy) > 45 || Date.now() - t0 > 700) return;
+      var box = document.querySelector(abasSel); if (!box) return;
+      var bts = [].filter.call(box.querySelectorAll('button,[role=tab],a'), function (b) { return b.offsetParent !== null; }); if (bts.length < 2) return;
+      var i = -1; bts.forEach(function (b, k) { if (ehAtiva ? ehAtiva(b) : (b.getAttribute('aria-selected') === 'true' || b.classList.contains('on') || b.classList.contains('active') || b.classList.contains('sel'))) i = k; });
+      if (i < 0) return; var j = dx < 0 ? i + 1 : i - 1; if (j < 0 || j >= bts.length) return;
+      bts[j].click();
+      if (!reduz) { var alvo = area; alvo.style.transition = 'none'; alvo.style.translate = (dx < 0 ? 26 : -26) + 'px 0'; alvo.style.opacity = '.4'; void alvo.offsetWidth; alvo.style.transition = 'translate .32s ' + EASE + ',opacity .32s'; alvo.style.translate = '0 0'; alvo.style.opacity = '1'; }
+    }, { passive: true });
+  }
+
+  /* ───────── 11. abertura do app: a latinha pinga e a marca aparece (1 vez por sessão) ───────── */
+  function abertura() {
+    try { if (sessionStorage.getItem('st_abertura')) return; sessionStorage.setItem('st_abertura', '1'); } catch (e) { return; }
+    if (reduz) return;
+    var d = document.createElement('div'); d.className = 'st-abertura'; d.setAttribute('aria-hidden', 'true');
+    d.innerHTML = '<style>' +
+      '.st-abertura{position:fixed;inset:0;z-index:2147483500;background:#1C3F8F;display:grid;place-items:center;transition:opacity .45s ease,visibility .45s}' +
+      '.st-abertura.sai{opacity:0;visibility:hidden}' +
+      '.st-ab-c{display:flex;flex-direction:column;align-items:center;gap:14px;color:#fff;font:800 28px "Bricolage Grotesque","Public Sans",system-ui,sans-serif;letter-spacing:-.01em}' +
+      '.st-ab-c svg{width:96px;height:96px;overflow:visible;animation:stAbLata .7s ' + EASE + ' both}' +
+      '.st-ab-gota{animation:stAbGota .9s .45s cubic-bezier(.5,0,.8,.4) both}' +
+      '.st-ab-poca{transform-origin:32px 66px;animation:stAbPoca .5s 1.15s ' + EASE + ' both}' +
+      '.st-ab-c span{animation:stAbTxt .5s .55s ' + EASE + ' both}.st-ab-c small{font:600 13px "Public Sans",system-ui;opacity:.8;animation:stAbTxt .5s .75s ' + EASE + ' both}' +
+      '@keyframes stAbLata{from{transform:translateY(-30px) rotate(-12deg);opacity:0}to{transform:none;opacity:1}}' +
+      '@keyframes stAbGota{0%{transform:translateY(0) scale(.2);opacity:0}20%{opacity:1;transform:translateY(0) scale(1)}100%{transform:translateY(34px);opacity:1}}' +
+      '@keyframes stAbPoca{from{transform:scaleX(0);opacity:0}to{transform:scaleX(1);opacity:1}}' +
+      '@keyframes stAbTxt{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}' +
+      '</style><div class="st-ab-c"><svg viewBox="0 0 64 72"><ellipse class="st-ab-poca" cx="32" cy="66" rx="16" ry="3" fill="#FFD200"/>' +
+      '<path d="M14 14h36l-3 34a4 4 0 0 1-4 3.6H21a4 4 0 0 1-4-3.6z" fill="#fff"/><rect x="12" y="8" width="40" height="8" rx="3" fill="#E30613"/>' +
+      '<path d="M18 26h28" stroke="#FFD200" stroke-width="6"/><circle class="st-ab-gota" cx="32" cy="56" r="3.4" fill="#FFD200"/></svg>' +
+      '<span>Só Tintas</span><small>Colorindo Vidas e Realizando Sonhos</small></div>';
+    (document.body || document.documentElement).appendChild(d);
+    setTimeout(function () { d.classList.add('sai'); setTimeout(function () { d.remove(); }, 600); }, 1500);
+    d.addEventListener('click', function () { d.classList.add('sai'); });
+  }
+
   g.STAnima = { observar: observar, contar: contar, encher: encher, sanfona: sanfona, abas: abas, confete: confete, comemorarUmaVez: comemorarUmaVez,
     faixa: faixa, check: check, avisos: avisos, flip: flip, puxar: puxar, pop: function (el) { if (el && !reduz) { el.classList.remove('st-pop'); void el.offsetWidth; el.classList.add('st-pop'); } },
-    brilho: function (el) { if (el && !reduz) el.classList.add('st-brilho'); }, reduz: reduz };
+    brilho: function (el) { if (el && !reduz) el.classList.add('st-brilho'); }, reduz: reduz,
+    esqueletos: esqueletos, deslizar: deslizar, abertura: abertura };
 })(window);

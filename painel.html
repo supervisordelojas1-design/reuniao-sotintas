@@ -2330,12 +2330,13 @@ window.abrirUpload=abrirUpload;window.enviarUpload=enviarUpload;
  } else { tip.style.display='none'; } },{passive:true});
 })();
 </script>
-<script src="st-anima.js?v=2"></script>
+<script src="st-anima.js?v=3"></script>
 <script>
 /* animações (etapa 2): KPIs contando, barras enchendo, ponteiro do velocímetro, vermelho pulsando, abas deslizantes */
 (function(){ if(!window.STAnima) return; var app=document.getElementById('app'), ab=document.getElementById('abas');
   STAnima.observar(document.body,{ numeros:'#app .kpi .vl,#app .rbox .v', barras:'#app .bar > i', agulhas:'#app .st-agulha', pulso:'#app .kpi .vl[style*="--bad"]', pulsoTexto:true });
   if(ab) STAnima.abas(ab,'.on');
+  if(STAnima.esqueletos){ STAnima.esqueletos(document.body); STAnima.deslizar(app,'#abas',function(b){ return b.classList.contains('on'); }); }
   STAnima.puxar(document.scrollingElement, function(){ location.reload(); });
 })();
 </script>

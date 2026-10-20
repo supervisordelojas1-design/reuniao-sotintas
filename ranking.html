@@ -127,6 +127,7 @@ tr.tie td.pos::after{content:"*";color:var(--accent);margin-left:2px}
 
 /* ── etapa 3: pódio que sobe do chão + coroa no 1º; Modo TV (?tv=1) ── */
 .pd{position:relative}
+td.empty{text-align:left;padding-left:24px;white-space:normal}td.empty::before{margin:0 0 10px 30px!important}
 @media (prefers-reduced-motion:no-preference){
   .podium .pd{transform-origin:50% 100%;animation:pdSobe .8s cubic-bezier(.2,.8,.2,1) both}
   .podium .pd.r3{animation-delay:.05s}.podium .pd.r2{animation-delay:.35s}.podium .pd.r1{animation-delay:.7s}
@@ -228,7 +229,7 @@ body.tv td.pts{font-size:clamp(18px,1.6vw,26px)}
 </div>
 <div id="tip" hidden></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="st-dados.js?v=85"></script>
+<script src="st-dados.js?v=86"></script>
 <script>
 let DATA={lojas:[],vend:[]};   /* vem do Servidor de Dados ST, já recortado pelo crachá */
 let RECORTE=false; const POS={}; let POS_PEND={};
@@ -447,12 +448,13 @@ render();
   };
 })();
 </script>
-<script src="st-anima.js?v=2"></script>
+<script src="st-anima.js?v=3"></script>
 <script>
 (function(){ if(!window.STAnima) return;
   /* a lista desliza para a nova ordem ao trocar mês/aba */
   var r0=render; render=function(){ STAnima.flip(document.getElementById('tb'),'tr',function(tr){ var b=tr.querySelector('.nm b'); return b?b.textContent:tr.textContent; }, r0); };
   STAnima.observar(document.body,{ numeros:'#podium .pts', abas:'.tabs' });
+  if(STAnima.esqueletos){ STAnima.esqueletos(document.body); STAnima.deslizar(document.querySelector('.wrap'),'.tabs'); }
   STAnima.puxar(document.scrollingElement, function(){ location.reload(); });
 })();
 </script>
