@@ -383,7 +383,16 @@
 
   /* relatório (tela + impressão/PDF) ---------------------------------------------------- */
   App.vist.relatorio = (id) => { App.cache.abaAssessor = 'vistoria'; irPara('#/assessor/vistoria/' + id + '/relatorio'); };
-  App.vist.imprimir = () => { setTimeout(() => window.print(), 60); };
+  /* nome do PDF: Ficha de Vistoria - cliente - quem fez (cargo) - data */
+  App.vist.imprimir = () => {
+    const id = (location.hash.match(/vistoria\/([^/]+)\/relatorio/) || [])[1], v = (V.lista || []).find(x => String(x.id) === String(id)), cab = (v && v.respostas && v.respostas._cab) || {};
+    const u = App.user || {}, d = new Date(), dt = ('0' + d.getDate()).slice(-2) + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + d.getFullYear();
+    const nome = ['Ficha de Vistoria', cab.cliente || '', u.nome ? u.nome + (u.cargo ? ' (' + u.cargo + ')' : '') : '', dt].filter(Boolean).join(' - ').replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim();
+    const t0 = document.title; let tp = null;
+    try { if (window.top && window.top !== window) { tp = window.top.document.title; window.top.document.title = nome; } } catch (e) {}
+    document.title = nome;
+    setTimeout(() => { window.print(); setTimeout(() => { document.title = t0; try { if (tp != null) window.top.document.title = tp; } catch (e) {} }, 800); }, 60);
+  };
   function telaRelatorio(v) {
     const c = porId('vistoria'); const r = v.respostas || {}; const cab = r._cab || {}; const av = avaliar(c, r); const sit = av.situacao || {};
     const fundo = { vermelho: '#FDE8E8', amarelo: '#FFF3E0', verde: '#E3F5EA' }[av.semaforo];

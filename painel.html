@@ -962,6 +962,35 @@ function waOrc(){
  if(L.length>25){lin.push('');lin.push('… e mais '+(L.length-25)+' — lista completa no PDF.');}
  window.open('https://wa.me/?text='+encodeURIComponent(lin.join('\n')),'_blank','noopener,noreferrer');
 }
+/* ---------- nome do arquivo PDF: documento - pessoa (cargo) - loja/região - data ----------
+   O Chrome sugere o nome a partir do TÍTULO da página (e, dentro do app, do título da janela de cima).
+   Por isso os dois títulos mudam só durante a impressão e voltam logo depois. */
+const GER_PAINEL={};   /* código da loja -> gerente (aba EQUIPE do app) */
+try{ fetch('https://script.google.com/macros/s/AKfycbxC916U8rNw_-HFTW7vtFZz4AC_B1bHcTLE3bvMDWji6E5lAqkXgC0EIgQFtjHYTp8I/exec?acao=equipe')
+ .then(r=>r.json()).then(j=>{ const g=(j&&j.gerentes)||{}; Object.keys(g).forEach(k=>{ const m=String(g[k].loja||'').match(/\d+/); if(m&&g[k].gerente) GER_PAINEL[('00'+Number(m[0])).slice(-3)]=g[k].gerente; }); }).catch(()=>{}); }catch(e){}
+const tcPdf=t=>String(t||'').toLowerCase().replace(/(^|\s)(\S)/g,(m,a,b)=>a+b.toUpperCase()).replace(/\b(De|Da|Do|Dos|Das|E)\b/g,w=>w.toLowerCase());
+function pessoaPdf(vend){
+ const l=ST.loja?D.lojas.find(x=>x.cod==ST.loja):null;
+ if(!vend&&LOCK&&String(LOCK).indexOf('vend:')==0){ const v=vendDaVez(); vend=v&&v.nome; }
+ const loja=l?'Loja '+l.cod+' '+tcPdf(l.nome):'';
+ if(vend) return tcPdf(vend)+' (Vendedor)'+(loja?' - '+loja:'');
+ if(l){ const g=GER_PAINEL[('00'+Number(l.cod)).slice(-3)]; return (g?tcPdf(g)+' (Gerente) - ':'')+loja; }
+ if(ST.sup) return tcPdf(ST.sup)+' (Supervisor)';
+ return 'Rede Só Tintas';
+}
+function nomePdf(tipo,vend){
+ const d=new Date(), dt=('0'+d.getDate()).slice(-2)+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+d.getFullYear();
+ return (tipo+' - '+pessoaPdf(vend)+' - '+dt).replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,' ').trim();
+}
+function imprimirComo(nome){
+ const t0=document.title; let tp=null;
+ try{ if(window.top&&window.top!==window){ tp=window.top.document.title; window.top.document.title=nome; } }catch(e){}
+ document.title=nome;
+ setTimeout(function(){
+  window.print();
+  setTimeout(function(){ document.body.classList.remove('impr'); document.title=t0; try{ if(tp!=null) window.top.document.title=tp; }catch(e){} },600);
+ },120);
+}
 function pdfOrc(){
  const O=OAT(); if(!O) return;
  const onde=ST.loja?('Loja '+ST.loja):ST.sup?('Região '+ST.sup):'Rede Só Tintas';
@@ -981,7 +1010,7 @@ function pdfOrc(){
   corpo+'<div class="ass"><div>Gerente</div><div>Supervisor</div></div>'+
   '<div class="fo">A coluna Retorno é para anotar à mão o resultado de cada ligação.</div></div>';
  document.body.classList.add('impr');
- setTimeout(function(){window.print();setTimeout(function(){document.body.classList.remove('impr')},400)},120);
+ imprimirComo(nomePdf('Orçamentos em aberto',(ST.ovend||null)));
 }
 
 /* bloco de carteira — o mesmo da loja, reaproveitado pelo vendedor */
@@ -1179,7 +1208,7 @@ function alinhamento(tipo,chave){
  var num=function(l,v,s){return '<div class="n"><span>'+l+'</span><b>'+v+'</b>'+(s?'<i>'+s+'</i>':'')+'</div>'};
  var ind=function(l,v){return '<div class="i"><span>'+l+'</span><b>'+v+'</b></div>'};
 
- var h='<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Resumo de alinhamento — '+esc(d.titulo)+'</title><style>'+
+ var h='<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>'+esc(nomePdf('Resumo de alinhamento'))+'</title><style>'+
  '@page{size:A4 portrait;margin:10mm}'+
  '*{box-sizing:border-box;margin:0;padding:0}'+
  'body{font:11px/1.35 Arial,Helvetica,sans-serif;color:#15243A}'+
@@ -1490,7 +1519,7 @@ function pdfPlano(){
    Os números refletem a apuração até ${new Date(D.periodo.dataBase+'T12:00').toLocaleDateString('pt-BR')}.</div>
  </div>`;
  document.body.classList.add('impr');
- setTimeout(()=>{window.print();setTimeout(()=>document.body.classList.remove('impr'),400)},120);
+ imprimirComo(nomePdf('Plano de ação',null));
 }
 
 function enviarWA(){
@@ -1558,7 +1587,7 @@ function pdfOrient(elId,lab){
   <div class="ass"><div>Gerente</div><div>Supervisor</div></div>
   <div class="fo">Documento gerado pelo Painel de Coordenação de Supervisão.</div></div>`;
  document.body.classList.add('impr');
- setTimeout(()=>{window.print();setTimeout(()=>document.body.classList.remove('impr'),400)},120);
+ imprimirComo(nomePdf((typeof lab!=='undefined'&&lab?lab:'Orientação'),null));
 }
 function waOrient(elId,lab){
  const h=conteudoOrient(elId); if(!h) return;
@@ -1917,7 +1946,7 @@ function pdfCart(completo){
   '<div class="ass"><div>Gerente</div><div>Supervisor</div></div>'+
   '<div class="fo">A coluna Contato é para anotar à mão o retorno de cada cliente.</div></div>';
  document.body.classList.add('impr');
- setTimeout(function(){window.print();setTimeout(function(){document.body.classList.remove('impr')},400)},120);
+ imprimirComo(nomePdf('Carteira de clientes',(ST.vend||null)));
 }
 function goCart(g){ST.vend=null;ST.view='cart';ST.cg=g||ST.cg||'POS';render();window.scrollTo({top:0,behavior:'smooth'})}
 function goCartV(v,g){ST.vend=v;ST.view='cart';ST.cg=g||'POS';render();window.scrollTo({top:0,behavior:'smooth'})}

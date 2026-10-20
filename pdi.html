@@ -265,6 +265,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
   const TN = { P1: 'P1 Crítico', P2: 'P2 Alta', P3: 'P3 Desenvolver', P4: 'P4 Potencializar', PI: 'Integração' };
   const hojeIso = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
   const somaDias = (iso, n) => { const d = new Date(String(iso).slice(0, 10) + 'T12:00:00'); if (isNaN(d.getTime())) return iso; d.setDate(d.getDate() + n); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+  const limpaArq = s => tc(String(s || '')).replace(/[\\/:*?"<>|]+/g, '-').trim();
   const arqNome = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
   /* bibliotecas do PDF: carregadas só quando alguém gera um termo */
   const LIB_H2C = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
@@ -679,7 +680,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
           if (i) pdf.addPage(); pdf.addImage(url, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
         }
         pdf.setProperties({ title: `PDI ${v.nome} · ${opts.lojaNome(v.loja_id)}`, author: 'Só Tintas', subject: 'Plano de Desenvolvimento Individual', creator: 'Só Tintas App · PDI Comercial' });
-        return { blob: pdf.output('blob'), imgs, nome: `PDI_${arqNome(v.nome)}_${v.c}_${t.data}.pdf` };
+        return { blob: pdf.output('blob'), imgs, nome: `PDI - ${limpaArq(v.nome)} (Vendedor) - Loja ${v.c} ${limpaArq(String(v.l || ''))} - ${String(t.data).split('-').reverse().join('-')}.pdf`.replace(/\s+/g, ' ').replace(' .pdf', '.pdf') };
       } finally { host.remove(); }
     }
     function abrirTermo(v) {

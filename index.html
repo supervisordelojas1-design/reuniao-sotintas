@@ -6187,7 +6187,13 @@ $('pasteOk').onclick=function(){
   if(txt){ S.blocos[i].notas += (S.blocos[i].notas?'\n':'') + txt; if(i===S.cur) $('bNotas').value=S.blocos[i].notas; toast('Transcrição inserida no bloco '+(i+1)+'.'); }
   $('modalPaste').classList.remove('show');
 };
-$('btnPdf').onclick=function(){ window.print(); };
+$('btnPdf').onclick=function(){
+  /* nome do PDF: Ata - título - condutor (nome e cargo) - data */
+  var dt=($('fData')&&$('fData').value)||new Date().toISOString().slice(0,10); dt=dt.split('-').reverse().join('-');
+  var partes=['Ata', ($('fTitulo')&&$('fTitulo').value.trim())||'Reunião', ($('fCondutor')&&$('fCondutor').value.trim().replace(/\s*[–—]\s*/,' (').replace(/^(.*\(.*)$/,'$1)'))||'', dt].filter(Boolean);
+  var nome=partes.join(' - ').replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,' ').trim(), t0=document.title;
+  document.title=nome; window.print(); setTimeout(function(){ document.title=t0; },800);
+};
 $('btnGoogle').onclick=enviarGoogle;
 $('btnZap').onclick=function(){
   var t=textoResumo(); $('zapText').value=t; $('modalZap').classList.add('show');
