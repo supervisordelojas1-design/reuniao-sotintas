@@ -8953,7 +8953,7 @@ syncNav();
  function podeVerPainel(){ var s=sessao(); if(!s) return false;
   var p=((s&&s.papel)||'').trim().toLowerCase();
   if(!p) return true;                      /* sessao antiga sem papel: mostra e deixa o servidor decidir */
-  return p.indexOf('coorden')>=0 || p.indexOf('supervis')>=0 || p.indexOf('gerente')>=0 || (s&&s.escopo==='lojas'); }
+  return p.indexOf('coorden')>=0 || p.indexOf('supervis')>=0 || p.indexOf('gerente')>=0 || p.indexOf('vendedor')>=0 || (s&&(s.escopo==='lojas'||s.vendedor)); }
  /* Painel saiu da barra de abas — acesso passa a ser só pela tela inicial (cards).
     Mantemos a aba oculta como gatilho do overlay (a tela inicial a aciona por .click()). */
  function sincronizarAba(){ var ver=podeVerPainel(); b.style.display='none'; if(!ver){ ov.style.display='none'; document.body.style.overflow=''; } }
@@ -8969,7 +8969,7 @@ syncNav();
   var tema=(window.STtema?window.STtema.get():'light');
   /* "Ver como" ativo (coordenação): o painel abre posicionado na região/loja da visão */
   var vz=null; try{ vz=window.STDados&&STDados.visao(); }catch(e2){}
-  var vp=vz?(vz.perfil==='sup'?'sup:'+vz.nome:vz.perfil==='ger'?'loja:'+((vz.lojas||[])[0]||''):''):'';
+  var vp=vz?(vz.perfil==='sup'?'sup:'+vz.nome:vz.perfil==='ger'?'loja:'+((vz.lojas||[])[0]||''):vz.perfil==='vend'?'vend:'+((vz.lojas||[])[0]||'')+':'+vz.nome:''):'';
   if(f.getAttribute('data-u')!==u || f.getAttribute('data-tema')!==tema || f.getAttribute('data-v')!==vp || !f.getAttribute('src')){
    f.setAttribute('src','painel.html?tema='+tema+(u?('&u='+encodeURIComponent(u)):'')+(vp?('&visao='+encodeURIComponent(vp)):''));
    f.setAttribute('data-u',u); f.setAttribute('data-tema',tema); f.setAttribute('data-v',vp);
@@ -9083,7 +9083,7 @@ syncNav();
     <div id="iniHoje" class="ini-hoje" role="button" tabindex="0" aria-label="Compromissos de hoje"></div>
     <div class="ini-sec">Gestão</div>
     <div class="ini-feat">
-      <button type="button" class="ini-card feat" data-act="painel" data-gate="1" data-ger="1">
+      <button type="button" class="ini-card feat" data-act="painel" data-gate="1" data-ger="1" data-vend="1">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-chart"/></svg></span>
         <span class="ini-txt"><span class="ini-nm">Painel de Metas e Indicadores</span><span class="ini-ds">Painel de Supervisão</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
@@ -9459,7 +9459,7 @@ body.foco .wrap{padding-bottom:40px}
     if(!c) return;
     var act=c.getAttribute('data-act');
     fecharInicio();
-    if(act==='painel'){ var vz=window.STDados&&STDados.visao(); if(vz&&vz.perfil==='vend'){ if(window.verComoAviso) verComoAviso('Vendedor não tem acesso ao Painel de Metas e Indicadores.'); return; } var tp=document.getElementById('tabPainel'); if(tp) tp.click(); return; }
+    if(act==='painel'){ var tp=document.getElementById('tabPainel'); if(tp) tp.click(); return; }
     if(act==='niveis'){ abrirNiveis(); return; }
     if(act==='ranking'){ abrirRanking(); return; }
     if(act==='proposta'){ abrirProposta(); return; }

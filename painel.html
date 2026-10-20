@@ -698,18 +698,26 @@ let LOCK=__L__;
 /* "Ver como" do app (só coordenação): ?visao=sup:NOME ou ?visao=loja:034 — a coordenação já recebe a rede
    inteira, então o painel só se posiciona e se trava na região/loja escolhida, como a pessoa veria. */
 const VISAO=(function(){ try{ return new URLSearchParams(location.search).get('visao')||''; }catch(e){ return ''; } })();
+/* VENDEDOR: o servidor manda só a linha dele (lock "vend:034"); na visão, o nome vem do "Ver como" */
+let VEND_NOME=null;
+const chVend=t=>String(t||'').replace(/^[A-Z0-9]{3}\s*-\s*/i,'').replace(/\s*-?\s*N\s?\d.*$/i,'').replace(/\s*-\s*\d+\s*$/,'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
+const mesmoVend=(a,b)=>{a=chVend(a);b=chVend(b);if(!a||!b)return false;if(a==b)return true;const x=a.split(' '),y=b.split(' ');return x.length>1&&y.length>1&&x[0]==y[0]&&x[x.length-1]==y[y.length-1]};
 if(!LOCK&&VISAO){
  const nn=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim();
- if(VISAO.indexOf('loja:')==0){ const c=VISAO.slice(5); const l=D.lojas.find(x=>String(x.cod)==c||('00'+Number(x.cod)).slice(-3)==c); if(l) LOCK='loja:'+l.cod; }
+ if(VISAO.indexOf('vend:')==0){ const p=VISAO.split(':'), c=p[1], nome=p.slice(2).join(':');
+   const l=D.lojas.find(x=>String(x.cod)==c||('00'+Number(x.cod)).slice(-3)==c), v=l&&l.vendedores.find(x=>mesmoVend(x.nome,nome));
+   if(l&&v){ LOCK='vend:'+l.cod; VEND_NOME=v.nome; } }
+ else if(VISAO.indexOf('loja:')==0){ const c=VISAO.slice(5); const l=D.lojas.find(x=>String(x.cod)==c||('00'+Number(x.cod)).slice(-3)==c); if(l) LOCK='loja:'+l.cod; }
  else if(VISAO.indexOf('sup:')==0){ const n=nn(VISAO.slice(4)); const s=(D.supervisores||[]).find(x=>nn(x.nome)==n)||(D.supervisores||[]).find(x=>nn(x.nome).split(' ')[0]==n.split(' ')[0]); if(s) LOCK=s.nome; }
  const fx=document.createElement('div'); fx.setAttribute('role','status');
  fx.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:max(10px,env(safe-area-inset-bottom,0px));z-index:99999;max-width:calc(100% - 24px);padding:8px 14px;border-radius:999px;background:#FFD200;color:#1d2433;font:700 12.5px system-ui,sans-serif;box-shadow:0 6px 22px rgba(0,0,0,.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
- fx.textContent=LOCK?('👁 Vendo como: '+(String(LOCK).indexOf('loja:')==0?'Gerente · loja '+String(LOCK).slice(5):'Supervisor '+LOCK)+' · só leitura'):'👁 Não achei essa região/loja no painel deste mês: mostrando a rede';
+ fx.textContent=LOCK?('👁 Vendo como: '+(String(LOCK).indexOf('vend:')==0?'Vendedor · '+VEND_NOME:String(LOCK).indexOf('loja:')==0?'Gerente · loja '+String(LOCK).slice(5):'Supervisor '+LOCK)+' · só leitura'):'👁 Não achei essa região/loja no painel deste mês: mostrando a rede';
  document.body.appendChild(fx);
 }
 const PERFIS=[];
 if(!LOCK){PERFIS.push({v:'geral',t:'👑 Diretoria — visão geral'});
  D.supervisores.forEach(s=>PERFIS.push({v:'sup:'+s.nome,t:'🧭 Supervisor — '+s.nome}));}
+else if(String(LOCK).indexOf('vend:')==0){ const lj=D.lojas.find(x=>x.cod==String(LOCK).slice(5)); const vv=lj&&(VEND_NOME?lj.vendedores.find(x=>x.nome==VEND_NOME):lj.vendedores[0]); PERFIS.push({v:LOCK,t:'👤 Meu painel — '+(vv?vv.nome:'')}); }
 else if(String(LOCK).indexOf('loja:')==0){ const lj=(_.L||[]).find(x=>x[0]==String(LOCK).slice(5)); PERFIS.push({v:LOCK,t:'🏪 Minha loja — '+(lj?lj[0]+' · '+lj[1]:String(LOCK).slice(5))}); }
 else PERFIS.push({v:'sup:'+LOCK,t:'🧭 Minha região — '+LOCK});
 D.lojas.slice().filter(l=>!LOCK||l.sup==LOCK).sort((a,b)=>a.cod.localeCompare(b.cod))
@@ -1293,6 +1301,34 @@ function vSup(nome){
  h+='</div>'+novBox(novSoma(ls.map(l=>l.cod)),'Clientes novos — região '+nome,s.I&&s.I.novos,s.fat,false)
   +orcBox(OSoma(ls.map(l=>l.cod)),'Orçamentos em aberto — região '+nome,s.restLoja,null)
   +resumoBox('sup:'+nome,s,'a região de '+nome);
+ return h;
+}
+/* ---------- painel do VENDEDOR: só os números dele ---------- */
+function vendDaVez(){const l=D.lojas.find(x=>x.cod==ST.loja);if(!l)return null;
+ return VEND_NOME?(l.vendedores.find(x=>x.nome==VEND_NOME)||null):(l.vendedores[0]||null)}
+function subVend(M,nome){if(!M)return null;const k=Object.keys(M).find(x=>mesmoVend(x,nome));return k?M[k]:null}
+function vVendedor(){
+ const l=D.lojas.find(x=>x.cod==ST.loja), v=vendDaVez();
+ if(!l||!v) return '<div class="empty">Os seus números ainda não estão no painel deste mês.</div>';
+ const pp=v.meta?v.proj/v.meta:null, f=farol(v.pct);
+ let h=`<div class="kpis">
+  <div class="kpi hero"><div class="lb">Seu faturado</div><div class="vl">${K(v.fat)}</div>
+   <div class="ft">${D.periodo.utDecorridos} de ${D.periodo.utTotal} dias úteis</div></div>
+  <div class="kpi"><div class="lb">% da sua meta</div><div class="vl" style="color:${cor(f.c)}">${PC(v.pct)}</div>
+   <div class="ft">meta ${K(v.meta)}</div></div>
+  <div class="kpi"><div class="lb">Projeção fechamento</div>
+   <div class="vl" style="color:${pp>=1?'var(--ok)':pp>=.9?'var(--warn)':'var(--bad)'}">${PC(pp)}</div><div class="ft">${K(v.proj)}</div></div>
+  <div class="kpi"><div class="lb">Falta para a meta</div><div class="vl">${K(v.rest)}</div>
+   <div class="ft">${BRL(v.ritmoNec)}/dia · ${D.periodo.utRestantes} dias úteis</div></div>
+  <div class="kpi"><div class="lb">Seu nível</div><div class="vl">V${v.nv} · ${esc(v.nvRot)}</div>
+   <div class="ft">${v.prox?'faltam '+K(v.prox.falta)+' de Méd.90d para V'+v.prox.nv:'topo da régua'}</div></div>
+ </div>`;
+ h+=`<div class="sec"><div class="sech"><h3>Seus indicadores</h3><span class="cnt">Méd.90d ${K(v.med90)}</span></div>`
+  +linha(v,0,`meta ${K(v.meta)} · falta ${K(v.rest)} · ${BRL(v.ritmoNec)}/dia · <b style="color:var(--red)">ver indicadores ▾</b>`,`toggleV(0)`,bdgV(v)).replace('class="row "','class="row exp"')
+  +vExp(v,0,l)+'</div>';
+ const OO=OL(l.cod), KK=KL(l.cod);
+ const orc=VEND_NOME?subVend(OO&&OO.V,v.nome):OO, cart=VEND_NOME?subVend(KK&&KK.V,v.nome):KK;
+ h+=orcBox(orc,'Seus orçamentos em aberto',v.rest,null)+cartBox(cart,'Sua carteira de clientes',null);
  return h;
 }
 function vLoja(cod){
@@ -1973,7 +2009,7 @@ function go(v,id){
  if(v=='loja'){ST.view='loja';ST.loja=id;const l=D.lojas.find(x=>x.cod==id);if(l)ST.sup=l.sup}
  render();window.scrollTo({top:0,behavior:'smooth'});
 }
-function podeSubir(){if(LOCK)return ST.perfil.indexOf('loja:')==0?0:1;
+function podeSubir(){if(LOCK)return (ST.perfil.indexOf('loja:')==0||ST.perfil.indexOf('vend:')==0)?0:1;
  return ST.perfil=='geral'?2:ST.perfil.indexOf('sup:')==0?1:0}
 
 /* ---------- abas: Geral + uma por supervisor ---------- */
@@ -1982,6 +2018,7 @@ function pintarAbas(){
  el.innerHTML="";
  function add(rot,ativo,fn){var b=document.createElement("button");
   b.textContent=rot; if(ativo)b.className="on"; if(fn)b.onclick=fn; el.appendChild(b);}
+ if(LOCK&&String(LOCK).indexOf('vend:')==0){ var vv=vendDaVez(); add(vv?vv.nome:'Meu painel',true,null); return; }
  if(LOCK){ var lj=String(LOCK).indexOf('loja:')==0?D.lojas.find(x=>x.cod==String(LOCK).slice(5)):null;
   add(lj?lj.cod+' · '+lj.nome:LOCK,true,null); return; }
  add("Geral",!ST.sup&&!ST.loja,abaGeral);
@@ -2018,6 +2055,7 @@ function render(){
   t=m.n; s=ST.loja?('Loja '+ST.loja):ST.sup?('Região '+ST.sup):'Visão geral da rede'; html=vInd()}
  else if(ST.view=='geral'){t='Visão geral da rede';s=`${D.geral.nLojas} lojas · ${D.geral.nVend} vendedores com meta`;html=vGeral()}
  else if(ST.view=='sup'){const x=D.supervisores.find(y=>y.nome==ST.sup);t='Região '+ST.sup;s=`${x?x.nLojas:0} lojas sob supervisão`;html=vSup(ST.sup)}
+ else if(LOCK&&String(LOCK).indexOf('vend:')==0){const l=D.lojas.find(x=>x.cod==ST.loja),v=vendDaVez();t=v?v.nome:'Meu painel';s=l?'Loja '+l.cod+' · '+l.nome:'';html=vVendedor()}
  else{const l=D.lojas.find(x=>x.cod==ST.loja);t=l?l.cod+' · '+l.nome:'Loja';s=l?'Supervisor: '+l.sup:'';html=vLoja(ST.loja)}
  document.getElementById('tTit').textContent=t;
  document.getElementById('tSub').textContent=s;
@@ -2028,7 +2066,12 @@ function render(){
 }
 
 /* ---------- perfil ---------- */
-if(LOCK&&String(LOCK).indexOf('loja:')==0){   /* GERENTE: o servidor manda só a loja dele */
+if(LOCK&&String(LOCK).indexOf('vend:')==0){   /* VENDEDOR: só os números dele */
+ const cod=String(LOCK).slice(5), l=D.lojas.find(x=>x.cod==cod);
+ ST.perfil=LOCK;ST.view='loja';ST.loja=cod;ST.sup=l?l.sup:null; const v=vendDaVez();
+ document.getElementById('hTit').textContent='Meu Painel';
+ document.getElementById('hSub').textContent='Só Tintas · '+(v?v.nome:'')+(l?' · loja '+l.cod:'');}
+else if(LOCK&&String(LOCK).indexOf('loja:')==0){   /* GERENTE: o servidor manda só a loja dele */
  const cod=String(LOCK).slice(5), l=D.lojas.find(x=>x.cod==cod);
  ST.perfil=LOCK;ST.view='loja';ST.loja=cod;ST.sup=l?l.sup:null;
  document.getElementById('hTit').textContent='Painel da Loja';
