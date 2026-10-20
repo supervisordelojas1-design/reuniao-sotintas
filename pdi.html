@@ -130,6 +130,71 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
   .pdi-tabs{border-radius:14px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* ===== Termo de PDI (formulário timbrado → PDF → WhatsApp) ===== */
+.tm-ov{position:fixed;inset:0;z-index:60;background:rgba(6,10,20,.72);display:flex;justify-content:center;align-items:flex-start;overflow-y:auto;padding:16px 12px 32px}
+.tm-box{width:100%;max-width:880px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.tm-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.tm-top b{font-family:var(--f-display);font-size:19px}
+.tm-form{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}
+.tm-form .tm-l2{grid-column:1/-1}
+.tm-form input,.tm-form textarea{width:100%;margin-top:4px;background:var(--surface2);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:9px 10px;font:500 14px var(--f-body)}
+.tm-form textarea{min-height:66px;resize:vertical}
+.tm-acoes{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tm-acoes [data-tm-st]{flex-basis:100%}
+.tm-acoes a{color:var(--navy);font-weight:700}
+.tm-prev{display:flex;flex-direction:column;gap:12px;align-items:center}
+.tm-prev img{width:100%;max-width:794px;border-radius:4px;box-shadow:0 4px 18px rgba(0,0,0,.35);background:#fff}
+@media(max-width:620px){.tm-form{grid-template-columns:1fr}}
+.tm-host{position:fixed;left:-12000px;top:0;width:794px}
+.tm-pg{width:794px;height:1123px;background:#fff;color:#1d2433;font-family:"Public Sans",Arial,sans-serif;font-size:11.5px;line-height:1.42;display:flex;flex-direction:column;padding:30px 44px 22px;box-sizing:border-box;position:relative}
+.tm-hd{display:flex;align-items:center;gap:18px}
+.tm-hd img{height:66px;width:auto}
+.tm-hd-t{flex:1}
+.tm-hd-t small,.tm-hd-n small{display:block;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:#6b7387;font-weight:700}
+.tm-hd-t h2{margin:2px 0 3px;font-family:"Bricolage Grotesque","Public Sans",Arial,sans-serif;font-size:21px;line-height:1.1;color:#1C3F8F;font-weight:800}
+.tm-hd-t span{font-size:12px;font-weight:600;color:#1d2433}
+.tm-hd-n{text-align:right;border-left:2px solid #e4e8f0;padding-left:14px}
+.tm-hd-n b{display:block;font-size:13px;color:#1d2433;margin:2px 0}
+.tm-faixa{display:flex;height:5px;margin:12px 0 14px;border-radius:3px;overflow:hidden}
+.tm-faixa i{flex:5;background:#E30613}.tm-faixa i:nth-child(2){flex:2;background:#FFD200}.tm-faixa i:nth-child(3){flex:3;background:#1C3F8F}
+.tm-corpo{flex:1;overflow:hidden;display:flex;flex-direction:column;gap:11px}
+.tm-ft{display:flex;justify-content:space-between;gap:10px;border-top:1px solid #dfe4ee;padding-top:7px;margin-top:8px;font-size:9px;color:#6b7387}
+.tm-ft b{color:#1C3F8F}
+.tm-sec h3{margin:0 0 6px;font-family:"Bricolage Grotesque","Public Sans",Arial,sans-serif;font-size:13.5px;color:#1C3F8F;font-weight:800;border-bottom:1.5px solid #1C3F8F;padding-bottom:3px}
+.tm-sec h4{margin:8px 0 3px;font-size:11px;color:#1d2433}
+.tm-id{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid #dfe4ee;border-radius:6px;overflow:hidden}
+.tm-id div{padding:5px 8px;border-right:1px solid #dfe4ee;border-bottom:1px solid #dfe4ee;min-height:36px}
+.tm-id div:nth-child(4n){border-right:0}
+.tm-id div.w2{grid-column:span 2}
+.tm-id span{display:block;font-size:8.5px;text-transform:uppercase;letter-spacing:.06em;color:#6b7387;font-weight:700}
+.tm-id b{font-size:11.5px}
+.tm-fatos{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px}
+.tm-fatos div{background:#f3f5fa;border-radius:6px;padding:6px 9px}
+.tm-fatos span{display:block;font-size:9px;color:#6b7387;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.tm-fatos b{font-size:15px}
+.tm-fatos .din b{color:#c0141e}
+.tm-t{width:100%;border-collapse:collapse;font-size:10.8px}
+.tm-t th{text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:#fff;background:#1C3F8F;padding:4px 7px}
+.tm-t td{padding:4px 7px;border-bottom:1px solid #e6e9f1;vertical-align:top}
+.tm-t tr:nth-child(even) td{background:#f8f9fc}
+.tm-ok{color:#178048;font-weight:700}.tm-no{color:#c0141e;font-weight:700}
+.tm-star{color:#b38600;font-weight:800}
+.tm-acao{border:1px solid #dfe4ee;border-left:4px solid #E30613;border-radius:6px;padding:7px 10px}
+.tm-acao-t{display:flex;justify-content:space-between;gap:10px;margin-bottom:3px}
+.tm-acao-t b{font-size:12px}.tm-acao-t span{font-size:10px;color:#6b7387;white-space:nowrap;font-weight:600}
+.tm-acao p{margin:3px 0}
+.tm-acao em,.tm-q em{font-style:normal;font-weight:700;color:#1C3F8F;display:block;font-size:9.5px;text-transform:uppercase;letter-spacing:.04em}
+.tm-mods{display:flex;flex-wrap:wrap;gap:5px}
+.tm-mods span{background:#eef2fb;color:#1C3F8F;border-radius:20px;padding:2px 9px;font-weight:600;font-size:10.5px}
+.tm-q{margin:5px 0 7px}
+.tm-resp{margin:2px 0 0;padding:5px 8px;background:#f8f9fc;border-radius:5px;white-space:pre-wrap}
+.tm-linhas i{display:block;height:21px;border-bottom:1px solid #b9c1d3}
+.tm-rev td{height:30px}
+.tm-decl{margin:0 0 6px;text-align:justify}
+.tm-ass{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:40px}
+.tm-ass div{border-top:1px solid #1d2433;padding-top:4px;text-align:center;font-size:10.5px}
+.tm-ass small{display:block;color:#6b7387;font-size:9.5px}
+.tm-local{margin-top:18px;font-size:11px}
 </style></head><body>
 <div class="wrap">
   <div class="topbar"></div>
@@ -197,7 +262,14 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
   const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set'];
   const DU = 26;
   const TN = { P1: 'P1 Crítico', P2: 'P2 Alta', P3: 'P3 Desenvolver', P4: 'P4 Potencializar', PI: 'Integração' };
-  const hojeIso = () => new Date().toISOString().slice(0, 10);
+  const hojeIso = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
+  const somaDias = (iso, n) => { const d = new Date(String(iso).slice(0, 10) + 'T12:00:00'); if (isNaN(d.getTime())) return iso; d.setDate(d.getDate() + n); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+  const arqNome = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+  /* bibliotecas do PDF: carregadas só quando alguém gera um termo */
+  const LIB_H2C = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+  const LIB_PDF = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+  const LIBS = {};
+  const carregaJs = src => LIBS[src] || (LIBS[src] = new Promise((ok, erro) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => { delete LIBS[src]; erro(new Error('sem internet para carregar o gerador de PDF')); }; document.head.appendChild(s); }));
 
   const brl = v => v == null ? '—' : 'R$ ' + Math.round(v).toLocaleString('pt-BR');
   const pct = v => v == null ? '—' : (v * 100).toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + '%';
@@ -468,7 +540,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
           <p><span class="pdi-lbl">Ação</span>${a.a}</p><p><span class="pdi-lbl">Comportamento a observar</span>${a.c}</p><p><span class="pdi-lbl">Exemplo do dado</span>${a.e}</p><p><span class="pdi-lbl">Analogia</span>${a.an}</p>
           <div class="pdi-track"><select data-acao="${a.k}" data-v="${v.id}" ${dis} aria-label="Status da ação">${[['', 'Não iniciada'], ['andamento', 'Em andamento'], ['feito', 'Concluída']].map(o => `<option value="${o[0]}" ${(s.s || '') === o[0] ? 'selected' : ''}>${o[1]}</option>`).join('')}</select><input type="text" data-acaoobs="${a.k}" data-v="${v.id}" value="${esc(s.obs)}" placeholder="Evidência observada (opcional)" ${dis} aria-label="Evidência observada"></div></div>`; }).join('')}</div></div>
         <div><h4>Acompanhamento</h4>${acompHTML(v)}</div>
-        <div><button type="button" class="btn pequeno" data-copy="${v.id}">Copiar PDI para o WhatsApp</button></div>
+        <div class="tm-acoes"><button type="button" class="btn pequeno azul" data-termo="${v.id}">📄 Formalizar PDI (termo em PDF)</button><button type="button" class="btn pequeno contorno" data-copy="${v.id}">Copiar texto para o WhatsApp</button>${r.termo && r.termo.emitido ? `<span class="pdi-meta">Último termo emitido em ${dt(r.termo.emitido)}${r.termo.por ? ' por ' + esc(r.termo.por) : ''}</span>` : ''}</div>
       </div>`;
     }
 
@@ -539,9 +611,138 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
       global.scrollTo(0, y);
     }
 
+    /* ═════════════ Termo de PDI: formulário timbrado → PDF → WhatsApp ═════════════ */
+    function termoBlocos(v, t) {
+      const AA = A(v), top = (['P1', 'P2', 'PI'].includes(v.tier)) ? AA.slice(0, 4) : AA.slice(0, 3);
+      const M = metasDe(v), r = S.REG[v.id] || {}, au = r.auto || {}, cv = v.cpf, cn = v.cn, ck = v.cnk_aj || v.cnk, cp = v.cpk;
+      const linhas = n => '<div class="tm-linhas">' + '<i></i>'.repeat(n) + '</div>';
+      const resp = (s, n) => s && String(s).trim() ? `<p class="tm-resp">${esc(String(s).trim())}</p>` : linhas(n);
+      const sit = b => b ? '<span class="tm-ok">Atingido</span>' : '<span class="tm-no">A desenvolver</span>';
+      const sup = String(opts.regiaoDe(v.loja_id) || '').replace(/^Supervisor\s+/, '');
+      const B = [];
+      const id = [['Colaborador', v.nome, 'w2'], ['Loja', opts.lojaNome(v.loja_id), 'w2'],
+        ['Nível atual', `V${v.v} · ${NV[v.v]}`], ['Nível esperado', v.ve ? `V${v.ve} · ${NV[v.ve]}` : '—'], ['Tempo de casa', `${v.t} meses${v.tf === 'estimado' ? ' (estimado)' : ''}`], ['Prioridade', `${TN[v.tier]} · ${Math.round(v.sc.final)}/100`],
+        ['Supervisor', sup], ['Gerente da loja', t.gerente], ['Data da conversa', dt(t.data)], ['Vigência (90 dias)', `até ${dt(somaDias(t.data, 90))}`]];
+      B.push(`<section class="tm-sec"><h3>1. Identificação</h3><div class="tm-id">${id.map(([k, x, c]) => `<div class="${c || ''}"><span>${k}</span><b>${x ? esc(x) : '&nbsp;'}</b></div>`).join('')}</div></section>`);
+      const ind = [['Vendas identificadas (CPF)', pct(cv.ident), '≥ 80%', cp.ident], ['Itens por venda CPF', n1(cv.itens), '≥ 2,5', cp.itens], ['Ticket médio CPF', brl(cv.ticket), '≥ R$ 200', cp.ticket], ['Desconto CPF', pct1(cv.desccpf), 'abaixo de 7%', cp.desccpf],
+        ['Faturamento CNPJ', brl(cn.fatcnpj), '≥ R$ 30 mil', ck.fatcnpj], ['Positivados CNPJ por mês', Math.round(cn.posit || 0), '≥ 10', ck.posit], ['Clientes novos CNPJ por mês', n1(cn.novos), '≥ 4', ck.novos], ['Desconto CNPJ', pct1(cn.desccnpj), 'abaixo de 17%', ck.desccnpj]];
+      B.push(`<section class="tm-sec"><h3>2. Situação atual</h3><div class="tm-fatos"><div><span>Atingimento · 3 meses</span><b>${pct(v.a3)}</b></div><div><span>Mês atual (projeção)</span><b>${pct(v.pj)}</b></div><div><span>Meses com 100%</span><b>${v.bt} de ${v.m}</b></div><div class="din"><span>Bônus não recebido · 3 meses</span><b>${brl(v.perda_tot)}</b></div></div>
+        <table class="tm-t"><thead><tr><th>Indicador</th><th>Média 3 meses</th><th>Meta</th><th>Situação</th></tr></thead><tbody>${ind.map(x => `<tr><td>${x[0]}</td><td>${x[1]}</td><td>${x[2]}</td><td>${sit(x[3])}</td></tr>`).join('')}</tbody></table></section>`);
+      B.push(`<section class="tm-sec"><h3>3. Metas para os próximos 90 dias</h3><table class="tm-t"><thead><tr><th>Indicador</th><th>Hoje</th><th>Meta em 90 dias</th></tr></thead><tbody>${M.map(m => `<tr><td>${esc(m[1])}${au.meta === m[0] ? ' <span class="tm-star">★ meta escolhida pelo colaborador</span>' : ''}</td><td>${esc(m[2])}</td><td><b>${esc(m[3])}</b></td></tr>`).join('')}</tbody></table></section>`);
+      top.forEach((a, i) => {
+        const st = ((r.acoes || {})[a.k] || {}).s, prazo = somaDias(t.data, a.k === 'integ' || i < 2 ? 30 : 60);
+        B.push(`${i === 0 ? '<section class="tm-sec"><h3>4. Plano de ação</h3>' : '<section class="tm-sec">'}<div class="tm-acao"><div class="tm-acao-t"><b>${i + 1}. ${a.t}</b><span>Prazo: ${dt(prazo)}${st === 'feito' ? ' · concluída' : st === 'andamento' ? ' · em andamento' : ''}</span></div>
+          <p><em>O que fazer</em>${a.a.replace('(lista acima)', '(lista na seção 5)')}</p><p><em>Comportamento esperado (o que a liderança vai observar)</em>${a.c}</p><p><em>Ponto de partida</em>${a.e}</p></div></section>`);
+      });
+      const cart = (v.cart || []).slice(0, 6);
+      B.push(`<section class="tm-sec"><h3>5. Desenvolvimento e carteira</h3><h4>Trilha no MENTOR ST PRO</h4><div class="tm-mods">${modulosDe(v, P.REST).map(m => `<span>${esc(m)}</span>`).join('')}</div>
+        ${cart.length ? `<h4>Clientes CNPJ para recuperar</h4><table class="tm-t"><thead><tr><th>Cliente</th><th>Situação</th><th>Compra média/mês</th></tr></thead><tbody>${cart.map(c => `<tr><td>${esc(c.cli)}</td><td>${c.g === 'sumiu' ? 'Parou de comprar' : 'Comprando menos'}</td><td>${brl(c.med)}</td></tr>`).join('')}</tbody></table>` : ''}</section>`);
+      B.push(`<section class="tm-sec"><h3>6. Autoavaliação do colaborador</h3>${r.disc && DISC[r.disc] ? `<p style="margin:0 0 4px"><b>Perfil DISC:</b> ${DISC[r.disc].n}</p>` : ''}
+        <div class="tm-q"><em>O que mais atrapalha o seu resultado hoje?</em>${resp(au.q1, 2)}</div>
+        <div class="tm-q"><em>Em que você é bom e pode ensinar a um colega?</em>${resp(au.q2, 2)}</div>
+        <div class="tm-q"><em>Que ajuda você precisa do gerente ou do supervisor?</em>${resp(au.q3, 2)}</div></section>`);
+      B.push(`<section class="tm-sec"><h3>7. Compromissos</h3><div class="tm-q"><em>Compromisso do colaborador</em>${resp(t.compromisso, 3)}</div><div class="tm-q"><em>Apoio da liderança</em>${resp(t.apoio, 3)}</div></section>`);
+      const rv1 = r.prox && r.prox > t.data ? r.prox : somaDias(t.data, 30);
+      B.push(`<section class="tm-sec"><h3>8. Revisões do PDI</h3><table class="tm-t tm-rev"><thead><tr><th style="width:15%">Revisão</th><th style="width:16%">Data prevista</th><th style="width:16%">Realizada em</th><th>O que mudou no comportamento e nos números</th><th style="width:17%">Rubrica</th></tr></thead><tbody>
+        ${[['1ª · 30 dias', rv1], ['2ª · 60 dias', somaDias(t.data, 60)], ['3ª · 90 dias', somaDias(t.data, 90)]].map(x => `<tr><td>${x[0]}</td><td>${dt(x[1])}</td><td></td><td></td><td></td></tr>`).join('')}</tbody></table></section>`);
+      B.push(`<section class="tm-sec"><h3>9. Ciência e assinaturas</h3><p class="tm-decl">Declaro que participei da conversa de Plano de Desenvolvimento Individual, que entendi a situação atual, as metas e as ações descritas neste termo, e que me comprometo a colocá-las em prática nos próximos 90 dias, com o apoio da liderança, nas datas de revisão acima.</p>
+        <div class="tm-ass"><div>${esc(v.nome)}<small>Colaborador</small></div><div>${t.gerente ? esc(t.gerente) : '&nbsp;'}<small>Gerente da loja</small></div><div>${sup ? esc(sup) : '&nbsp;'}<small>Supervisor</small></div></div>
+        <p class="tm-local">Local e data: ______________________________, ____/____/________</p></section>`);
+      return B;
+    }
+    function termoPagina(v, t) {
+      return `<div class="tm-pg"><header class="tm-hd"><img src="pdi-logo.jpg" alt=""><div class="tm-hd-t"><small>Plano de Desenvolvimento Individual</small><h2>PDI Comercial · Termo de compromisso</h2><span>${esc(v.nome)} · ${esc(opts.lojaNome(v.loja_id))}</span></div>
+        <div class="tm-hd-n"><small>Termo nº</small><b>${esc(termoNum(v, t))}</b><small>${dt(t.data)}</small></div></header><div class="tm-faixa"><i></i><i></i><i></i></div>
+        <main class="tm-corpo"></main><footer class="tm-ft"><span><b>Só Tintas</b> · Colorindo Vidas e Realizando Sonhos</span><span>Documento interno · liderança e colaborador</span><span data-pg></span></footer></div>`;
+    }
+    const termoNum = (v, t) => `PDI-${v.c}-${String(t.data).replace(/-/g, '')}`;
+    async function termoPdf(v, t) {
+      await Promise.all([carregaJs(LIB_H2C), carregaJs(LIB_PDF)]);
+      try { await document.fonts.ready; } catch (e) {}
+      const host = document.createElement('div'); host.className = 'tm-host'; host.setAttribute('aria-hidden', 'true'); document.body.appendChild(host);
+      try {
+        const pags = []; let corpo = null;
+        const nova = () => { host.insertAdjacentHTML('beforeend', termoPagina(v, t)); const pg = host.lastElementChild; corpo = pg.querySelector('.tm-corpo'); pags.push(pg); };
+        nova();
+        await Promise.all([...host.querySelectorAll('img')].map(i => i.complete ? 0 : new Promise(ok => { i.onload = i.onerror = ok; })));
+        for (const b of termoBlocos(v, t)) {
+          corpo.insertAdjacentHTML('beforeend', b);
+          if (corpo.scrollHeight > corpo.clientHeight + 1 && corpo.children.length > 1) { corpo.lastElementChild.remove(); nova(); corpo.insertAdjacentHTML('beforeend', b); }
+        }
+        await Promise.all([...host.querySelectorAll('img')].map(i => i.complete ? 0 : new Promise(ok => { i.onload = i.onerror = ok; })));
+        pags.forEach((p, i) => { p.querySelector('[data-pg]').textContent = `Página ${i + 1} de ${pags.length}`; });
+        const pdf = new global.jspdf.jsPDF({ unit: 'mm', format: 'a4', compress: true }), imgs = [];
+        for (let i = 0; i < pags.length; i++) {
+          const cv = await global.html2canvas(pags[i], { scale: 2, backgroundColor: '#ffffff', logging: false, useCORS: true, scrollX: 0, scrollY: 0, windowWidth: 1200 });
+          const url = cv.toDataURL('image/jpeg', 0.88); imgs.push(url);
+          if (i) pdf.addPage(); pdf.addImage(url, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+        }
+        pdf.setProperties({ title: `PDI ${v.nome} · ${opts.lojaNome(v.loja_id)}`, author: 'Só Tintas', subject: 'Plano de Desenvolvimento Individual', creator: 'Só Tintas App · PDI Comercial' });
+        return { blob: pdf.output('blob'), imgs, nome: `PDI_${arqNome(v.nome)}_${v.c}_${t.data}.pdf` };
+      } finally { host.remove(); }
+    }
+    function abrirTermo(v) {
+      const r = S.REG[v.id] || {}, ant = r.termo || {};
+      const t = { data: hojeIso(), gerente: ant.gerente || '', compromisso: ant.compromisso || '', apoio: ant.apoio || '' };
+      let doc = null, ocupado = false;
+      const volta = document.activeElement;
+      const ov = document.createElement('div'); ov.className = 'tm-ov'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Termo de PDI de ' + v.nome);
+      ov.innerHTML = `<div class="tm-box">
+        <div class="tm-top"><div><span class="pdi-lbl" style="display:block">Formalizar PDI · termo em PDF</span><b>${esc(v.nome)}</b><div class="pdi-meta">${esc(opts.lojaNome(v.loja_id))} · ${TN[v.tier]}</div></div><button type="button" class="btn pequeno contorno" data-tm="fechar" aria-label="Fechar">✕</button></div>
+        <div class="tm-form">
+          <label class="pdi-q">Gerente da loja<input type="text" data-tmf="gerente" maxlength="80" value="${esc(t.gerente)}" placeholder="Nome do gerente"></label>
+          <label class="pdi-q">Data da conversa<input type="date" data-tmf="data" value="${esc(t.data)}"></label>
+          <label class="pdi-q tm-l2">Compromisso do colaborador, nas palavras dele<textarea data-tmf="compromisso" maxlength="600" placeholder="Ex.: Vou pedir o CPF antes de começar a cotar em todo atendimento e, toda segunda, mostrar ao gerente a lista dos clientes CNPJ que liguei.">${esc(t.compromisso)}</textarea></label>
+          <label class="pdi-q tm-l2">Apoio da liderança<textarea data-tmf="apoio" maxlength="600" placeholder="Ex.: O gerente acompanha 2 atendimentos por semana no balcão e confere o % de vendas identificadas no fechamento do dia.">${esc(t.apoio)}</textarea></label>
+          <p class="pdi-meta tm-l2" style="margin:0">Situação, metas, plano de ação, trilha e clientes vêm da ficha. A autoavaliação, a meta escolhida e o DISC saem como foram registrados no acompanhamento. Campos vazios saem com linhas para preencher à mão na conversa.</p>
+        </div>
+        <div class="tm-acoes"><button type="button" class="btn azul" data-tm="gerar">Gerar termo</button><button type="button" class="btn verde" data-tm="zap">Enviar pelo WhatsApp</button><button type="button" class="btn contorno" data-tm="baixar">Baixar PDF</button><span class="pdi-meta" data-tm-st role="status" aria-live="polite"></span></div>
+        <div class="tm-prev" data-tm-prev></div></div>`;
+      document.body.appendChild(ov);
+      const st = h => { ov.querySelector('[data-tm-st]').innerHTML = h; };
+      const fechar = () => { document.removeEventListener('keydown', tecla); ov.remove(); if (volta && volta.focus) volta.focus(); };
+      const tecla = e => { if (e.key === 'Escape') fechar(); };
+      document.addEventListener('keydown', tecla);
+      ov.querySelector('[data-tmf="gerente"]').focus();
+      ov.addEventListener('input', e => { const k = e.target.dataset.tmf; if (k) { t[k] = e.target.value; doc = null; } });
+      ov.addEventListener('change', e => { const k = e.target.dataset.tmf; if (k) { t[k] = e.target.value || (k === 'data' ? hojeIso() : ''); doc = null; } });
+      const baixar = d => { const a = document.createElement('a'); a.href = URL.createObjectURL(d.blob); a.download = d.nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 8000); };
+      async function gerar() {
+        if (ocupado) return null; ocupado = true; st('Montando o termo…');
+        ov.querySelectorAll('[data-tm]').forEach(b => { if (b.dataset.tm !== 'fechar') b.disabled = true; });
+        try {
+          doc = await termoPdf(v, t);
+          ov.querySelector('[data-tm-prev]').innerHTML = doc.imgs.map((u, i) => `<img src="${u}" alt="Termo de PDI de ${esc(v.nome)}, página ${i + 1} de ${doc.imgs.length}">`).join('');
+          st(`Termo pronto: ${doc.imgs.length} página(s). Confira abaixo e envie.`);
+          const ok = await salvar(v, { termo: { gerente: t.gerente.slice(0, 80), compromisso: t.compromisso.slice(0, 600), apoio: t.apoio.slice(0, 600), data: t.data, emitido: hojeIso(), por: opts.usuario || '' } });
+          if (ok) { const w = el.querySelector(`.pdi-row[data-id="${v.id}"]`); if (w && S.abertos.has(v.id)) w.nextElementSibling.innerHTML = ficha(v); }
+          return doc;
+        } catch (e) { doc = null; st('<span class="pdi-bad">Não consegui gerar o PDF: ' + esc(e.message || e) + '</span>'); return null; }
+        finally { ocupado = false; ov.querySelectorAll('[data-tm]').forEach(b => { b.disabled = false; }); }
+      }
+      ov.addEventListener('click', async e => {
+        if (e.target === ov) { fechar(); return; }
+        const b = e.target.closest('[data-tm]'); if (!b) return;
+        const acao = b.dataset.tm;
+        if (acao === 'fechar') { fechar(); return; }
+        if (acao === 'gerar') { await gerar(); return; }
+        if (!doc) { if (await gerar()) st(`Termo pronto. Toque de novo em <b>${acao === 'zap' ? 'Enviar pelo WhatsApp' : 'Baixar PDF'}</b>.`); return; }
+        if (acao === 'baixar') { baixar(doc); st('PDF baixado: ' + esc(doc.nome)); return; }
+        const msg = `PDI de ${v.nome} · ${opts.lojaNome(v.loja_id)} · Só Tintas`;
+        const f = new File([doc.blob], doc.nome, { type: 'application/pdf' });
+        if (navigator.canShare && navigator.canShare({ files: [f] })) {
+          try { await navigator.share({ files: [f], title: msg, text: msg }); st('Enviado. Escolha o WhatsApp na lista de compartilhamento, se ainda não escolheu.'); return; }
+          catch (err) { if (err && err.name === 'AbortError') { st('Envio cancelado.'); return; } }
+        }
+        baixar(doc);
+        st(`Este aparelho não envia arquivos direto para o WhatsApp, então o PDF foi baixado. <a href="https://wa.me/?text=${encodeURIComponent(msg + '\nSegue o termo do PDI em PDF.')}" target="_blank" rel="noopener">Abrir o WhatsApp</a> e anexe o arquivo na conversa (clipe 📎).`);
+      });
+    }
+
     /* ---------- eventos (delegados no próprio contêiner) ---------- */
     el.onclick = async (e) => {
-      const t = e.target.closest('[data-tab],[data-pri],[data-goreg],.pdi-row,[data-copy],[data-campo],[data-rev],[data-abrir]'); if (!t || !el.contains(t)) return;
+      const t = e.target.closest('[data-tab],[data-pri],[data-goreg],.pdi-row,[data-copy],[data-termo],[data-campo],[data-rev],[data-abrir]'); if (!t || !el.contains(t)) return;
+      if (t.dataset.termo) { abrirTermo(vPor(t.dataset.termo)); return; }
       if (t.dataset.tab) { S.tab = t.dataset.tab; render(); return; }
       if (t.dataset.pri) { S.pri = t.dataset.pri; S.tab = 'ranking'; render(); return; }
       if (t.dataset.goreg) { S.reg = t.dataset.goreg; S.tab = 'ranking'; S.pri = 'TODAS'; render(); return; }
