@@ -9584,5 +9584,85 @@ body.foco .wrap{padding-bottom:40px}
   bt.addEventListener('click',abrir);
 })();
 </script>
+<!-- ===== ACABAMENTO MODERNO (etapa 1: tela inicial + abertura dos painéis) =====
+     Só sombras, profundidade e movimento por cima do layout de sempre: nada muda de lugar.
+     Animações usam apenas transform/opacity (leves no celular) e somem com "reduzir movimento". -->
+<style id="st-moderno">
+:root{
+  --st-ease:cubic-bezier(.2,.8,.2,1);
+  --st-sh1:0 1px 2px rgba(16,30,60,.06),0 3px 8px rgba(16,30,60,.07);
+  --st-sh2:0 2px 4px rgba(16,30,60,.07),0 10px 24px rgba(16,30,60,.12);
+  --st-sh3:0 6px 12px rgba(16,30,60,.10),0 20px 44px rgba(16,30,60,.18);
+  --st-shh:0 6px 14px rgba(14,38,96,.22),0 18px 40px rgba(14,38,96,.24);
+  --st-shh2:0 10px 20px rgba(14,38,96,.26),0 28px 56px rgba(14,38,96,.30);
+}
+html[data-theme="dark"]{
+  --st-sh1:0 1px 2px rgba(0,0,0,.35),0 3px 10px rgba(0,0,0,.30);
+  --st-sh2:0 2px 6px rgba(0,0,0,.40),0 12px 28px rgba(0,0,0,.40);
+  --st-sh3:0 8px 16px rgba(0,0,0,.45),0 24px 52px rgba(0,0,0,.50);
+  --st-shh:0 6px 16px rgba(0,0,0,.45),0 18px 42px rgba(0,0,0,.45);
+  --st-shh2:0 10px 22px rgba(0,0,0,.5),0 30px 60px rgba(0,0,0,.55);
+}
+/* topo: degradê com leve brilho e sombra mais macia */
+#ovInicio .ini-top{background:radial-gradient(120% 140% at 0% 0%,rgba(255,255,255,.10),transparent 55%),linear-gradient(135deg,var(--navy,#1C3F8F),var(--navy-d,#152F69));box-shadow:var(--st-shh)}
+#ovInicio .ini-logo{box-shadow:0 4px 12px rgba(0,0,0,.25);transition:transform .35s var(--st-ease)}
+#ovInicio .ini-theme{transition:background .2s,transform .2s var(--st-ease),box-shadow .2s;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+#ovInicio .ini-theme:active{transform:scale(.96)}
+/* cards de destaque (Gestão): profundidade, brilho que passa e ícone que reage */
+#ovInicio .ini-card.feat{box-shadow:var(--st-shh);transition:transform .25s var(--st-ease),box-shadow .25s var(--st-ease)}
+#ovInicio .ini-card.feat::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
+  background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.16) 50%,transparent 65%);transform:translateX(-120%);transition:transform .8s var(--st-ease)}
+#ovInicio .ini-card .ini-ic{transition:transform .3s var(--st-ease),box-shadow .3s}
+/* cards de operação: sombra em camadas e "levantar" no toque/mouse */
+#ovInicio .ini-grid .ini-card{box-shadow:var(--st-sh1);transition:transform .25s var(--st-ease),box-shadow .25s var(--st-ease),border-color .25s}
+/* toque: afunda um pouco, como botão de verdade */
+#ovInicio .ini-card:active{transform:scale(.97)!important;transition-duration:.08s!important}
+/* resumo do dia */
+#ovInicio .ini-hoje{box-shadow:var(--st-sh1);transition:box-shadow .25s var(--st-ease),transform .25s var(--st-ease)}
+/* entrada em cascata ao abrir a tela inicial */
+@keyframes stEntra{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
+#ovInicio.st-anima .ini-hoje,#ovInicio.st-anima .ini-sec,#ovInicio.st-anima .ini-card{animation:stEntra .5s var(--st-ease) backwards;animation-delay:calc(var(--i,0) * 55ms + 60ms)}
+#ovInicio.st-anima .ini-top{animation:stTopo .45s var(--st-ease) backwards}
+@keyframes stTopo{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
+/* painéis (Painel, Níveis, PDI, Mentor...) sobem suavemente ao abrir */
+@keyframes stSobe{from{opacity:0;transform:translateY(28px) scale(.99)}to{opacity:1;transform:none}}
+.st-ov-entra{animation:stSobe .38s var(--st-ease) backwards}
+/* botões "Voltar ao início" dos painéis */
+button[id^="ov"][id$="Fechar"]{transition:transform .2s var(--st-ease),box-shadow .2s;box-shadow:0 3px 10px rgba(0,0,0,.25)}
+button[id^="ov"][id$="Fechar"]:active{transform:scale(.96)}
+@media (prefers-reduced-motion: reduce){
+  #ovInicio *,#ovInicio,.st-ov-entra,button[id^="ov"][id$="Fechar"]{animation:none!important;transition:none!important}
+  #ovInicio .ini-card:hover,#ovInicio .ini-hoje:hover{transform:none!important}
+}
+
+@media (hover:none){ #ovInicio .ini-card.feat:hover{transform:none;box-shadow:var(--st-shh)} #ovInicio .ini-grid .ini-card:hover{transform:none;box-shadow:var(--st-sh1)} #ovInicio .ini-hoje:hover{transform:none;box-shadow:var(--st-sh1)} }
+/* efeitos de passar o mouse só onde existe mouse (no celular o "hover" grudava no card depois do toque) */
+@media (hover:hover){
+#ovInicio .ini-top:hover .ini-logo{transform:rotate(-6deg) scale(1.05)}
+#ovInicio .ini-theme:hover{transform:translateY(-1px);box-shadow:0 6px 14px rgba(0,0,0,.2)}
+#ovInicio .ini-card.feat:hover{transform:translateY(-4px);box-shadow:var(--st-shh2)}
+#ovInicio .ini-card.feat:hover::before{transform:translateX(120%)}
+#ovInicio .ini-card.feat:hover .ini-ic{transform:scale(1.08) rotate(-4deg);box-shadow:0 6px 16px rgba(0,0,0,.18)}
+#ovInicio .ini-grid .ini-card:hover{transform:translateY(-4px);box-shadow:var(--st-sh3)}
+#ovInicio .ini-grid .ini-card:hover .ini-ic{transform:scale(1.1) rotate(-5deg)}
+#ovInicio .ini-hoje:hover{box-shadow:var(--st-sh2);transform:translateY(-2px)}
+button[id^="ov"][id$="Fechar"]:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,.3)}
+}
+</style>
+<script>
+/* dispara a cascata ao abrir a tela inicial e a subida ao abrir cada painel */
+(function(){
+  var ov=document.getElementById('ovInicio'); if(!ov) return;
+  function numerar(){ var i=0; ov.querySelectorAll('.ini-hoje,.ini-sec,.ini-card').forEach(function(el){ if(getComputedStyle(el).display==='none') return; el.style.setProperty('--i', Math.min(i++,14)); }); }
+  function animar(){ ov.classList.remove('st-anima'); void ov.offsetWidth; numerar(); ov.classList.add('st-anima'); clearTimeout(ov._stT); ov._stT=setTimeout(function(){ ov.classList.remove('st-anima'); },1800); }
+  var aberto=ov.classList.contains('aberto');
+  new MutationObserver(function(){ var a=ov.classList.contains('aberto'); if(a&&!aberto) animar(); aberto=a; }).observe(ov,{attributes:true,attributeFilter:['class']});
+  if(aberto) animar();
+  ['ovPainel','ovNiveis','ovRanking','ovPdi','ovMentor','ovProposta'].forEach(function(id){
+    var o=document.getElementById(id); if(!o) return; var vis=false;
+    new MutationObserver(function(){ var v=o.style.display&&o.style.display!=='none'; if(v&&!vis){ o.classList.remove('st-ov-entra'); void o.offsetWidth; o.classList.add('st-ov-entra'); } vis=!!v; }).observe(o,{attributes:true,attributeFilter:['style']});
+  });
+})();
+</script>
 </body>
 </html>
