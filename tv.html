@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="pt-BR"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Modo TV · Só Tintas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Public+Sans:wght@500;700&display=swap">
+<style>
+:root{--navy:#1C3F8F;--amarelo:#FFD200;--vermelho:#E30613;--fundo:#0e1526;--tinta:#fff}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--fundo);color:var(--tinta);font-family:"Public Sans",system-ui,sans-serif;overflow:hidden}
+.topo{position:fixed;inset:0 0 auto 0;height:58px;display:flex;align-items:center;gap:16px;padding:0 22px;background:var(--navy);z-index:5;box-shadow:0 4px 18px rgba(0,0,0,.35)}
+.topo::after{content:"";position:absolute;left:0;right:0;bottom:-5px;height:5px;background:var(--amarelo)}
+.marca{font:800 22px "Bricolage Grotesque",system-ui;letter-spacing:-.01em}
+.tela-nome{font-weight:700;opacity:.9;font-size:16px}
+.esp{flex:1}
+.relogio{font:800 26px "Bricolage Grotesque",system-ui;font-variant-numeric:tabular-nums}
+.bt{border:0;border-radius:999px;padding:8px 14px;font:700 13px inherit;cursor:pointer;background:rgba(255,255,255,.14);color:#fff}
+.bt:hover{background:rgba(255,255,255,.24)}
+.palco{position:fixed;inset:63px 0 6px 0}
+.palco iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff;opacity:0;transform:scale(1.015);transition:opacity .7s ease,transform .9s ease}
+.palco iframe.ativa{opacity:1;transform:none}
+.barra{position:fixed;left:0;bottom:0;height:6px;background:var(--amarelo);width:0}
+.barra.anda{transition:width linear}
+.pontos{display:flex;gap:6px}.pontos i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.35)}.pontos i.on{background:var(--amarelo)}
+body.cheio .topo .bt{display:none}
+@media (prefers-reduced-motion:reduce){.palco iframe{transition:none;transform:none}}
+</style>
+</head><body>
+<div class="topo">
+  <span class="marca">Só Tintas</span><span class="tela-nome" id="nome">Ranking</span>
+  <span class="pontos" id="pontos"></span>
+  <span class="esp"></span>
+  <button class="bt" id="btCheia" type="button">⛶ Tela cheia</button>
+  <button class="bt" id="btSair" type="button">✕ Sair</button>
+  <span class="relogio" id="relogio">--:--</span>
+</div>
+<div class="palco" id="palco"></div>
+<div class="barra" id="barra"></div>
+<script>
+/* Modo TV: gira sozinho entre Ranking de Lojas, Ranking de Vendedores e o Painel da loja (se a pessoa
+   já entrou no Painel neste aparelho). Cada tela fica 20 s; os dados se atualizam a cada 10 min. */
+(function(){
+  var SEG=20000;
+  var tema='claro';
+  var telas=[{n:'Ranking de Lojas',u:'ranking.html?tv=1&tab=l&tema='+tema},{n:'Ranking de Vendedores',u:'ranking.html?tv=1&tab=v&tema='+tema}];
+  try{ if(localStorage.getItem('pnl_sessao_v1')) telas.push({n:'Painel de Metas',u:'painel.html?tv=1&tema='+tema}); }catch(e){}
+  var palco=document.getElementById('palco'), barra=document.getElementById('barra'), pts=document.getElementById('pontos');
+  pts.innerHTML=telas.map(function(){ return '<i></i>'; }).join('');
+  var frames=telas.map(function(t){ var f=document.createElement('iframe'); f.title=t.n; f.src=t.u; palco.appendChild(f); return f; });
+  var i=-1;
+  function mostra(){
+    var ant=i; i=(i+1)%telas.length;
+    frames.forEach(function(f,k){ f.classList.toggle('ativa',k===i); });
+    [].forEach.call(pts.children,function(p,k){ p.classList.toggle('on',k===i); });
+    document.getElementById('nome').textContent=telas[i].n;
+    /* recarrega a tela que vai aparecer de novo, para o pódio subir outra vez */
+    if(ant>=0 && telas.length>1){ var prox=(i+1)%telas.length; setTimeout(function(){ try{ frames[prox].contentWindow.location.reload(); }catch(e){ frames[prox].src=telas[prox].u; } }, 1500); }
+    barra.classList.remove('anda'); barra.style.width='0'; void barra.offsetWidth;
+    barra.classList.add('anda'); barra.style.transitionDuration=SEG+'ms'; barra.style.width='100%';
+  }
+  mostra(); if(telas.length>1) setInterval(mostra,SEG);
+  function hora(){ var d=new Date(); document.getElementById('relogio').textContent=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
+  hora(); setInterval(hora,10000);
+  document.getElementById('btCheia').onclick=function(){ var e=document.documentElement; (e.requestFullscreen||e.webkitRequestFullscreen||function(){}).call(e); };
+  document.addEventListener('fullscreenchange',function(){ document.body.classList.toggle('cheio',!!document.fullscreenElement); });
+  document.getElementById('btSair').onclick=function(){ location.href='ranking.html'; };
+  /* tela da TV não apaga */
+  try{ if(navigator.wakeLock) navigator.wakeLock.request('screen').catch(function(){}); }catch(e){}
+  setTimeout(function(){ location.reload(); }, 6*60*60000);   /* a cada 6 h recomeça do zero */
+})();
+</script>
+</body></html>

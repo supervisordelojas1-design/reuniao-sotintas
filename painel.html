@@ -366,6 +366,21 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
  body{background:var(--card)}.sec,.kpi,.acao,.ritmo{box-shadow:none;break-inside:avoid}
  .resumo{display:block!important}
 }
+
+/* ── etapa 3: termômetro da meta ── */
+.termo{background:var(--surface,#fff);border:1px solid var(--line,#e4e9f3);border-radius:16px;padding:14px 16px 12px;margin:0 0 14px;box-shadow:0 6px 20px rgba(20,35,70,.06)}
+.termo-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.termo-top b{font-size:15px}.termo-top span{font-size:13px;color:var(--muted,#5a677f)}
+.termo-tubo{display:flex;align-items:center;gap:0;padding:22px 0 18px}
+.termo-bulbo{flex:none;width:34px;height:34px;border-radius:50%;background:var(--tc);box-shadow:inset 0 -4px 0 rgba(0,0,0,.15),0 0 0 4px rgba(0,0,0,.04);position:relative;z-index:1}
+.termo-trilho{position:relative;flex:1;height:16px;margin-left:-8px;border-radius:0 999px 999px 0;background:var(--line,#e4e9f3)}
+.termo-fill{position:absolute;left:0;top:0;bottom:0;width:var(--p);border-radius:0 999px 999px 0;background:var(--tc);transform-origin:left center}
+@media (prefers-reduced-motion:no-preference){.termo-fill{animation:termoEnche 1.4s cubic-bezier(.2,.8,.2,1) .15s both}}
+@keyframes termoEnche{from{width:0}}
+.termo-marca{font-style:normal;position:absolute;top:-6px;bottom:-6px;width:0;border-left:2px dashed var(--muted,#5a677f)}
+.termo-marca span{position:absolute;white-space:nowrap;font-size:11px;font-weight:700;color:var(--muted,#5a677f);transform:translateX(-50%)}
+.termo-marca.hoje span{bottom:100%;margin-bottom:2px}.termo-marca.meta{border-left:3px solid var(--ink,#16233d)}.termo-marca.meta span{top:100%;margin-top:2px;color:var(--ink,#16233d)}
+.termo-txt{font-size:13.5px;line-height:1.45}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
@@ -732,6 +747,20 @@ const save=(k,v)=>{const d=DB();d[k]=v;localStorage.setItem(KEY,JSON.stringify(d
 const load=k=>DB()[k]||null;
 
 /* ---------- render ---------- */
+/* termômetro da meta: realizado enchendo até a meta (100%), com a marca de onde deveria estar hoje */
+function termometro(tit,meta,fat,proj,rest,porDia){
+ if(!meta) return '';
+ const pct=fat/meta, pj=proj/meta, esc120=x=>Math.max(0,Math.min(1.2,x))/1.2*100;
+ const tc=pct>=1?'var(--ok,#1a8f4a)':pj>=1?'#2f9e5b':pj>=.95?'var(--warn,#b7791f)':'var(--bad,#d9363e)';
+ const UR=D.periodo.utRestantes;
+ const txt=pct>=1?`<b>Meta batida!</b> ${PC(pct)} da meta — cada real a mais agora é bônus.`
+  :`Faltam <b>${K(rest)}</b> · <b>${BRL(porDia)}</b> por dia útil · ${UR} dia${UR===1?'':'s'} úte${UR===1?'l':'is'}. Projeção de fechamento: <b style="color:${tc}">${PC(pj)}</b>.`;
+ return `<div class="termo" style="--tc:${tc}"><div class="termo-top"><b>🌡️ ${tit}</b><span>${PC(pct)} de ${K(meta)}</span></div>
+  <div class="termo-tubo"><span class="termo-bulbo"></span><div class="termo-trilho"><i class="termo-fill" style="--p:${esc120(pct).toFixed(1)}%"></i>
+   <em class="termo-marca hoje" style="left:${esc120(RE).toFixed(1)}%"><span>hoje deveria estar</span></em>
+   <em class="termo-marca meta" style="left:${esc120(1).toFixed(1)}%"><span>meta</span></em></div></div>
+  <div class="termo-txt">${txt}</div></div>`;
+}
 function kpiGrid(o,lbl){
  const f=farol(o.pctLoja), fp=o.pctProj;
  return `<div class="kpis">
@@ -1341,7 +1370,7 @@ function vVendedor(){
  if(!l||!v) return '<div class="empty">Os seus números ainda não estão no painel deste mês.</div>';
  if((v.pct||0)>=1&&window.STAnima) setTimeout(function(){ STAnima.comemorarUmaVez('meta-v-'+v.nome+'-'+D.periodo.mes,function(){ STAnima.confete(); STAnima.faixa('Meta batida! 🎯 Parabéns, '+tcPdf(String(v.nome).split(' ')[0])+'!','#128a52'); }); },500);
  const pp=v.meta?v.proj/v.meta:null, f=farol(v.pct);
- let h=`<div class="kpis">
+ let h=termometro('Termômetro da sua meta',v.meta,v.fat,v.proj,v.rest,v.ritmoNec)+`<div class="kpis">
   <div class="kpi hero"><div class="lb">Seu faturado</div><div class="vl">${K(v.fat)}</div>
    <div class="ft">${D.periodo.utDecorridos} de ${D.periodo.utTotal} dias úteis</div></div>
   <div class="kpi"><div class="lb">% da sua meta</div><div class="vl" style="color:${cor(f.c)}">${PC(v.pct)}</div>
@@ -1366,7 +1395,7 @@ function vLoja(cod){
  if(!l) return '<div class="empty">Loja não encontrada.</div>';
  if((l.pctLoja||0)>=1&&window.STAnima) setTimeout(function(){ STAnima.comemorarUmaVez('meta-l-'+l.cod+'-'+D.periodo.mes,function(){ STAnima.confete(); STAnima.faixa('A loja '+l.cod+' bateu a meta! 🎯','#128a52'); }); },500);
  const vs=l.vendedores.slice().sort((a,b)=>(b.pct||0)-(a.pct||0));
- let h=kpiGrid(l,'da loja')+gaugeBox(l,'Atingimento da loja '+l.cod)+indBloco(l,D.geral)+ritmoBox(l);
+ let h=termometro('Termômetro da meta da loja',l.metaLoja,l.fat,l.proj,l.restLoja,l.ritmoNec)+kpiGrid(l,'da loja')+gaugeBox(l,'Atingimento da loja '+l.cod)+indBloco(l,D.geral)+ritmoBox(l);
  h+=`<div class="sec"><div class="sech"><h3>Vendedores</h3><span class="cnt">${vs.length} com meta ativa</span></div>`;
  if(!vs.length) h+='<div class="empty">Nenhum vendedor com meta cadastrada nesta loja.</div>';
  vs.forEach((v,i)=>{h+=linha(v,i,`Méd.90d ${K(v.med90)} · meta ${K(v.meta)} · falta ${K(v.rest)} · ${BRL(v.ritmoNec)}/dia` +
@@ -2308,6 +2337,13 @@ window.abrirUpload=abrirUpload;window.enviarUpload=enviarUpload;
   STAnima.observar(document.body,{ numeros:'#app .kpi .vl,#app .rbox .v', barras:'#app .bar > i', agulhas:'#app .st-agulha', pulso:'#app .kpi .vl[style*="--bad"]', pulsoTexto:true });
   if(ab) STAnima.abas(ab,'.on');
   STAnima.puxar(document.scrollingElement, function(){ location.reload(); });
+})();
+</script>
+<script>
+/* Modo TV do Painel (painel.html?tv=1, aberto pelo tv.html): letras maiores e dados novos a cada 10 min */
+(function(){ if(!/[?&]tv=1/.test(location.search)) return;
+  var st=document.createElement('style'); st.textContent='body{zoom:1.12}#btnUp,.no-tv{display:none!important}'; document.head.appendChild(st);
+  setTimeout(function(){ location.reload(); }, 10*60000);
 })();
 </script>
 </body>

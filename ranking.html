@@ -124,6 +124,29 @@ tr.tie td.pos::after{content:"*";color:var(--accent);margin-left:2px}
 #updCard .u-prev b{color:var(--ink)}
 #updCard .u-warn{color:#c0392b}
 #updCard .u-msg{font-size:12.5px;font-weight:700;margin-top:8px}
+
+/* ── etapa 3: pódio que sobe do chão + coroa no 1º; Modo TV (?tv=1) ── */
+.pd{position:relative}
+@media (prefers-reduced-motion:no-preference){
+  .podium .pd{transform-origin:50% 100%;animation:pdSobe .8s cubic-bezier(.2,.8,.2,1) both}
+  .podium .pd.r3{animation-delay:.05s}.podium .pd.r2{animation-delay:.35s}.podium .pd.r1{animation-delay:.7s}
+  .podium .pd.r1::after{animation:coroa .9s 1.35s cubic-bezier(.3,1.4,.5,1) both}
+}
+@keyframes pdSobe{from{transform:scaleY(.05);opacity:0}to{transform:none;opacity:1}}
+@keyframes coroa{from{transform:translate(-50%,-90px) rotate(-25deg);opacity:0}to{transform:translate(-50%,0) rotate(0);opacity:1}}
+.podium .pd.r1::after{content:"👑";position:absolute;top:-30px;left:50%;transform:translateX(-50%);font-size:34px;line-height:1;filter:drop-shadow(0 4px 6px rgba(0,0,0,.25))}
+#btnTV{border:1px solid var(--line);background:var(--surface);color:var(--ink,inherit);font:700 13px var(--f-body);padding:8px 14px;border-radius:999px;cursor:pointer}
+body.tv .controls,body.tv .legend,body.tv .notes,body.tv #btnUpdToggle,body.tv #updCard,body.tv .tabs,body.tv #btnTV{display:none!important}
+body.tv .wrap{max-width:none;padding:28px 44px;gap:28px}
+body.tv h1{font-size:clamp(34px,4vw,58px)}
+body.tv .eyebrow{font-size:16px}
+body.tv .podium{grid-template-columns:repeat(3,minmax(0,1fr))!important;margin-top:36px}
+body.tv .pd.r1{order:2!important;padding-block:42px}body.tv .pd.r2{order:1!important;padding-block:26px}body.tv .pd.r3{order:3!important}
+body.tv .pd .pos{font-size:46px}body.tv .pd .nm{font-size:clamp(20px,2.2vw,32px)}body.tv .pd .pts{font-size:clamp(26px,2.6vw,40px)}
+body.tv .pd.r1::after{font-size:58px;top:-52px}
+body.tv #tb tr:nth-child(n+11){display:none}
+body.tv td,body.tv th{font-size:clamp(14px,1.25vw,20px);padding-block:10px}
+body.tv td.pts{font-size:clamp(18px,1.6vw,26px)}
 </style>
 </head><body>
 <div class="wrap">
@@ -138,6 +161,7 @@ tr.tie td.pos::after{content:"*";color:var(--accent);margin-left:2px}
         <button role="tab" id="tab-v" aria-selected="false">Vendedores</button>
       </div>
       <div class="atz">Atualizado em <b id="atzVal">—</b></div>
+      <button type="button" id="btnTV" hidden title="Ranking em tela cheia, girando sozinho, para a TV da loja">📺 Modo TV</button>
     </div>
   </header>
 
@@ -430,6 +454,23 @@ render();
   var r0=render; render=function(){ STAnima.flip(document.getElementById('tb'),'tr',function(tr){ var b=tr.querySelector('.nm b'); return b?b.textContent:tr.textContent; }, r0); };
   STAnima.observar(document.body,{ numeros:'#podium .pts', abas:'.tabs' });
   STAnima.puxar(document.scrollingElement, function(){ location.reload(); });
+})();
+</script>
+<script>
+/* Modo TV: ranking.html?tv=1&tab=l|v — sem controles, top 10, pódio grande; atualiza a cada 10 min */
+(function(){
+  var q=new URLSearchParams(location.search), tv=q.get('tv')==='1';
+  var s=null; try{ s=(window.STDados&&STDados.sessaoVisao())||JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); }catch(e){}
+  var b=document.getElementById('btnTV');
+  if(b && s && !s.vendedor){ b.hidden=false; b.onclick=function(){ location.href='tv.html'; }; }
+  if(!tv) return;
+  document.body.classList.add('tv');
+  var tab=q.get('tab'); if(tab==='v'||tab==='l'){ st.tab=tab; try{ render(); }catch(e){} }
+  setTimeout(function(){ try{ if(window.STDados&&STDados.semCache) STDados.semCache(20000); }catch(e){} location.reload(); }, 10*60000);
+  /* desce devagar até o fim da lista do top 10 e volta para o pódio (a TV não tem quem role a tela) */
+  function passeio(){ var alvo=document.querySelector('.tbl'); if(!alvo) return; var y0=0, y1=Math.max(0,alvo.getBoundingClientRect().bottom+scrollY-innerHeight+20); if(y1<=10) return;
+    var t0=null, dur=7000; function passo(t){ if(t0==null) t0=t; var k=Math.min(1,(t-t0)/dur), e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2; scrollTo(0,y0+(y1-y0)*e); if(k<1) requestAnimationFrame(passo); } requestAnimationFrame(passo); }
+  setTimeout(passeio,6000); setInterval(function(){ scrollTo({top:0,behavior:'smooth'}); setTimeout(passeio,5000); },20000);
 })();
 </script>
 </body></html>
