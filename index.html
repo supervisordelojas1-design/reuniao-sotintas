@@ -9682,6 +9682,53 @@ button[id^="ov"][id$="Fechar"]:hover{transform:translateY(-1px);box-shadow:0 6px
   STAnima.puxar(ov, function(){ location.reload(); });
   STAnima.avisos('#toast');
   if(STAnima.abertura){ STAnima.abertura(); STAnima.esqueletos(document.body); }
+  /* tour do primeiro acesso: um holofote passa pelos cards principais, uma vez por pessoa neste aparelho */
+  var TXT={painel:['📊 Painel de Metas','Sua meta, quanto já vendeu, quanto falta e quanto precisa vender por dia.'],
+    mentor:['🎓 Mentor ST PRO','Trilha de treinamento, provas e a sua sequência 🔥 de dias estudando.'],
+    niveis:['🏅 Níveis','Em que nível você está e quanto falta de média para subir.'],
+    pdi:['📋 PDI','O plano de desenvolvimento de cada vendedor, com as revisões e o termo em PDF.'],
+    proposta:['💼 Proposta','Monte a proposta para um candidato a vendedor.'],
+    acessos:['🔑 Acesso dos vendedores','Libere ou bloqueie o acesso da sua equipe ao app.'],
+    ranking:['🏆 Ranking','A premiação do ano. No celular, arraste para o lado para trocar Lojas e Vendedores.'],
+    despesas:['🧾 Despesas','Lance a despesa com a foto do comprovante; o recibo sai em PDF com o seu nome.']};
+  function tour(){
+    var s=null; try{ s=JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); }catch(e){}
+    if(!s||!s.nome||(window.STDados&&STDados.visao&&STDados.visao())) return;
+    var ck='st_tour_v1:'+String(s.nome).toLowerCase().trim(); try{ if(localStorage.getItem(ck)) return; }catch(e){ return; }
+    var passos=Object.keys(TXT).map(function(k){ return document.querySelector('#ovInicio .ini-card[data-act="'+k+'"]'); })
+      .filter(function(el){ return el && el.offsetParent!==null && el.getBoundingClientRect().width>0; }).slice(0,6);
+    if(passos.length<2) return;
+    try{ localStorage.setItem(ck,'1'); }catch(e){}
+    var ov=document.createElement('div'); ov.className='st-tour';
+    ov.innerHTML='<style>.st-tour{position:fixed;inset:0;z-index:2147483200}.st-tour-luz{position:fixed;border-radius:16px;box-shadow:0 0 0 9999px rgba(6,10,20,.72),0 0 0 3px #FFD200;transition:all .45s cubic-bezier(.2,.8,.2,1);pointer-events:none}'+
+      '.st-tour-bal{position:fixed;left:12px;right:12px;margin:auto;max-width:360px;background:#fff;color:#16233d;border-radius:14px;padding:14px 14px 12px;box-shadow:0 14px 40px rgba(0,0,0,.35);font:500 14px "Public Sans",system-ui,sans-serif;transition:top .45s cubic-bezier(.2,.8,.2,1)}'+
+      '.st-tour-bal b{display:block;font-size:16px;margin-bottom:4px}.st-tour-ac{display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:8px}'+
+      '.st-tour-ac button{border:0;border-radius:9px;padding:9px 14px;font:800 13px inherit;cursor:pointer}.st-tour-pula{background:transparent;color:#5a677f}.st-tour-vai{background:#1C3F8F;color:#fff}.st-tour-n{font-size:12px;color:#5a677f}</style>'+
+      '<div class="st-tour-luz"></div><div class="st-tour-bal" role="dialog" aria-live="polite"><b></b><span></span><div class="st-tour-ac"><button type="button" class="st-tour-pula">Pular</button><span class="st-tour-n"></span><button type="button" class="st-tour-vai">Próximo</button></div></div>';
+    document.body.appendChild(ov);
+    var luz=ov.querySelector('.st-tour-luz'), bal=ov.querySelector('.st-tour-bal'), i=0;
+    function fim(){ ov.remove(); }
+    function mostra(){
+      var el=passos[i], k=el.getAttribute('data-act'); el.scrollIntoView({block:'center',behavior:'smooth'});
+      setTimeout(function(){
+        var r=el.getBoundingClientRect(), pad=6;
+        luz.style.left=(r.left-pad)+'px'; luz.style.top=(r.top-pad)+'px'; luz.style.width=(r.width+pad*2)+'px'; luz.style.height=(r.height+pad*2)+'px';
+        bal.querySelector('b').textContent=TXT[k][0]; bal.querySelector('span').textContent=TXT[k][1];
+        ov.querySelector('.st-tour-n').textContent=(i+1)+' de '+passos.length;
+        ov.querySelector('.st-tour-vai').textContent=i===passos.length-1?'Começar!':'Próximo';
+        var h=bal.offsetHeight||130, abaixo=r.bottom+14+h<innerHeight;
+        bal.style.top=(abaixo?r.bottom+14:Math.max(12,r.top-h-14))+'px';
+      },320);
+    }
+    ov.querySelector('.st-tour-pula').onclick=fim;
+    ov.querySelector('.st-tour-vai').onclick=function(){ i++; if(i>=passos.length){ fim(); try{ scrollTo({top:0,behavior:'smooth'}); }catch(e){} return; } mostra(); };
+    addEventListener('resize',function(){ if(document.body.contains(ov)) mostra(); });
+    mostra();
+  }
+  window.STTour={ refazer:function(){ try{ var s=JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); localStorage.removeItem('st_tour_v1:'+String(s.nome).toLowerCase().trim()); }catch(e){} tour(); } };
+  (function esperaInicio(){ var o=document.getElementById('ovInicio'); if(!o) return;
+    function tenta(){ if(o.classList.contains('aberto')) setTimeout(tour, 2200); }
+    tenta(); new MutationObserver(function(){ tenta(); }).observe(o,{attributes:true,attributeFilter:['class']}); })();
   function marcar(n){
     var card=document.querySelector('#ovInicio .ini-card[data-act="pdi"] .ini-txt'); if(!card) return;
     var b=card.querySelector('.st-badge'); if(!n){ if(b) b.remove(); return; }
@@ -9689,8 +9736,10 @@ button[id^="ov"][id$="Fechar"]:hover{transform:translateY(-1px);box-shadow:0 6px
     b.innerHTML='<i></i>'+n+(n===1?' revisão vencida':' revisões vencidas');
   }
   /* aviso ao abrir o app (1 vez por dia): revisões de PDI vencidas e as da semana */
-  function alertaPdi(n,sem){
+  function alertaPdi(n,sem,tent){
     if(!n&&!sem) return;
+    /* espera o tour do primeiro acesso terminar (e dá tempo dele começar) para não brigarem na tela */
+    tent=tent||0; if(tent<120 && (tent<4 || document.querySelector('.st-tour'))){ setTimeout(function(){ alertaPdi(n,sem,tent+1); },1000); return; }
     var hoje=new Date().toDateString(), ck='st_alerta_pdi_dia';
     try{ if(localStorage.getItem(ck)===hoje) return; localStorage.setItem(ck,hoje); }catch(e){}
     var d=document.createElement('div'); d.className='st-alerta-pdi'; d.setAttribute('role','alert');

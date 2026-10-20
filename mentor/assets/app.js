@@ -160,6 +160,25 @@
       return null;
     },
 
+    /* sequência de dias estudando: chama que cresce, últimos 7 dias e o próximo marco */
+    cardSequencia(p) {
+      const set = new Set(p.dias || []), s = p.streak || 0;
+      const dia = (k) => { const d = new Date(); d.setDate(d.getDate() - k); return d.toISOString().slice(0, 10); };
+      const fezHoje = set.has(dia(0));
+      const nomes = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+      const bolas = [6, 5, 4, 3, 2, 1, 0].map(k => { const d = new Date(); d.setDate(d.getDate() - k); const on = set.has(dia(k));
+        return `<span class="seq-dia ${on ? 'on' : ''} ${k === 0 ? 'hoje' : ''}" title="${dia(k).split('-').reverse().join('/')}"><i>${on ? '🔥' : ''}</i><b>${k === 0 ? 'hoje' : nomes[d.getDay()]}</b></span>`; }).join('');
+      const marcos = [3, 7, 14, 30, 60, 100], prox = marcos.find(m => m > s) || (s + 30);
+      const tam = Math.min(2.6, 1.3 + s * 0.08);
+      const msg = !s ? 'Estude hoje para acender a sua chama.'
+        : fezHoje ? `Chama acesa hoje! Volte amanhã para chegar a <b>${s + 1} dias</b>.`
+        : `Estude hoje para não apagar: são <b>${s} dia${s === 1 ? '' : 's'}</b> seguidos.`;
+      if (window.STAnima && marcos.includes(s) && fezHoje) setTimeout(() => STAnima.comemorarUmaVez('mentor-seq-' + s + '-' + dia(0), () => { STAnima.confete(); STAnima.faixa(`🔥 ${s} dias seguidos! Isso é constância de campeão.`, '#E30613'); }), 600);
+      return `<div class="card seq-card"><div class="linha" style="gap:14px"><span class="seq-chama ${s ? 'viva' : ''}" style="font-size:${tam}rem">🔥</span>
+        <div class="cresce"><div class="negrito">${s} dia${s === 1 ? '' : 's'} seguido${s === 1 ? '' : 's'} estudando</div><div class="pequeno texto-2">${msg}</div>
+        <div class="pequeno texto-2" style="margin-top:2px">Próximo marco: <b>${prox} dias</b> · faltam ${Math.max(0, prox - s)}</div></div></div>
+        <div class="seq-semana">${bolas}</div></div>`;
+    },
     anel(pct, texto, sub) {
       const r = 38, c = 2 * Math.PI * r; const v = Math.max(0, Math.min(100, pct));
       return `<div class="anel"><svg width="92" height="92" viewBox="0 0 92 92"><circle class="anel-fundo" cx="46" cy="46" r="${r}"/><circle class="anel-valor" cx="46" cy="46" r="${r}" stroke-dasharray="${(c * v / 100).toFixed(1)} ${c.toFixed(1)}"/></svg><div class="anel-texto">${texto}<small>${sub || ''}</small></div></div>`;
@@ -230,6 +249,7 @@
     return App.cabecalho(`${saud}, ${esc(primeiroNome)}!`, `${esc(u.loja)} · ${esc(u.cargo || '')}`, { extra }) + `<div class="tela">
       ${prox ? `<div class="card destaque clicavel" onclick="location.hash='${prox.hash}'"><div class="etiqueta amarela">Continuar de onde parou</div><div class="linha mt-1"><span class="icone-grande amarelo">${prox.icone}</span><div class="cresce"><div class="negrito">${esc(prox.titulo)}</div><div class="pequeno texto-2">${esc(prox.sub)}</div></div><span class="seta">›</span></div></div>`
         : `<div class="card sucesso"><div class="linha"><span class="icone-grande verde">🏆</span><div><div class="negrito">Trilha e avaliação concluídas!</div><div class="pequeno">Você é um Campeão Só Tintas. Veja seu certificado no Perfil.</div></div></div></div>`}
+      ${App.cardSequencia(p)}
       ${DB.util.ehLider(u) ? (() => { const e = DB.util.escopoDe(u, App.cont); return `<div class="card info clicavel" onclick="location.hash='#/equipe'"><div class="linha"><span class="icone-grande azul">📊</span><div class="cresce"><div class="negrito">Painel da equipe</div><div class="pequeno texto-2">${esc(e.rotulo)} · ${e.nivel === 'rede' ? 'regiões, lojas e colaboradores' : e.nivel === 'regiao' ? 'lojas e colaboradores da sua região' : 'colaboradores da sua loja'}</div></div><span class="seta">›</span></div></div>`; })() : ''}
       <div class="card clicavel" onclick="location.hash='#/trilha'"><div class="linha entre"><div class="card-titulo" style="margin:0"><span class="icone-grande vermelho">🎓</span><div><h3>Trilha de treinamento</h3><div class="pequeno texto-2">${trilha.concluidos} de ${trilha.mods.length} módulos concluídos</div></div></div><b>${trilha.pct}%</b></div><div class="barra mt-1"><span style="width:${trilha.pct}%"></span></div></div>
       <div class="grade-2">

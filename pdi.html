@@ -195,6 +195,19 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
 .tm-ass div{border-top:1px solid #1d2433;padding-top:4px;text-align:center;font-size:10.5px}
 .tm-ass small{display:block;color:#6b7387;font-size:9.5px}
 .tm-local{margin-top:18px;font-size:11px}
+
+/* linha do tempo das revisões (etapa 3) */
+.pdi-linha{list-style:none;margin:10px 0 12px;padding:0 0 0 4px;position:relative}
+.pdi-linha::before{content:"";position:absolute;left:17px;top:8px;bottom:8px;width:3px;border-radius:3px;background:linear-gradient(#1C3F8F,#FFD200);transform-origin:top}
+@media (prefers-reduced-motion:no-preference){.pdi-linha::before{animation:pdiTraco .9s cubic-bezier(.2,.8,.2,1) both}.pdi-linha li{animation:pdiNo .45s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i) * .14s + .15s)}}
+@keyframes pdiTraco{from{transform:scaleY(0)}to{transform:none}}
+@keyframes pdiNo{from{opacity:0;translate:-8px 0}to{opacity:1;translate:0 0}}
+.pdi-linha li{position:relative;display:flex;gap:12px;align-items:flex-start;padding:6px 0}
+.pdi-linha li>div{min-width:0;font-size:13px}.pdi-linha li p{margin:2px 0 0;line-height:1.4;overflow-wrap:anywhere}
+.pdi-no{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:12.5px;background:#1C3F8F;color:#fff;position:relative;z-index:1;box-shadow:0 0 0 3px var(--card,#fff)}
+.pdi-linha li.futuro .pdi-no{background:var(--card,#fff);color:#1C3F8F;border:2px dashed #1C3F8F}
+.pdi-linha li.atrasada .pdi-no{border-color:#d9363e;color:#d9363e}
+.pdi-linha li.atrasada b{color:#d9363e}
 </style></head><body>
 <div class="wrap">
   <div class="topbar"></div>
@@ -486,7 +499,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
         </div></div>
         <div class="pdi-box"><h4>Revisões</h4>
           <label class="pdi-q pdi-inline">Próxima revisão <input type="date" data-prox="${v.id}" value="${esc(r.prox || '')}" ${dis}>${r.prox && r.prox < hojeIso() ? '<span class="pdi-bad pdi-venc">vencida</span>' : ''}</label>
-          ${(r.revisoes || []).length ? `<div class="pdi-tw"><table class="pdi-t"><thead><tr><th>Data</th><th>Registro</th><th>Por</th></tr></thead><tbody>${r.revisoes.slice().reverse().map(x => `<tr><td>${dt(x.d)}</td><td>${esc(x.t)}</td><td>${esc(x.por || '')}</td></tr>`).join('')}</tbody></table></div>` : '<p class="pdi-meta">Nenhuma revisão registrada ainda.</p>'}
+          ${(r.revisoes || []).length || r.prox ? `<ol class="pdi-linha" aria-label="Linha do tempo do PDI">${(r.revisoes || []).map((x, i) => `<li class="feito" style="--i:${i}"><span class="pdi-no">${i + 1}</span><div><b>${dt(x.d)}</b>${x.por ? ` <span class="pdi-meta">· ${esc(x.por)}</span>` : ''}<p>${esc(x.t)}</p></div></li>`).join('')}${r.prox ? `<li class="futuro ${r.prox < hojeIso() ? 'atrasada' : ''}" style="--i:${(r.revisoes || []).length}"><span class="pdi-no">${r.prox < hojeIso() ? '!' : '→'}</span><div><b>${dt(r.prox)}</b> <span class="pdi-meta">· ${r.prox < hojeIso() ? 'revisão vencida' : 'próxima revisão'}</span></div></li>` : ''}</ol>` : '<p class="pdi-meta">Nenhuma revisão registrada ainda.</p>'}
           <label class="pdi-q">Nova revisão: o que mudou no comportamento e nos números?<textarea id="pdi-rv-${v.id}" ${dis} placeholder="Ex.: pediu CPF antes de cotar em 7 de 10 atendimentos; identificadas subiram de 60% para 74%."></textarea></label>
           <button type="button" class="btn pequeno azul" data-rev="${v.id}" ${dis}>Registrar revisão</button>
         </div>`;

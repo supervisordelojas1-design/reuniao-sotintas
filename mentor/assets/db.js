@@ -133,7 +133,7 @@
       const streak = Gamificacao.calcularStreak(dias);
       return {
         itens, xp_total: xpEventos.reduce((s, e) => s + e.xp, 0), eventos: xpEventos,
-        conquistas: (d.conquistas[uid] || []), tentativas: d.tentativas[uid] || [], streak, dias_ativos: dias.length,
+        conquistas: (d.conquistas[uid] || []), tentativas: d.tentativas[uid] || [], streak, dias_ativos: dias.length, dias,
         disc: d.disc[uid] || null, estado: Gamificacao.resumirEstado(itens, cont, { streak }),
       };
     },
@@ -447,7 +447,7 @@
       const streak = Gamificacao.calcularStreak(listaDias);
       const eventos = (xp.data || []).map(e => ({ ...e, xp: Number(e.xp) }));
       return {
-        itens: itens.data || [], xp_total: eventos.reduce((s, e) => s + e.xp, 0), eventos, conquistas: conq.data || [], tentativas: tent.data || [], streak, dias_ativos: listaDias.length,
+        itens: itens.data || [], xp_total: eventos.reduce((s, e) => s + e.xp, 0), eventos, conquistas: conq.data || [], tentativas: tent.data || [], streak, dias_ativos: listaDias.length, dias: listaDias,
         disc: disc.data || null, estado: Gamificacao.resumirEstado(itens.data || [], DB.conteudo, { streak }),
       };
     },

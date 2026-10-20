@@ -162,3 +162,17 @@ input, select, textarea, .campo input, .campo select, .campo textarea, .chat-ent
   .cabecalho h1 { font-size: 1.45rem; }
   .tela { padding-left: 12px; padding-right: 12px; }
 }
+
+/* sequência 🔥 (etapa 3) */
+.seq-card{overflow:hidden}
+.seq-chama{display:inline-block;line-height:1;filter:grayscale(1) opacity(.45);transition:font-size .4s}
+.seq-chama.viva{filter:none;transform-origin:50% 90%;animation:seqChama 1.6s ease-in-out infinite}
+@keyframes seqChama{0%,100%{transform:scale(1) rotate(-2deg)}50%{transform:scale(1.08) rotate(2deg)}}
+.seq-semana{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:12px}
+.seq-dia{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.72rem;color:var(--texto-2,#5a677f)}
+.seq-dia i{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:.95rem;background:rgba(120,135,165,.14);border:2px solid transparent}
+.seq-dia.on i{background:rgba(227,6,19,.10);border-color:rgba(227,6,19,.35);animation:seqPop .5s cubic-bezier(.2,.8,.2,1) both}
+.seq-dia.hoje b{color:var(--texto,#16233d)}.seq-dia.hoje i{border-color:#FFD200}
+.seq-dia:nth-child(1) i{animation-delay:.05s}.seq-dia:nth-child(2) i{animation-delay:.1s}.seq-dia:nth-child(3) i{animation-delay:.15s}.seq-dia:nth-child(4) i{animation-delay:.2s}.seq-dia:nth-child(5) i{animation-delay:.25s}.seq-dia:nth-child(6) i{animation-delay:.3s}.seq-dia:nth-child(7) i{animation-delay:.35s}
+@keyframes seqPop{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.seq-chama.viva,.seq-dia.on i{animation:none}}
