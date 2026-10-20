@@ -698,6 +698,7 @@ const LOCK=__L__;
 const PERFIS=[];
 if(!LOCK){PERFIS.push({v:'geral',t:'👑 Diretoria — visão geral'});
  D.supervisores.forEach(s=>PERFIS.push({v:'sup:'+s.nome,t:'🧭 Supervisor — '+s.nome}));}
+else if(String(LOCK).indexOf('loja:')==0){ const lj=(_.L||[]).find(x=>x[0]==String(LOCK).slice(5)); PERFIS.push({v:LOCK,t:'🏪 Minha loja — '+(lj?lj[0]+' · '+lj[1]:String(LOCK).slice(5))}); }
 else PERFIS.push({v:'sup:'+LOCK,t:'🧭 Minha região — '+LOCK});
 D.lojas.slice().filter(l=>!LOCK||l.sup==LOCK).sort((a,b)=>a.cod.localeCompare(b.cod))
  .forEach(l=>PERFIS.push({v:'loja:'+l.cod,t:'🏪 Gerente — '+l.cod+' '+l.nome}));
@@ -1969,7 +1970,8 @@ function pintarAbas(){
  el.innerHTML="";
  function add(rot,ativo,fn){var b=document.createElement("button");
   b.textContent=rot; if(ativo)b.className="on"; if(fn)b.onclick=fn; el.appendChild(b);}
- if(LOCK){ add(LOCK,true,null); return; }
+ if(LOCK){ var lj=String(LOCK).indexOf('loja:')==0?D.lojas.find(x=>x.cod==String(LOCK).slice(5)):null;
+  add(lj?lj.cod+' · '+lj.nome:LOCK,true,null); return; }
  add("Geral",!ST.sup&&!ST.loja,abaGeral);
  (D.supervisores||[]).forEach(function(s){ add(s.nome,ST.sup==s.nome,function(){abaSup(s.nome)}); });
 }
@@ -2014,7 +2016,12 @@ function render(){
 }
 
 /* ---------- perfil ---------- */
-if(LOCK){ST.perfil='sup:'+LOCK;ST.view='sup';ST.sup=LOCK;
+if(LOCK&&String(LOCK).indexOf('loja:')==0){   /* GERENTE: o servidor manda só a loja dele */
+ const cod=String(LOCK).slice(5), l=D.lojas.find(x=>x.cod==cod);
+ ST.perfil=LOCK;ST.view='loja';ST.loja=cod;ST.sup=l?l.sup:null;
+ document.getElementById('hTit').textContent='Painel da Loja';
+ document.getElementById('hSub').textContent='Só Tintas · '+(l?l.cod+' · '+l.nome:'Loja '+cod);}
+else if(LOCK){ST.perfil='sup:'+LOCK;ST.view='sup';ST.sup=LOCK;
  document.getElementById('hTit').textContent='Coordenação de Supervisão';
  document.getElementById('hSub').textContent='Só Tintas · Região '+LOCK;}
 const sel=document.getElementById('selPerfil');
