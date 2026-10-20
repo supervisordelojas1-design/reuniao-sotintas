@@ -1992,8 +1992,8 @@ html[data-tema="escuro"] .dpq, html[data-theme="dark"] .dpq{border-color:#5a4a1c
 </div>
 
 <div class="toast" id="toast"></div>
-<script src="st-dados.js?v=84"></script>
-<script src="st-anima.js?v=1"></script>
+<script src="st-dados.js?v=85"></script>
+<script src="st-anima.js?v=2"></script>
 <script>
 "use strict";
 
@@ -7036,6 +7036,7 @@ $('cnSair').onclick=function(){
   if(!confirm('Sair e entrar com outro nome?')) return;
   try{ localStorage.removeItem(LS_SESSAO); }catch(e){}
   try{ if(window.STDados) STDados.esquecer(); }catch(e){}
+  try{ Object.keys(localStorage).forEach(function(k){ if(k.indexOf('st_painel_cache_v1:')===0) localStorage.removeItem(k); }); }catch(e){}
   location.reload();
 };
 function cnBox(cor,html){
@@ -9686,6 +9687,23 @@ button[id^="ov"][id$="Fechar"]:hover{transform:translateY(-1px);box-shadow:0 6px
     if(!b){ b=document.createElement('span'); b.className='st-badge'; card.appendChild(b); }
     b.innerHTML='<i></i>'+n+(n===1?' revisão vencida':' revisões vencidas');
   }
+  /* aviso ao abrir o app (1 vez por dia): revisões de PDI vencidas e as da semana */
+  function alertaPdi(n,sem){
+    if(!n&&!sem) return;
+    var hoje=new Date().toDateString(), ck='st_alerta_pdi_dia';
+    try{ if(localStorage.getItem(ck)===hoje) return; localStorage.setItem(ck,hoje); }catch(e){}
+    var d=document.createElement('div'); d.className='st-alerta-pdi'; d.setAttribute('role','alert');
+    d.style.cssText='position:fixed;left:0;right:0;margin:auto;bottom:max(16px,env(safe-area-inset-bottom,0px));width:min(420px,calc(100% - 24px));z-index:2147482990;background:#fff;color:#16233d;border-radius:14px;border-left:5px solid #E30613;box-shadow:0 12px 34px rgba(6,10,20,.35);padding:12px 12px 12px 14px;display:flex;gap:10px;align-items:center;font:600 13.5px "Public Sans",system-ui,sans-serif;translate:0 140%;transition:translate .45s cubic-bezier(.2,.8,.2,1)';
+    var txt=(n?'<b style="color:#d9363e">'+n+(n===1?' revisão de PDI vencida':' revisões de PDI vencidas')+'</b>':'')+(n&&sem?' e ':'')+(sem?'<b>'+sem+' nesta semana</b>':'');
+    d.innerHTML='<span style="font-size:22px">📋</span><span style="flex:1;min-width:0">'+txt+'<br><span style="font-weight:500;color:#5a677f;font-size:12.5px">Toque em Abrir para ver quem é.</span></span>'+
+      '<button type="button" data-a="abrir" style="border:0;border-radius:9px;background:#1C3F8F;color:#fff;font:800 12.5px inherit;padding:9px 12px;cursor:pointer">Abrir</button>'+
+      '<button type="button" data-a="x" aria-label="Fechar" style="border:0;background:transparent;font-size:18px;color:#5a677f;cursor:pointer;padding:4px">✕</button>';
+    document.body.appendChild(d); requestAnimationFrame(function(){ requestAnimationFrame(function(){ d.style.translate='0 0'; }); });
+    function fecha(){ d.style.translate='0 140%'; setTimeout(function(){ d.remove(); },500); }
+    d.querySelector('[data-a=x]').onclick=fecha;
+    d.querySelector('[data-a=abrir]').onclick=function(){ fecha(); var c=document.querySelector('#ovInicio .ini-card[data-act="pdi"]'); if(c) c.click(); };
+    setTimeout(fecha,15000);
+  }
   function contarVencidas(){
     try{
       if(!window.STDados || !STDados.crachaGuardado()) return;           /* sem crachá não pede PIN na tela inicial */
@@ -9694,9 +9712,11 @@ button[id^="ov"][id$="Fechar"]:hover{transform:translateY(-1px);box-shadow:0 6px
       if(c && Date.now()-c.em<10*60000){ marcar(c.n); return; }
       STDados.chamar('pdi').then(function(j){
         if(!j||!j.ok) return; var hoje=new Date(); hoje=new Date(hoje.getTime()-hoje.getTimezoneOffset()*60000).toISOString().slice(0,10);
-        var n=Object.keys(j.acomp||{}).filter(function(ch){ var r=j.acomp[ch]; return r&&r.prox&&r.prox<hoje; }).length;
+        var em7=new Date(Date.now()+7*864e5); em7=new Date(em7.getTime()-em7.getTimezoneOffset()*60000).toISOString().slice(0,10);
+        var R=Object.keys(j.acomp||{}).map(function(ch){ return j.acomp[ch]; }).filter(function(r){ return r&&r.prox; });
+        var n=R.filter(function(r){ return r.prox<hoje; }).length, sem=R.filter(function(r){ return r.prox>=hoje&&r.prox<=em7; }).length;
         try{ sessionStorage.setItem(k,JSON.stringify({n:n,em:Date.now()})); }catch(e){}
-        marcar(n);
+        marcar(n); alertaPdi(n,sem);
       }).catch(function(){});
     }catch(e){}
   }

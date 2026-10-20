@@ -21,7 +21,7 @@
       .then(function (r) { return r.json(); });
   }
   function guardar(r) { try { localStorage.setItem(LS_CRACHA, JSON.stringify({ nome: r.nome, tk: r.tk, ex: r.ex, perfil: r.perfil, lojas: r.lojas })); } catch (e) {} }
-  function esquecer() { try { localStorage.removeItem(LS_CRACHA); localStorage.removeItem(LS_VISAO); } catch (e) {} }
+  function esquecer() { try { localStorage.removeItem(LS_CRACHA); localStorage.removeItem(LS_VISAO); } catch (e) {} limparCache(); }
   /* ── "Ver como" (só coordenação): crachá de visão, só leitura, 2 horas ── */
   function ehCoordReal() { var s = sessao(); return !!s && (s.escopo === 'todos' || /coorden/i.test(String(s.papel || ''))); }
   function visao() {
@@ -105,7 +105,34 @@
   }
 
   /* pede dados ao servidor; se o crachá venceu ou não vale, pede o PIN e tenta de novo */
-  function chamar(acao, extra, real) {
+  /* ── cópia no aparelho: abre mais rápido (3 min) e funciona sem internet ── */
+  var LEITURA = /^(niveis|ranking|pdi|posicao|mentorLer)$/, PREF_CACHE = 'st_cache_v1:', FRESCO_MS = 3 * 60000;
+  function chaveCache(acao, extra, real) {
+    var s = sessao(), v = real ? null : visao();
+    return PREF_CACHE + norm(s && s.nome) + '|' + (v ? 'vc:' + norm(v.nome) + ':' + (v.lojas || []).join(',') : 'eu') + '|' + acao + '|' + JSON.stringify(extra || {});
+  }
+  function lerCache(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+  function gravarCache(k, r) {
+    try { localStorage.setItem(k, JSON.stringify({ em: Date.now(), r: r })); }
+    catch (e) { limparCache(); try { localStorage.setItem(k, JSON.stringify({ em: Date.now(), r: r })); } catch (e2) {} }
+  }
+  function limparCache() { try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf(PREF_CACHE) === 0) localStorage.removeItem(k); }); } catch (e) {} }
+  function semCache(ms) { try { sessionStorage.setItem('st_fresco_ate', String(Date.now() + (ms || 15000))); } catch (e) {} }
+  function querFresco() { try { return Number(sessionStorage.getItem('st_fresco_ate') || 0) > Date.now(); } catch (e) { return false; } }
+  function horaDe(ms) { var d = new Date(ms), p = function (n) { return (n < 10 ? '0' : '') + n; }, hoje = new Date().toDateString() === d.toDateString(); return (hoje ? 'hoje, ' : p(d.getDate()) + '/' + p(d.getMonth() + 1) + ', ') + p(d.getHours()) + 'h' + p(d.getMinutes()); }
+  function faixaOffline(em) {
+    var f = document.getElementById('stOffFaixa');
+    if (!f) {
+      f = document.createElement('div'); f.id = 'stOffFaixa'; f.setAttribute('role', 'status');
+      f.style.cssText = 'position:fixed;left:0;right:0;margin:auto;width:max-content;max-width:calc(100% - 24px);top:max(10px,env(safe-area-inset-top,0px));z-index:2147482998;padding:7px 14px;border-radius:999px;background:#16233d;color:#fff;font:700 12.5px "Public Sans",system-ui,sans-serif;box-shadow:0 6px 22px rgba(0,0,0,.35)';
+      (document.body || document.documentElement).appendChild(f);
+      g.addEventListener('online', function () { var x = document.getElementById('stOffFaixa'); if (x) x.remove(); }, { once: true });
+    }
+    f.textContent = '📶 Sem internet · mostrando os dados de ' + horaDe(em);
+  }
+
+  /* pede dados ao servidor; se o crachá venceu ou não vale, pede o PIN e tenta de novo */
+  function chamarRede(acao, extra, real) {
     function vai(tk) { var b = { acao: acao, tk: tk }; for (var k in (extra || {})) b[k] = extra[k]; return post(b); }
     return cracha(real).then(vai).then(function (r) {
       if (r && !r.ok && r.cracha) {
@@ -114,6 +141,22 @@
         return cracha(real).then(vai);
       }
       return r;
+    });
+  }
+  function chamar(acao, extra, real) {
+    if (!LEITURA.test(acao)) {
+      return chamarRede(acao, extra, real).then(function (r) { if (r && r.ok) limparCache(); return r; });
+    }
+    var k = chaveCache(acao, extra, real), c = lerCache(k);
+    if (c && c.r && !querFresco() && Date.now() - c.em < FRESCO_MS && navigator.onLine !== false) return Promise.resolve(c.r);
+    if (c && c.r && navigator.onLine === false) { faixaOffline(c.em); return Promise.resolve(c.r); }
+    return chamarRede(acao, extra, real).then(function (r) {
+      if (r && r.ok) gravarCache(k, r);
+      return r;
+    }, function (err) {
+      /* sem rede (fetch falhou): usa a última cópia boa deste aparelho */
+      if (c && c.r && !(err && /PIN/.test(String(err.message || '')))) { faixaOffline(c.em); return c.r; }
+      throw err;
     });
   }
 
@@ -139,5 +182,5 @@
   g.addEventListener('storage', function (e) { if (e.key === LS_VISAO) faixaVisao(); });
 
   g.STDados = { URL: URL_DADOS, chamar: chamar, entrar: entrar, cracha: cracha, esquecer: esquecer, perfil: perfil, crachaGuardado: crachaGuardado,
-    visao: visao, sessaoVisao: sessaoVisao, entrarVisao: entrarVisao, sairVisao: sairVisao, ehCoordReal: ehCoordReal, faixaVisao: faixaVisao };
+    visao: visao, sessaoVisao: sessaoVisao, semCache: semCache, limparCache: limparCache, entrarVisao: entrarVisao, sairVisao: sairVisao, ehCoordReal: ehCoordReal, faixaVisao: faixaVisao };
 })(window);

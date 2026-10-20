@@ -2187,7 +2187,14 @@ function enviarUpload(){
    function(m){st.textContent='✕ '+m;bt.disabled=false});
  }
 }
-function sairPainel(){ try{localStorage.removeItem(PKEY)}catch(e){}; location.reload(); }
+function sairPainel(){ try{localStorage.removeItem(PKEY); Object.keys(localStorage).forEach(function(k){if(k.indexOf('st_painel_cache_v1:')===0)localStorage.removeItem(k)})}catch(e){}; location.reload(); }
+function avisoOffline(em){
+ var d=new Date(em),p=function(n){return(n<10?'0':'')+n},hoje=new Date().toDateString()===d.toDateString();
+ var f=document.createElement('div'); f.setAttribute('role','status');
+ f.style.cssText='position:fixed;left:0;right:0;margin:auto;width:max-content;max-width:calc(100% - 24px);top:max(10px,env(safe-area-inset-top,0px));z-index:99999;padding:7px 14px;border-radius:999px;background:#16233d;color:#fff;font:700 12.5px system-ui,sans-serif;box-shadow:0 6px 22px rgba(0,0,0,.35)';
+ f.textContent='📶 Sem internet · mostrando os números de '+(hoje?'hoje, ':p(d.getDate())+'/'+p(d.getMonth()+1)+', ')+p(d.getHours())+'h'+p(d.getMinutes());
+ document.body.appendChild(f); window.addEventListener('online',function(){f.remove()},{once:true});
+}
 function pedirDados(u,p,cb,errCb){
  if(typeof google!=='undefined'&&google.script&&google.script.run){
   google.script.run
@@ -2195,9 +2202,18 @@ function pedirDados(u,p,cb,errCb){
    .withFailureHandler(function(e){errCb('Servidor: '+(e&&e.message||'falha'))})
    .loginPainel(u,p);
  }else{
+  /* cópia no aparelho: sem internet, abre com os últimos números baixados */
+  var CK='st_painel_cache_v1:'+String(u).toLowerCase().trim()+'|'+((location.search.match(/[?&]visao=([^&]*)/)||[])[1]||'');
   fetch(API_URL+'?dados=1&u='+encodeURIComponent(u)+'&p='+encodeURIComponent(p))
-   .then(function(r){return r.json()}).then(cb)
-   .catch(function(){errCb('Sem conexão com o servidor.')});
+   .then(function(r){return r.json()}).then(function(res){
+     if(res&&res.ok){ try{localStorage.setItem(CK,JSON.stringify({em:Date.now(),res:res}))}catch(e){ try{Object.keys(localStorage).forEach(function(k){if(k.indexOf('st_painel_cache_v1:')===0)localStorage.removeItem(k)})}catch(e2){} } }
+     cb(res);
+   })
+   .catch(function(){
+     var c=null; try{c=JSON.parse(localStorage.getItem(CK)||'null')}catch(e){}
+     if(c&&c.res){ cb(c.res); avisoOffline(c.em); return; }
+     errCb('Sem conexão com o servidor.');
+   });
  }
 }
 /* link individual: painel.html?u=RAMON abre com o nome pronto, so falta o PIN */
@@ -2285,7 +2301,7 @@ window.abrirUpload=abrirUpload;window.enviarUpload=enviarUpload;
  } else { tip.style.display='none'; } },{passive:true});
 })();
 </script>
-<script src="st-anima.js?v=1"></script>
+<script src="st-anima.js?v=2"></script>
 <script>
 /* animações (etapa 2): KPIs contando, barras enchendo, ponteiro do velocímetro, vermelho pulsando, abas deslizantes */
 (function(){ if(!window.STAnima) return; var app=document.getElementById('app'), ab=document.getElementById('abas');

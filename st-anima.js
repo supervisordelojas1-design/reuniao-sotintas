@@ -209,6 +209,7 @@
       bola.style.transition = 'transform .3s ' + EASE + ',opacity .3s';
       if (!ok) { bola.style.opacity = '0'; bola.style.transform = 'translateY(-60px)'; return; }
       ocupado = true; bola.style.transform = 'translateY(40px)'; bola.classList.add('gira');
+      try { if (g.STDados && g.STDados.semCache) g.STDados.semCache(20000); } catch (e) {}   /* puxou: busca dados novos, não a cópia */
       Promise.resolve().then(aoAtualizar || function () { g.location.reload(); }).catch(function () {}).then(function () {
         setTimeout(function () { bola.classList.remove('gira'); bola.style.opacity = '0'; bola.style.transform = 'translateY(-60px)'; ocupado = false; }, 600);
       });
