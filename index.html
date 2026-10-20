@@ -8442,7 +8442,7 @@ $('dpCsv').onclick=function(){
   var _todas=(DP_DADOS?(DP_DADOS.itens||[]).concat(DP_DADOS.acertados||[]):[]);
   if(!_todas.length){ toast('Nada para baixar neste período.'); return; }
   _todas.sort(function(a,b){ return a.data<b.data?1:-1; });
-  var nomeArq='despesas_'+($('dpDe').value||'')+'_a_'+($('dpAte').value||'');
+  var nomeArq=nomeArqDp('Despesas', $('dpFiltro').value, 'xlsx').replace(/\.xlsx$/,'');
   comXLSX(function(){
     var wb=XLSX.utils.book_new();
     /* aba Geral: tudo, com o total no topo */
@@ -8573,6 +8573,13 @@ function avisoBaixou(nome){
 }
 /* Chamar SEMPRE de dentro do clique. Devolve true se foi para o menu de
    compartilhar do aparelho; false se caiu no download. */
+/* nome do arquivo com a pessoa e o período, igual aos outros PDFs do app */
+function nomeArqDp(tipo, pessoa, ext){
+  var d=function(iso){ var p=String(iso||'').split('-'); return p.length===3 ? p[2]+'-'+p[1]+'-'+p[0] : ''; };
+  var de=d($('dpDe').value), ate=d($('dpAte').value);
+  var t=tipo+' - '+(String(pessoa||'').trim() || 'Toda a equipe')+(de||ate ? ' - '+de+(ate&&ate!==de?' a '+ate:'') : '');
+  return t.replace(/[\\\/:*?"<>|]+/g,' ').replace(/\s+/g,' ').trim()+'.'+(ext||'pdf');
+}
 function enviarPdfNoZap(b64, nome, titulo, texto){
   if(!b64){
     toast('Este PDF ficou grande demais para anexar — use o link para abrir e compartilhar.');
@@ -8672,12 +8679,12 @@ function mostrarCaixaResumo(res){
 delegar('dpReciboBox', {
   'data-zapresumo': function(){
     var res=DP_PDF.res; if(!res) return;
-    enviarPdfNoZap(res.pdfBase64, res.arquivo||'resumo-despesas.pdf',
+    enviarPdfNoZap(res.pdfBase64, nomeArqDp('Resumo de despesas', $('dpFiltro').value),
       'Resumo de despesas', textoResumoZap(res).replace(/\n📎[^\n]*$/,'').trim());
   },
   'data-zaprecibo': function(i){
     var r=(DP_RECIBOS.itens||[])[Number(i)]; if(!r) return;
-    enviarPdfNoZap(r.pdfBase64, r.arquivo||'recibo.pdf', 'Recibo de reembolso',
+    enviarPdfNoZap(r.pdfBase64, nomeArqDp('Recibo de reembolso', r.nome), 'Recibo de reembolso',
       textoReciboZap(r, DP_RECIBOS.de, DP_RECIBOS.ate).replace(/\n📎[^\n]*$/,'').trim());
   }
 });
