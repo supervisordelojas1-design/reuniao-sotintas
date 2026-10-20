@@ -451,6 +451,11 @@ render();
         var s=sess();
         if(j.recorte && !(s && ehVendedor(s))) VIEW={all:true};   /* o servidor já recortou */
         aplicar(j.data);
+        /* comemoração: o vendedor que SUBIU de nível vê o selo crescer e confete (uma vez por sessão) */
+        try{ var ss=sess(); if(window.STAnima && ss && ehVendedor(ss) && VENDS.length===1 && VENDS[0].muda>0){
+          setTimeout(function(){ STAnima.comemorarUmaVez('nivel-'+VENDS[0].nome+'-'+VENDS[0].niv,function(){
+            STAnima.confete(); var p=document.querySelector('#tb .pill'); if(p){ STAnima.pop(p); STAnima.brilho(p); }
+            STAnima.faixa('Você subiu de nível! 🚀 Agora '+(NIVV[VENDS[0].niv]||{}).nome,'#1C3F8F'); }); },600); } }catch(e){}
       } else if(j && !j.ok){ avisoNiveis(j.erro||'Não consegui carregar os níveis.'); }
       else avisoNiveis('A coordenação ainda não publicou a base de níveis.');
       setAtz(j && j.atualizado);
@@ -627,4 +632,11 @@ render();
 })();
 </script>
 
+<script src="st-anima.js?v=1"></script>
+<script>
+(function(){ if(!window.STAnima) return;
+  STAnima.observar(document.body,{ numeros:'.rcard .big,#podium .pts', barras:'#escada .bar', abas:'#tabs' });
+  STAnima.puxar(document.scrollingElement, function(){ if(window.__niveisRecarregar) window.__niveisRecarregar(); });
+})();
+</script>
 </body></html>

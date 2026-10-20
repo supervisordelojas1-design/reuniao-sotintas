@@ -219,6 +219,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
   <div id="pdi-root"><p class="pdi-meta">Carregando o PDI…</p></div>
 </div>
 <script src="st-dados.js?v=84"></script>
+<script src="st-anima.js?v=1"></script>
 <script>try{if(window.self!==window.top)document.documentElement.classList.add('embutido');}catch(e){document.documentElement.classList.add('embutido');}</script>
 <script>
 /* ===== Tema claro/escuro (compartilhado: ?tema=... ou localStorage 'st_tema'; padrão escuro) ===== */
@@ -441,7 +442,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
     const progresso = v => { const r = S.REG[v.id]; if (!r) return null; const AA = A(v); return { feitas: AA.filter(a => r.acoes && r.acoes[a.k] && r.acoes[a.k].s === 'feito').length, total: AA.length, ult: (r.revisoes || []).slice(-1)[0], prox: r.prox }; };
     const dis = opts.pode ? '' : 'disabled';
     let toastT = null;
-    function toast(m) { let t = el.querySelector('.pdi-toast'); if (!t) { t = document.createElement('div'); t.className = 'pdi-toast'; t.setAttribute('role', 'status'); el.appendChild(t); } t.textContent = m; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 1800); }
+    function toast(m) { let t = document.querySelector('body > .pdi-toast'); if (!t) { t = document.createElement('div'); t.className = 'pdi-toast'; t.setAttribute('role', 'status'); document.body.appendChild(t); }   /* fora do conteúdo: o redesenho não apaga o aviso */ t.textContent = m; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 1800); }
     async function salvar(v, patch) {
       if (!opts.pode) { toast('Somente leitura'); return false; }
       const novo = Object.assign({}, S.REG[v.id] || {}, patch, { atualizado: hojeIso(), por: opts.usuario || '' });
@@ -453,7 +454,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
       const pg = progresso(v);
       return `<button type="button" class="pdi-row l-${v.tier}" aria-expanded="${S.abertos.has(v.id)}" data-id="${v.id}">
         <span class="pdi-pos">${v.pos || '·'}</span><span class="pdi-badge b-${v.tier}">${v.tier === 'PI' ? 'Novo' : v.tier}</span>
-        <span class="pdi-quem"><span class="pdi-nm">${esc(v.nome)}</span><br><span class="pdi-meta">${esc(opts.lojaNome(v.loja_id))} · V${v.v} ${NV[v.v]}</span>${pg ? `<span class="pdi-prog">PDI: ${pg.feitas}/${pg.total} ações concluídas${pg.prox ? ` · revisão ${dt(pg.prox)}${pg.prox < hojeIso() ? ' (vencida)' : ''}` : ''}</span>` : ''}</span>
+        <span class="pdi-quem"><span class="pdi-nm">${esc(v.nome)}</span><br><span class="pdi-meta">${esc(opts.lojaNome(v.loja_id))} · V${v.v} ${NV[v.v]}</span>${pg ? `<span class="pdi-prog">PDI: ${pg.feitas}/${pg.total} ações concluídas${pg.prox ? ` · revisão ${dt(pg.prox)}${pg.prox < hojeIso() ? ' <b class="pdi-venc">(vencida)</b>' : ''}` : ''}</span>` : ''}</span>
         <span class="pdi-c-num pdi-meta">3 meses <b>${pct(v.a3)}</b> · mês <b>${pct(v.pj)}</b><br>na mesa: <b class="pdi-bad">${brl(v.perda_tot)}</b></span>
         <span class="pdi-c-spark">${spark(v)}</span>
         <span><span class="pdi-score">${Math.round(v.sc.final)}<small>/100</small></span>${stack(v.sc)}</span>
@@ -484,7 +485,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
           ${cp.data ? `<p class="pdi-meta">Última observação: ${dt(cp.data)}</p>` : ''}
         </div></div>
         <div class="pdi-box"><h4>Revisões</h4>
-          <label class="pdi-q pdi-inline">Próxima revisão <input type="date" data-prox="${v.id}" value="${esc(r.prox || '')}" ${dis}>${r.prox && r.prox < hojeIso() ? '<span class="pdi-bad">vencida</span>' : ''}</label>
+          <label class="pdi-q pdi-inline">Próxima revisão <input type="date" data-prox="${v.id}" value="${esc(r.prox || '')}" ${dis}>${r.prox && r.prox < hojeIso() ? '<span class="pdi-bad pdi-venc">vencida</span>' : ''}</label>
           ${(r.revisoes || []).length ? `<div class="pdi-tw"><table class="pdi-t"><thead><tr><th>Data</th><th>Registro</th><th>Por</th></tr></thead><tbody>${r.revisoes.slice().reverse().map(x => `<tr><td>${dt(x.d)}</td><td>${esc(x.t)}</td><td>${esc(x.por || '')}</td></tr>`).join('')}</tbody></table></div>` : '<p class="pdi-meta">Nenhuma revisão registrada ainda.</p>'}
           <label class="pdi-q">Nova revisão: o que mudou no comportamento e nos números?<textarea id="pdi-rv-${v.id}" ${dis} placeholder="Ex.: pediu CPF antes de cotar em 7 de 10 atendimentos; identificadas subiram de 60% para 74%."></textarea></label>
           <button type="button" class="btn pequeno azul" data-rev="${v.id}" ${dis}>Registrar revisão</button>
@@ -554,7 +555,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
     function painelAcomp() {
       const lst = filtra(P.ALL.filter(v => v.tier !== 'P4' || S.REG[v.id]));
       return `<p class="pdi-meta">Situação de cada PDI: ações concluídas, meta escolhida, observação em campo e revisões. Revisão vencida aparece em vermelho.</p><div class="pdi-tw"><table class="pdi-t"><thead><tr><th>Vendedor</th><th>Faixa</th><th>Loja</th><th>Ações</th><th>Meta escolhida</th><th>Campo</th><th>Última revisão</th><th>Próxima</th></tr></thead><tbody>${lst.map(v => { const r = S.REG[v.id], pg = progresso(v), M = metasDe(v), mm = r && r.auto && M.find(m => m[0] === r.auto.meta), it = r && r.campo && r.campo.itens ? Object.values(r.campo.itens) : [], med = it.length ? it.reduce((a, b) => a + b, 0) / it.length : null;
-        return `<tr><td><button type="button" class="pdi-link" data-abrir="${v.id}">${esc(v.nome)}</button></td><td><span class="pdi-badge b-${v.tier}">${v.tier === 'PI' ? 'Novo' : v.tier}</span></td><td>${esc(opts.lojaNome(v.loja_id))}</td><td>${pg ? `${pg.feitas}/${pg.total}` : '<span class="pdi-meta">não iniciado</span>'}</td><td>${mm ? esc(mm[1]) : '—'}</td><td>${med != null ? n1(med) : '—'}</td><td>${pg && pg.ult ? dt(pg.ult.d) : '—'}</td><td class="${pg && pg.prox && pg.prox < hojeIso() ? 'pdi-bad' : ''}">${pg && pg.prox ? dt(pg.prox) : '—'}</td></tr>`; }).join('')}</tbody></table></div>`;
+        return `<tr><td><button type="button" class="pdi-link" data-abrir="${v.id}">${esc(v.nome)}</button></td><td><span class="pdi-badge b-${v.tier}">${v.tier === 'PI' ? 'Novo' : v.tier}</span></td><td>${esc(opts.lojaNome(v.loja_id))}</td><td>${pg ? `${pg.feitas}/${pg.total}` : '<span class="pdi-meta">não iniciado</span>'}</td><td>${mm ? esc(mm[1]) : '—'}</td><td>${med != null ? n1(med) : '—'}</td><td>${pg && pg.ult ? dt(pg.ult.d) : '—'}</td><td class="${pg && pg.prox && pg.prox < hojeIso() ? 'pdi-bad pdi-venc' : ''}">${pg && pg.prox ? dt(pg.prox) : '—'}</td></tr>`; }).join('')}</tbody></table></div>`;
     }
     function painelLojas() {
       const ids = [...new Set(P.ALL.map(v => v.c))];
@@ -729,11 +730,11 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
         if (acao === 'fechar') { fechar(); return; }
         if (acao === 'gerar') { await gerar(); return; }
         if (!doc) { if (await gerar()) st(`Termo pronto. Toque de novo em <b>${acao === 'zap' ? 'Enviar pelo WhatsApp' : 'Baixar PDF'}</b>.`); return; }
-        if (acao === 'baixar') { baixar(doc); st('PDF baixado: ' + esc(doc.nome)); return; }
+        if (acao === 'baixar') { baixar(doc); st('PDF baixado: ' + esc(doc.nome)); if (global.STAnima) STAnima.check(ov.querySelector('[data-tm-st]')); return; }
         const msg = `PDI de ${v.nome} · ${opts.lojaNome(v.loja_id)} · Só Tintas`;
         const f = new File([doc.blob], doc.nome, { type: 'application/pdf' });
         if (navigator.canShare && navigator.canShare({ files: [f] })) {
-          try { await navigator.share({ files: [f], title: msg, text: msg }); st('Enviado. Escolha o WhatsApp na lista de compartilhamento, se ainda não escolheu.'); return; }
+          try { await navigator.share({ files: [f], title: msg, text: msg }); st('Enviado. Escolha o WhatsApp na lista de compartilhamento, se ainda não escolheu.'); b.textContent = 'Enviado'; if (global.STAnima) STAnima.check(b); return; }
           catch (err) { if (err && err.name === 'AbortError') { st('Envio cancelado.'); return; } }
         }
         baixar(doc);
@@ -878,6 +879,12 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
     $('pdi-root').innerHTML='<p class="pdi-meta">Carregando o PDI…</p>';
     if(!sess()){ montar(); return Promise.resolve(); }
     return carregar().catch(function(e){ ERRO=e.message||String(e); }).then(montar);
+  }
+  /* animações (etapa 2): números contando, barras, revisão vencida pulsando, ficha em sanfona, abas, avisos com ✓ */
+  if(window.STAnima){
+    STAnima.observar($('pdi-root'),{ numeros:'.pdi-kpi b,.pdi-score,.pdi-fact b', barras:'.pdi-stack i', pulso:'.pdi-venc', pulsoTexto:true, sanfona:'.pdi-fwrap', abas:'.pdi-tabs' });
+    STAnima.avisos('.pdi-toast');
+    STAnima.puxar(document.scrollingElement, function(){ return iniciar(); });
   }
   getJSON(APP_EQUIPE_URL+'?acao=equipe').then(function(j){ if(j&&j.ok&&j.equipe) aplicarEquipe(j.equipe); }).catch(function(){});
   iniciar();

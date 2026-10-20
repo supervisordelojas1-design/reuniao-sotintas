@@ -231,7 +231,14 @@ function rank(list){
     const P=posRede(ms), k=st.tab==='l'?'lojas':'vend';
     out.forEach(r=>{const ch=st.tab==='l'?r.e.id:(r.e.id+'|'+r.e.l), x=P&&P[k][ch]; r.pos=x?x[0]:'…'; r.tot=x?x[1]:0; r.tie=false});
     out.sort((a,b)=>(typeof a.pos==='number'?a.pos:1e9)-(typeof b.pos==='number'?b.pos:1e9));
-  } else out.forEach((r,i)=>{r.pos=i+1;r.tie=(i>0&&out[i-1].P===r.P)||(i<out.length-1&&out[i+1].P===r.P)});
+  } else {
+    out.forEach((r,i)=>{r.pos=i+1;r.tie=(i>0&&out[i-1].P===r.P)||(i<out.length-1&&out[i+1].P===r.P)});
+    /* ▲▼ quanto subiu/caiu em relação ao ranking sem o último mês escolhido */
+    if(ms.length>1){ const pm=ms.slice(0,-1), ant={};
+      list.map(e=>{let P=0,s=0,n=0;pm.forEach(m=>{const d=e.m[m];if(!d)return;const p=d[1]/d[0];P+=pts(p);s+=p;n++});return {e,P,avg:n?s/n:0,n}})
+       .filter(r=>r.n>0).sort((a,b)=>b.P-a.P||b.avg-a.avg).forEach((r,i)=>{ant[r.e.id+'|'+(r.e.l||'')]=i+1});
+      out.forEach(r=>{const a=ant[r.e.id+'|'+(r.e.l||'')]; r.delta=a?a-r.pos:0;}); }
+  }
   return {out,ms};
 }
 /* posição na REDE (o servidor calcula; aqui só chegam as linhas do seu escopo) */
@@ -266,7 +273,7 @@ function render(){
   $('mh').innerHTML=ms.map(m=>`<span>${MES[m-1]}</span>`).join('');
   const q=st.q.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
   const rows=out.filter(r=>!q||(nm(r)+' '+sub(r)).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').includes(q));
-  $('tb').innerHTML=rows.length?rows.map(r=>`<tr class="${r.tie?'tie':''}"><td class="pos">${r.pos}${r.tot?`<small style="display:block;font-size:10px;font-weight:600;opacity:.7">de ${r.tot}</small>`:''}</td><td class="nm"><b>${nm(r)}</b><span>${sub(r)}</span></td><td class="num pts">${r.P}</td>
+  $('tb').innerHTML=rows.length?rows.map(r=>`<tr class="${r.tie?'tie':''}"><td class="pos">${r.pos}${r.delta?`<span class="st-seta ${r.delta>0?'sobe':'desce'}" title="${r.delta>0?'subiu':'caiu'} ${Math.abs(r.delta)} em relação ao período sem o último mês">${r.delta>0?'▲':'▼'}${Math.abs(r.delta)}</span>`:''}${r.tot?`<small style="display:block;font-size:10px;font-weight:600;opacity:.7">de ${r.tot}</small>`:''}</td><td class="nm"><b>${nm(r)}</b><span>${sub(r)}</span></td><td class="num pts">${r.P}</td>
     <td><span class="bd"><i style="background:var(--p3);color:var(--p3-ink)">M3 ${r.c[3]}</i><i style="background:var(--p2);color:var(--p2-ink)">M2 ${r.c[2]}</i><i style="background:var(--p1);color:var(--p1-ink)">M1 ${r.c[1]}</i></span></td>
     <td class="num">${pc(r.avg)}</td><td class="num">${r.n}/${ms.length}</td><td>${cellsHTML(r,ms)}</td></tr>`).join('')
     :`<tr><td colspan="7" class="empty">Nenhum resultado para esse filtro. Limpe a busca ou selecione mais meses.</td></tr>`;
@@ -414,6 +421,15 @@ render();
         else msg.innerHTML='<span class="u-warn">Falhou: '+((j&&j.erro)||'erro')+'</span>';
       }).catch(function(e){ msg.innerHTML='<span class="u-warn">Sem conexão: '+e.message+'</span>'; });
   };
+})();
+</script>
+<script src="st-anima.js?v=1"></script>
+<script>
+(function(){ if(!window.STAnima) return;
+  /* a lista desliza para a nova ordem ao trocar mês/aba */
+  var r0=render; render=function(){ STAnima.flip(document.getElementById('tb'),'tr',function(tr){ var b=tr.querySelector('.nm b'); return b?b.textContent:tr.textContent; }, r0); };
+  STAnima.observar(document.body,{ numeros:'#podium .pts', abas:'.tabs' });
+  STAnima.puxar(document.scrollingElement, function(){ location.reload(); });
 })();
 </script>
 </body></html>

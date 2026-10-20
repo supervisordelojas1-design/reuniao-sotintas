@@ -1993,6 +1993,7 @@ html[data-tema="escuro"] .dpq, html[data-theme="dark"] .dpq{border-color:#5a4a1c
 
 <div class="toast" id="toast"></div>
 <script src="st-dados.js?v=84"></script>
+<script src="st-anima.js?v=1"></script>
 <script>
 "use strict";
 
@@ -9662,6 +9663,39 @@ button[id^="ov"][id$="Fechar"]:hover{transform:translateY(-1px);box-shadow:0 6px
     var o=document.getElementById(id); if(!o) return; var vis=false;
     new MutationObserver(function(){ var v=o.style.display&&o.style.display!=='none'; if(v&&!vis){ o.classList.remove('st-ov-entra'); void o.offsetWidth; o.classList.add('st-ov-entra'); } vis=!!v; }).observe(o,{attributes:true,attributeFilter:['style']});
   });
+})();
+</script>
+<script>
+/* animações (etapa 2) na tela inicial: puxar para atualizar (latinha), avisos com ✓
+   e o contador de revisões de PDI vencidas pulsando no card do PDI */
+(function(){
+  if(!window.STAnima) return;
+  var ov=document.getElementById('ovInicio');
+  STAnima.puxar(ov, function(){ location.reload(); });
+  STAnima.avisos('#toast');
+  function marcar(n){
+    var card=document.querySelector('#ovInicio .ini-card[data-act="pdi"] .ini-txt'); if(!card) return;
+    var b=card.querySelector('.st-badge'); if(!n){ if(b) b.remove(); return; }
+    if(!b){ b=document.createElement('span'); b.className='st-badge'; card.appendChild(b); }
+    b.innerHTML='<i></i>'+n+(n===1?' revisão vencida':' revisões vencidas');
+  }
+  function contarVencidas(){
+    try{
+      if(!window.STDados || !STDados.crachaGuardado()) return;           /* sem crachá não pede PIN na tela inicial */
+      var pf=STDados.perfil(); if(['coord','sup','ger'].indexOf(pf)<0) return;
+      var k='st_pdi_venc_'+pf, c=JSON.parse(sessionStorage.getItem(k)||'null');
+      if(c && Date.now()-c.em<10*60000){ marcar(c.n); return; }
+      STDados.chamar('pdi').then(function(j){
+        if(!j||!j.ok) return; var hoje=new Date(); hoje=new Date(hoje.getTime()-hoje.getTimezoneOffset()*60000).toISOString().slice(0,10);
+        var n=Object.keys(j.acomp||{}).filter(function(ch){ var r=j.acomp[ch]; return r&&r.prox&&r.prox<hoje; }).length;
+        try{ sessionStorage.setItem(k,JSON.stringify({n:n,em:Date.now()})); }catch(e){}
+        marcar(n);
+      }).catch(function(){});
+    }catch(e){}
+  }
+  var aberto=ov&&ov.classList.contains('aberto');
+  if(ov) new MutationObserver(function(){ var a=ov.classList.contains('aberto'); if(a&&!aberto) contarVencidas(); aberto=a; }).observe(ov,{attributes:true,attributeFilter:['class']});
+  if(aberto) contarVencidas();
 })();
 </script>
 </body>

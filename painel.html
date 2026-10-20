@@ -1339,6 +1339,7 @@ function subVend(M,nome){if(!M)return null;const k=Object.keys(M).find(x=>mesmoV
 function vVendedor(){
  const l=D.lojas.find(x=>x.cod==ST.loja), v=vendDaVez();
  if(!l||!v) return '<div class="empty">Os seus números ainda não estão no painel deste mês.</div>';
+ if((v.pct||0)>=1&&window.STAnima) setTimeout(function(){ STAnima.comemorarUmaVez('meta-v-'+v.nome+'-'+D.periodo.mes,function(){ STAnima.confete(); STAnima.faixa('Meta batida! 🎯 Parabéns, '+tcPdf(String(v.nome).split(' ')[0])+'!','#128a52'); }); },500);
  const pp=v.meta?v.proj/v.meta:null, f=farol(v.pct);
  let h=`<div class="kpis">
   <div class="kpi hero"><div class="lb">Seu faturado</div><div class="vl">${K(v.fat)}</div>
@@ -1363,6 +1364,7 @@ function vVendedor(){
 function vLoja(cod){
  const l=D.lojas.find(x=>x.cod==cod);
  if(!l) return '<div class="empty">Loja não encontrada.</div>';
+ if((l.pctLoja||0)>=1&&window.STAnima) setTimeout(function(){ STAnima.comemorarUmaVez('meta-l-'+l.cod+'-'+D.periodo.mes,function(){ STAnima.confete(); STAnima.faixa('A loja '+l.cod+' bateu a meta! 🎯','#128a52'); }); },500);
  const vs=l.vendedores.slice().sort((a,b)=>(b.pct||0)-(a.pct||0));
  let h=kpiGrid(l,'da loja')+gaugeBox(l,'Atingimento da loja '+l.cod)+indBloco(l,D.geral)+ritmoBox(l);
  h+=`<div class="sec"><div class="sech"><h3>Vendedores</h3><span class="cnt">${vs.length} com meta ativa</span></div>`;
@@ -1895,7 +1897,7 @@ function gauge(p,tit,sub){
  return `<div class="gzc"><h4>${tit}</h4>
   <svg viewBox="0 0 140 78" role="img" aria-label="${tit}: ${PPCT(p)}">
    ${arcs}
-   <line x1="${bx}" y1="${by}" x2="${nx}" y2="${ny}" stroke="#7A8A99" stroke-width="3" stroke-linecap="round"/>
+   <line class="st-agulha" style="--g:${(t*180).toFixed(1)}deg;transform-origin:${cx}px ${cy}px" x1="${bx}" y1="${by}" x2="${nx}" y2="${ny}" stroke="#7A8A99" stroke-width="3" stroke-linecap="round"/>
    <circle cx="${cx}" cy="${cy}" r="8" fill="#fff" stroke="#B7C3CE" stroke-width="3.5"/>
   </svg>
   <div class="gzv" style="color:${f[2]=='#FDD835'?'#B59500':f[2]}">${PPCT(p)}</div>
@@ -2281,6 +2283,15 @@ window.abrirUpload=abrirUpload;window.enviarUpload=enviarUpload;
  document.addEventListener('touchstart',function(e){ var el=alvo(e); if(el){ mostra(el);
   var r=el.getBoundingClientRect(); tip.style.left=Math.max(8,Math.min(r.left,innerWidth-tip.offsetWidth-8))+'px'; tip.style.top=(r.bottom+8)+'px';
  } else { tip.style.display='none'; } },{passive:true});
+})();
+</script>
+<script src="st-anima.js?v=1"></script>
+<script>
+/* animações (etapa 2): KPIs contando, barras enchendo, ponteiro do velocímetro, vermelho pulsando, abas deslizantes */
+(function(){ if(!window.STAnima) return; var app=document.getElementById('app'), ab=document.getElementById('abas');
+  STAnima.observar(document.body,{ numeros:'#app .kpi .vl,#app .rbox .v', barras:'#app .bar > i', agulhas:'#app .st-agulha', pulso:'#app .kpi .vl[style*="--bad"]', pulsoTexto:true });
+  if(ab) STAnima.abas(ab,'.on');
+  STAnima.puxar(document.scrollingElement, function(){ location.reload(); });
 })();
 </script>
 </body>
