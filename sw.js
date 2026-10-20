@@ -7,8 +7,8 @@
  * Troque o número da versão sempre que subir um index.html novo — é o que
  * faz o aparelho baixar a versão nova em vez de servir a antiga.
  */
-var VERSAO = 'ast-v82';
-var CASCA  = ['./', './index.html', './niveis.html', './ranking.html', './proposta.html', './pdi.html', './pdi-logo.jpg', './agenda.html', './manifest.json'];
+var VERSAO = 'ast-v83';
+var CASCA  = ['./', './index.html', './niveis.html', './ranking.html', './proposta.html', './pdi.html', './pdi-logo.jpg', './st-dados.js', './agenda.html', './manifest.json'];
 
 self.addEventListener('install', function (e) {
   self.skipWaiting();

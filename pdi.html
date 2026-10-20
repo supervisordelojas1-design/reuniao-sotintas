@@ -218,6 +218,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
   </section>
   <div id="pdi-root"><p class="pdi-meta">Carregando o PDI…</p></div>
 </div>
+<script src="st-dados.js"></script>
 <script>try{if(window.self!==window.top)document.documentElement.classList.add('embutido');}catch(e){document.documentElement.classList.add('embutido');}</script>
 <script>
 /* ===== Tema claro/escuro (compartilhado: ?tema=... ou localStorage 'st_tema'; padrão escuro) ===== */
@@ -794,102 +795,65 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
 </script>
 <script>
 (function(){
-  /* ====== CONFIG — servidor do PDI (Apps Script "Servidor PDI", planilha PDI_SOTINTAS; código fora do GitHub) ====== */
-  var BACKEND_PDI = 'https://script.google.com/macros/s/AKfycbznIM0I8T-wkPiOvRbO-uhJifdyQUXToIwYd8PtEf855I5pFxb5nz5kn1eDm8HEy2JyEA/exec';
-  var PDI_TOKEN   = 'sotintas-pdi-2026';
-  /* ============================================================================================ */
+  /* ====== Dados: Servidor de Dados ST (st-dados.js). O recorte por carteira/loja é feito NO SERVIDOR,
+     pelo crachá de quem está logado: coordenação vê a rede, supervisor a carteira, gerente a loja. ====== */
   var APP_EQUIPE_URL = 'https://script.google.com/macros/s/AKfycbxC916U8rNw_-HFTW7vtFZz4AC_B1bHcTLE3bvMDWji6E5lAqkXgC0EIgQFtjHYTp8I/exec';
-  var LS_BASE='st_pdi_base_v1', LS_ACOMP='st_pdi_acomp_v1';
 
   function $(id){ return document.getElementById(id); }
   function sess(){ try{ return JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); }catch(e){ return null; } }
   function up(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().trim(); }
   function code3(s){ var m=String(s||'').match(/\d+/); return m?('00'+m[0]).slice(-3):''; }
-  function lsGet(k){ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } }
-  function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); return true; }catch(e){ return false; } }
   function ehCoord(){ var s=sess(); return !!s && (up(s.papel).indexOf('COORDEN')>=0 || s.escopo==='todos'); }
+  function getJSON(url){ return fetch(url,{cache:'no-store'}).then(function(r){ return r.json(); }); }
+  function esc(t){ return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
 
-  /* ===== Carteira de lojas por supervisor: FONTE = EQUIPE do App (mesma regra do Níveis). Reserva abaixo. ===== */
+  /* nome do supervisor de cada loja (só para rótulo): EQUIPE do App; reserva abaixo */
   var SUPMAP = {
     '010':'BRUNO','004':'BRUNO','006':'BRUNO','007':'BRUNO','002':'BRUNO','022':'BRUNO','023':'BRUNO','009':'BRUNO','012':'BRUNO','017':'BRUNO','013':'BRUNO',
     '033':'DANILO','034':'DANILO','027':'DANILO','029':'DANILO','016':'DANILO','032':'DANILO','030':'DANILO','028':'DANILO','038':'DANILO',
     '026':'RAMON','035':'RAMON','036':'RAMON','018':'RAMON','024':'RAMON','025':'RAMON','019':'RAMON','021':'RAMON',
     '015':'CARLOS EDUARDO','008':'CARLOS EDUARDO'
   };
-  function codesDoSup(sup){ var c={}; for(var k in SUPMAP){ if(SUPMAP[k]===sup) c[k]=1; } return c; }
-  function viewFallback(){
-    var s=sess(); if(!s) return {all:false, codes:{}, motivo:'sem-login'};
-    if(ehCoord()) return {all:true};
-    var nome=up(s.nome), sups=['BRUNO','DANILO','RAMON','CARLOS EDUARDO'];
-    var m=sups.filter(function(S){ return nome.indexOf(S)>=0 || nome.split(' ')[0]===S.split(' ')[0]; })[0];
-    if(!m) return {all:false, codes:{}, motivo:'sem-carteira'};
-    return {all:false, codes:codesDoSup(m), sup:m};
-  }
-  var VIEW=viewFallback();
   function aplicarEquipe(eq){
-    if(!eq || typeof eq!=='object') return;
-    var map={};
-    Object.keys(eq).forEach(function(nome){ var e=eq[nome]||{}; (e.lojas||[]).forEach(function(l){ var c=code3(l); if(c) map[c]=up(nome); }); });
+    if(!eq || typeof eq!=='object') return; var map={};
+    Object.keys(eq).forEach(function(nome){ ((eq[nome]||{}).lojas||[]).forEach(function(l){ var c=code3(l); if(c) map[c]=up(nome); }); });
     if(Object.keys(map).length) SUPMAP=map;
-    var s=sess(); if(!s) return;
-    var alvo=null, nomeU=up(s.nome);
-    Object.keys(eq).forEach(function(nome){ var u=up(nome); if(u===nomeU || nomeU.indexOf(u)>=0 || u.split(' ')[0]===nomeU.split(' ')[0]) alvo=nome; });
-    var papel=(alvo && eq[alvo].papel)?up(eq[alvo].papel):up(s.papel);
-    if(papel.indexOf('COORDEN')>=0){ VIEW={all:true}; }
-    else if(alvo){ var c={}; (eq[alvo].lojas||[]).forEach(function(l){ var k=code3(l); if(k) c[k]=1; }); VIEW = Object.keys(c).length?{all:false,codes:c,sup:up(alvo)}:VIEW; }
   }
 
-  /* ===== Dados: base do mês + acompanhamento (servidor; sem servidor, ficam neste aparelho) ===== */
-  var BASE=null, ACOMP={}, ATZ=null, MODO=BACKEND_PDI?'servidor':'local';
-  function getJSON(url){ return fetch(url,{cache:'no-store'}).then(function(r){ return r.json(); }); }
-  function post(body){ return fetch(BACKEND_PDI,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)}).then(function(r){ return r.json(); }); }
-  function carregarBase(){
-    if(!BACKEND_PDI){ var b=lsGet(LS_BASE); BASE=b&&b.base||null; ATZ=b&&b.em||null; return Promise.resolve(); }
-    return getJSON(BACKEND_PDI+'?acao=base&token='+encodeURIComponent(PDI_TOKEN)).then(function(j){ if(j&&j.ok){ BASE=j.base||null; ATZ=j.atualizado||null; } else throw new Error((j&&j.erro)||'resposta inválida'); });
-  }
-  function carregarAcomp(){
-    if(!BACKEND_PDI){ ACOMP=lsGet(LS_ACOMP)||{}; return Promise.resolve(); }
-    return getJSON(BACKEND_PDI+'?acao=acomp&token='+encodeURIComponent(PDI_TOKEN)).then(function(j){ if(j&&j.ok) ACOMP=j.acomp||{}; else throw new Error((j&&j.erro)||'resposta inválida'); });
+  var BASE=null, ACOMP={}, ATZ=null, ERRO=null, PERFIL=null;
+  function carregar(){
+    return window.STDados.chamar('pdi').then(function(j){
+      if(!j || !j.ok) throw new Error((j&&j.erro)||'resposta inválida do servidor');
+      BASE=j.base||null; ACOMP=j.acomp||{}; ATZ=j.atualizado||null; ERRO=null; PERFIL=window.STDados.perfil();
+    });
   }
   function salvarAcomp(v, estado){
-    var s=sess(); var por=(s&&s.nome)||'';
-    if(!podeVerLoja(v.c)) return Promise.reject(new Error('Este vendedor não está na sua carteira.'));
-    if(!BACKEND_PDI){ ACOMP[v.id]=estado; if(!lsSet(LS_ACOMP,ACOMP)) return Promise.reject(new Error('sem espaço no aparelho')); return Promise.resolve(); }
-    return post({acao:'salvar',token:PDI_TOKEN,chave:v.id,loja:v.c,estado:estado,por:por}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'o servidor não confirmou'); ACOMP[v.id]=estado; });
+    return window.STDados.chamar('pdiSalvar',{chave:v.id, loja:v.c, estado:estado}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'o servidor não confirmou'); ACOMP[v.id]=estado; });
   }
   function publicarBase(base, rotulo){
-    var s=sess(); base.rotulo=rotulo||base.rotulo||'';
-    if(!BACKEND_PDI){ if(!lsSet(LS_BASE,{base:base,em:new Date().toISOString()})) return Promise.reject(new Error('A base não coube no armazenamento deste aparelho.')); return Promise.resolve(); }
-    return post({acao:'publicar',token:PDI_TOKEN,base:base,por:(s&&s.nome)||''}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'o servidor não confirmou'); });
+    base.rotulo=rotulo||base.rotulo||'';
+    return window.STDados.chamar('pdiPublicar',{base:base}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'o servidor não confirmou'); ATZ=j.atualizado||new Date().toISOString(); });
   }
 
-  /* ===== Escopo ===== */
-  function podeVerLoja(c){ return VIEW.all || !!(VIEW.codes && VIEW.codes[code3(c)]); }
-  function recortar(base){
-    if(!base) return null;
-    var V=(base.V||[]).filter(function(v){ return podeVerLoja(v.c); });
-    var L={},O={}; Object.keys(base.L||{}).forEach(function(k){ if(podeVerLoja(k)) L[k]=base.L[k]; }); Object.keys(base.ORF||{}).forEach(function(k){ if(podeVerLoja(k)) O[k]=base.ORF[k]; });
-    var out={}; for(var k in base) out[k]=base[k]; out.V=V; out.L=L; out.ORF=O; return out;
-  }
   function tc(s){ return String(s||'').toLowerCase().replace(/(^|\s)(\S)/g,function(m,a,b){return a+b.toUpperCase();}); }
   function lojaNomeDe(base){ return function(id){ var k=code3(id); var m=(base.M||{})[k]; var n=m?m[0]:((base.V||[]).filter(function(v){return v.c===k;})[0]||{}).l; return k+(n?' · '+n:''); }; }
   function supDe(id){ var s=SUPMAP[code3(id)]; return s?'Supervisor '+tc(s):'Sem supervisor'; }
-
   function fmtAtz(v){ if(!v) return ''; var d=new Date(v); if(isNaN(d.getTime())) return String(v); var p=function(n){return (n<10?'0':'')+n;}; return p(d.getDate())+'/'+p(d.getMonth()+1)+'/'+d.getFullYear(); }
 
   function montar(){
     var root=$('pdi-root'), s=sess();
     $('btnBase').hidden=!ehCoord();
-    $('status').innerHTML = (MODO==='servidor'?'🟢 compartilhado':'💾 neste aparelho')+(ATZ?' · base de <b>'+fmtAtz(ATZ)+'</b>':'');
-    if(!s){ root.innerHTML='<div class="cardx erro"><h3>Entre no app primeiro</h3><p class="pdi-meta" style="margin:0">Abra o PDI pelo Só Tintas App, já logado. Cada supervisor vê só as lojas da carteira dele.</p></div>'; return; }
-    if(!VIEW.all && (!VIEW.codes || !Object.keys(VIEW.codes).length)){ root.innerHTML='<div class="cardx erro"><h3>Sem carteira de lojas</h3><p class="pdi-meta" style="margin:0">Seu login ('+(s.nome||'')+') não tem lojas na EQUIPE do app. Peça à coordenação para incluir suas lojas.</p></div>'; return; }
-    var b=recortar(BASE);
-    $('sub').textContent=(VIEW.all?'Rede Só Tintas':'Carteira de '+tc(VIEW.sup||s.nome))+(BASE&&BASE.rotulo?' · '+BASE.rotulo:'');
-    if(!b || !b.V.length){ root.innerHTML='<div class="cardx info"><h3>'+(BASE?'Nenhum vendedor da sua carteira na base':'Base do mês ainda não publicada')+'</h3><p class="pdi-meta" style="margin:0">'+(ehCoord()?'Toque em <b>Atualizar base do mês</b> e escolha o arquivo PDI_dados_&lt;mês&gt;.json gerado pela rotina mensal (pasta Downloads).':'A coordenação publica a base do mês. Quando ela publicar, seus vendedores aparecem aqui.')+(MODO==='local'?'<br><br>Atenção: o servidor do PDI ainda não está configurado; até lá a base e o acompanhamento ficam só no aparelho em que foram lançados.':'')+'</p></div>'; return; }
-    window.PdiUI.montar(root,{ base:b, acomp:ACOMP, pode:true, usuario:s.nome||'', regiaoDe:supDe, lojaNome:lojaNomeDe(BASE), nivel:VIEW.all?'rede':'regiao', salvar:function(v,estado){ return salvarAcomp(v,estado); } });
+    $('status').innerHTML = '🔒 recorte pelo seu crachá'+(ATZ?' · base de <b>'+fmtAtz(ATZ)+'</b>':'');
+    if(!s){ root.innerHTML='<div class="cardx erro"><h3>Entre no app primeiro</h3><p class="pdi-meta" style="margin:0">Abra o PDI pelo Só Tintas App, já logado.</p></div>'; return; }
+    if(ERRO){ root.innerHTML='<div class="cardx erro"><h3>Não consegui carregar o PDI</h3><p class="pdi-meta" style="margin:0 0 10px">'+esc(ERRO)+'</p><button type="button" class="btn pequeno azul" id="pdiDeNovo">Tentar de novo</button></div>'; $('pdiDeNovo').onclick=iniciar; return; }
+    var lojas=[...new Set((BASE&&BASE.V||[]).map(function(v){return v.c;}))];
+    var pf=PERFIL||'', rot = pf==='coord' ? 'Rede Só Tintas' : pf==='ger' ? (lojas.length===1&&BASE?'Loja '+lojaNomeDe(BASE)(lojas[0]):'Suas lojas') : 'Carteira de '+tc(s.nome);
+    $('sub').textContent=rot+(BASE&&BASE.rotulo?' · '+BASE.rotulo:'');
+    if(!BASE || !BASE.V || !BASE.V.length){ root.innerHTML='<div class="cardx info"><h3>'+(BASE?'Nenhum vendedor do seu escopo na base':'Base do mês ainda não publicada')+'</h3><p class="pdi-meta" style="margin:0">'+(ehCoord()?'Toque em <b>Atualizar base do mês</b> e escolha o arquivo PDI_dados_&lt;mês&gt;.json gerado pela rotina mensal (pasta Downloads).':'A coordenação publica a base do mês. Quando ela publicar, seus vendedores aparecem aqui.')+'</p></div>'; return; }
+    window.PdiUI.montar(root,{ base:BASE, acomp:ACOMP, pode:true, usuario:s.nome||'', regiaoDe:supDe, lojaNome:lojaNomeDe(BASE), nivel: pf==='coord'?'rede':pf==='ger'?'loja':'regiao', salvar:function(v,estado){ return salvarAcomp(v,estado); } });
   }
 
-  /* ===== Publicar base (só coordenação) ===== */
+  /* ===== Publicar base (só coordenação; o servidor confere pelo crachá) ===== */
   var PREVIA=null;
   $('btnBase').onclick=function(){ $('cardBase').hidden=!$('cardBase').hidden; };
   $('arqBase').onchange=function(){
@@ -898,21 +862,24 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
         $('previa').innerHTML='<b>Prévia:</b> '+j.V.length+' vendedores · '+res.c.P1+' P1 · '+res.c.P2+' P2 · '+res.c.P3+' P3 · '+res.c.P4+' P4 · '+res.c.PI+' em integração · '+window.PdiUI.brl(res.mesa)+' de bônus na mesa.';
         if(!$('rotBase').value) $('rotBase').value=j.rotulo||('base '+f.name.replace(/^PDI_dados_|\.json$/gi,''));
         $('btnPublicar').disabled=false;
-      }catch(e){ PREVIA=null; $('previa').innerHTML='<span class="pdi-bad">Não deu para ler o arquivo: '+e.message+'</span>'; $('btnPublicar').disabled=true; } };
+      }catch(e){ PREVIA=null; $('previa').innerHTML='<span class="pdi-bad">Não deu para ler o arquivo: '+esc(e.message)+'</span>'; $('btnPublicar').disabled=true; } };
     r.readAsText(f,'utf-8');
   };
   $('btnPublicar').onclick=function(){
     if(!PREVIA||!ehCoord()) return; var bt=this; bt.disabled=true; bt.textContent='Publicando…';
-    publicarBase(PREVIA,$('rotBase').value.trim()).then(function(){ BASE=PREVIA; ATZ=new Date().toISOString(); PREVIA=null; $('cardBase').hidden=true; $('previa').textContent=''; $('arqBase').value=''; bt.textContent='Publicar base'; montar(); })
-      .catch(function(e){ $('previa').innerHTML='<span class="pdi-bad">Não publicou: '+e.message+'</span>'; bt.disabled=false; bt.textContent='Publicar base'; });
+    publicarBase(PREVIA,$('rotBase').value.trim()).then(function(){ PREVIA=null; $('cardBase').hidden=true; $('previa').textContent=''; $('arqBase').value=''; bt.textContent='Publicar base'; return iniciar(); })
+      .catch(function(e){ $('previa').innerHTML='<span class="pdi-bad">Não publicou: '+esc(e.message)+'</span>'; bt.disabled=false; bt.textContent='Publicar base'; });
   };
 
   /* ===== Início ===== */
-  var equipe = APP_EQUIPE_URL ? getJSON(APP_EQUIPE_URL+'?acao=equipe').then(function(j){ if(j&&j.ok&&j.equipe) aplicarEquipe(j.equipe); }).catch(function(){}) : Promise.resolve();
-  Promise.all([equipe, carregarBase(), carregarAcomp()]).then(montar).catch(function(e){
-    $('pdi-root').innerHTML='<div class="cardx erro"><h3>Não consegui carregar o PDI</h3><p class="pdi-meta" style="margin:0">'+e.message+'. Verifique a internet e toque em voltar e abrir de novo.</p></div>';
-  });
-  window.__PDI={VIEW:function(){return VIEW;},recarregar:function(){ return Promise.all([carregarBase(),carregarAcomp()]).then(montar); }};
+  function iniciar(){
+    $('pdi-root').innerHTML='<p class="pdi-meta">Carregando o PDI…</p>';
+    if(!sess()){ montar(); return Promise.resolve(); }
+    return carregar().catch(function(e){ ERRO=e.message||String(e); }).then(montar);
+  }
+  getJSON(APP_EQUIPE_URL+'?acao=equipe').then(function(j){ if(j&&j.ok&&j.equipe) aplicarEquipe(j.equipe); }).catch(function(){});
+  iniciar();
+  window.__PDI={recarregar:iniciar};
 })();
 </script>
 </body></html>

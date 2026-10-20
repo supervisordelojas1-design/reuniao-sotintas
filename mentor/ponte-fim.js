@@ -39,7 +39,7 @@
         var h = perfilOriginal.apply(this, arguments);
         h = h.replace('>Sair da conta</button>', '>Voltar ao Assistente ST</button>');
         h = h.replace(/<button class="btn bloco link mt-1 pequeno"[\s\S]*?Zerar demonstração<\/button>/, '');
-        h = h.replace('modo demonstração', 'progresso guardado neste aparelho');
+        h = h.replace('modo demonstração', 'progresso salvo no servidor do app');
         return h;
       };
     }
@@ -59,7 +59,7 @@
           if (/^\s*Sair\s*$/.test(b.textContent)) { b.textContent = 'Voltar ao Assistente ST'; b.onclick = function (e) { e.preventDefault(); voltarAoApp(); }; }
         });
         Array.prototype.forEach.call(alvo.querySelectorAll('.rodape'), function (r) {
-          if (/modo demonstração/.test(r.innerHTML)) r.innerHTML = r.innerHTML.replace('🧪 modo demonstração', 'progresso guardado neste aparelho');
+          if (/modo demonstração/.test(r.innerHTML)) r.innerHTML = r.innerHTML.replace('🧪 modo demonstração', 'progresso salvo no servidor do app');
         });
       };
       new MutationObserver(limpar).observe(alvo, { childList: true, subtree: true }); limpar();

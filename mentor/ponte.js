@@ -67,7 +67,19 @@
   d.versao = d.versao || 1;
 
   var login = loginDe(s.nome);
-  var u = d.usuarios[login] || { id: uuid(), login: login, criado_em: new Date().toISOString() };
+  var u = d.usuarios[login] || { id: login, login: login, criado_em: new Date().toISOString() };
+  /* Fase 2: o id passa a ser o login (igual em qualquer aparelho, para o progresso ir à planilha).
+     Quem já tinha progresso com o id antigo deste aparelho leva tudo para o id novo. */
+  if (u.id !== login) {
+    var velho = u.id;
+    ['progresso', 'xp', 'conquistas', 'tentativas', 'atividade', 'disc'].forEach(function (k) {
+      if (d[k][velho] !== undefined && d[k][login] === undefined) d[k][login] = d[k][velho];
+      delete d[k][velho];
+    });
+    d.chat.forEach(function (c) { if (c.colaborador_id === velho) c.colaborador_id = login; });
+    (((d.conteudo_override || {}).niveis_vendedores) || []).forEach(function (v) { if (v.colaborador_id === velho) v.colaborador_id = login; });
+    u.id = login;
+  }
   u.nome = String(s.nome);
   u.cargo = String(s.papel || 'Colaborador');
   u.perfil = perfil;

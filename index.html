@@ -1992,6 +1992,7 @@ html[data-tema="escuro"] .dpq, html[data-theme="dark"] .dpq{border-color:#5a4a1c
 </div>
 
 <div class="toast" id="toast"></div>
+<script src="st-dados.js"></script>
 <script>
 "use strict";
 
@@ -6983,6 +6984,8 @@ $('lgEntrar').onclick=function(){
                    monta o perfil com isso; vendedor abre só os cards dele */
                 vendedor:!!res.vendedor, lotacao:res.lotacao||'', carteira:res.carteira||[],
                 gerencia:res.gerencia||[], trocarPin:!!res.trocarPin});
+      /* crachá do Servidor de Dados (PDI, Níveis, Ranking, Mentor): aproveita o PIN que acabou de ser digitado */
+      try{ if(window.STDados) STDados.entrar(res.nome||nome, pin).catch(function(){}); }catch(e){}
       if(res.novo) setTimeout(function(){ toast('Acesso criado. Confira seus dados em Minha conta.'); }, 900);
     })
     .catch(function(){
@@ -7025,6 +7028,7 @@ $('cnFechar').onclick=function(){ $('modalConta').classList.remove('show'); };
 $('cnSair').onclick=function(){
   if(!confirm('Sair e entrar com outro nome?')) return;
   try{ localStorage.removeItem(LS_SESSAO); }catch(e){}
+  try{ if(window.STDados) STDados.esquecer(); }catch(e){}
   location.reload();
 };
 function cnBox(cor,html){
@@ -9085,7 +9089,7 @@ syncNav();
         <span class="ini-txt"><span class="ini-nm">Mentor ST PRO</span><span class="ini-ds">Treinamento, trilha, DISC e assessor técnico</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
-      <button type="button" class="ini-card feat" data-act="niveis" data-gate="1" data-vend="1">
+      <button type="button" class="ini-card feat" data-act="niveis" data-gate="1" data-vend="1" data-ger="1">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-target"/></svg></span>
         <span class="ini-txt"><span class="ini-nm">Níveis</span><span class="ini-ds">Lojas, vendedores e prazos</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
@@ -9095,7 +9099,7 @@ syncNav();
         <span class="ini-txt"><span class="ini-nm">Proposta de Vendedor</span><span class="ini-ds">Fixo, comissão, bônus e simulador</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
-      <button type="button" class="ini-card feat" data-act="pdi" data-gate="1">
+      <button type="button" class="ini-card feat" data-act="pdi" data-gate="1" data-ger="1">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-flag"/></svg></span>
         <span class="ini-txt"><span class="ini-nm">PDI Comercial</span><span class="ini-ds">Prioridade e desenvolvimento dos vendedores</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
@@ -9254,13 +9258,14 @@ body.foco .wrap{padding-bottom:40px}
     if(!p) return true; return p.indexOf('coorden')>=0 || p.indexOf('supervis')>=0; }
 
   function ehVend(){ var s=sessao(); return !!(s && (s.vendedor || /vendedor/i.test(String(s.papel||'')))); }
+  function ehGer(){ var s=sessao(); if(!s||ehVend()) return false; return s.escopo==='lojas' || /gerente/i.test(String(s.papel||'')); }
   function ehLider(){ var s=sessao(); if(!s||ehVend()) return false; var p=String(s.papel||'').toLowerCase();
     return s.escopo==='todos' || s.escopo==='lojas' || p.indexOf('coorden')>=0 || p.indexOf('supervis')>=0 || p.indexOf('gerente')>=0; }
   function aplicarGate(){
     var ver=podeVer(), vend=ehVend();
     document.body.classList.toggle('modo-vendedor', vend);
     Array.prototype.forEach.call(grid.querySelectorAll('[data-gate]'),function(c){
-      c.style.display = (ver || (vend && c.hasAttribute('data-vend'))) ? '' : 'none';
+      c.style.display = (ver || (vend && c.hasAttribute('data-vend')) || (ehGer() && c.hasAttribute('data-ger'))) ? '' : 'none';
     });
     Array.prototype.forEach.call(grid.querySelectorAll('[data-lider]'),function(c){
       c.style.display = ehLider() ? '' : 'none';
