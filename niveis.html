@@ -39,6 +39,7 @@ h1{font-family:var(--f-display);font-weight:800;font-size:clamp(24px,4vw,36px);l
 .hd-top{display:flex;align-items:center;gap:8px}
 .themebtn{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:700 13px var(--f-body);padding:7px 12px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;line-height:1}
 .themebtn:hover{border-color:var(--navy)}
+html.embutido .themebtn{display:none} /* dentro do app: o tema vem do Assistente ST */
 .themebtn .ic{font-size:15px}
 .atz{color:var(--muted);font-size:11.5px;font-weight:600;white-space:nowrap}
 .atz b{color:var(--ink);font-weight:800}
@@ -181,6 +182,7 @@ tr.atraso-row{background:var(--atraso-bg)}
 </section>
 <div class="foot">Mudança = comparação da régua Jul–Set com a de Outubro, usando a Méd. 90 dias atual. Loja out/26: Ouro&gt;250k · Prata 150–250k · Bronze&lt;150k</div>
 </div>
+<script>try{if(window.self!==window.top)document.documentElement.classList.add('embutido');}catch(e){document.documentElement.classList.add('embutido');}</script>
 <script>
 /* ===== Tema claro/escuro (compartilhado: ?tema=... ou localStorage 'st_tema'; padrão escuro) ===== */
 (function(){

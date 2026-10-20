@@ -31,6 +31,7 @@ h1{font-family:var(--f-display);font-weight:800;font-size:clamp(24px,4vw,36px);l
 .hd-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .themebtn{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:700 13px var(--f-body);padding:7px 12px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;line-height:1}
 .themebtn:hover{border-color:var(--navy)}
+html.embutido .themebtn{display:none} /* dentro do app: o tema vem do Assistente ST */
 .status{font-size:12px;color:var(--muted)}
 .status b{color:var(--ink)}
 .cardx{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:grid;gap:10px}
@@ -152,6 +153,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
   </section>
   <div id="pdi-root"><p class="pdi-meta">Carregando o PDI…</p></div>
 </div>
+<script>try{if(window.self!==window.top)document.documentElement.classList.add('embutido');}catch(e){document.documentElement.classList.add('embutido');}</script>
 <script>
 /* ===== Tema claro/escuro (compartilhado: ?tema=... ou localStorage 'st_tema'; padrão escuro) ===== */
 (function(){
@@ -591,8 +593,8 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
 </script>
 <script>
 (function(){
-  /* ====== CONFIG — cole a URL /exec do Apps Script do PDI aqui (ver pdi-backend.gs.txt) ====== */
-  var BACKEND_PDI = '';
+  /* ====== CONFIG — servidor do PDI (Apps Script "Servidor PDI", planilha PDI_SOTINTAS; código fora do GitHub) ====== */
+  var BACKEND_PDI = 'https://script.google.com/macros/s/AKfycbznIM0I8T-wkPiOvRbO-uhJifdyQUXToIwYd8PtEf855I5pFxb5nz5kn1eDm8HEy2JyEA/exec';
   var PDI_TOKEN   = 'sotintas-pdi-2026';
   /* ============================================================================================ */
   var APP_EQUIPE_URL = 'https://script.google.com/macros/s/AKfycbxC916U8rNw_-HFTW7vtFZz4AC_B1bHcTLE3bvMDWji6E5lAqkXgC0EIgQFtjHYTp8I/exec';

@@ -1,0 +1,164 @@
+/* ═══════════════════════════════════════════════════════════════
+   MENTOR ST PRO — padrão visual do Só Tintas Apps (v62)
+   Carregado DEPOIS de style.css. Mesmo visual do Ranking, Níveis e PDI:
+   fundo neutro, cartões brancos (claro) ou azul-noite (escuro),
+   título em Bricolage Grotesque, texto em Public Sans, destaque azul.
+   O tema vem do app: ?tema=light|dark, localStorage 'st_tema' e
+   postMessage({st_tema}) — ver tema-st.js.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  color-scheme: light;
+  --st-bg: #f5f6f8; --st-surface: #ffffff; --st-surface-2: #eef1f6;
+  --st-ink: #14213a; --st-muted: #5d6779; --st-muted-2: #8a93a2; --st-line: #dde1e8;
+  --st-accent: #1f4fd1; --st-accent-ink: #ffffff;
+  --st-red: #d32027; --st-yellow: #FFD100;
+  --st-tint-blue: #e8eefc; --st-tint-green: #e3f5ea; --st-tint-yellow: #fff6d6; --st-tint-red: #fde8e8;
+  --st-f-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --st-f-body: "Public Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* variáveis originais do Mentor apontando para o padrão */
+  --fundo: var(--st-bg); --card: var(--st-surface);
+  --texto: var(--st-ink); --texto-2: var(--st-muted); --texto-3: var(--st-muted-2);
+  --borda: var(--st-line);
+  --azul: var(--st-accent); --azul-escuro: #14306f; --azul-claro: var(--st-tint-blue);
+  --vermelho: var(--st-red); --vermelho-escuro: #a8161c;
+  --verde-claro: var(--st-tint-green);
+  --sombra: 0 1px 2px rgba(20, 33, 58, .05);
+  --sombra-2: 0 8px 24px rgba(20, 33, 58, .10);
+  --raio: 14px;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --st-bg: #0f1522; --st-surface: #172034; --st-surface-2: #1d2840;
+  --st-ink: #e8ecf4; --st-muted: #9aa5bb; --st-muted-2: #7c879d; --st-line: #2a3550;
+  --st-accent: #7aa2ff; --st-accent-ink: #0f1522;
+  --st-red: #ff6b70;
+  --st-tint-blue: #1b2a4d; --st-tint-green: #15352a; --st-tint-yellow: #2e2814; --st-tint-red: #3a1a1e;
+  --azul-escuro: #24427f; --verde: #4cc98a;
+  --sombra: none; --sombra-2: 0 8px 24px rgba(0, 0, 0, .35);
+}
+
+body { font-family: var(--st-f-body); background: var(--st-bg); color: var(--st-ink); }
+h1, h2, h3 { font-family: var(--st-f-display); letter-spacing: -.01em; }
+#app { background: var(--st-bg); }
+@media (min-width: 600px) { #app { box-shadow: 0 0 0 1px var(--st-line); } }
+
+/* ── Cabeçalho no padrão dos painéis: "SÓ TINTAS · MENTOR ST PRO" + título grande ── */
+.cabecalho, .cabecalho.azul, .cabecalho.verde, .cabecalho.amarelo, .cabecalho.escuro {
+  background: var(--st-bg); color: var(--st-ink); border-radius: 0; padding: 16px 16px 6px;
+}
+.cabecalho::before, .cabecalho::after { display: none; }
+.cabecalho h1, .cabecalho.amarelo h1 { color: var(--st-ink); font-size: 1.65rem; font-weight: 800; line-height: 1.1; margin-top: 2px; }
+.cabecalho .sub { color: var(--st-muted); opacity: 1; }
+.cabecalho-topo { justify-content: flex-start; margin-bottom: 4px; min-height: 0; }
+.cabecalho-topo > span:empty { display: none; }
+.btn-voltar, .cabecalho.amarelo .btn-voltar {
+  background: var(--st-surface); color: var(--st-ink); border: 1px solid var(--st-line); width: 34px; height: 34px; border-radius: 10px;
+}
+.logo-st .marca {
+  background: none; box-shadow: none; padding: 0; border-radius: 0; color: var(--st-muted);
+  font-family: var(--st-f-body); font-size: .74rem; font-weight: 700; letter-spacing: .14em;
+}
+.cabecalho .logo-st .marca::after { content: " · MENTOR ST PRO"; }
+.cabecalho .anel .anel-fundo { stroke: var(--st-line); }
+.cabecalho .anel .anel-valor { stroke: var(--st-yellow); }
+.cabecalho .anel .anel-texto { color: var(--st-ink); }
+.cabecalho .xp-pill { background: var(--st-surface); border: 1px solid var(--st-line); color: var(--st-ink); backdrop-filter: none; }
+.cabecalho .pequeno[style*="opacity"] { color: var(--st-muted); }
+.cabecalho .linha.mt-2 { background: var(--st-surface); border: 1px solid var(--st-line); border-radius: 14px; padding: 12px; }
+
+/* ── Superfícies que eram brancas fixas ── */
+.card, .item-lista, .opcao, .quiz-opcao, .nav-inferior, .modal, .g-modal, .kpi, .tabela-wrap,
+.hist-stats > div, .org-arvore, .org-painel, .org-diretor, .org-chip, .vp-tile, .vf-item, .nv-linha,
+.balao.bot, .login-corpo, .conquista, .chip, .sugestoes button, .abas button.ativa, .login-abas button.ativa,
+.thumb-prod, .foto-produto, .nao-permitimos .np-ico {
+  background: var(--st-surface); color: var(--st-ink);
+}
+.card { border: 1px solid var(--st-line); box-shadow: var(--sombra); }
+.chip.ativo { background: var(--st-accent); color: var(--st-accent-ink); border-color: var(--st-accent); }
+input, select, textarea, .campo input, .campo select, .campo textarea, .chat-entrada input, .vf-item input {
+  background: var(--st-surface); color: var(--st-ink); border-color: var(--st-line);
+}
+.abas, .login-abas { background: var(--st-surface-2); }
+.abas button.ativa, .login-abas button.ativa { color: var(--st-accent); }
+.barra { background: var(--st-surface-2); }
+.nav-inferior { border-top-color: var(--st-line); }
+.nav-inferior button.ativo { color: var(--st-accent); }
+.org-diretor.sel::after { background: var(--st-surface); }
+.tl-item::before { background: var(--st-surface); box-shadow: 0 0 0 3px var(--st-bg); }
+
+/* tons claros (avisos, destaques) */
+.card.destaque { background: var(--st-tint-yellow); border-color: #e0b800; }
+.aula-conteudo .destaque, .destaque-box, .aviso-demo { background: var(--st-tint-yellow); }
+.tl-card.mascote { background: var(--st-surface); }
+.aula-conteudo th { background: var(--st-tint-blue); color: var(--st-ink); }
+
+/* botões: azul do padrão; vermelho fica para o que é alerta */
+.btn { background: var(--st-accent); color: var(--st-accent-ink); }
+.chat-entrada button { background: var(--st-accent); color: var(--st-accent-ink); }
+.balao.eu { background: var(--st-accent); color: var(--st-accent-ink); }
+.passo .n { background: var(--st-accent); color: var(--st-accent-ink); }
+
+/* botões e etiquetas que tinham cinza/tons claros fixos */
+.btn.amarelo { background: var(--st-yellow); color: #14213a; }
+.btn.cinza, .etiqueta.cinza, .icone-grande.cinza { background: var(--st-surface-2); color: var(--st-ink); }
+.btn.verde { color: #fff; }
+:root[data-theme="dark"] .btn.verde { color: #0f1522; }
+:root[data-theme="dark"] .etiqueta.vermelha, :root[data-theme="dark"] .icone-grande.vermelho { background: var(--st-tint-red); }
+:root[data-theme="dark"] .etiqueta.verde { color: #7fe0ae; }
+:root[data-theme="dark"] .etiqueta.laranja, :root[data-theme="dark"] .icone-grande.laranja { background: #3a2412; color: #ffb877; }
+
+/* botões e textos dentro do cabeçalho (eram brancos sobre faixa colorida) */
+.cabecalho .btn.mini, .cabecalho .btn { background: var(--st-surface) !important; color: var(--st-ink); border: 1px solid var(--st-line); }
+.cabecalho .mini[style*="opacity"], .cabecalho [style*="opacity:.9"] { color: var(--st-muted); opacity: 1 !important; }
+
+/* blocos cinza/amarelo-claro fixos (painel da equipe, níveis, evolução) */
+.nv-resumo > div, .nv-contagem > div { background: var(--st-surface-2); }
+.vp-tile.verde { background: var(--st-tint-green); }
+.vp-tile.amarelo, .nv-tab tr.atual td, .nv-curva.atual, .nv-linha.atual { background: var(--st-tint-yellow); }
+.vp-tile.vermelho, table.tabela tr.nv-atraso td { background: var(--st-tint-red); }
+.nv-tab th { background: var(--st-tint-blue); color: var(--st-ink); }
+.nv-treino { background: var(--st-tint-blue); }
+.nv-ganho { background: var(--st-tint-green); }
+.nv-vinc { font-family: var(--st-f-body); background: var(--st-surface); color: var(--st-ink); }
+:root[data-theme="dark"] .vp-tile.verde { border-color: #245a40; }
+:root[data-theme="dark"] .vp-tile.amarelo, :root[data-theme="dark"] .nv-linha.atual { border-color: #6b5a1c; }
+:root[data-theme="dark"] .vp-tile.vermelho { border-color: #6b2a30; }
+
+/* aviso "entre pelo Assistente ST" e tela de login */
+.login-tela { background: var(--st-bg); }
+.login-topo { color: var(--st-ink); }
+.login-topo .titulo-app { font-family: var(--st-f-display); }
+.login-topo .titulo-app span { color: var(--st-accent); }
+
+/* Painel do gestor (desktop) */
+.g-lateral { background: var(--st-surface); color: var(--st-ink); border-right: 1px solid var(--st-line); }
+.g-lateral nav button { color: var(--st-muted); }
+.g-lateral nav button:hover { background: var(--st-surface-2); color: var(--st-ink); }
+.g-lateral nav button.ativo { background: var(--st-accent); color: var(--st-accent-ink); }
+.g-lateral a, .g-lateral a:visited { color: var(--st-accent); }
+
+/* relatório e certificado continuam em papel branco (impressão) */
+.rel { background: #fff; color: #1A1D24; }
+
+/* ── Escuro: o que tinha cor clara escrita direto no HTML ── */
+:root[data-theme="dark"] [style*="background:var(--fundo)"] { background: var(--st-surface-2) !important; }
+:root[data-theme="dark"] [style*="color:#222"] { color: var(--st-ink) !important; }
+:root[data-theme="dark"] .etiqueta.amarela { background: #3a3110; color: #f3d36b; }
+:root[data-theme="dark"] .icone-grande.amarelo { background: #3a3110; }
+:root[data-theme="dark"] .card.destaque { border-color: #6b5a1c; }
+:root[data-theme="dark"] .card.info { background: var(--st-tint-blue); border-color: #2f4170; }
+:root[data-theme="dark"] .card.sucesso { background: var(--st-tint-green); border-color: #245a40; }
+:root[data-theme="dark"] .card.alerta { background: var(--st-tint-red); border-color: #6b2a30; }
+:root[data-theme="dark"] img { background-color: transparent; }
+:root[data-theme="dark"] .aula-conteudo h2, :root[data-theme="dark"] .kpi .v { color: var(--st-accent); }
+:root[data-theme="dark"] table.tabela th, :root[data-theme="dark"] .aula-conteudo th, :root[data-theme="dark"] .nv-tab th { color: var(--st-ink); }
+:root[data-theme="dark"] [style*="color:var(--azul-escuro)"] { color: var(--st-accent) !important; }
+:root[data-theme="dark"] .aula-conteudo h3 { color: #ff8a8e; }
+
+/* ── Celular ── */
+@media (max-width: 400px) {
+  .cabecalho h1 { font-size: 1.45rem; }
+  .tela { padding-left: 12px; padding-right: 12px; }
+}

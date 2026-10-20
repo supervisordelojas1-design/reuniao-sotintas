@@ -1,7 +1,7 @@
 /* MENTOR ST PRO — service worker: deixa o app abrir rápido e funcionar
    sem internet para o que já foi visitado (conteúdo, páginas dos guias). */
-const CACHE = 'mentor-st-pro-v7-st1';
-const BASE = ['./', './index.html', './config.js', './ponte.js', './ponte-fim.js', './assets/style.css',
+const CACHE = 'mentor-st-pro-v7-st2';
+const BASE = ['./', './index.html', './config.js', './ponte.js', './ponte-fim.js', './assets/style.css', './assets/tema-st.css', './tema-st.js',
   './assets/conteudo-base.js', './assets/conteudo-aulas.js', './assets/conteudo-questoes.js', './assets/conteudo-tecnico.js', './assets/conteudo-produtos.js', './assets/conteudo-checklists.js',
   './assets/disc-data.js', './assets/gamificacao.js', './assets/assessor.js', './assets/db.js', './assets/app.js', './assets/app-assessor.js', './assets/app-checklists.js', './assets/app-disc.js', './assets/app-equipe.js', './assets/app-evolucao.js', './assets/niveis.js', './assets/conteudo-niveis.js',
   './assets/icons/icon-192.png', './assets/icons/icon-512.png'];
