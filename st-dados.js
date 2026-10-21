@@ -182,6 +182,25 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', faixaVisao); else faixaVisao();
   g.addEventListener('storage', function (e) { if (e.key === LS_VISAO) faixaVisao(); });
 
+  /* ── registro de uso: no máximo 1 linha por pessoa/tela a cada 30 min; só com o crachá da própria pessoa
+     (nunca no "Ver como"). Não pede PIN e não mostra nada: se não houver crachá, simplesmente não registra. ── */
+  var TELAS_ARQ = { 'index.html': 'inicio', '': 'inicio', 'painel.html': 'painel', 'ranking.html': 'ranking', 'niveis.html': 'niveis', 'pdi.html': 'pdi',
+    'semana.html': 'semana', 'tv.html': 'tv', 'agenda.html': 'agenda', 'proposta.html': 'proposta', 'uso.html': 'uso' };
+  function registrar(tela) {
+    try {
+      if (visao()) return;
+      var c = crachaGuardado(true); if (!c) return;
+      tela = String(tela || '').toLowerCase().replace(/[^a-z]/g, ''); if (!tela) return;
+      var k = 'st_uso_reg:' + norm(c.nome) + ':' + tela, ult = Number(localStorage.getItem(k) || 0);
+      if (Date.now() - ult < 30 * 60000) return;
+      localStorage.setItem(k, String(Date.now()));
+      var cel = (g.matchMedia && g.matchMedia('(pointer:coarse)').matches) || /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent || '');
+      post({ acao: 'acesso', tk: c.tk, tela: tela, disp: cel ? 'cel' : 'pc' }).catch(function () {});
+    } catch (e) {}
+  }
+  function telaAtual() { var p = location.pathname; if (/\/mentor\//.test(p)) return 'mentor'; var f = p.split('/').pop(); return Object.prototype.hasOwnProperty.call(TELAS_ARQ, f) ? TELAS_ARQ[f] : ''; }
+  setTimeout(function () { var t = telaAtual(); if (t) registrar(t); }, 2500);
+
   g.STDados = { URL: URL_DADOS, chamar: chamar, entrar: entrar, cracha: cracha, esquecer: esquecer, perfil: perfil, crachaGuardado: crachaGuardado,
-    visao: visao, sessaoVisao: sessaoVisao, semCache: semCache, limparCache: limparCache, entrarVisao: entrarVisao, sairVisao: sairVisao, ehCoordReal: ehCoordReal, faixaVisao: faixaVisao };
+    visao: visao, sessaoVisao: sessaoVisao, semCache: semCache, limparCache: limparCache, entrarVisao: entrarVisao, sairVisao: sairVisao, ehCoordReal: ehCoordReal, faixaVisao: faixaVisao, registrar: registrar };
 })(window);
