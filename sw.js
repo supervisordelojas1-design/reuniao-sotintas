@@ -7,7 +7,7 @@
  * Troque o número da versão sempre que subir um index.html novo — é o que
  * faz o aparelho baixar a versão nova em vez de servir a antiga.
  */
-var VERSAO = 'ast-v108';
+var VERSAO = 'ast-v109';
 var CASCA  = ['./', './index.html', './niveis.html', './ranking.html', './proposta.html', './pdi.html', './pdi-logo.jpg', './st-hora.js?v=1', './st-dados.js?v=89', './st-anima.js?v=3', './agenda.html', './tv.html', './semana.html', './uso.html', './cadastro.html', './manifest.json'];
 
 self.addEventListener('install', function (e) {
@@ -28,7 +28,8 @@ self.addEventListener('fetch', function (e) {
      O cache fica so como socorro quando nao ha sinal. */
   if (e.request.mode === "navigate") {
     e.respondWith(
-      fetch(e.request).catch(function () {
+      /* no-cache: confere com o site (o GitHub guarda cópia por 10 min); só baixa de novo se mudou */
+      fetch(e.request.url, { cache: 'no-cache', credentials: 'same-origin' }).catch(function () {
         return caches.match(e.request).then(function (r) {
           if (r) return r;
           return caches.match("index.html").then(function (r2) {
@@ -48,7 +49,7 @@ self.addEventListener('fetch', function (e) {
   /* Rede primeiro, cache como rede de segurança: assim uma versão nova do
      app chega no primeiro acesso com sinal, e o app abre mesmo sem sinal. */
   e.respondWith(
-    fetch(req).then(function (resp) {
+    fetch(url.origin === self.location.origin ? new Request(req, { cache: 'no-cache' }) : req).then(function (resp) {
       if (resp && resp.status === 200 && resp.type === 'basic') {
         var copia = resp.clone();
         caches.open(VERSAO).then(function (c) { c.put(req, copia); });

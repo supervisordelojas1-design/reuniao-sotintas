@@ -1,6 +1,6 @@
 /* MENTOR ST PRO — service worker: deixa o app abrir rápido e funcionar
    sem internet para o que já foi visitado (conteúdo, páginas dos guias). */
-const CACHE = 'mentor-st-pro-v12-st15';
+const CACHE = 'mentor-st-pro-v12-st16';
 const BASE = ['./', './index.html', './config.js', './ponte.js', './sync.js', '../st-hora.js?v=1', '../st-dados.js?v=89', '../st-anima.js?v=3', './ponte-fim.js', './assets/style.css', './assets/tema-st.css', './tema-st.js',
   './assets/conteudo-base.js', './assets/conteudo-aulas.js', './assets/conteudo-questoes.js', './assets/conteudo-tecnico.js', './assets/conteudo-produtos.js', './assets/conteudo-checklists.js',
   './assets/disc-data.js', './assets/gamificacao.js', './assets/assessor.js', './assets/db.js', './assets/app.js', './assets/app-assessor.js', './assets/app-checklists.js', './assets/app-disc.js', './assets/app-equipe.js', './assets/app-evolucao.js', './assets/niveis.js', './assets/conteudo-niveis.js',
@@ -19,5 +19,7 @@ self.addEventListener('fetch', (e) => {
     return;
   }
   // Demais arquivos: rede primeiro, cache como reserva
-  e.respondWith(fetch(e.request).then(r => { if (r.ok && url.origin === location.origin) caches.open(CACHE).then(c => c.put(e.request, r.clone())); return r; }).catch(() => caches.match(e.request)));
+  /* mesma origem: confere com o site (no-cache) para a versão nova chegar na hora */
+  const pedido = url.origin !== location.origin ? e.request : e.request.mode === 'navigate' ? new Request(e.request.url, { cache: 'no-cache', credentials: 'same-origin' }) : new Request(e.request, { cache: 'no-cache' });
+  e.respondWith(fetch(pedido).then(r => { if (r.ok && url.origin === location.origin) caches.open(CACHE).then(c => c.put(e.request, r.clone())); return r; }).catch(() => caches.match(e.request)));
 });
