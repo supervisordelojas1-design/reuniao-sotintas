@@ -1,5 +1,5 @@
 <!doctype html><html lang="pt-BR" data-theme="dark" style="color-scheme:dark"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>PDI Comercial · Só Tintas</title>
+<title>PDI Mensal · Só Tintas</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600;700&display=swap">
@@ -212,7 +212,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
 <div class="wrap">
   <div class="topbar"></div>
   <header>
-    <div><div class="eyebrow">Só Tintas · Gestão</div><h1>PDI Comercial</h1><div class="sub" id="sub">Prioridade de desenvolvimento e acompanhamento dos vendedores</div></div>
+    <div><div class="eyebrow">Só Tintas · Gestão</div><h1>PDI Mensal</h1><div class="sub" id="sub">Prioridade de desenvolvimento e acompanhamento dos vendedores</div></div>
     <div class="hd-actions">
       <span class="status" id="status"></span>
       <button type="button" class="btn pequeno" id="btnBase" hidden>Atualizar base do mês</button>
@@ -258,7 +258,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
 </script>
 <script>
 /* ═══════════════════════════════════════════════════════════════
-   MENTOR ST PRO — PDI Comercial (Plano de Desenvolvimento Individual)
+   MENTOR ST PRO — PDI Mensal (Plano de Desenvolvimento Individual)
    Ranking de prioridade, ficha de PDI e acompanhamento por vendedor.
    Usado no app (aba Equipe → PDI) e no Painel do Gestor (seção PDI).
 
@@ -667,7 +667,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
       return B;
     }
     function termoPagina(v, t) {
-      return `<div class="tm-pg"><header class="tm-hd"><img src="pdi-logo.jpg" alt=""><div class="tm-hd-t"><small>Plano de Desenvolvimento Individual</small><h2>PDI Comercial · Termo de compromisso</h2><span>${esc(v.nome)} · ${esc(opts.lojaNome(v.loja_id))}</span></div>
+      return `<div class="tm-pg"><header class="tm-hd"><img src="pdi-logo.jpg" alt=""><div class="tm-hd-t"><small>Plano de Desenvolvimento Individual</small><h2>PDI Mensal · Termo de compromisso</h2><span>${esc(v.nome)} · ${esc(opts.lojaNome(v.loja_id))}</span></div>
         <div class="tm-hd-n"><small>Termo nº</small><b>${esc(termoNum(v, t))}</b><small>${dt(t.data)}</small></div></header><div class="tm-faixa"><i></i><i></i><i></i></div>
         <main class="tm-corpo"></main><footer class="tm-ft"><span><b>Só Tintas</b> · Colorindo Vidas e Realizando Sonhos</span><span>Documento interno · liderança e colaborador</span><span data-pg></span></footer></div>`;
     }
@@ -693,7 +693,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
           const url = cv.toDataURL('image/jpeg', 0.88); imgs.push(url);
           if (i) pdf.addPage(); pdf.addImage(url, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
         }
-        pdf.setProperties({ title: `PDI ${v.nome} · ${opts.lojaNome(v.loja_id)}`, author: 'Só Tintas', subject: 'Plano de Desenvolvimento Individual', creator: 'Só Tintas App · PDI Comercial' });
+        pdf.setProperties({ title: `PDI ${v.nome} · ${opts.lojaNome(v.loja_id)}`, author: 'Só Tintas', subject: 'Plano de Desenvolvimento Individual', creator: 'Só Tintas App · PDI Mensal' });
         return { blob: pdf.output('blob'), imgs, nome: `PDI - ${limpaArq(v.nome)} (Vendedor) - Loja ${v.c} ${limpaArq(String(v.l || ''))} - ${String(t.data).split('-').reverse().join('-')}.pdf`.replace(/\s+/g, ' ').replace(' .pdf', '.pdf') };
       } finally { host.remove(); }
     }

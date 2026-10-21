@@ -9039,9 +9039,9 @@ syncNav();
 <div id="ovPdi" style="position:fixed;inset:0;z-index:99999;background:#0f1522;display:none;flex-direction:column">
  <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;color:#fff;font:600 14px system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
   <button id="ovPdiFechar" style="border:0;border-radius:8px;padding:9px 13px;background:#FFD100;color:#0F2B46;font:inherit;cursor:pointer">&larr; Voltar ao início</button>
-  <span style="opacity:.85">PDI Comercial · Só Tintas</span>
+  <span style="opacity:.85">PDI Mensal · Só Tintas</span>
  </div>
- <iframe id="ifrPdi" title="PDI Comercial Só Tintas" allow="web-share; clipboard-write" style="flex:1;width:100%;border:0;background:#0f1522"></iframe>
+ <iframe id="ifrPdi" title="PDI Mensal Só Tintas" allow="web-share; clipboard-write" style="flex:1;width:100%;border:0;background:#0f1522"></iframe>
 </div>
 
 <div id="ovMentor" style="position:fixed;inset:0;z-index:99999;background:#0f1522;display:none;flex-direction:column">
@@ -9120,7 +9120,7 @@ syncNav();
       </button>
       <button type="button" class="ini-card feat" data-act="pdi" data-gate="1" data-ger="1">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-flag"/></svg></span>
-        <span class="ini-txt"><span class="ini-nm">PDI Comercial</span><span class="ini-ds">Prioridade e desenvolvimento dos vendedores</span></span>
+        <span class="ini-txt"><span class="ini-nm">PDI Mensal</span><span class="ini-ds">Prioridade e desenvolvimento dos vendedores</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
       <button type="button" class="ini-card feat" data-act="semana" data-gate="1" data-ger="1" data-vend="1">
@@ -9343,7 +9343,7 @@ body.foco .wrap{padding-bottom:40px}
   }
   if(xR){ xR.addEventListener('click', function(){ ovR.style.display='none'; document.body.style.overflow=''; try{ if(window.abrirInicio) window.abrirInicio(); }catch(e){} }); }
 
-  // overlay do PDI Comercial (espelha o de Níveis: escopo pela carteira do supervisor)
+  // overlay do PDI Mensal (espelha o de Níveis: escopo pela carteira do supervisor)
   var ovD=document.getElementById('ovPdi'), ifrD=document.getElementById('ifrPdi'),
       xD=document.getElementById('ovPdiFechar');
   function abrirSemana(){
