@@ -143,9 +143,12 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
     var s=sessao();
     /* rótulos de loja do app principal ("34 - Cabo Frio"): é o formato que a liberação de acesso usa */
     var lj=s&&s.nome?fetch(ENVIO_URL+'?acao=acessosVendedores&eu='+encodeURIComponent(s.nome)).then(function(r){return r.json();}).then(function(d){ (d&&d.lojas||[]).forEach(function(l){ var m=String(l).match(/^\s*(\d+)/); if(m) LOJAS[('00'+m[1]).slice(-3)]=l; }); }).catch(function(){}):Promise.resolve();
-    return Promise.all([STDados.chamar('pessoas'),lj]).then(function(r){
+    return Promise.all([STDados.chamar('pessoas'),lj,STDados.chamar('painelResumo').catch(function(){return null;})]).then(function(r){
       var j=r[0]; if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não respondeu.');
-      D=j; montar();
+      D=j;
+      /* projeção do Painel de Metas (mesma fonte): por loja e por vendedor */
+      D.pL={}; D.pV=[]; var rs=r[2]&&r[2].ok&&r[2].resumo; if(rs){ (rs.lojas||[]).forEach(function(l){ D.pL[l.cod]=l.pp; }); D.pV=rs.vend||[]; }
+      montar();
     }).catch(function(e){ $('raiz').innerHTML='<div class="card"><h2>Não consegui abrir</h2><p class="sub">'+esc(e.message||e)+'</p><button class="btn" type="button" id="deNovo">Tentar de novo</button></div>'; $('deNovo').onclick=carregar; });
   }
 
@@ -181,13 +184,17 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
     if(!ks.length) return '<p class="sub">Ninguém encontrado.</p>';
     var ord={ger:0,vend:1};
     return ks.map(function(k){ var L=g[k].sort(function(a,b){return (ord[a.cargo]-ord[b.cargo])||(a.nome<b.nome?-1:1);});
-      var tit=k==='~sup'?'Supervisão e coordenação':'Loja '+k+' '+esc((LOJAS[k]||'').replace(/^\s*\d+\s*-\s*/,''));
+      var tit=k==='~sup'?'Supervisão e coordenação':'Loja '+k+' '+esc((LOJAS[k]||'').replace(/^\s*\d+\s*-\s*/,''))+(D.pL&&D.pL[k]!=null?' <span class="sub" style="font-weight:600">· projeção <b style="color:'+corPct(D.pL[k])+'">'+Math.round(D.pL[k]*100)+'%</b></span>':'');
       return '<section class="card"><h2>'+tit+' <span class="sub" style="font-weight:600">· '+L.length+'</span></h2><ul class="lista">'+L.map(item).join('')+'</ul></section>'; }).join('');
   }
+  var chave=function(n){return sem(n).replace(/\s*-?\s*n\s*\d+\s*$/,'').replace(/\s+\d+\s*$/,'').replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();};
+  function projVend(p){ if(p.cargo!=='vend') return null; var ks=[p.nome].concat(p.apelidos||[]).map(chave);
+    var v=(D.pV||[]).filter(function(x){ return p.lojas.indexOf(x.loja)>=0&&ks.indexOf(chave(x.nome))>=0; })[0]; return v?v.pp:null; }
+  function corPct(x){ return x>=1?'var(--ok)':x>=.9?'var(--warn)':'var(--bad)'; }
   function item(p){
     var ac=p.cargo==='vend'&&D.liberadosConhecidos?(p.liberado?'<span class="chip s-ativo">✓ com acesso</span>':'<span class="chip s-semacesso">🔒 sem acesso</span>'):'';
     var h='<li style="display:block"><div class="linha" style="justify-content:space-between"><span><b>'+esc(p.nome)+'</b> <span class="cod">'+esc(p.codigo)+'</span> <span class="sub">'+esc(CARGO[p.cargo]||p.cargo)+(p.cargo!=='vend'&&p.lojas.length?' · lojas '+esc(p.lojas.join(', ')):'')+(p.cargo!=='sup'&&p.supervisor?' · sup. '+esc(p.supervisor):'')+'</span>'+
-      (p.travado?' <span class="sub" title="Corrigido pela coordenação">🔒</span>':'')+'</span><span class="linha">'+ac+'<span class="sub">'+esc(quando(p.ultimo))+'</span>'+
+      (p.travado?' <span class="sub" title="Corrigido pela coordenação">🔒</span>':'')+'</span><span class="linha">'+(function(){ var x=projVend(p); return x==null?'':'<span class="sub">projeção <b style="color:'+corPct(x)+'">'+Math.round(x*100)+'%</b></span>'; })()+ac+'<span class="sub">'+esc(quando(p.ultimo))+'</span>'+
       (coord()?'<button class="btnp" type="button" data-ed="'+esc(p.codigo)+'">editar</button>':'')+
       (p.cargo==='vend'&&p.liberado===false&&!(STDados.visao&&STDados.visao())?'<button class="btnp verde" type="button" data-lib="'+esc(p.codigo)+'">Liberar acesso</button>':'')+'</span></div>';
     if(p.apelidos&&p.apelidos.length) h+='<div class="apel">também aparece como: '+esc(p.apelidos.join(' · '))+'</div>';

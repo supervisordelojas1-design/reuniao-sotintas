@@ -139,9 +139,12 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 
   function carregar(){
     $('raiz').innerHTML='<p class="sub">Carregando os acessos…</p>';
-    return STDados.chamar('acessos').then(function(j){
-      if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não respondeu.');
-      D=j; D.pessoas.forEach(function(p){ p.st=status(p); }); montar();
+    return Promise.all([STDados.chamar('acessos'),STDados.chamar('painelResumo').catch(function(){return null;})]).then(function(rs){
+      var j=rs[0]; if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não respondeu.');
+      D=j; D.pessoas.forEach(function(p){ p.st=status(p); });
+      /* mesma fonte do Painel de Metas: projeção de cada loja */
+      D.proj={}; var r=rs[1]&&rs[1].ok&&rs[1].resumo; if(r) (r.lojas||[]).forEach(function(l){ D.proj[l.cod]=l.pp; });
+      montar();
     }).catch(function(e){ $('raiz').innerHTML='<div class="card"><h2>Não consegui abrir</h2><p class="sub">'+esc(e.message||e)+'</p><button class="btn" type="button" id="deNovo">Tentar de novo</button></div>'; $('deNovo').onclick=carregar; });
   }
 
@@ -231,11 +234,15 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
       o.n++; if(p.d7>0) o.a++; if(p.tipo==='ger'){ o.ger=p; o.feito=p.pdiFeito; o.total=p.pdiTotal; } });
     var L=Object.keys(lojas).map(function(k){var o=lojas[k]; o.p=o.n?o.a/o.n:0; return o;}).sort(function(a,b){return (b.p-a.p)||(b.a-a.a)||(a.cod<b.cod?-1:1);});
     if(L.length<2&&D.perfil==='ger') return '';
-    var h='<section class="card"><h2>🏆 Ranking das lojas</h2><p class="sub" style="margin:0 0 6px">% da equipe (gerente + vendedores) que entrou nos últimos 7 dias.</p><div class="tabw"><table><thead><tr><th>#</th><th>Loja</th><th>Equipe ativa</th><th class="n esc">Gerente</th><th class="n esc">PDI feito</th></tr></thead><tbody>'+
+    var com=L.filter(function(o){return o.p>=.5&&D.proj&&D.proj[o.cod]!=null;}), sem=L.filter(function(o){return o.p<.5&&D.proj&&D.proj[o.cod]!=null;});
+    var med=function(a){ return a.reduce(function(s,o){return s+D.proj[o.cod];},0)/a.length; };
+    var leitura=com.length&&sem.length?'<p class="sub" style="margin:6px 0 0">📈 Lojas com metade ou mais da equipe ativa no app projetam <b>'+pct(med(com))+'</b>; as demais, <b>'+pct(med(sem))+'</b> (média simples, '+com.length+' × '+sem.length+' lojas).</p>':'';
+    var h='<section class="card"><h2>🏆 Ranking das lojas</h2><p class="sub" style="margin:0 0 6px">% da equipe (gerente + vendedores) que entrou nos últimos 7 dias.</p><div class="tabw"><table><thead><tr><th>#</th><th>Loja</th><th>Equipe ativa</th><th class="n">Projeção</th><th class="n esc">Gerente</th><th class="n esc">PDI feito</th></tr></thead><tbody>'+
       L.map(function(o,i){ return '<tr><td>'+(i+1)+'</td><td><b>'+esc(o.cod)+'</b> '+esc(o.nome||'')+(D.perfil==='coord'&&!FILTRO&&o.sup?'<div class="sub">'+esc(curto(o.sup))+'</div>':'')+'</td>'+
         '<td style="min-width:120px"><span data-tip="'+esc(o.a+' de '+o.n+' entraram nos últimos 7 dias')+'" tabindex="0">'+pct(o.p)+' <span class="sub">('+o.a+'/'+o.n+')</span></span><div class="barra"><i style="width:'+Math.round(o.p*100)+'%"></i></div></td>'+
+        '<td class="n">'+(D.proj&&D.proj[o.cod]!=null?'<span style="color:'+(D.proj[o.cod]>=1?'var(--ok)':D.proj[o.cod]>=.9?'var(--warn)':'var(--bad)')+';font-weight:800">'+pct(D.proj[o.cod])+'</span>':'—')+'</td>'+
         '<td class="n esc">'+(o.ger?(o.ger.d7>0?'<span class="chip s-ativo">✓ '+o.ger.d7+'d</span>':'<span class="chip s-nunca">✕</span>'):'—')+'</td>'+
-        '<td class="n esc">'+(o.total?o.feito+'/'+o.total:'—')+'</td></tr>'; }).join('')+'</tbody></table></div></section>';
+        '<td class="n esc">'+(o.total?o.feito+'/'+o.total:'—')+'</td></tr>'; }).join('')+'</tbody></table></div>'+leitura+'</section>';
     if(D.perfil==='coord'&&!FILTRO){
       var S={};
       P.forEach(function(p){ var k=curto(p.sup||'').split(' ')[0]; if(!k) return; var o=S[k]=S[k]||{nome:k,n:0,a:0,eu:null}; if(p.tipo==='sup'){ o.eu=p; return; } o.n++; if(p.d7>0) o.a++; });
