@@ -44,7 +44,7 @@ body.cheio .topo .bt{display:none}
   var SEG=20000;
   var tema='claro';
   var telas=[{n:'Ranking de Lojas',u:'ranking.html?tv=1&tab=l&tema='+tema},{n:'Ranking de Vendedores',u:'ranking.html?tv=1&tab=v&tema='+tema}];
-  try{ if(localStorage.getItem('pnl_sessao_v1')) telas.push({n:'Painel de Metas',u:'painel.html?tv=1&tema='+tema}); }catch(e){}
+  try{ if(localStorage.getItem('pnl_cracha_v1')||localStorage.getItem('st_cracha_v1')) telas.push({n:'Painel de Metas',u:'painel.html?tv=1&tema='+tema}); }catch(e){}
   var palco=document.getElementById('palco'), barra=document.getElementById('barra'), pts=document.getElementById('pontos');
   pts.innerHTML=telas.map(function(){ return '<i></i>'; }).join('');
   var frames=telas.map(function(t){ var f=document.createElement('iframe'); f.title=t.n; f.src=t.u; palco.appendChild(f); return f; });

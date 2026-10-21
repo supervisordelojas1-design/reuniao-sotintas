@@ -386,6 +386,7 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="st-hora.js?v=1"></script>
+<script src="st-dados.js?v=89"></script>
 </head>
 <body>
 
@@ -1462,7 +1463,7 @@ function acaoBox(id,nome){
  </div></div>`;
 }
 const noGoogle=typeof google!=='undefined'&&google.script&&google.script.run;
-function sessAtual(){try{return JSON.parse(localStorage.getItem(PKEY)||'null')}catch(e){return null}}
+function sessAtual(){if(window.PNL_CRED)return window.PNL_CRED;try{return JSON.parse(localStorage.getItem(PKEY)||'null')}catch(e){return null}}
 function postAPI(payload,cb,err){
  fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
   body:JSON.stringify(payload)})
@@ -2157,7 +2158,7 @@ if(!EMBUTIDO){var lk=document.getElementById('lnkSair');if(lk)lk.style.display='
 }
 /*FIM_PAINEL*/
 const PKEY='pnl_sessao_v1';
-function sessAtual(){try{return JSON.parse(localStorage.getItem(PKEY)||'null')}catch(e){return null}}
+function sessAtual(){if(window.PNL_CRED)return window.PNL_CRED;try{return JSON.parse(localStorage.getItem(PKEY)||'null')}catch(e){return null}}
 function postAPI(payload,cb,err){
  fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
   body:JSON.stringify(payload)})
@@ -2201,7 +2202,7 @@ function lerArquivos(files){
  });
 }
 function enviarUpload(){
- var s=null; try{s=JSON.parse(localStorage.getItem(PKEY)||'null')}catch(e){}
+ var s=sessAtual();
  var st=document.getElementById('pupStat'), bt=document.getElementById('pupGo');
  if(!s){st.textContent='Sessão expirou — saia e entre de novo.';return}
  bt.disabled=true; st.textContent='Enviando e processando no servidor... (até 1 minuto)';
@@ -2219,7 +2220,7 @@ function enviarUpload(){
    function(m){st.textContent='✕ '+m;bt.disabled=false});
  }
 }
-function sairPainel(){ try{localStorage.removeItem(PKEY); Object.keys(localStorage).forEach(function(k){if(k.indexOf('st_painel_cache_v1:')===0)localStorage.removeItem(k)})}catch(e){}; location.reload(); }
+function sairPainel(){ try{localStorage.removeItem(PKEY); localStorage.removeItem('pnl_cracha_v1'); Object.keys(localStorage).forEach(function(k){if(k.indexOf('st_painel_cache_v1:')===0)localStorage.removeItem(k)})}catch(e){}; location.reload(); }
 function avisoOffline(em){
  var B=window.STHora?STHora.data:function(x){return x==null?new Date():new Date(x)}, d=B(em),p=function(n){return(n<10?'0':'')+n},hoje=B().toDateString()===d.toDateString();
  var f=document.createElement('div'); f.setAttribute('role','status');
@@ -2227,26 +2228,34 @@ function avisoOffline(em){
  f.textContent='📶 Sem internet · mostrando os números de '+(hoje?'hoje, ':p(d.getDate())+'/'+p(d.getMonth()+1)+', ')+p(d.getHours())+'h'+p(d.getMinutes());
  document.body.appendChild(f); window.addEventListener('online',function(){f.remove()},{once:true});
 }
+/* ═══ Acesso: o Painel usa o MESMO crachá do app (um PIN só). Nada de PIN guardado no aparelho:
+   dentro do app, vale o crachá do app; aberto sozinho, o login gera um crachá próprio (7 dias). ═══ */
+var PCK='pnl_cracha_v1';
+function crachaPainel(){
+ try{ var ss=JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null');
+  if(window.STDados&&ss&&ss.nome) return STDados.cracha().catch(function(){return null}); }catch(e){}
+ var c=null; try{c=JSON.parse(localStorage.getItem(PCK)||'null')}catch(e){}
+ return Promise.resolve(c&&c.tk&&c.ex>Date.now()+60000?c.tk:null);
+}
+function credDe(tk){ return {u:'cracha',p:tk}; }
 function pedirDados(u,p,cb,errCb){
  if(typeof google!=='undefined'&&google.script&&google.script.run){
-  google.script.run
-   .withSuccessHandler(cb)
-   .withFailureHandler(function(e){errCb('Servidor: '+(e&&e.message||'falha'))})
-   .loginPainel(u,p);
- }else{
-  /* cópia no aparelho: sem internet, abre com os últimos números baixados */
-  var CK='st_painel_cache_v1:'+String(u).toLowerCase().trim()+'|'+((location.search.match(/[?&]visao=([^&]*)/)||[])[1]||'');
-  fetch(API_URL+'?dados=1&u='+encodeURIComponent(u)+'&p='+encodeURIComponent(p))
-   .then(function(r){return r.json()}).then(function(res){
-     if(res&&res.ok){ try{localStorage.setItem(CK,JSON.stringify({em:Date.now(),res:res}))}catch(e){ try{Object.keys(localStorage).forEach(function(k){if(k.indexOf('st_painel_cache_v1:')===0)localStorage.removeItem(k)})}catch(e2){} } }
-     cb(res);
-   })
-   .catch(function(){
-     var c=null; try{c=JSON.parse(localStorage.getItem(CK)||'null')}catch(e){}
-     if(c&&c.res){ cb(c.res); avisoOffline(c.em); return; }
-     errCb('Sem conexão com o servidor.');
-   });
+  google.script.run.withSuccessHandler(cb).withFailureHandler(function(e){errCb('Servidor: '+(e&&e.message||'falha'))}).loginPainel(u,p);
+  return;
  }
+ /* cópia no aparelho: sem internet, abre com os últimos números baixados (chave sem PIN) */
+ var quem=u==='cracha'?'ck:'+String(p).slice(-24):String(u).toLowerCase().trim();
+ var CK='st_painel_cache_v1:'+quem+'|'+((location.search.match(/[?&]visao=([^&]*)/)||[])[1]||'');
+ fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({tipo:'dados',u:u,p:p})})
+  .then(function(r){return r.json()}).then(function(res){
+    if(res&&res.ok){ try{localStorage.setItem(CK,JSON.stringify({em:Date.now(),res:res}))}catch(e){ try{Object.keys(localStorage).forEach(function(k){if(k.indexOf('st_painel_cache_v1:')===0)localStorage.removeItem(k)})}catch(e2){} } }
+    cb(res);
+  })
+  .catch(function(){
+    var c=null; try{c=JSON.parse(localStorage.getItem(CK)||'null')}catch(e){}
+    if(c&&c.res){ cb(c.res); avisoOffline(c.em); return; }
+    errCb('Sem conexão com o servidor.');
+  });
 }
 /* link individual: painel.html?u=RAMON abre com o nome pronto, so falta o PIN */
 (function(){try{
@@ -2257,40 +2266,51 @@ function pedirDados(u,p,cb,errCb){
   var pin=document.getElementById('plPin'); if(pin) setTimeout(function(){pin.focus()},250);}
  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',pf); else pf();
 }catch(e){}})();
+function abrirCom(res){
+ document.getElementById('pnlLogin').classList.add('hidden');
+ if(res.escopo==='todos'&&!/[?&]visao=/.test(location.search)) document.getElementById('btnUp').style.display='inline';
+ iniciarSeguro(res.dados, res.lock||null);
+}
 function fazerLogin(){
  var u=document.getElementById('plNome').value.trim();
  var p=document.getElementById('plPin').value.trim();
  var er=document.getElementById('plErro'), bt=document.getElementById('plBtn');
  if(!u||!p){er.textContent='Preencha nome e PIN.';return}
  bt.disabled=true; er.textContent=''; bt.textContent='Entrando...';
- pedirDados(u,p,function(res){
-   if(!res||!res.ok){er.textContent=(res&&res.erro)||'Falha no acesso.';bt.disabled=false;bt.textContent='Entrar';return}
-   try{localStorage.setItem(PKEY,JSON.stringify({u:u,p:p}))}catch(e){}
-   document.getElementById('pnlLogin').classList.add('hidden');
-   if(res.escopo==='todos'&&!/[?&]visao=/.test(location.search)) document.getElementById('btnUp').style.display='inline';
-   iniciarSeguro(res.dados, res.lock||null);
- },function(msg){er.textContent=msg;bt.disabled=false;bt.textContent='Entrar'});
+ var falha=function(msg){er.textContent=msg;bt.disabled=false;bt.textContent='Entrar'};
+ var URLD=(window.STDados&&STDados.URL)||'';
+ fetch(URLD,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:'entrar',nome:u,pin:p})})
+  .then(function(r){return r.json()}).then(function(r){
+    if(!r||!r.ok){ falha((r&&r.erro)||'Nome ou PIN não conferem.'); return; }
+    try{localStorage.setItem(PCK,JSON.stringify({tk:r.tk,ex:r.ex,nome:r.nome})); localStorage.removeItem(PKEY);}catch(e){}
+    window.PNL_CRED=credDe(r.tk);
+    pedirDados('cracha',r.tk,function(res){ if(!res||!res.ok){ falha((res&&res.erro)||'Falha no acesso.'); return; } abrirCom(res); },falha);
+  }).catch(function(){ falha('Sem conexão com o servidor.'); });
 }
 (function boot(){
  if(EMBUTIDO){ iniciarPainel(EMBUTIDO, LOCK_EMB); return; }
- var s=null; try{s=JSON.parse(localStorage.getItem(PKEY)||'null')}catch(e){}
  var lg=document.getElementById('pnlLogin');
- if(!s){ lg.classList.remove('hidden'); return; }
- var tt=document.getElementById('tTit'); if(tt) tt.textContent='Carregando o painel...';
- var ap=document.getElementById('app');
- if(ap) ap.innerHTML='<div class="sec"><div class="empty">Buscando os dados no servidor...<br><br>'+
-  '<span id="bootDemora" style="display:none">Está demorando mais que o normal. '+
-  '<b style="cursor:pointer;color:var(--red)" onclick="sairPainel()">Clique aqui para entrar de novo.</b></span></div></div>';
- var aviso=setTimeout(function(){var x=document.getElementById('bootDemora');if(x)x.style.display='inline'},15000);
- var soquete=setTimeout(function(){ mostrarErro('O servidor não respondeu em 40s. Saindo da sessão para você entrar de novo.');
-  try{localStorage.removeItem(PKEY)}catch(e){}; lg.classList.remove('hidden'); },40000);
- pedirDados(s.u,s.p,function(res){
-  clearTimeout(aviso); clearTimeout(soquete);
-   if(!res||!res.ok){ try{localStorage.removeItem(PKEY)}catch(e){}; lg.classList.remove('hidden'); return; }
-   if(res.escopo==='todos'&&!/[?&]visao=/.test(location.search)) document.getElementById('btnUp').style.display='inline';
-   iniciarSeguro(res.dados, res.lock||null);
- },function(msg){ clearTimeout(aviso); clearTimeout(soquete); lg.classList.remove('hidden');
-   document.getElementById('plErro').textContent=msg||'Sem conexão. Tente de novo.'; });
+ /* PIN que versões antigas guardavam no aparelho: apaga */
+ try{ localStorage.removeItem(PKEY); }catch(e){}
+ var tt=document.getElementById('tTit'), ap=document.getElementById('app');
+ crachaPainel().then(function(tk){
+  if(!tk){ lg.classList.remove('hidden'); return; }
+  window.PNL_CRED=credDe(tk);
+  if(tt) tt.textContent='Carregando o painel...';
+  if(ap) ap.innerHTML='<div class="sec"><div class="empty">Buscando os dados no servidor...<br><br>'+
+   '<span id="bootDemora" style="display:none">Está demorando mais que o normal. '+
+   '<b style="cursor:pointer;color:var(--red)" onclick="sairPainel()">Clique aqui para entrar de novo.</b></span></div></div>';
+  var aviso=setTimeout(function(){var x=document.getElementById('bootDemora');if(x)x.style.display='inline'},15000);
+  pedirDados('cracha',tk,function(res){
+   clearTimeout(aviso);
+   if(!res||!res.ok){
+    if(res&&res.cracha){ try{localStorage.removeItem(PCK); localStorage.removeItem('st_cracha_v1');}catch(e){} }
+    window.PNL_CRED=null; lg.classList.remove('hidden');
+    document.getElementById('plErro').textContent=(res&&res.erro)||'Não consegui abrir o painel.'; return;
+   }
+   abrirCom(res);
+  },function(msg){ clearTimeout(aviso); lg.classList.remove('hidden'); document.getElementById('plErro').textContent=msg||'Sem conexão. Tente de novo.'; });
+ });
 })();
 document.getElementById('plPin').addEventListener('keydown',function(e){if(e.key==='Enter')fazerLogin()});
 document.getElementById('pupFile').addEventListener('change',function(ev){lerArquivos(ev.target.files)});
