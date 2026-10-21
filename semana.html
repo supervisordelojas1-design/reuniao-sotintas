@@ -98,6 +98,10 @@ h3{font-size:14px;margin:0 0 6px}
   'use strict';
   var $=function(id){return document.getElementById(id);};
   var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
+  /* "2026-10-20 08:15" ou data convertida pela planilha ("Tue Oct 20 2026 08:15:00 GMT-0300") → "20/10 08:15" */
+  var quando=function(s){s=String(s||'');var p=function(n){return ('0'+n).slice(-2);};
+    if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(8,10)+'/'+s.slice(5,7)+(s.length>=16?' '+s.slice(11,16):'');
+    var d=new Date(s);return isNaN(d)?s:p(d.getDate())+'/'+p(d.getMonth()+1)+' '+p(d.getHours())+':'+p(d.getMinutes());};
   var brl=function(n){return 'R$ '+Math.round(Number(n)||0).toLocaleString('pt-BR');};
   var pct=function(x){return x==null||!isFinite(x)?'—':Math.round(x*100)+'%';};
   var dBr=function(iso){var p=String(iso||'').slice(0,10).split('-');return p.length===3?p[2]+'/'+p[1]:'';};
@@ -216,7 +220,7 @@ h3{font-size:14px;margin:0 0 6px}
         h+='<div class="vend"><div class="vend-top"><div><b>'+esc(l.comp?l.comp.nome:l.vendedor)+'</b><div class="sub">'+(l.comp&&l.comp.foco?'Foco: '+esc(l.comp.foco.nome):'Foco: volume')+' · projeção '+pct(l.comp&&l.comp.pp)+'</div></div><div class="linha">'+chip(l.situacao)+
           (l.aval?'<span class="chip c-respondido">'+l.aval.nota+'/'+l.aval.total+(l.aval.mentor?' · Mentor '+l.aval.mentor.acertos+'/'+l.aval.mentor.total:'')+'</span>':'')+'</div></div>';
         h+='<div class="linha" style="margin-top:8px">'+(l.situacao==='aguardando'&&!ro?'<button class="btn azul" type="button" data-feito="'+esc(l.chave)+'">✓ Fiz o PDI semanal</button>':'')+
-          (l.feito_em?'<span class="sub">PDI feito '+esc(String(l.feito_em).slice(8,10)+'/'+String(l.feito_em).slice(5,7)+' '+String(l.feito_em).slice(11,16))+(l.feito_por?' por '+esc(l.feito_por):'')+'</span>':'')+
+          (l.feito_em?'<span class="sub">PDI feito '+esc(quando(l.feito_em))+(l.feito_por?' por '+esc(l.feito_por):'')+'</span>':'')+
           '<button class="mais" type="button" data-abrir="'+esc(l.chave)+'">'+(aberto?'Fechar compromissos':'Ver compromissos')+'</button></div>';
         if(aberto) h+=blocoComp(l.comp,l.chave)+(l.aval?resultado(l.aval):'');
         h+='</div>';
