@@ -119,7 +119,7 @@
   function limparCache() { try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf(PREF_CACHE) === 0) localStorage.removeItem(k); }); } catch (e) {} }
   function semCache(ms) { try { sessionStorage.setItem('st_fresco_ate', String(Date.now() + (ms || 15000))); } catch (e) {} }
   function querFresco() { try { return Number(sessionStorage.getItem('st_fresco_ate') || 0) > Date.now(); } catch (e) { return false; } }
-  function horaDe(ms) { var d = new Date(ms), p = function (n) { return (n < 10 ? '0' : '') + n; }, hoje = new Date().toDateString() === d.toDateString(); return (hoje ? 'hoje, ' : p(d.getDate()) + '/' + p(d.getMonth() + 1) + ', ') + p(d.getHours()) + 'h' + p(d.getMinutes()); }
+  function horaDe(ms) { var B = g.STHora ? g.STHora.data : function (x) { return x == null ? new Date() : new Date(x); }, d = B(ms), p = function (n) { return (n < 10 ? '0' : '') + n; }, hoje = B().toDateString() === d.toDateString(); return (hoje ? 'hoje, ' : p(d.getDate()) + '/' + p(d.getMonth() + 1) + ', ') + p(d.getHours()) + 'h' + p(d.getMinutes()); }
   function faixaOffline(em) {
     var f = document.getElementById('stOffFaixa');
     if (!f) {

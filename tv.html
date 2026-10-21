@@ -36,6 +36,7 @@ body.cheio .topo .bt{display:none}
 </div>
 <div class="palco" id="palco"></div>
 <div class="barra" id="barra"></div>
+<script src="st-hora.js?v=1"></script>
 <script>
 /* Modo TV: gira sozinho entre Ranking de Lojas, Ranking de Vendedores e o Painel da loja (se a pessoa
    já entrou no Painel neste aparelho). Cada tela fica 20 s; os dados se atualizam a cada 10 min. */
@@ -59,7 +60,7 @@ body.cheio .topo .bt{display:none}
     barra.classList.add('anda'); barra.style.transitionDuration=SEG+'ms'; barra.style.width='100%';
   }
   mostra(); if(telas.length>1) setInterval(mostra,SEG);
-  function hora(){ var d=new Date(); document.getElementById('relogio').textContent=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
+  function hora(){ var d=window.STHora?STHora.data():new Date(); document.getElementById('relogio').textContent=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
   hora(); setInterval(hora,10000);
   document.getElementById('btCheia').onclick=function(){ var e=document.documentElement; (e.requestFullscreen||e.webkitRequestFullscreen||function(){}).call(e); };
   document.addEventListener('fullscreenchange',function(){ document.body.classList.toggle('cheio',!!document.fullscreenElement); });

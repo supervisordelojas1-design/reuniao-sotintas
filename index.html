@@ -99,6 +99,9 @@ input,textarea,select{font-family:inherit;font-size:15px;color:var(--ink)}
 .topbar .spacer{flex:1}
 .chip-timer{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);padding:5px 10px;border-radius:20px;font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .chip-timer b{font-size:16px}
+.chip-hora{display:inline-flex;align-items:center;gap:4px}
+.chip-hora b{font-size:15px}
+@media(max-width:380px){.chip-hora span{display:none}}
 
 /* ---------- cartões ---------- */
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);
@@ -833,6 +836,7 @@ html[data-tema="escuro"] .dpq, html[data-theme="dark"] .dpq{border-color:#5a4a1c
     <div class="spacer"></div>
     <button class="chip-dica" id="btnUser" title="Trocar de usuario"></button>
     <button class="chip-dica" id="btnDicas" title="Mostrar ou esconder as orientações"><svg class="ic" aria-hidden="true"><use href="#i-bulb"/></svg><span class="ct"> Dicas</span></button>
+    <div class="chip-timer chip-hora" id="chipHora" title="Horário de Brasília" aria-label="Horário de Brasília"><span aria-hidden="true">🕒</span> <b id="horaBR">--:--</b></div>
     <div class="chip-timer hidden" id="chipTimer"><svg class="ic" aria-hidden="true"><use href="#i-timer"/></svg> <b id="totalTime">00:00</b></div>
   </div>
 </div>
@@ -1992,7 +1996,9 @@ html[data-tema="escuro"] .dpq, html[data-theme="dark"] .dpq{border-color:#5a4a1c
 </div>
 
 <div class="toast" id="toast"></div>
-<script src="st-dados.js?v=86"></script>
+<script src="st-hora.js?v=1"></script>
+<script>try{ STHora.relogio(document.getElementById('horaBR')); }catch(e){}</script>
+<script src="st-dados.js?v=87"></script>
 <script src="st-anima.js?v=3"></script>
 <script>
 "use strict";
@@ -2245,7 +2251,7 @@ function salvarLocal(){
   try{
     if(!S) return;
     localStorage.setItem(LS_KEY, JSON.stringify(S));
-    var d=new Date();
+    var d=(window.STHora?STHora.data():new Date());
     var el=$('salvoEm');
     if(el) el.textContent='✓ salvo às '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
   }catch(e){
@@ -3545,7 +3551,7 @@ function abrirNaoFui(linha){
   $('naoFuiMotivo').value='';
   $('modalNaoFui').classList.add('show');
 }
-function agora(){ var d=new Date(); return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
+function agora(){ var d=(window.STHora?STHora.data():new Date()); return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
 function somarHora(hora, min){
   var p=String(hora||'00:00').split(':');
   var t=(+p[0])*60+(+p[1]||0)+(parseInt(min,10)||0);
@@ -5537,7 +5543,7 @@ function carregarJson(f){
 
 /* ============ EVENTOS ============ */
 renderModels(); renderAgenda(); renderParts(); initMic(); checarInterrompida(); carregarProximas();
-(function(){ var d=new Date(); $('fData').value=dataLocal(d); $('fHora').value=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); })();
+(function(){ var d=(window.STHora?STHora.data():new Date()); $('fData').value=dataLocal(d); $('fHora').value=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); })();
 $('fObjetivo').oninput=checkStart; $('fTitulo').oninput=checkStart;
 $('fData').onchange=checkStart; $('fHora').onchange=checkStart;
 $('btnAddPart').onclick=function(){ PARTS.push({n:'',e:'',f:''}); renderParts(); };
@@ -9297,10 +9303,10 @@ body.foco .wrap{padding-bottom:40px}
   }
   function saudar(){
     var s=sessao(), nome=(s&&s.nome)?String(s.nome).trim().split(' ')[0]:'';
-    var h=new Date().getHours(), cumpr=h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
+    var h=(window.STHora?STHora.data():new Date()).getHours(), cumpr=h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
     var el=document.getElementById('iniSaud'); if(el) el.textContent=cumpr+(nome?', '+nome:'')+' 👋';
     var d=document.getElementById('iniData');
-    if(d){ try{ var dt=new Date();
+    if(d){ try{ var dt=(window.STHora?STHora.data():new Date());
       var dias=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
       var meses=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
       var dia=dias[dt.getDay()]; dia=dia.charAt(0).toUpperCase()+dia.slice(1);

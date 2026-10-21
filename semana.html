@@ -63,6 +63,19 @@ h3{font-size:14px;margin:0 0 6px}
 .bom{background:var(--okbg);border-radius:10px;padding:8px 12px;font-size:13px}
 .toast{position:fixed;left:0;right:0;margin:auto;bottom:18px;width:max-content;max-width:calc(100% - 24px);background:#16233d;color:#fff;padding:10px 16px;border-radius:999px;font-weight:700;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.35)}
 .relogio{font-variant-numeric:tabular-nums}
+.filtros{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}
+.filtros button{border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:999px;padding:6px 12px;font:700 12.5px var(--f-body);cursor:pointer}
+.filtros button[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.placar{width:100%;border-collapse:collapse;font-size:13px}
+.placar th{text-align:left;color:var(--muted);font-size:11.5px;font-weight:700;padding:6px 6px;border-bottom:1px solid var(--line)}
+.placar td{padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+.placar td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.placar tr.sel td{background:var(--navybg)}
+.barra{height:6px;border-radius:99px;background:var(--surface2);overflow:hidden;margin-top:4px;min-width:60px}
+.barra i{display:block;height:100%;background:var(--ok)}
+.barra i.med{background:var(--warn)}.barra i.ruim{background:var(--bad)}
+.pos{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--surface2);font-weight:800;font-size:12px;margin-right:6px}
+@media(max-width:520px){.placar .esc{display:none}}
 </style></head><body>
 <div class="wrap">
   <div class="topbar"></div>
@@ -86,7 +99,8 @@ h3{font-size:14px;margin:0 0 6px}
   document.getElementById('btnTema').onclick=function(){ window.__setTema(document.documentElement.getAttribute('data-theme')==='light'?'dark':'light'); };
 })();
 </script>
-<script src="st-dados.js?v=86"></script>
+<script src="st-hora.js?v=1"></script>
+<script src="st-dados.js?v=87"></script>
 <script src="mentor/assets/conteudo-base.js"></script>
 <script src="mentor/assets/conteudo-questoes.js"></script>
 <script>
@@ -101,12 +115,16 @@ h3{font-size:14px;margin:0 0 6px}
   /* "2026-10-20 08:15" ou data convertida pela planilha ("Tue Oct 20 2026 08:15:00 GMT-0300") → "20/10 08:15" */
   var quando=function(s){s=String(s||'');var p=function(n){return ('0'+n).slice(-2);};
     if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(8,10)+'/'+s.slice(5,7)+(s.length>=16?' '+s.slice(11,16):'');
-    var d=new Date(s);return isNaN(d)?s:p(d.getDate())+'/'+p(d.getMonth()+1)+' '+p(d.getHours())+':'+p(d.getMinutes());};
+    var d=new Date(s);if(!isNaN(d)&&window.STHora)d=STHora.data(d.getTime());return isNaN(d)?s:p(d.getDate())+'/'+p(d.getMonth()+1)+' '+p(d.getHours())+':'+p(d.getMinutes());};
   var brl=function(n){return 'R$ '+Math.round(Number(n)||0).toLocaleString('pt-BR');};
   var pct=function(x){return x==null||!isFinite(x)?'—':Math.round(x*100)+'%';};
   var dBr=function(iso){var p=String(iso||'').slice(0,10).split('-');return p.length===3?p[2]+'/'+p[1]:'';};
   var SIT={aguardando:'Aguardando o PDI',liberado:'Avaliação liberada',respondido:'Respondido',nao_respondeu:'Não respondeu no prazo',nao_feito:'PDI não feito no prazo'};
   var D=null, ABERTOS={}, RESP={}, MENTOR=null;
+  /* nome sem sobra do sistema ("Fulano - Vermelha", "Fulano 2") */
+  var nm=function(s){return String(s||'').replace(/\s+-\s+\S.*$/,'').replace(/\s+\d+\s*$/,'').trim();};
+  /* filtro por supervisor (só coordenação); lembra a escolha neste aparelho */
+  var FILTRO=''; try{ FILTRO=localStorage.getItem('st_semana_filtro')||''; }catch(e){}
   function toast(m){ var t=document.createElement('div'); t.className='toast'; t.setAttribute('role','status'); t.textContent=m; document.body.appendChild(t); setTimeout(function(){t.remove();},2800); }
   function chip(s){ return '<span class="chip c-'+esc(s)+'">'+esc(SIT[s]||s)+'</span>'; }
   function visao(){ try{ return !!(window.STDados&&STDados.visao&&STDados.visao()); }catch(e){ return false; } }
@@ -156,7 +174,7 @@ h3{font-size:14px;margin:0 0 6px}
   /* ───────── tela do vendedor ───────── */
   function telaVendedor(){
     var atual=D.linhas.filter(function(l){return l.semana===D.atual;})[0], ant=D.linhas.filter(function(l){return l.semana===D.anterior;})[0];
-    $('sub').textContent=atual?'Semana de '+dBr(atual.semana)+' · '+(atual.comp?atual.comp.nome:''):'';
+    $('sub').textContent=atual?'Semana de '+dBr(atual.semana)+' · '+nm(atual.comp?atual.comp.nome:''):'';
     if(!atual){ $('raiz').innerHTML='<div class="card"><h2>Ainda não há PDI semanal para você</h2><p class="sub">Ele chega toda segunda de manhã, junto com o resumo da loja.</p></div>'; return; }
     var h='<section class="card"><div class="vend-top"><h2 style="margin:0">Seus 3 compromissos da semana</h2>'+chip(atual.situacao)+'</div>'+blocoComp(atual.comp,atual.chave)+'</section>';
     h+='<section class="card" id="aval"><h2>Avaliação da semana</h2>';
@@ -207,7 +225,7 @@ h3{font-size:14px;margin:0 0 6px}
     var A=D.linhas.filter(function(l){return l.semana===D.atual;}), P=D.linhas.filter(function(l){return l.semana===D.anterior;});
     $('sub').textContent=D.atual?'Semana de '+dBr(D.atual)+(A[0]&&A[0].prazo?' · prazo dos vendedores: '+prazoTxt(A[0].prazo):''):'';
     if(!A.length&&!P.length){ $('raiz').innerHTML='<div class="card"><h2>Ainda não há PDI semanal</h2><p class="sub">Ele é criado toda segunda de manhã, junto com o resumo semanal das lojas.</p></div>'; return; }
-    var lojas={}; A.concat(P).forEach(function(l){ lojas[l.loja]=1; });
+    var lojas={}, so=lojasDoFiltro(); A.concat(P).forEach(function(l){ if(!so||so[l.loja]) lojas[l.loja]=1; });
     var ro=visao();
     var h='';
     Object.keys(lojas).sort().forEach(function(cod){
@@ -217,7 +235,7 @@ h3{font-size:14px;margin:0 0 6px}
       h+='<section class="card"><div class="vend-top"><h2 style="margin:0">Loja '+esc(cod)+'</h2><span class="sub">PDI feito <b>'+feitos+'/'+a.length+'</b> · respondido <b>'+resp.length+'/'+a.length+'</b>'+(media!=null?' · média <b>'+media.toFixed(1).replace('.',',')+'</b>':'')+'</span></div>';
       a.forEach(function(l){
         var aberto=ABERTOS[l.chave];
-        h+='<div class="vend"><div class="vend-top"><div><b>'+esc(l.comp?l.comp.nome:l.vendedor)+'</b><div class="sub">'+(l.comp&&l.comp.foco?'Foco: '+esc(l.comp.foco.nome):'Foco: volume')+' · projeção '+pct(l.comp&&l.comp.pp)+'</div></div><div class="linha">'+chip(l.situacao)+
+        h+='<div class="vend"><div class="vend-top"><div><b>'+esc(nm(l.comp?l.comp.nome:l.vendedor))+'</b><div class="sub">'+(l.comp&&l.comp.foco?'Foco: '+esc(l.comp.foco.nome):'Foco: volume')+' · projeção '+pct(l.comp&&l.comp.pp)+'</div></div><div class="linha">'+chip(l.situacao)+
           (l.aval?'<span class="chip c-respondido">'+l.aval.nota+'/'+l.aval.total+(l.aval.mentor?' · Mentor '+l.aval.mentor.acertos+'/'+l.aval.mentor.total:'')+'</span>':'')+'</div></div>';
         h+='<div class="linha" style="margin-top:8px">'+(l.situacao==='aguardando'&&!ro?'<button class="btn azul" type="button" data-feito="'+esc(l.chave)+'">✓ Fiz o PDI semanal</button>':'')+
           (l.feito_em?'<span class="sub">PDI feito '+esc(quando(l.feito_em))+(l.feito_por?' por '+esc(l.feito_por):'')+'</span>':'')+
@@ -230,7 +248,7 @@ h3{font-size:14px;margin:0 0 6px}
         p.forEach(function(l){
           var f=l.fechamento||{}, nO=((l.comp&&l.comp.orcs)||[]).length, meta=(l.comp&&l.comp.positMeta)||10;
           var dif=(l.posit_real!=null&&f.posit!=null&&l.fechamento)?(f.posit-l.posit_real):null;
-          h+='<div class="vend"><div class="vend-top"><b>'+esc(l.comp?l.comp.nome:l.vendedor)+'</b><span class="linha">'+chip(l.situacao)+(l.aval?'<span class="chip c-respondido">'+l.aval.nota+'/'+l.aval.total+'</span>':'')+'</span></div>'+
+          h+='<div class="vend"><div class="vend-top"><b>'+esc(nm(l.comp?l.comp.nome:l.vendedor))+'</b><span class="linha">'+chip(l.situacao)+(l.aval?'<span class="chip c-respondido">'+l.aval.nota+'/'+l.aval.total+'</span>':'')+'</span></div>'+
             '<div class="fech"><label>Positivações CNPJ (meta '+meta+')<input type="number" min="0" max="99" inputmode="numeric" data-fp="'+esc(l.chave)+'" value="'+(f.posit!=null?f.posit:'')+'" '+(ro?'disabled':'')+'></label>'+
             '<label>Orçamentos retornados (de '+nO+')<input type="number" min="0" max="99" inputmode="numeric" data-fo="'+esc(l.chave)+'" value="'+(f.orcs!=null?f.orcs:'')+'" '+(ro?'disabled':'')+'></label>'+
             '<label>Indicador foco<select data-fi="'+esc(l.chave)+'" '+(ro?'disabled':'')+'>'+['','melhorou','igual','piorou'].map(function(o){return '<option value="'+o+'"'+(f.indicador===o?' selected':'')+'>'+(o||'—')+'</option>';}).join('')+'</select></label></div>'+
@@ -245,11 +263,45 @@ h3{font-size:14px;margin:0 0 6px}
     $('raiz').innerHTML=h;
   }
 
+  /* ───────── placar do ritual (coordenação): supervisores lado a lado + filtro ───────── */
+  function supsAtuais(){ return (SUPD&&SUPD.linhas||[]).filter(function(x){return x.semana===SUPD.atual;}); }
+  function codsDe(x){ var d=x.dados||{}; if(d.carteira&&d.carteira.cods) return d.carteira.cods; return (d.auditoria||[]).map(function(a){return a.cod;}); }
+  function lojasDoFiltro(){
+    if(D.perfil!=='coord'||!FILTRO) return null;
+    var x=supsAtuais().filter(function(s){return s.supervisor===FILTRO;})[0]; if(!x) return null;
+    var o={}; codsDe(x).forEach(function(c){ o[String(c)]=1; }); return o;
+  }
+  function placar(){
+    if(D.perfil!=='coord') return '';
+    var S=supsAtuais(); if(!S.length) return '';
+    if(FILTRO&&!S.some(function(s){return s.supervisor===FILTRO;})) FILTRO='';
+    var A=D.linhas.filter(function(l){return l.semana===D.atual;});
+    var R=S.map(function(x){
+      var cs={}; codsDe(x).forEach(function(c){cs[String(c)]=1;});
+      var a=A.filter(function(l){return cs[l.loja];}), f=a.filter(function(l){return l.situacao!=='aguardando'&&l.situacao!=='nao_feito';}).length, r=a.filter(function(l){return l.aval;});
+      var med=r.length?r.reduce(function(s,l){return s+l.aval.nota/(l.aval.total||10)*10;},0)/r.length:null;
+      return { sup:x.supervisor, lojas:Object.keys(cs).length, n:a.length, f:f, r:r.length, pf:a.length?f/a.length:0, pr:a.length?r.length/a.length:0, med:med, plano:!!x.plano };
+    }).sort(function(a,b){ return (b.pf-a.pf)||(b.pr-a.pr)||((b.med||0)-(a.med||0)); });
+    var tot=R.reduce(function(o,x){o.n+=x.n;o.f+=x.f;o.r+=x.r;return o;},{n:0,f:0,r:0});
+    var cor=function(x){return x>=.8?'':x>=.5?'med':'ruim';};
+    var h='<section class="card"><div class="vend-top"><h2 style="margin:0">🏆 Placar do ritual</h2><span class="sub">Rede: feito <b>'+tot.f+'/'+tot.n+'</b> · respondido <b>'+tot.r+'/'+tot.n+'</b></span></div>';
+    h+='<div class="filtros" role="group" aria-label="Filtrar por supervisor"><button type="button" data-filtro="" aria-pressed="'+(!FILTRO)+'">Todos</button>'+
+      R.map(function(x){return '<button type="button" data-filtro="'+esc(x.sup)+'" aria-pressed="'+(FILTRO===x.sup)+'">'+esc(String(x.sup).split(' ')[0])+'</button>';}).join('')+'</div>';
+    h+='<table class="placar"><thead><tr><th>Supervisor</th><th>PDI feito</th><th>Respondido</th><th class="n">Nota média</th><th class="esc">Plano</th></tr></thead><tbody>'+
+      R.map(function(x,i){ return '<tr'+(FILTRO===x.sup?' class="sel"':'')+'><td><span class="pos">'+(i+1)+'</span><b>'+esc(x.sup)+'</b><div class="sub">'+x.lojas+' lojas · '+x.n+' vendedores</div></td>'+
+        '<td>'+pct(x.pf)+' <span class="sub">('+x.f+'/'+x.n+')</span><div class="barra"><i class="'+cor(x.pf)+'" style="width:'+Math.round(x.pf*100)+'%"></i></div></td>'+
+        '<td>'+pct(x.pr)+' <span class="sub">('+x.r+'/'+x.n+')</span><div class="barra"><i class="'+cor(x.pr)+'" style="width:'+Math.round(x.pr*100)+'%"></i></div></td>'+
+        '<td class="n">'+(x.med!=null?x.med.toFixed(1).replace('.',','):'—')+'</td><td class="esc">'+(x.plano?'<span class="chip c-respondido">registrado</span>':'<span class="chip c-aguardando">pendente</span>')+'</td></tr>'; }).join('')+
+      '</tbody></table><p class="sub" style="margin:8px 0 0">Ordem: % de PDI feito, depois % respondido. Nota média em 0 a 10. Toque num nome acima para ver só a carteira dele.</p></section>';
+    return h;
+  }
+
   /* ───────── PDI semanal do supervisor ───────── */
   function blocoSup(){
     if(!SUPD||!SUPD.linhas||!SUPD.linhas.length) return '';
     var ro=visao(), h='';
-    SUPD.linhas.filter(function(x){return x.semana===SUPD.atual;}).forEach(function(x){
+    var vale=function(x){ return !(D.perfil==='coord'&&FILTRO)||x.supervisor===FILTRO; };
+    SUPD.linhas.filter(function(x){return x.semana===SUPD.atual&&vale(x);}).forEach(function(x){
       var d=x.dados||{}, p=x.plano||{}, f=d.foco, ed=x.meu&&x.prazoAberto&&!ro;
       h+='<section class="card"><div class="vend-top"><h2 style="margin:0">'+(x.meu?'Meu PDI semanal':'PDI semanal de '+esc(x.supervisor))+'</h2>'+(x.plano?'<span class="chip c-respondido">Plano registrado</span>':(x.prazoAberto?'<span class="chip c-liberado">Plano até '+esc(prazoTxt(d.prazo))+'</span>':'<span class="chip c-nao_feito">Plano não registrado</span>'))+'</div>';
       if(d.carteira) h+='<div class="kpis" style="margin-top:8px"><div class="kpi"><span>Carteira</span><b>'+d.carteira.lojas+' lojas</b></div><div class="kpi"><span>Atingido</span><b>'+pct(d.carteira.pct)+'</b></div><div class="kpi"><span>Projeção</span><b>'+pct(d.carteira.pp)+'</b></div><div class="kpi"><span>Falta</span><b>'+brl(d.carteira.falta)+'</b></div></div>';
@@ -265,7 +317,7 @@ h3{font-size:14px;margin:0 0 6px}
       else if(x.plano) h+='<div class="bom" style="margin-top:8px"><b>Plano:</b> visita em '+esc(dBr(p.visita))+' · '+esc(p.acao)+(p.auditoria?'<br><b>Auditoria:</b> '+esc(p.auditoria):'')+(p.indicador?'<br><b>Indicador:</b> '+esc(p.indicador):'')+'<div class="sub">registrado por '+esc(p.por||'')+' em '+esc(String(p.em||'').slice(8,10)+'/'+String(p.em||'').slice(5,7)+' '+String(p.em||'').slice(11,16))+'</div></div>';
       h+='</section>';
     });
-    SUPD.linhas.filter(function(x){return x.semana===SUPD.anterior;}).forEach(function(x){
+    SUPD.linhas.filter(function(x){return x.semana===SUPD.anterior&&vale(x);}).forEach(function(x){
       var p=x.plano||{}, f=x.fechamento||{}, d=x.dados||{}, pode=!ro&&(x.meu||D.perfil==='coord');
       h+='<section class="card"><h3>Fechamento do supervisor · semana de '+dBr(x.semana)+(x.meu?'':' · '+esc(x.supervisor))+'</h3>'+
         '<p class="sub" style="margin:0 0 6px">Plano: '+(x.plano?'visita em '+esc(dBr(p.visita))+' na loja '+esc(d.foco?d.foco.cod+' '+d.foco.nome:'')+' · '+esc(p.acao):'não registrado')+'</p>'+
@@ -276,10 +328,11 @@ h3{font-size:14px;margin:0 0 6px}
     });
     return h;
   }
-  function montar(){ if(D.perfil==='vend') telaVendedor(); else { telaLider(); var b=blocoSup(); if(b) $('raiz').insertAdjacentHTML('afterbegin',b); } }
+  function montar(){ if(D.perfil==='vend') telaVendedor(); else { var pl=placar(); telaLider(); var b=blocoSup(); if(b) $('raiz').insertAdjacentHTML('afterbegin',b); if(pl) $('raiz').insertAdjacentHTML('afterbegin',pl); } }
 
   document.addEventListener('click',function(e){
     var t=e.target.closest('button'); if(!t) return;
+    if(t.dataset.filtro!=null){ FILTRO=t.dataset.filtro; try{ localStorage.setItem('st_semana_filtro',FILTRO); }catch(e){} montar(); return; }
     if(t.dataset.mais){ ABERTOS[t.dataset.mais]=!ABERTOS[t.dataset.mais]; montar(); return; }
     if(t.dataset.abrir){ ABERTOS[t.dataset.abrir]=!ABERTOS[t.dataset.abrir]; montar(); return; }
     if(t.dataset.feito){

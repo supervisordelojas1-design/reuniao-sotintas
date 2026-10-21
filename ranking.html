@@ -229,7 +229,8 @@ body.tv td.pts{font-size:clamp(18px,1.6vw,26px)}
 </div>
 <div id="tip" hidden></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="st-dados.js?v=86"></script>
+<script src="st-hora.js?v=1"></script>
+<script src="st-dados.js?v=87"></script>
 <script>
 let DATA={lojas:[],vend:[]};   /* vem do Servidor de Dados ST, já recortado pelo crachá */
 let RECORTE=false; const POS={}; let POS_PEND={};
@@ -341,6 +342,7 @@ render();
     if(!val){ el.textContent='carregando…'; return; }
     var d=(typeof val==='number')?new Date(val):new Date(String(val));
     if(isNaN(d.getTime())){ el.textContent=String(val); return; }
+    if(window.STHora) d=STHora.data(d.getTime());
     var p=function(n){return (n<10?'0':'')+n;};
     el.textContent=p(d.getDate())+'/'+p(d.getMonth()+1)+'/'+d.getFullYear()+' às '+p(d.getHours())+':'+p(d.getMinutes());
   }

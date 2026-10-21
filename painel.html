@@ -385,6 +385,7 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
 .termo-txt{font-size:13.5px;line-height:1.45}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="st-hora.js?v=1"></script>
 </head>
 <body>
 
@@ -582,7 +583,7 @@ const ORC={};
  /* O relogio da temperatura e a data REAL de hoje, nao a dataBase do
     painel: num mes recem-virado a dataBase vai para o fim do mes e
     jogava TODO orcamento para frio. */
- const O=_.O||{}, hj_=new Date(), base=new Date(hj_.getFullYear(),hj_.getMonth(),hj_.getDate(),12,0,0);
+ const O=_.O||{}, hj_=(window.STHora?STHora.data():new Date()), base=new Date(hj_.getFullYear(),hj_.getMonth(),hj_.getDate(),12,0,0);
  function faixa(d){ return d<=7?'Q':(d<=15?'M':'F') }
  /* a data pode chegar como texto aaaa-mm-dd, como dd/mm/aaaa ou ja
     convertida em objeto de data pela planilha — aceita os tres */
@@ -2220,7 +2221,7 @@ function enviarUpload(){
 }
 function sairPainel(){ try{localStorage.removeItem(PKEY); Object.keys(localStorage).forEach(function(k){if(k.indexOf('st_painel_cache_v1:')===0)localStorage.removeItem(k)})}catch(e){}; location.reload(); }
 function avisoOffline(em){
- var d=new Date(em),p=function(n){return(n<10?'0':'')+n},hoje=new Date().toDateString()===d.toDateString();
+ var B=window.STHora?STHora.data:function(x){return x==null?new Date():new Date(x)}, d=B(em),p=function(n){return(n<10?'0':'')+n},hoje=B().toDateString()===d.toDateString();
  var f=document.createElement('div'); f.setAttribute('role','status');
  f.style.cssText='position:fixed;left:0;right:0;margin:auto;width:max-content;max-width:calc(100% - 24px);top:max(10px,env(safe-area-inset-top,0px));z-index:99999;padding:7px 14px;border-radius:999px;background:#16233d;color:#fff;font:700 12.5px system-ui,sans-serif;box-shadow:0 6px 22px rgba(0,0,0,.35)';
  f.textContent='📶 Sem internet · mostrando os números de '+(hoje?'hoje, ':p(d.getDate())+'/'+p(d.getMonth()+1)+', ')+p(d.getHours())+'h'+p(d.getMinutes());
