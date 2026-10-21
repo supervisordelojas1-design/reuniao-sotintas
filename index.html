@@ -2000,6 +2000,7 @@ html[data-tema="escuro"] .dpq, html[data-theme="dark"] .dpq{border-color:#5a4a1c
 <script>try{ STHora.relogio(document.getElementById('horaBR')); }catch(e){}</script>
 <script src="st-dados.js?v=90"></script>
 <script src="st-anima.js?v=3"></script>
+<script src="st-mascote.js?v=1"></script>
 <script>
 "use strict";
 
@@ -9189,7 +9190,7 @@ syncNav();
       </button>
     </div>
   </div>
-  <div class="ini-foot"><button type="button" id="iniConta" class="ini-conta">Minha conta · trocar PIN · sair</button><br>Só Tintas · Colorindo Vidas e Realizando Sonhos</div>
+  <div class="ini-foot"><button type="button" id="iniConta" class="ini-conta">Minha conta · trocar PIN · sair</button><br><button type="button" id="iniBoasVindas" class="ini-conta">🫡 Rever boas-vindas</button> · <button type="button" id="iniTour" class="ini-conta">🧭 Rever o tour</button><br>Só Tintas · Colorindo Vidas e Realizando Sonhos</div>
 </div>
 
 <style>
@@ -9810,10 +9811,13 @@ button[id^="ov"][id$="Fechar"]:hover{transform:translateY(-1px);box-shadow:0 6px
     ov.querySelector('[data-bv=ok]').onclick=function(){ fecha('visto'); };
     setTimeout(function(){ var b=ov.querySelector('[data-bv=ok]'); if(b) b.focus(); },50);
   }
-  window.STBoasVindas={ rever:function(){ try{ var s=JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); localStorage.removeItem('st_boasvindas_v1:'+String(s.nome).toLowerCase().trim()); }catch(e){} boasVindas(function(){}); } };
+  window.STBoasVindas={ rever:function(){ try{ var s=JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); localStorage.removeItem('st_boasvindas_v1:'+String(s.nome).toLowerCase().trim()); }catch(e){} var vai=function(){ boasVindas(function(){}); }; if(window.STMascote) STMascote.mostrar(vai,true); else vai(); } };
+  (function(){ var a=document.getElementById('iniBoasVindas'), t=document.getElementById('iniTour');
+    if(a) a.onclick=function(){ window.STBoasVindas.rever(); };
+    if(t) t.onclick=function(){ try{ scrollTo({top:0,behavior:'smooth'}); }catch(e){} setTimeout(function(){ window.STTour.refazer(); },350); }; })();
   (function esperaInicio(){ var o=document.getElementById('ovInicio'); if(!o) return;
     var ja=false;
-    function tenta(){ if(o.classList.contains('aberto')&&!ja){ ja=true; setTimeout(function(){ boasVindas(tour); }, 2200); } }
+    function tenta(){ if(o.classList.contains('aberto')&&!ja){ ja=true; var seg=function(){ setTimeout(function(){ boasVindas(tour); }, 400); }; setTimeout(function(){ if(window.STMascote) STMascote.mostrar(seg); else seg(); }, 350); } }
     tenta(); new MutationObserver(function(){ tenta(); }).observe(o,{attributes:true,attributeFilter:['class']}); })();
   function marcar(n){
     var card=document.querySelector('#ovInicio .ini-card[data-act="pdi"] .ini-txt'); if(!card) return;
@@ -9825,7 +9829,7 @@ button[id^="ov"][id$="Fechar"]:hover{transform:translateY(-1px);box-shadow:0 6px
   function alertaPdi(n,sem,tent){
     if(!n&&!sem) return;
     /* espera o tour do primeiro acesso terminar (e dá tempo dele começar) para não brigarem na tela */
-    tent=tent||0; if(tent<120 && (tent<4 || document.querySelector('.st-tour,.st-bv'))){ setTimeout(function(){ alertaPdi(n,sem,tent+1); },1000); return; }
+    tent=tent||0; if(tent<120 && (tent<4 || document.querySelector('.st-tour,.st-bv,.st-mv'))){ setTimeout(function(){ alertaPdi(n,sem,tent+1); },1000); return; }
     var hoje=new Date().toDateString(), ck='st_alerta_pdi_dia';
     try{ if(localStorage.getItem(ck)===hoje) return; localStorage.setItem(ck,hoje); }catch(e){}
     var d=document.createElement('div'); d.className='st-alerta-pdi'; d.setAttribute('role','alert');

@@ -189,9 +189,20 @@ h3{font-size:14px;margin:0 0 6px}
     else if(atual.situacao==='respondido') h+=resultado(atual.aval);
     else h+='<p class="aviso">'+esc(SIT[atual.situacao])+'. Fale com o seu gerente.</p>';
     h+='</section>';
-    if(ant) h+='<section class="card"><h2>Semana passada ('+dBr(ant.semana)+')</h2>'+(ant.aval?'<p>Avaliação: <b>'+ant.aval.nota+'/'+ant.aval.total+'</b>'+(ant.aval.mentor?' · Mentor '+ant.aval.mentor.acertos+'/'+ant.aval.mentor.total:'')+'</p>':'<p class="sub">'+esc(SIT[ant.situacao]||'')+'</p>')+
+    var antAberta=ant&&(ant.situacao==='liberado'||ant.situacao==='aguardando');
+    if(antAberta){
+      var hA='<section class="card" id="avalAnt"><div class="vend-top"><h2 style="margin:0">⏳ Avaliação da semana passada ('+dBr(ant.semana)+')</h2>'+chip(ant.situacao)+'</div>';
+      if(ant.situacao==='aguardando') hA+='<p>Ainda dá tempo! A avaliação libera quando o seu gerente marcar que fez o PDI semanal da semana passada com você.</p><p class="aviso">Prazo: <b>'+esc(prazoTxt(ant.prazo))+'</b>.</p>';
+      else hA+='<p class="aviso">Prazo estendido: responda até <b>'+esc(prazoTxt(ant.prazo))+'</b>. Só dá para enviar uma vez.</p><div id="aquestoes"><p class="sub">Preparando as questões…</p></div>';
+      h=hA+'</section>'+h;
+    }
+    if(ant&&!antAberta) h+='<section class="card"><h2>Semana passada ('+dBr(ant.semana)+')</h2>'+(ant.aval?'<p>Avaliação: <b>'+ant.aval.nota+'/'+ant.aval.total+'</b>'+(ant.aval.mentor?' · Mentor '+ant.aval.mentor.acertos+'/'+ant.aval.mentor.total:'')+'</p>':'<p class="sub">'+esc(SIT[ant.situacao]||'')+'</p>')+
       (ant.fechamento?'<p>Fechamento do gerente: <b>'+ant.fechamento.posit+'</b> de '+((ant.comp&&ant.comp.positMeta)||10)+' positivações · <b>'+ant.fechamento.orcs+'</b> de '+((ant.comp&&ant.comp.orcs)||[]).length+' orçamentos retornados</p>':'<p class="sub">O gerente ainda não registrou o fechamento.</p>')+'</section>';
     $('raiz').innerHTML=h;
+    if(antAberta&&ant.situacao==='liberado'){
+      if(visao()) $('aquestoes').innerHTML='<p class="sub">Modo "Ver como": as questões só aparecem para o próprio vendedor.</p>';
+      else prepararMentor(ant).then(function(M){ montarQuestoes(ant,M,'a'); });
+    }
     if(atual.situacao==='liberado'){
       if(visao()){ $('questoes').innerHTML='<p class="sub">Modo "Ver como": as questões só aparecem para o próprio vendedor.</p>'; return; }
       prepararMentor(atual).then(function(M){ MENTOR=M; montarQuestoes(atual); });
@@ -203,22 +214,23 @@ h3{font-size:14px;margin:0 0 6px}
     if(a.revisao) h+='<div style="margin-top:8px">'+a.revisao.map(function(r,i){return '<div class="rev"><span class="'+(r.ok?'ok':'x')+'">'+(r.ok?'✓':'✗')+'</span><span>'+(i+1)+'. '+(r.ok?'':'Resposta certa: ')+'<b>'+esc(r.certa)+'</b></span></div>';}).join('')+'</div>';
     return h;
   }
-  function montarQuestoes(linha){
+  function montarQuestoes(linha,MT,px){
+    px=px||''; if(MT===undefined) MT=MENTOR;
     var Q=linha.questoes||[], h='';
-    Q.forEach(function(q,i){ h+='<div class="q" data-q="'+i+'"><p>'+(i+1)+'. '+esc(q.t)+'</p>'+q.ops.map(function(o,k){return '<label><input type="radio" name="q'+i+'" value="'+k+'"><span>'+esc(o)+'</span></label>';}).join('')+'</div>'; });
-    if(MENTOR&&MENTOR.qs.length){
-      h+='<h3 style="margin-top:14px">'+esc(MENTOR.icone)+' Mentor ST PRO · '+esc(MENTOR.titulo)+'</h3>';
-      MENTOR.qs.forEach(function(q,i){ h+='<div class="q" data-m="'+i+'"><p>'+(i+1)+'. '+esc(q.enunciado)+'</p>'+q.opcoes.map(function(o,k){return '<label><input type="radio" name="m'+i+'" value="'+k+'"><span>'+esc(o)+'</span></label>';}).join('')+'</div>'; });
+    Q.forEach(function(q,i){ h+='<div class="q" data-q="'+px+i+'"><p>'+(i+1)+'. '+esc(q.t)+'</p>'+q.ops.map(function(o,k){return '<label><input type="radio" name="'+px+'q'+i+'" value="'+k+'"><span>'+esc(o)+'</span></label>';}).join('')+'</div>'; });
+    if(MT&&MT.qs.length){
+      h+='<h3 style="margin-top:14px">'+esc(MT.icone)+' Mentor ST PRO · '+esc(MT.titulo)+'</h3>';
+      MT.qs.forEach(function(q,i){ h+='<div class="q" data-m="'+px+i+'"><p>'+(i+1)+'. '+esc(q.enunciado)+'</p>'+q.opcoes.map(function(o,k){return '<label><input type="radio" name="'+px+'m'+i+'" value="'+k+'"><span>'+esc(o)+'</span></label>';}).join('')+'</div>'; });
     }
-    h+='<div class="linha" style="margin-top:10px"><button class="btn verde" type="button" id="enviar">Enviar respostas</button><span class="sub" id="falta"></span></div>';
-    $('questoes').innerHTML=h;
-    $('enviar').onclick=function(){
+    h+='<div class="linha" style="margin-top:10px"><button class="btn verde" type="button" id="'+px+'enviar">Enviar respostas</button><span class="sub" id="'+px+'falta"></span></div>';
+    $(px+'questoes').innerHTML=h;
+    $(px+'enviar').onclick=function(){
       var R=[], M=0, falta=0;
-      Q.forEach(function(q,i){ var x=document.querySelector('input[name="q'+i+'"]:checked'); var box=document.querySelector('[data-q="'+i+'"]'); box.classList.toggle('erro',!x); if(!x) falta++; R.push(x?Number(x.value):-1); });
-      (MENTOR?MENTOR.qs:[]).forEach(function(q,i){ var x=document.querySelector('input[name="m'+i+'"]:checked'); var box=document.querySelector('[data-m="'+i+'"]'); box.classList.toggle('erro',!x); if(!x) falta++; if(x&&Number(x.value)===q.correta) M++; });
-      if(falta){ $('falta').textContent='Faltam '+falta+' resposta(s).'; var e=document.querySelector('.q.erro'); if(e) e.scrollIntoView({behavior:'smooth',block:'center'}); return; }
+      Q.forEach(function(q,i){ var x=document.querySelector('input[name="'+px+'q'+i+'"]:checked'); var box=document.querySelector('[data-q="'+px+i+'"]'); box.classList.toggle('erro',!x); if(!x) falta++; R.push(x?Number(x.value):-1); });
+      (MT?MT.qs:[]).forEach(function(q,i){ var x=document.querySelector('input[name="'+px+'m'+i+'"]:checked'); var box=document.querySelector('[data-m="'+px+i+'"]'); box.classList.toggle('erro',!x); if(!x) falta++; if(x&&Number(x.value)===q.correta) M++; });
+      if(falta){ $(px+'falta').textContent='Faltam '+falta+' resposta(s).'; var e=document.querySelector('#'+px+'questoes .q.erro'); if(e) e.scrollIntoView({behavior:'smooth',block:'center'}); return; }
       var b=this; b.disabled=true; b.textContent='Enviando…';
-      STDados.chamar('semanaAval',{chave:linha.chave,respostas:R,mentor:MENTOR?{modulo:MENTOR.modulo,titulo:MENTOR.titulo,acertos:M,total:MENTOR.qs.length}:null}).then(function(j){
+      STDados.chamar('semanaAval',{chave:linha.chave,respostas:R,mentor:MT?{modulo:MT.modulo,titulo:MT.titulo,acertos:M,total:MT.qs.length}:null}).then(function(j){
         if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não confirmou.');
         toast('Respostas enviadas!'); if(window.STAnima&&j.nota>=8) STAnima.confete();
         return carregar();
@@ -255,6 +267,7 @@ h3{font-size:14px;margin:0 0 6px}
           var f=l.fechamento||{}, nO=((l.comp&&l.comp.orcs)||[]).length, meta=(l.comp&&l.comp.positMeta)||10;
           var dif=(l.posit_real!=null&&f.posit!=null&&l.fechamento)?(f.posit-l.posit_real):null;
           h+='<div class="vend"><div class="vend-top"><b>'+esc(nm(l.comp?l.comp.nome:l.vendedor))+'</b><span class="linha">'+chip(l.situacao)+(l.aval?'<span class="chip c-respondido">'+l.aval.nota+'/'+l.aval.total+'</span>':'')+'</span></div>'+
+            (l.situacao==='aguardando'&&!ro?'<div class="linha" style="margin:8px 0"><button class="btn azul" type="button" data-feito="'+esc(l.chave)+'">✓ Fiz o PDI semanal da semana passada</button><span class="sub">prazo estendido até '+esc(prazoTxt(l.prazo))+'</span></div>':'')+
             '<div class="fech"><label>Positivações CNPJ (meta '+meta+')<input type="number" min="0" max="99" inputmode="numeric" data-fp="'+esc(l.chave)+'" value="'+(f.posit!=null?f.posit:'')+'" '+(ro?'disabled':'')+'></label>'+
             '<label>Orçamentos retornados (de '+nO+')<input type="number" min="0" max="99" inputmode="numeric" data-fo="'+esc(l.chave)+'" value="'+(f.orcs!=null?f.orcs:'')+'" '+(ro?'disabled':'')+'></label>'+
             '<label>Indicador foco<select data-fi="'+esc(l.chave)+'" '+(ro?'disabled':'')+'>'+['','melhorou','igual','piorou'].map(function(o){return '<option value="'+o+'"'+(f.indicador===o?' selected':'')+'>'+(o||'—')+'</option>';}).join('')+'</select></label></div>'+
