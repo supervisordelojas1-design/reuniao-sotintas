@@ -63,6 +63,8 @@
     conteudo() {
       const base = clone(global.CONTEUDO);
       const d = Demo.ler();
+      /* conteúdo publicado pela coordenação (Servidor de Dados) vale para todos; vem antes das edições locais */
+      if (d.conteudo_compartilhado) for (const k of Object.keys(d.conteudo_compartilhado)) { if (!/^niveis_/.test(k) && d.conteudo_compartilhado[k] != null) base[k] = clone(d.conteudo_compartilhado[k]); }
       if (d.conteudo_override) { const o = { ...d.conteudo_override }; const nb = o.niveis_base; delete o.niveis_base; Object.assign(base, o); if (nb && base.niveis_vendas) base.niveis_vendas = { ...base.niveis_vendas, base: { ...base.niveis_vendas.base, ...nb } }; }
       return base;
     },

@@ -160,14 +160,20 @@ h3{font-size:14px;margin:0 0 6px}
   function semente(s){ var h=2166136261; for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return h>>>0; }
   function embaralha(a,s){ a=a.slice(); for(var i=a.length-1;i>0;i--){ s=(Math.imul(s,1103515245)+12345)>>>0; var j=(s>>>16)%(i+1), t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
   function prepararMentor(linha){
-    var C=window.CONTEUDO||{}; if(!C.modulos||!C.questoes) return Promise.resolve(null);
-    var mods=C.modulos.filter(function(m){return m.ativo!==false;}).sort(function(a,b){return a.ordem-b.ordem;});
-    return STDados.chamar('mentorLer').catch(function(){return null;}).then(function(j){
+    var C0=window.CONTEUDO||{};
+    /* módulos e questões publicados pela coordenação no Painel do Gestor valem mais que os do arquivo */
+    return STDados.chamar('conteudoLer').catch(function(){return null;}).then(function(k){
+      var cc=(k&&k.ok&&k.cont)||{}, C={modulos:cc.modulos||C0.modulos, questoes:cc.questoes||C0.questoes};
+      if(!C.modulos||!C.questoes) return null;
+      (C.questoes||[]).forEach(function(q){ if(typeof q.opcoes==='string'){ try{ q.opcoes=JSON.parse(q.opcoes); }catch(e){ q.opcoes=[]; } } if(q.correta!=null) q.correta=Number(q.correta); });
+      var mods=C.modulos.filter(function(m){return m.ativo!==false;}).sort(function(a,b){return a.ordem-b.ordem;});
+      return STDados.chamar('mentorLer').catch(function(){return null;}).then(function(j){
       var tent=(j&&j.eu&&j.eu.tentativas)||[], ok={}; tent.forEach(function(t){ if(t.aprovado) ok[t.modulo_id]=1; });
       var m=mods.filter(function(x){return !ok[x.id];})[0];
       if(!m){ var sem=Number(String(linha.semana).replace(/-/g,''))||0; m=mods[sem%mods.length]; }
       var qs=embaralha(C.questoes.filter(function(q){return q.modulo_id===m.id;}), semente(linha.chave)).slice(0,5);
       return { modulo:m.id, titulo:m.titulo, icone:m.icone||'🎓', qs:qs };
+      });
     });
   }
 

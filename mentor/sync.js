@@ -99,6 +99,7 @@
     return Promise.all([
       g.STDados.chamar('mentorLer'),
       g.STDados.chamar('niveis').catch(function () { return null; }),
+      g.STDados.chamar('conteudoLer').catch(function () { return null; }),
     ]).then(function (rs) {
       var j = rs[0]; if (!j || !j.ok) throw new Error((j && j.erro) || 'sem resposta');
       var d = ler(); if (!d) return false;
@@ -106,6 +107,7 @@
       if (j.eu) aplicarMeu(d, j.eu);
       aplicarEquipe(d, j.equipe);
       aplicarNiveis(d, rs[1]);
+      if (rs[2] && rs[2].ok) { d.conteudo_compartilhado = rs[2].cont || {}; d.conteudo_compartilhado_em = rs[2].em || null; }
       gravar(d);
       ultimoEnviado = j.eu ? assin(j.eu) : '';
       gravarSync(assin(meu(d)) === ultimoEnviado ? ultimoEnviado : (lerSync() || {}).assin || '');
@@ -139,6 +141,49 @@
   }).catch(function () {
     var tenta = setInterval(function () { puxar().then(function () { clearInterval(tenta); }).catch(function () {}); }, 60000);
   });
+
+  /* ── conteúdo do Mentor: o que a coordenação salva no Painel do Gestor é publicado para todos ── */
+  var TAB_LOCAL = function (k) { return !/^niveis_/.test(k); };
+  function publicar(tabelas) {
+    return g.STDados.chamar('conteudoSalvar', { tabelas: tabelas }).then(function (j) {
+      if (!j || !j.ok) throw new Error((j && j.erro) || 'o servidor não confirmou');
+      var d = ler(); if (d) {
+        d.conteudo_compartilhado = d.conteudo_compartilhado || {};
+        Object.keys(tabelas).forEach(function (t) { if (tabelas[t] === null) delete d.conteudo_compartilhado[t]; else d.conteudo_compartilhado[t] = tabelas[t]; if (d.conteudo_override) delete d.conteudo_override[t]; });
+        d.conteudo_compartilhado_em = j.em || null; gravar(d);
+      }
+      return j;
+    });
+  }
+  function avisoFalha(e) { return new Error('Ficou salvo só neste aparelho: não consegui publicar para a equipe (' + ((e && e.message) || e) + '). Salve de novo com internet.'); }
+  var Demo = g.DB.gestor && g.DB.gestor.demo;
+  if (Demo && Demo.gestorSalvarConteudo && Demo.gestorSalvarConfig) {
+    var salvarConteudo = Demo.gestorSalvarConteudo, salvarConfig = Demo.gestorSalvarConfig;
+    Demo.gestorSalvarConteudo = function (tabela, lista) {
+      return salvarConteudo.call(Demo, tabela, lista).then(function () {
+        if (!TAB_LOCAL(tabela)) return true;
+        var T = {}; T[tabela] = lista;
+        return publicar(T).then(function () { return true; }, function (e) { throw avisoFalha(e); });
+      });
+    };
+    Demo.gestorSalvarConfig = function (cfg) {
+      return salvarConfig.call(Demo, cfg).then(function () {
+        var d = ler(), c = d && d.conteudo_override && d.conteudo_override.config; if (!c) return true;
+        return publicar({ config: c }).then(function () { return true; }, function (e) { throw avisoFalha(e); });
+      });
+    };
+  }
+  /* edições antigas que ficaram só neste aparelho (antes da central): a coordenação publica sozinha */
+  function migrarLocais() {
+    var c = g.STDados.crachaGuardado && g.STDados.crachaGuardado(true);
+    if (!c || c.perfil !== 'coord' || (g.STDados.visao && g.STDados.visao())) return;
+    var d = ler(), o = d && d.conteudo_override; if (!o) return;
+    var T = {}, n = 0; Object.keys(o).forEach(function (k) { if (TAB_LOCAL(k) && o[k] != null) { T[k] = o[k]; n++; } });
+    if (!n) return;
+    publicar(T).then(function () { try { console.log('[Mentor] publicadas para a equipe: ' + Object.keys(T).join(', ')); } catch (e) {} }).catch(function () {});
+  }
+  primeira.then(migrarLocais, function () {});
+  g.ST_CONTEUDO = { publicar: publicar };
 
   setInterval(enviar, 4000);
   document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') enviar(); });
