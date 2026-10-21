@@ -9123,6 +9123,11 @@ syncNav();
         <span class="ini-txt"><span class="ini-nm">PDI Comercial</span><span class="ini-ds">Prioridade e desenvolvimento dos vendedores</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
+      <button type="button" class="ini-card feat" data-act="semana" data-gate="1" data-ger="1" data-vend="1">
+        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-flag"/></svg></span>
+        <span class="ini-txt"><span class="ini-nm">PDI Semanal</span><span class="ini-ds">Os 3 compromissos da semana e a avaliação</span></span>
+        <span class="ini-go" aria-hidden="true">&rarr;</span>
+      </button>
       <button type="button" class="ini-card feat" data-act="acessos" data-lider="1">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
         <span class="ini-txt"><span class="ini-nm">Acesso dos vendedores</span><span class="ini-ds">Liberar vendedor, novo PIN e desativar</span></span>
@@ -9341,6 +9346,12 @@ body.foco .wrap{padding-bottom:40px}
   // overlay do PDI Comercial (espelha o de Níveis: escopo pela carteira do supervisor)
   var ovD=document.getElementById('ovPdi'), ifrD=document.getElementById('ifrPdi'),
       xD=document.getElementById('ovPdiFechar');
+  function abrirSemana(){
+    if(!ovD||!ifrD) return;
+    var tema=(window.STtema?window.STtema.get():'light');
+    ifrD.setAttribute('src','semana.html?tema='+tema+'&v='+Date.now());
+    ovD.style.display='flex'; document.body.style.overflow='hidden';
+  }
   function abrirPdi(){
     if(!ovD||!ifrD) return;
     var s=sessao(); var u=(s&&s.nome)?s.nome:'';
@@ -9479,6 +9490,7 @@ body.foco .wrap{padding-bottom:40px}
     if(act==='ranking'){ abrirRanking(); return; }
     if(act==='proposta'){ abrirProposta(); return; }
     if(act==='pdi'){ abrirPdi(); return; }
+    if(act==='semana'){ abrirSemana(); return; }
     if(act==='mentor'){ abrirMentor(); return; }
     if(act==='acessos'){ abrirAcessos(); return; }
     if(ehVend()) return;      /* vendedor não entra nas operações da supervisão */
@@ -9687,6 +9699,7 @@ button[id^="ov"][id$="Fechar"]:hover{transform:translateY(-1px);box-shadow:0 6px
     mentor:['🎓 Mentor ST PRO','Trilha de treinamento, provas e a sua sequência 🔥 de dias estudando.'],
     niveis:['🏅 Níveis','Em que nível você está e quanto falta de média para subir.'],
     pdi:['📋 PDI','O plano de desenvolvimento de cada vendedor, com as revisões e o termo em PDF.'],
+    semana:['🗓️ PDI Semanal','Os 3 compromissos da semana de cada vendedor. O gerente marca que fez e o vendedor responde a avaliação até o meio-dia.'],
     proposta:['💼 Proposta','Monte a proposta para um candidato a vendedor.'],
     acessos:['🔑 Acesso dos vendedores','Libere ou bloqueie o acesso da sua equipe ao app.'],
     ranking:['🏆 Ranking','A premiação do ano. No celular, arraste para o lado para trocar Lojas e Vendedores.'],

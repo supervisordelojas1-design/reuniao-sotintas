@@ -1,0 +1,267 @@
+<!doctype html><html lang="pt-BR" data-theme="dark" style="color-scheme:dark"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>PDI Semanal · Só Tintas</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#0f1522; --surface:#1a2336; --surface2:#222d44; --ink:#eef2fb; --muted:#9aa5bb; --line:#2c3850;
+  --accent:#ff3b47; --navy:#4f7cf0; --ok:#3fbf7f; --bad:#ff6b6b; --warn:#ffab5e; --amarelo:#FFD200;
+  --okbg:#12301f; --badbg:#3a1a20; --warnbg:#3a2717; --navybg:#1e2b4d;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Public Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+html[data-theme="light"]{
+  --bg:#f5f7fb; --surface:#ffffff; --surface2:#eef2f8; --ink:#16233d; --muted:#5a677f; --line:#e4e9f3;
+  --navy:#1C3F8F; --ok:#178048; --bad:#c42a22; --warn:#b35600;
+  --okbg:#e1f3e8; --badbg:#fdeceb; --warnbg:#ffefdd; --navybg:#e7edf9;
+  color-scheme:light;
+}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+.wrap{max-width:900px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-right,0px)) 60px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px}
+.topbar{height:8px;background:var(--accent);border-radius:0 0 6px 6px;margin:-20px 0 4px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(24px,4vw,34px);line-height:1.05;margin:4px 0 0;color:var(--accent)}
+h2{font-family:var(--f-display);font-size:18px;margin:0 0 8px}
+h3{font-size:14px;margin:0 0 6px}
+.sub{color:var(--muted);font-size:13px}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:9px 14px;font:700 13px var(--f-body);cursor:pointer}
+.btn.azul{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.verde{background:var(--ok);border-color:var(--ok);color:#06130b}
+.btn:disabled{opacity:.5;cursor:default}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:0 6px 20px rgba(0,0,0,.12)}
+.chip{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:800;white-space:nowrap}
+.c-aguardando{background:var(--surface2);color:var(--muted)}.c-liberado{background:var(--navybg);color:var(--navy)}
+.c-respondido{background:var(--okbg);color:var(--ok)}.c-nao_respondeu,.c-nao_feito{background:var(--badbg);color:var(--bad)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.kpi{background:var(--surface2);border-radius:10px;padding:8px 10px}.kpi span{display:block;font-size:11.5px;color:var(--muted)}.kpi b{font-size:17px}
+.comp{border-left:4px solid var(--navy);padding:8px 12px;margin:10px 0;background:var(--surface2);border-radius:0 10px 10px 0}
+.comp .n{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:11.5px;font-weight:800;margin-right:6px}
+.lista{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:4px}
+.lista li{display:flex;justify-content:space-between;gap:10px;font-size:13px;border-bottom:1px solid var(--line);padding:4px 0}
+.lista li span:last-child{color:var(--muted);white-space:nowrap}
+.mais{background:none;border:0;color:var(--navy);font:700 12.5px var(--f-body);cursor:pointer;padding:4px 0}
+.q{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0}
+.q p{margin:0 0 6px;font-weight:700}
+.q label{display:flex;gap:8px;align-items:flex-start;padding:6px 8px;border-radius:8px;cursor:pointer}
+.q label:hover{background:var(--surface2)}
+.q input{margin-top:3px;accent-color:var(--navy)}
+.q.erro{border-color:var(--bad)}
+.rev{display:flex;gap:8px;font-size:13px;padding:4px 0;border-bottom:1px solid var(--line)}
+.rev .ok{color:var(--ok);font-weight:800}.rev .x{color:var(--bad);font-weight:800}
+.vend{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0;background:var(--surface)}
+.vend-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.vend-top b{font-size:15px}
+.linha{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.fech{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:8px}
+.fech label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.fech input,.fech select{background:var(--surface2);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:8px;font:600 14px var(--f-body)}
+.aviso{background:var(--warnbg);color:var(--ink);border-radius:10px;padding:8px 12px;font-size:13px}
+.bom{background:var(--okbg);border-radius:10px;padding:8px 12px;font-size:13px}
+.toast{position:fixed;left:0;right:0;margin:auto;bottom:18px;width:max-content;max-width:calc(100% - 24px);background:#16233d;color:#fff;padding:10px 16px;border-radius:999px;font-weight:700;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.relogio{font-variant-numeric:tabular-nums}
+</style></head><body>
+<div class="wrap">
+  <div class="topbar"></div>
+  <header>
+    <div><div class="eyebrow">Só Tintas · desenvolvimento</div><h1>PDI Semanal</h1><div class="sub" id="sub">Carregando…</div></div>
+    <button type="button" class="btn" id="btnTema"><span id="temaIc">🌙</span> <span id="temaTx">Escuro</span></button>
+  </header>
+  <main id="raiz"><p class="sub">Carregando o PDI semanal…</p></main>
+</div>
+<script>
+(function(){
+  function qp(n){try{return new URLSearchParams(location.search).get(n);}catch(e){return null;}}
+  function ls(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+  var p=(qp('tema')||'').toLowerCase(), t=(p==='claro'||p==='light')?'light':(p==='escuro'||p==='dark')?'dark':null;
+  if(!t){ var s=(ls('st_tema')||'').toLowerCase(); t=(s==='light'||s==='claro')?'light':'dark'; }
+  window.__setTema=function(tema){ document.documentElement.setAttribute('data-theme',tema); document.documentElement.style.colorScheme=tema;
+    var ic=document.getElementById('temaIc'), tx=document.getElementById('temaTx'); if(ic) ic.textContent=tema==='light'?'☀️':'🌙'; if(tx) tx.textContent=tema==='light'?'Claro':'Escuro';
+    try{localStorage.setItem('st_tema',tema);}catch(e){} try{ if(window.parent&&window.parent!==window) window.parent.postMessage({st_tema:tema},'*'); }catch(e){} };
+  window.__setTema(t);
+  window.addEventListener('message',function(ev){ var d=ev&&ev.data; if(d&&(d.st_tema==='light'||d.st_tema==='dark')) window.__setTema(d.st_tema); });
+  document.getElementById('btnTema').onclick=function(){ window.__setTema(document.documentElement.getAttribute('data-theme')==='light'?'dark':'light'); };
+})();
+</script>
+<script src="st-dados.js?v=86"></script>
+<script src="mentor/assets/conteudo-base.js"></script>
+<script src="mentor/assets/conteudo-questoes.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   PDI SEMANAL — gerente libera, vendedor responde (até o prazo), gerente fecha a semana.
+   Os dados e o gabarito ficam no Servidor de Dados ST; aqui só a tela.
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+  var $=function(id){return document.getElementById(id);};
+  var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
+  var brl=function(n){return 'R$ '+Math.round(Number(n)||0).toLocaleString('pt-BR');};
+  var pct=function(x){return x==null||!isFinite(x)?'—':Math.round(x*100)+'%';};
+  var dBr=function(iso){var p=String(iso||'').slice(0,10).split('-');return p.length===3?p[2]+'/'+p[1]:'';};
+  var SIT={aguardando:'Aguardando o PDI',liberado:'Avaliação liberada',respondido:'Respondido',nao_respondeu:'Não respondeu no prazo',nao_feito:'PDI não feito no prazo'};
+  var D=null, ABERTOS={}, RESP={}, MENTOR=null;
+  function toast(m){ var t=document.createElement('div'); t.className='toast'; t.setAttribute('role','status'); t.textContent=m; document.body.appendChild(t); setTimeout(function(){t.remove();},2800); }
+  function chip(s){ return '<span class="chip c-'+esc(s)+'">'+esc(SIT[s]||s)+'</span>'; }
+  function visao(){ try{ return !!(window.STDados&&STDados.visao&&STDados.visao()); }catch(e){ return false; } }
+  function prazoTxt(p){ if(!p) return ''; var x=p.split(' '); return dBr(x[0])+' às '+(x[1]||'').replace(':00','h'); }
+
+  function carregar(){
+    return STDados.chamar('semana').then(function(j){
+      if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não respondeu.');
+      D=j; montar();
+    }).catch(function(e){ $('raiz').innerHTML='<div class="card"><h2>Não consegui abrir</h2><p class="sub">'+esc(e.message||e)+'</p><button class="btn azul" type="button" id="deNovo">Tentar de novo</button></div>'; $('deNovo').onclick=carregar; });
+  }
+
+  /* ───────── compromissos (mesma ficha para vendedor e gerente) ───────── */
+  function blocoComp(c, id){
+    if(!c) return '<p class="sub">Sem compromissos registrados.</p>';
+    var h='<div class="kpis"><div class="kpi"><span>Meta do mês</span><b>'+brl(c.meta)+'</b></div><div class="kpi"><span>Realizado</span><b>'+brl(c.fat)+'</b></div>'+
+      '<div class="kpi"><span>Projeção</span><b>'+pct(c.pp)+'</b></div><div class="kpi"><span>Precisa por dia útil</span><b>'+brl(c.dia)+'</b></div></div>';
+    h+='<div class="comp"><span class="n">1</span><b>'+(c.foco?'Indicador: '+esc(c.foco.nome)+' — de '+esc(c.foco.atual)+' para '+esc(c.foco.meta):'Indicadores CPF na meta: foco em volume')+'</b>'+
+      (c.foco?'<div style="margin-top:4px"><b>Ação:</b> '+esc(c.foco.acao)+'</div><div><b>O gerente observa:</b> '+esc(c.foco.obs)+'</div>':'')+'</div>';
+    var L=c.lista||[], ab=ABERTOS[id+':l'];
+    h+='<div class="comp"><span class="n">2</span><b>Positivar '+(c.positMeta||10)+' clientes CNPJ na semana (2 por dia útil)</b><div class="sub">Lista de '+L.length+' clientes da carteira sem compra no mês</div>'+
+      '<ul class="lista">'+L.slice(0,ab?L.length:5).map(function(x){return '<li><span>'+esc(x.cli)+(x.daLoja?' <span class="sub">(sem vendedor)</span>':'')+'</span><span>média '+brl(x.media)+'</span></li>';}).join('')+'</ul>'+
+      (L.length>5?'<button class="mais" type="button" data-mais="'+esc(id)+':l">'+(ab?'Mostrar menos':'Ver os '+L.length+' clientes')+'</button>':'')+'</div>';
+    var O=c.orcs||[];
+    h+='<div class="comp"><span class="n">3</span><b>Retornar '+O.length+' orçamento'+(O.length===1?'':'s')+' em aberto</b>'+
+      (O.length?'<ul class="lista">'+O.map(function(o){return '<li><span>'+esc(o.cli)+(o.tel?' · <a href="tel:'+esc(String(o.tel).replace(/[^\d+]/g,''))+'" style="color:var(--navy)">'+esc(o.tel)+'</a>':'')+'</span><span>'+brl(o.valor)+(o.dias!=null?' · '+o.dias+' dias':'')+'</span></li>';}).join('')+'</ul>':'<div class="sub">Nenhum orçamento em aberto no seu nome.</div>')+'</div>';
+    return h;
+  }
+
+  /* ───────── avaliação do Mentor: o próximo módulo da trilha que ainda não foi aprovado ───────── */
+  function semente(s){ var h=2166136261; for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return h>>>0; }
+  function embaralha(a,s){ a=a.slice(); for(var i=a.length-1;i>0;i--){ s=(Math.imul(s,1103515245)+12345)>>>0; var j=(s>>>16)%(i+1), t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+  function prepararMentor(linha){
+    var C=window.CONTEUDO||{}; if(!C.modulos||!C.questoes) return Promise.resolve(null);
+    var mods=C.modulos.filter(function(m){return m.ativo!==false;}).sort(function(a,b){return a.ordem-b.ordem;});
+    return STDados.chamar('mentorLer').catch(function(){return null;}).then(function(j){
+      var tent=(j&&j.eu&&j.eu.tentativas)||[], ok={}; tent.forEach(function(t){ if(t.aprovado) ok[t.modulo_id]=1; });
+      var m=mods.filter(function(x){return !ok[x.id];})[0];
+      if(!m){ var sem=Number(String(linha.semana).replace(/-/g,''))||0; m=mods[sem%mods.length]; }
+      var qs=embaralha(C.questoes.filter(function(q){return q.modulo_id===m.id;}), semente(linha.chave)).slice(0,5);
+      return { modulo:m.id, titulo:m.titulo, icone:m.icone||'🎓', qs:qs };
+    });
+  }
+
+  /* ───────── tela do vendedor ───────── */
+  function telaVendedor(){
+    var atual=D.linhas.filter(function(l){return l.semana===D.atual;})[0], ant=D.linhas.filter(function(l){return l.semana===D.anterior;})[0];
+    $('sub').textContent=atual?'Semana de '+dBr(atual.semana)+' · '+(atual.comp?atual.comp.nome:''):'';
+    if(!atual){ $('raiz').innerHTML='<div class="card"><h2>Ainda não há PDI semanal para você</h2><p class="sub">Ele chega toda segunda de manhã, junto com o resumo da loja.</p></div>'; return; }
+    var h='<section class="card"><div class="vend-top"><h2 style="margin:0">Seus 3 compromissos da semana</h2>'+chip(atual.situacao)+'</div>'+blocoComp(atual.comp,atual.chave)+'</section>';
+    h+='<section class="card" id="aval"><h2>Avaliação da semana</h2>';
+    if(atual.situacao==='aguardando') h+='<p>A avaliação libera quando o seu gerente marcar que fez o PDI semanal com você.</p><p class="aviso">Prazo para responder: <b>'+esc(prazoTxt(atual.prazo))+'</b>. Converse com o seu gerente antes disso.</p>';
+    else if(atual.situacao==='liberado') h+='<p class="aviso">Responda até <b>'+esc(prazoTxt(atual.prazo))+'</b>. São '+(atual.questoes||[]).length+' questões sobre o seu PDI e mais a avaliação do Mentor. Só dá para enviar uma vez.</p><div id="questoes"><p class="sub">Preparando as questões…</p></div>';
+    else if(atual.situacao==='respondido') h+=resultado(atual.aval);
+    else h+='<p class="aviso">'+esc(SIT[atual.situacao])+'. Fale com o seu gerente.</p>';
+    h+='</section>';
+    if(ant) h+='<section class="card"><h2>Semana passada ('+dBr(ant.semana)+')</h2>'+(ant.aval?'<p>Avaliação: <b>'+ant.aval.nota+'/'+ant.aval.total+'</b>'+(ant.aval.mentor?' · Mentor '+ant.aval.mentor.acertos+'/'+ant.aval.mentor.total:'')+'</p>':'<p class="sub">'+esc(SIT[ant.situacao]||'')+'</p>')+
+      (ant.fechamento?'<p>Fechamento do gerente: <b>'+ant.fechamento.posit+'</b> de '+((ant.comp&&ant.comp.positMeta)||10)+' positivações · <b>'+ant.fechamento.orcs+'</b> de '+((ant.comp&&ant.comp.orcs)||[]).length+' orçamentos retornados</p>':'<p class="sub">O gerente ainda não registrou o fechamento.</p>')+'</section>';
+    $('raiz').innerHTML=h;
+    if(atual.situacao==='liberado'){
+      if(visao()){ $('questoes').innerHTML='<p class="sub">Modo "Ver como": as questões só aparecem para o próprio vendedor.</p>'; return; }
+      prepararMentor(atual).then(function(M){ MENTOR=M; montarQuestoes(atual); });
+    }
+  }
+  function resultado(a){
+    if(!a) return '';
+    var h='<div class="bom" style="font-size:15px">Você acertou <b>'+a.nota+' de '+a.total+'</b> sobre o seu PDI'+(a.mentor?' e <b>'+a.mentor.acertos+' de '+a.mentor.total+'</b> no Mentor ('+esc(a.mentor.titulo||a.mentor.modulo)+')':'')+'.</div>';
+    if(a.revisao) h+='<div style="margin-top:8px">'+a.revisao.map(function(r,i){return '<div class="rev"><span class="'+(r.ok?'ok':'x')+'">'+(r.ok?'✓':'✗')+'</span><span>'+(i+1)+'. '+(r.ok?'':'Resposta certa: ')+'<b>'+esc(r.certa)+'</b></span></div>';}).join('')+'</div>';
+    return h;
+  }
+  function montarQuestoes(linha){
+    var Q=linha.questoes||[], h='';
+    Q.forEach(function(q,i){ h+='<div class="q" data-q="'+i+'"><p>'+(i+1)+'. '+esc(q.t)+'</p>'+q.ops.map(function(o,k){return '<label><input type="radio" name="q'+i+'" value="'+k+'"><span>'+esc(o)+'</span></label>';}).join('')+'</div>'; });
+    if(MENTOR&&MENTOR.qs.length){
+      h+='<h3 style="margin-top:14px">'+esc(MENTOR.icone)+' Mentor ST PRO · '+esc(MENTOR.titulo)+'</h3>';
+      MENTOR.qs.forEach(function(q,i){ h+='<div class="q" data-m="'+i+'"><p>'+(i+1)+'. '+esc(q.enunciado)+'</p>'+q.opcoes.map(function(o,k){return '<label><input type="radio" name="m'+i+'" value="'+k+'"><span>'+esc(o)+'</span></label>';}).join('')+'</div>'; });
+    }
+    h+='<div class="linha" style="margin-top:10px"><button class="btn verde" type="button" id="enviar">Enviar respostas</button><span class="sub" id="falta"></span></div>';
+    $('questoes').innerHTML=h;
+    $('enviar').onclick=function(){
+      var R=[], M=0, falta=0;
+      Q.forEach(function(q,i){ var x=document.querySelector('input[name="q'+i+'"]:checked'); var box=document.querySelector('[data-q="'+i+'"]'); box.classList.toggle('erro',!x); if(!x) falta++; R.push(x?Number(x.value):-1); });
+      (MENTOR?MENTOR.qs:[]).forEach(function(q,i){ var x=document.querySelector('input[name="m'+i+'"]:checked'); var box=document.querySelector('[data-m="'+i+'"]'); box.classList.toggle('erro',!x); if(!x) falta++; if(x&&Number(x.value)===q.correta) M++; });
+      if(falta){ $('falta').textContent='Faltam '+falta+' resposta(s).'; var e=document.querySelector('.q.erro'); if(e) e.scrollIntoView({behavior:'smooth',block:'center'}); return; }
+      var b=this; b.disabled=true; b.textContent='Enviando…';
+      STDados.chamar('semanaAval',{chave:linha.chave,respostas:R,mentor:MENTOR?{modulo:MENTOR.modulo,titulo:MENTOR.titulo,acertos:M,total:MENTOR.qs.length}:null}).then(function(j){
+        if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não confirmou.');
+        toast('Respostas enviadas!'); if(window.STAnima&&j.nota>=8) STAnima.confete();
+        return carregar();
+      }).catch(function(e){ b.disabled=false; b.textContent='Enviar respostas'; toast(e.message||'Não consegui enviar.'); });
+    };
+  }
+
+  /* ───────── tela do gerente / supervisão / coordenação ───────── */
+  function telaLider(){
+    var A=D.linhas.filter(function(l){return l.semana===D.atual;}), P=D.linhas.filter(function(l){return l.semana===D.anterior;});
+    $('sub').textContent=D.atual?'Semana de '+dBr(D.atual)+(A[0]&&A[0].prazo?' · prazo dos vendedores: '+prazoTxt(A[0].prazo):''):'';
+    if(!A.length&&!P.length){ $('raiz').innerHTML='<div class="card"><h2>Ainda não há PDI semanal</h2><p class="sub">Ele é criado toda segunda de manhã, junto com o resumo semanal das lojas.</p></div>'; return; }
+    var lojas={}; A.concat(P).forEach(function(l){ lojas[l.loja]=1; });
+    var ro=visao();
+    var h='';
+    Object.keys(lojas).sort().forEach(function(cod){
+      var a=A.filter(function(l){return l.loja===cod;}), p=P.filter(function(l){return l.loja===cod;});
+      var feitos=a.filter(function(l){return l.situacao!=='aguardando'&&l.situacao!=='nao_feito';}).length, resp=a.filter(function(l){return l.aval;});
+      var media=resp.length?(resp.reduce(function(s,l){return s+l.aval.nota;},0)/resp.length):null;
+      h+='<section class="card"><div class="vend-top"><h2 style="margin:0">Loja '+esc(cod)+'</h2><span class="sub">PDI feito <b>'+feitos+'/'+a.length+'</b> · respondido <b>'+resp.length+'/'+a.length+'</b>'+(media!=null?' · média <b>'+media.toFixed(1).replace('.',',')+'</b>':'')+'</span></div>';
+      a.forEach(function(l){
+        var aberto=ABERTOS[l.chave];
+        h+='<div class="vend"><div class="vend-top"><div><b>'+esc(l.comp?l.comp.nome:l.vendedor)+'</b><div class="sub">'+(l.comp&&l.comp.foco?'Foco: '+esc(l.comp.foco.nome):'Foco: volume')+' · projeção '+pct(l.comp&&l.comp.pp)+'</div></div><div class="linha">'+chip(l.situacao)+
+          (l.aval?'<span class="chip c-respondido">'+l.aval.nota+'/'+l.aval.total+(l.aval.mentor?' · Mentor '+l.aval.mentor.acertos+'/'+l.aval.mentor.total:'')+'</span>':'')+'</div></div>';
+        h+='<div class="linha" style="margin-top:8px">'+(l.situacao==='aguardando'&&!ro?'<button class="btn azul" type="button" data-feito="'+esc(l.chave)+'">✓ Fiz o PDI semanal</button>':'')+
+          (l.feito_em?'<span class="sub">PDI feito '+esc(String(l.feito_em).slice(8,10)+'/'+String(l.feito_em).slice(5,7)+' '+String(l.feito_em).slice(11,16))+(l.feito_por?' por '+esc(l.feito_por):'')+'</span>':'')+
+          '<button class="mais" type="button" data-abrir="'+esc(l.chave)+'">'+(aberto?'Fechar compromissos':'Ver compromissos')+'</button></div>';
+        if(aberto) h+=blocoComp(l.comp,l.chave)+(l.aval?resultado(l.aval):'');
+        h+='</div>';
+      });
+      if(p.length){
+        h+='<h3 style="margin-top:14px">Fechamento da semana de '+dBr(D.anterior)+'</h3><p class="sub" style="margin-top:0">Antes de fazer o PDI desta semana, registre o que cada vendedor cumpriu na semana passada.</p>';
+        p.forEach(function(l){
+          var f=l.fechamento||{}, nO=((l.comp&&l.comp.orcs)||[]).length, meta=(l.comp&&l.comp.positMeta)||10;
+          var dif=(l.posit_real!=null&&f.posit!=null&&l.fechamento)?(f.posit-l.posit_real):null;
+          h+='<div class="vend"><div class="vend-top"><b>'+esc(l.comp?l.comp.nome:l.vendedor)+'</b><span class="linha">'+chip(l.situacao)+(l.aval?'<span class="chip c-respondido">'+l.aval.nota+'/'+l.aval.total+'</span>':'')+'</span></div>'+
+            '<div class="fech"><label>Positivações CNPJ (meta '+meta+')<input type="number" min="0" max="99" inputmode="numeric" data-fp="'+esc(l.chave)+'" value="'+(f.posit!=null?f.posit:'')+'" '+(ro?'disabled':'')+'></label>'+
+            '<label>Orçamentos retornados (de '+nO+')<input type="number" min="0" max="99" inputmode="numeric" data-fo="'+esc(l.chave)+'" value="'+(f.orcs!=null?f.orcs:'')+'" '+(ro?'disabled':'')+'></label>'+
+            '<label>Indicador foco<select data-fi="'+esc(l.chave)+'" '+(ro?'disabled':'')+'>'+['','melhorou','igual','piorou'].map(function(o){return '<option value="'+o+'"'+(f.indicador===o?' selected':'')+'>'+(o||'—')+'</option>';}).join('')+'</select></label></div>'+
+            '<div class="linha" style="margin-top:8px">'+(ro?'':'<button class="btn" type="button" data-fechar="'+esc(l.chave)+'">Salvar fechamento</button>')+
+            (l.posit_real!=null?'<span class="sub">Planilha: <b>'+l.posit_real+'</b> positivações novas na semana</span>':'')+
+            (dif!=null&&dif!==0?'<span class="chip c-nao_feito">Informado '+f.posit+', planilha '+l.posit_real+'</span>':'')+
+            (l.fechamento?'<span class="sub">salvo por '+esc(f.por||'')+'</span>':'')+'</div></div>';
+        });
+      }
+      h+='</section>';
+    });
+    $('raiz').innerHTML=h;
+  }
+
+  function montar(){ if(D.perfil==='vend') telaVendedor(); else telaLider(); }
+
+  document.addEventListener('click',function(e){
+    var t=e.target.closest('button'); if(!t) return;
+    if(t.dataset.mais){ ABERTOS[t.dataset.mais]=!ABERTOS[t.dataset.mais]; montar(); return; }
+    if(t.dataset.abrir){ ABERTOS[t.dataset.abrir]=!ABERTOS[t.dataset.abrir]; montar(); return; }
+    if(t.dataset.feito){
+      t.disabled=true; t.textContent='Liberando…';
+      STDados.chamar('semanaFeito',{chave:t.dataset.feito}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não confirmou.'); toast('Avaliação liberada para o vendedor.'); return carregar(); })
+        .catch(function(err){ t.disabled=false; t.textContent='✓ Fiz o PDI semanal'; toast(err.message); });
+      return;
+    }
+    if(t.dataset.fechar){
+      var k=t.dataset.fechar, q=function(a){return document.querySelector('['+a+'="'+CSS.escape(k)+'"]');};
+      var ps=q('data-fp').value, os=q('data-fo').value; if(ps===''||os===''){ toast('Preencha positivações e orçamentos.'); return; }
+      t.disabled=true; t.textContent='Salvando…';
+      STDados.chamar('semanaFechar',{chave:k,posit:ps,orcs:os,indicador:q('data-fi').value}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não confirmou.'); toast('Fechamento salvo.'); return carregar(); })
+        .catch(function(err){ t.disabled=false; t.textContent='Salvar fechamento'; toast(err.message); });
+    }
+  });
+  if(window.STDados) carregar(); else $('raiz').innerHTML='<p class="sub">Abra pelo Só Tintas App.</p>';
+})();
+</script>
+<script src="st-anima.js?v=3"></script>
+<script>(function(){ if(!window.STAnima) return; STAnima.esqueletos(document.body); STAnima.puxar(document.scrollingElement,function(){ location.reload(); }); })();</script>
+</body></html>
