@@ -1998,7 +1998,7 @@ html[data-tema="escuro"] .dpq, html[data-theme="dark"] .dpq{border-color:#5a4a1c
 <div class="toast" id="toast"></div>
 <script src="st-hora.js?v=1"></script>
 <script>try{ STHora.relogio(document.getElementById('horaBR')); }catch(e){}</script>
-<script src="st-dados.js?v=89"></script>
+<script src="st-dados.js?v=90"></script>
 <script src="st-anima.js?v=3"></script>
 <script>
 "use strict";
@@ -9129,6 +9129,11 @@ syncNav();
         <span class="ini-txt"><span class="ini-nm">PDI Mensal</span><span class="ini-ds">Prioridade e desenvolvimento dos vendedores</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
+      <button type="button" class="ini-card feat" data-act="pontos" data-gate="1" data-ger="1" data-vend="1">
+        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-star"/></svg></span>
+        <span class="ini-txt"><span class="ini-nm">Ranking ST</span><span class="ini-ds">Seus pontos e o ranking da rede: semana, mês e ano</span></span>
+        <span class="ini-go" aria-hidden="true">&rarr;</span>
+      </button>
       <button type="button" class="ini-card feat" data-act="semana" data-gate="1" data-ger="1" data-vend="1">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-flag"/></svg></span>
         <span class="ini-txt"><span class="ini-nm">PDI Semanal</span><span class="ini-ds">Os 3 compromissos da semana e a avaliação</span></span>
@@ -9375,6 +9380,12 @@ body.foco .wrap{padding-bottom:40px}
     ifrD.setAttribute('src','cadastro.html?tema='+tema+'&v='+Date.now());
     ovD.style.display='flex'; document.body.style.overflow='hidden';
   }
+  function abrirPontos(){
+    if(!ovD||!ifrD) return; titOv('Ranking ST · Só Tintas');
+    var tema=(window.STtema?window.STtema.get():'light');
+    ifrD.setAttribute('src','pontos.html?tema='+tema+'&v='+Date.now());
+    ovD.style.display='flex'; document.body.style.overflow='hidden';
+  }
   function abrirSemana(){
     if(!ovD||!ifrD) return; titOv('PDI Semanal · Só Tintas');
     var tema=(window.STtema?window.STtema.get():'light');
@@ -9522,6 +9533,7 @@ body.foco .wrap{padding-bottom:40px}
     if(act==='pdi'){ abrirPdi(); return; }
     if(act==='semana'){ abrirSemana(); return; }
     if(act==='uso'){ abrirUso(); return; }
+    if(act==='pontos'){ abrirPontos(); return; }
     if(act==='cadastro'){ abrirCadastro(); return; }
     if(act==='mentor'){ abrirMentor(); return; }
     if(act==='acessos'){ abrirAcessos(); return; }
@@ -9731,6 +9743,7 @@ button[id^="ov"][id$="Fechar"]:hover{transform:translateY(-1px);box-shadow:0 6px
     mentor:['🎓 Mentor ST PRO','Trilha de treinamento, provas e a sua sequência 🔥 de dias estudando.'],
     niveis:['🏅 Níveis','Em que nível você está e quanto falta de média para subir.'],
     pdi:['📋 PDI','O plano de desenvolvimento de cada vendedor, com as revisões e o termo em PDF.'],
+    pontos:['⭐ Ranking ST','Tudo vira ponto: entrar no app, estudar no Mentor, fazer e responder o PDI. Veja sua posição na rede.'],
     semana:['🗓️ PDI Semanal','Os 3 compromissos da semana de cada vendedor. O gerente marca que fez e o vendedor responde a avaliação até o meio-dia.'],
     proposta:['💼 Proposta','Monte a proposta para um candidato a vendedor.'],
     acessos:['🔑 Acesso dos vendedores','Libere ou bloqueie o acesso da sua equipe ao app.'],

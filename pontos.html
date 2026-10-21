@@ -1,0 +1,206 @@
+<!doctype html><html lang="pt-BR" data-theme="dark" style="color-scheme:dark"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ranking ST · Só Tintas</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#0f1522; --surface:#1a2336; --surface2:#222d44; --ink:#eef2fb; --muted:#9aa5bb; --line:#2c3850;
+  --accent:#ff3b47; --navy:#6f95f5; --ok:#3fbf7f; --bad:#ff6b6b; --warn:#ffab5e;
+  --okbg:#12301f; --badbg:#3a1a20; --warnbg:#3a2717; --navybg:#1e2b4d;
+  --heat:111,149,245;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Public Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+html[data-theme="light"]{
+  --bg:#f5f7fb; --surface:#ffffff; --surface2:#eef2f8; --ink:#16233d; --muted:#5a677f; --line:#e4e9f3;
+  --navy:#1C3F8F; --ok:#178048; --bad:#c42a22; --warn:#b35600;
+  --okbg:#e1f3e8; --badbg:#fdeceb; --warnbg:#ffefdd; --navybg:#e7edf9;
+  --heat:28,63,143;
+  color-scheme:light;
+}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+.wrap{max-width:980px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-right,0px)) 60px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px}
+.topbar{height:8px;background:var(--accent);border-radius:0 0 6px 6px;margin:-20px 0 4px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(24px,4vw,34px);line-height:1.05;margin:4px 0 0;color:var(--accent)}
+h2{font-family:var(--f-display);font-size:18px;margin:0 0 4px}
+.sub{color:var(--muted);font-size:13px}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:9px 14px;font:700 13px var(--f-body);cursor:pointer}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:0 6px 20px rgba(0,0,0,.12);min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.kpi span{display:block;font-size:12px;color:var(--muted);font-weight:700}
+.kpi b{font-family:var(--f-display);font-size:28px;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi small{color:var(--muted);font-size:12.5px}
+.chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:800;white-space:nowrap}
+.s-hoje{background:var(--okbg);color:var(--ok)}.s-ativo{background:var(--okbg);color:var(--ok)}
+.s-sumido{background:var(--warnbg);color:var(--warn)}.s-nunca{background:var(--badbg);color:var(--bad)}.s-semacesso{background:var(--surface2);color:var(--muted)}
+.filtros{display:flex;flex-wrap:wrap;gap:6px}
+.filtros button,.abas button{border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:999px;padding:6px 12px;font:700 12.5px var(--f-body);cursor:pointer}
+.filtros button[aria-pressed="true"],.abas button[aria-selected="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.abas{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.grupo{margin:8px 0 2px;font-weight:800;font-size:13px}
+.lista{list-style:none;margin:0;padding:0}
+.lista li{display:flex;justify-content:space-between;gap:10px;font-size:13px;border-bottom:1px solid var(--line);padding:6px 0}
+.lista li span:last-child{color:var(--muted);white-space:nowrap;text-align:right}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--muted);font-size:11.5px;font-weight:700;padding:6px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tabw{overflow-x:auto}
+.barra{height:8px;border-radius:99px;background:var(--surface2);overflow:hidden;min-width:60px}
+.barra i{display:block;height:100%;background:var(--navy);border-radius:0 4px 4px 0}
+.hb{display:grid;grid-template-columns:minmax(90px,140px) 1fr 44px;gap:8px;align-items:center;margin:6px 0;font-size:13px}
+.hb .tr{height:12px;background:transparent;position:relative}
+.hb .tr i{display:block;height:100%;background:var(--navy);border-radius:0 4px 4px 0;min-width:2px}
+.hb .v{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+.colunas{display:flex;align-items:flex-end;gap:2px;height:130px;border-bottom:1px solid var(--line);padding-top:16px}
+.colunas .c{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;position:relative;cursor:default}
+.colunas .c i{display:block;width:100%;max-width:26px;background:var(--navy);border-radius:4px 4px 0 0;min-height:2px}
+.colunas .c b{position:absolute;top:-2px;font-size:11px;color:var(--ink)}
+.eixo{display:flex;gap:2px;font-size:10.5px;color:var(--muted);margin-top:4px}.eixo span{flex:1;text-align:center}
+.heat{display:grid;grid-template-columns:34px repeat(17,1fr);gap:2px;font-size:10.5px;color:var(--muted);align-items:center}
+.heat .cel{aspect-ratio:1/1;border-radius:3px;background:var(--surface2);min-width:10px}
+.heat .h{text-align:center}
+.escala{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);margin-top:8px}
+.escala i{width:16px;height:12px;border-radius:3px;display:inline-block}
+.busca{width:100%;background:var(--surface2);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:9px 12px;font:500 14px var(--f-body);margin:6px 0 8px}
+.aviso{background:var(--warnbg);color:var(--ink);border-radius:10px;padding:9px 12px;font-size:13px}
+.tip{position:fixed;z-index:50;pointer-events:none;background:#16233d;color:#fff;padding:6px 10px;border-radius:8px;font-size:12.5px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.35);max-width:240px}
+[data-tip]:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+.mais{background:none;border:0;color:var(--navy);font:700 12.5px var(--f-body);cursor:pointer;padding:6px 0}
+@media(max-width:560px){ .esc{display:none} .kpi b{font-size:24px} }
+.linha{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.cod{font:700 11.5px ui-monospace,Menlo,monospace;background:var(--surface2);border-radius:6px;padding:2px 6px;color:var(--muted)}
+.apel{font-size:12px;color:var(--muted)}
+.btnp{border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:8px;padding:5px 10px;font:700 12px var(--f-body);cursor:pointer}
+.btnp.azul{background:var(--navy);border-color:var(--navy);color:#fff}
+.btnp.verde{background:var(--ok);border-color:var(--ok);color:#06130b}
+.lib{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
+.lib input,.campo input,.campo select,.campo textarea{background:var(--surface2);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:8px;font:600 14px var(--f-body)}
+.lib input{width:110px}
+.modal{position:fixed;inset:0;background:rgba(6,10,20,.6);display:flex;align-items:center;justify-content:center;padding:16px;z-index:40}
+.modal .caixa{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;width:100%;max-width:480px;max-height:92vh;overflow:auto}
+.campo{display:flex;flex-direction:column;gap:4px;margin:8px 0;font-size:12px;color:var(--muted);font-weight:700}
+.campo textarea{min-height:80px;font-weight:500}
+.ok{color:var(--ok);font-weight:700}.ruim{color:var(--bad);font-weight:700}
+.rk{list-style:none;margin:0;padding:0}
+.rk li{display:grid;grid-template-columns:38px 1fr auto;gap:10px;align-items:center;padding:9px 4px;border-bottom:1px solid var(--line)}
+.rk li.eu{background:var(--navybg);border-radius:10px;border-bottom-color:transparent}
+.rk .pos{font:800 15px var(--f-display);text-align:center;color:var(--muted)}
+.rk .pos.m1,.rk .pos.m2,.rk .pos.m3{font-size:20px}
+.rk .pts{font:800 16px var(--f-display);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.rk .pts small{font:600 11px var(--f-body);color:var(--muted)}
+.rk .bar{height:5px;border-radius:99px;background:var(--surface2);overflow:hidden;margin-top:4px}
+.rk .bar i{display:block;height:100%;background:var(--navy);border-radius:0 4px 4px 0}
+.podio{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-items:end;margin:6px 0 12px}
+.podio div{background:var(--surface2);border-radius:12px;padding:10px 6px;text-align:center}
+.podio .p1{padding-top:18px;background:linear-gradient(180deg,rgba(255,210,0,.25),var(--surface2))}
+.podio b{display:block;font-size:13px;line-height:1.2;margin-top:4px}.podio span{font:800 18px var(--f-display)}
+.podio em{display:block;font-style:normal;font-size:24px}
+.tabelaST td{padding:6px;border-bottom:1px solid var(--line);font-size:13px}.tabelaST td.n{text-align:right;font-weight:800;color:var(--ok)}
+</style></head>
+<body>
+<div class="wrap">
+  <div class="topbar"></div>
+  <header>
+    <div><div class="eyebrow">Só Tintas · gestão</div><h1>Ranking ST</h1><div class="sub" id="sub">Carregando…</div></div>
+    <button type="button" class="btn" id="btnTema"><span id="temaIc">🌙</span> <span id="temaTx">Escuro</span></button>
+  </header>
+  <main id="raiz" style="display:flex;flex-direction:column;gap:14px"><p class="sub">Carregando o ranking…</p></main>
+</div>
+<div id="modal" class="modal" hidden></div>
+<script>
+(function(){
+  function qp(n){try{return new URLSearchParams(location.search).get(n);}catch(e){return null;}}
+  function ls(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+  var p=(qp('tema')||'').toLowerCase(), t=(p==='claro'||p==='light')?'light':(p==='escuro'||p==='dark')?'dark':null;
+  if(!t){ var s=(ls('st_tema')||'').toLowerCase(); t=(s==='light'||s==='claro')?'light':'dark'; }
+  window.__setTema=function(tema){ document.documentElement.setAttribute('data-theme',tema); document.documentElement.style.colorScheme=tema;
+    var ic=document.getElementById('temaIc'), tx=document.getElementById('temaTx'); if(ic) ic.textContent=tema==='light'?'☀️':'🌙'; if(tx) tx.textContent=tema==='light'?'Claro':'Escuro';
+    try{localStorage.setItem('st_tema',tema);}catch(e){} try{ if(window.parent&&window.parent!==window) window.parent.postMessage({st_tema:tema},'*'); }catch(e){} };
+  window.__setTema(t);
+  window.addEventListener('message',function(ev){ var d=ev&&ev.data; if(d&&(d.st_tema==='light'||d.st_tema==='dark')) window.__setTema(d.st_tema); });
+  document.getElementById('btnTema').onclick=function(){ window.__setTema(document.documentElement.getAttribute('data-theme')==='light'?'dark':'light'); };
+})();
+</script>
+<script src="st-hora.js?v=1"></script>
+<script src="st-dados.js?v=90"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   RANKING ST — pontos por acesso, trilha, vídeos, PDIs e avaliações.
+   O servidor calcula tudo a partir do histórico; aqui só a tela.
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+  var $=function(id){return document.getElementById(id);};
+  var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
+  var dBr=function(iso){var p=String(iso||'').slice(0,10).split('-');return p.length===3?p[2]+'/'+p[1]:'';};
+  var nf=function(n){return Math.round(Number(n)||0).toLocaleString('pt-BR');};
+  var curto=function(n){return String(n||'').replace(/\s+-\s+\S.*$/,'').split(' ').slice(0,2).join(' ');};
+  var D=null, PER='s', CAT=null, VER=25;
+  var PERS={s:'Semana',m:'Mês',a:'Ano'}, CATS={vend:'Vendedores',ger:'Gerentes',loja:'Lojas',sup:'Supervisores'};
+  try{ PER=localStorage.getItem('st_rank_per')||'s'; }catch(e){}
+
+  function carregar(){
+    return STDados.chamar('pontos').then(function(j){
+      if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não respondeu.');
+      D=j; if(!CAT) CAT=j.eu?(j.eu.cargo==='sup'?'sup':j.eu.cargo==='ger'?'ger':'vend'):(j.perfil==='coord'?'loja':'vend'); montar();
+    }).catch(function(e){ $('raiz').innerHTML='<div class="card"><h2>Não consegui abrir</h2><p class="sub">'+esc(e.message||e)+'</p><button class="btn" type="button" id="deNovo">Tentar de novo</button></div>'; $('deNovo').onclick=carregar; });
+  }
+  function lista(cat,per){
+    per=per||PER;
+    var L=cat==='loja'?D.lojas.map(function(l){return {id:l.loja,nome:'Loja '+l.loja+' '+(l.nome||''),sub:(l.n+' pessoas · média por pessoa'),v:l[per],sup:l.sup};})
+      :D.pessoas.filter(function(p){return p.cargo===cat;}).map(function(p){return {id:p.codigo,nome:p.nome,sub:(p.cargo==='sup'?p.lojas.length+' lojas':'Loja '+p.loja),v:p[per],sup:p.sup};});
+    L.sort(function(a,b){return b.v-a.v||(a.nome<b.nome?-1:1);});
+    var pos=0, ant=null; L.forEach(function(x,i){ if(x.v!==ant){ pos=i+1; ant=x.v; } x.pos=pos; });
+    return L;
+  }
+  function minhaId(cat){ if(!D.eu) return null; if(cat==='loja') return D.eu.loja||null; return D.eu.cargo===cat?D.eu.codigo:null; }
+  function montar(){
+    $('sub').textContent='Semana de '+dBr(D.semana)+(window.STHora?' · atualizado às '+STHora.hm():'');
+    var h='';
+    if(D.eu){
+      var cat=D.eu.cargo==='sup'?'sup':D.eu.cargo==='ger'?'ger':'vend';
+      var posDe=function(per){ var L=lista(cat,per), me=L.filter(function(x){return x.id===D.eu.codigo;})[0]; return me?('#'+me.pos+' de '+L.length):''; };
+      h+='<div class="kpis">'+['s','m','a'].map(function(p){ return '<div class="kpi"><span>Meus STs · '+PERS[p]+'</span><b>'+nf(D.eu[p])+'</b> <small>'+posDe(p)+' '+CATS[cat].toLowerCase()+'</small></div>'; }).join('')+'</div>';
+    } else if(D.perfil!=='coord') h+='<div class="aviso">Ainda não encontrei você no Cadastro da Equipe. Seus pontos aparecem assim que a coordenação ligar o seu login ao cadastro.</div>';
+    h+='<div class="linha" style="justify-content:space-between"><div class="filtros" role="group" aria-label="Período">'+Object.keys(PERS).map(function(p){return '<button type="button" data-per="'+p+'" aria-pressed="'+(PER===p)+'">'+PERS[p]+'</button>';}).join('')+'</div>'+
+      '<div class="filtros" role="group" aria-label="Categoria">'+Object.keys(CATS).map(function(c){return '<button type="button" data-cat="'+c+'" aria-pressed="'+(CAT===c)+'">'+CATS[c]+'</button>';}).join('')+'</div></div>';
+    var L=lista(CAT), mx=Math.max(1,L.length?L[0].v:1), eu=minhaId(CAT);
+    h+='<section class="card"><h2>🏆 '+CATS[CAT]+' · '+PERS[PER]+'</h2>';
+    var top=L.slice(0,3).filter(function(x){return x.v>0;});
+    if(top.length===3) h+='<div class="podio">'+[1,0,2].map(function(i){var x=top[i];return '<div class="p'+(i+1)+'"><em>'+['🥇','🥈','🥉'][i]+'</em><b>'+esc(curto(x.nome))+'</b><span>'+nf(x.v)+'</span> <small class="sub">STs</small></div>';}).join('')+'</div>';
+    if(!L.some(function(x){return x.v>0;})) h+='<p class="sub">Ninguém pontuou neste período ainda. Quem entrar no app primeiro já sai na frente! 🚀</p>';
+    var mostra=L.slice(0,VER), mi=L.filter(function(x){return x.id===eu;})[0];
+    if(mi&&mostra.indexOf(mi)<0) mostra=mostra.concat([mi]);
+    h+='<ol class="rk">'+mostra.map(function(x){ var md=x.pos<=3&&x.v>0?['🥇','🥈','🥉'][x.pos-1]:x.pos+'º';
+      return '<li class="'+(x.id===eu?'eu':'')+'"><span class="pos m'+x.pos+'">'+md+'</span><span><b>'+esc(x.nome)+'</b>'+(x.id===eu?' <span class="chip s-ativo">você</span>':'')+'<div class="sub">'+esc(x.sub)+(CAT!=='sup'&&x.sup?' · sup. '+esc(curto(x.sup)):'')+'</div><div class="bar"><i style="width:'+Math.round(x.v/mx*100)+'%"></i></div></span><span class="pts">'+nf(x.v)+' <small>STs</small></span></li>'; }).join('')+'</ol>'+
+      (L.length>VER?'<button class="mais" type="button" data-vermais="1">Ver todos ('+L.length+')</button>':'')+'</section>';
+    if(D.extrato&&D.extrato.length) h+='<section class="card"><h2>🧾 Meus últimos pontos</h2><ul class="lista">'+D.extrato.slice(0,20).map(function(e){return '<li><span>'+esc(e.r)+(e.x?' <span class="sub">· '+esc(e.x)+'</span>':'')+'</span><span><b style="color:var(--ok)">+'+e.p+'</b> · '+dBr(e.d)+'</span></li>';}).join('')+'</ul></section>';
+    var T=D.tabela;
+    h+='<section class="card"><h2>💡 Como ganhar STs</h2><div class="grid2">'+
+      bloco('Vendedor',[['Entrou no app (1 vez por dia)',T.acesso],['Vídeo assistido no Mentor',15],['Aula concluída',20],['Prova do módulo aprovada',60],['Nota 10 na prova (bônus)',25],['Módulo completo',50],['Avaliação do PDI semanal no prazo',T.aval_prazo],['Cada acerto na avaliação','+'+T.aval_acerto+' (até '+T.aval_max+')'],['Meta de positivações da semana',T.posit_meta]])+
+      bloco('Gerente',[['Entrou no app (1 vez por dia)',T.acesso],['PDI semanal feito no prazo (por vendedor)',T.ger_pdi],['Loja com 100% dos PDIs feitos',T.ger_loja100],['Fechamento da semana (por vendedor)',T.ger_fech],['Equipe com média 8+ na avaliação',T.ger_media8],['Revisão do PDI Mensal registrada',T.ger_revisao]])+
+      bloco('Supervisor',[['Entrou no app (1 vez por dia)',T.acesso],['Plano semanal registrado no prazo',T.sup_plano],['Fechamento do plano',T.sup_fech],['Carteira com 100% dos PDIs feitos',T.sup_carteira100]])+
+      '</div><p class="sub" style="margin:8px 0 0">Ranking de lojas: média de STs por pessoa (gerente + vendedores), para loja pequena competir de igual para igual. A semana zera toda segunda.</p></section>';
+    $('raiz').innerHTML=h;
+  }
+  function bloco(t,L){ return '<div><h3 style="margin:4px 0">'+t+'</h3><table class="tabelaST">'+L.map(function(x){return '<tr><td>'+esc(x[0])+'</td><td class="n">'+(typeof x[1]==='number'?'+'+x[1]:esc(x[1]))+'</td></tr>';}).join('')+'</table></div>'; }
+  document.addEventListener('click',function(e){
+    var b=e.target.closest('button'); if(!b) return;
+    if(b.dataset.per){ PER=b.dataset.per; try{ localStorage.setItem('st_rank_per',PER); }catch(x){} montar(); return; }
+    if(b.dataset.cat){ CAT=b.dataset.cat; VER=25; montar(); return; }
+    if(b.dataset.vermais){ VER=9999; montar(); return; }
+  });
+  if(window.STDados) carregar(); else $('raiz').innerHTML='<p class="sub">Abra pelo Só Tintas App.</p>';
+})();
+</script>
+<script src="st-anima.js?v=3"></script>
+<script>(function(){ if(!window.STAnima) return; STAnima.esqueletos(document.body); STAnima.puxar(document.scrollingElement,function(){ location.reload(); }); })();</script>
+</body></html>
