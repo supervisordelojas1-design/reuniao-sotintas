@@ -185,7 +185,7 @@
   /* ── registro de uso: no máximo 1 linha por pessoa/tela a cada 30 min; só com o crachá da própria pessoa
      (nunca no "Ver como"). Não pede PIN e não mostra nada: se não houver crachá, simplesmente não registra. ── */
   var TELAS_ARQ = { 'index.html': 'inicio', '': 'inicio', 'painel.html': 'painel', 'ranking.html': 'ranking', 'niveis.html': 'niveis', 'pdi.html': 'pdi',
-    'semana.html': 'semana', 'tv.html': 'tv', 'agenda.html': 'agenda', 'proposta.html': 'proposta', 'uso.html': 'uso' };
+    'semana.html': 'semana', 'tv.html': 'tv', 'agenda.html': 'agenda', 'proposta.html': 'proposta', 'uso.html': 'uso', 'cadastro.html': 'cadastro' };
   function registrar(tela) {
     try {
       if (visao()) return;

@@ -1998,7 +1998,7 @@ html[data-tema="escuro"] .dpq, html[data-theme="dark"] .dpq{border-color:#5a4a1c
 <div class="toast" id="toast"></div>
 <script src="st-hora.js?v=1"></script>
 <script>try{ STHora.relogio(document.getElementById('horaBR')); }catch(e){}</script>
-<script src="st-dados.js?v=88"></script>
+<script src="st-dados.js?v=89"></script>
 <script src="st-anima.js?v=3"></script>
 <script>
 "use strict";
@@ -9144,6 +9144,11 @@ syncNav();
         <span class="ini-txt"><span class="ini-nm">Acessos ao App</span><span class="ini-ds">Quem está entrando, quem sumiu e quem nunca entrou</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
+      <button type="button" class="ini-card feat" data-act="cadastro" data-lider="1">
+        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-user"/></svg></span>
+        <span class="ini-txt"><span class="ini-nm">Cadastro da Equipe</span><span class="ini-ds">Uma pessoa, um código · liberar acesso dos vendedores</span></span>
+        <span class="ini-go" aria-hidden="true">&rarr;</span>
+      </button>
     </div>
     <div class="ini-sec">Operação</div>
     <div class="ini-grid">
@@ -9364,6 +9369,12 @@ body.foco .wrap{padding-bottom:40px}
     ifrD.setAttribute('src','uso.html?tema='+tema+'&v='+Date.now());
     ovD.style.display='flex'; document.body.style.overflow='hidden';
   }
+  function abrirCadastro(){
+    if(!ovD||!ifrD) return; titOv('Cadastro da Equipe · Só Tintas');
+    var tema=(window.STtema?window.STtema.get():'light');
+    ifrD.setAttribute('src','cadastro.html?tema='+tema+'&v='+Date.now());
+    ovD.style.display='flex'; document.body.style.overflow='hidden';
+  }
   function abrirSemana(){
     if(!ovD||!ifrD) return; titOv('PDI Semanal · Só Tintas');
     var tema=(window.STtema?window.STtema.get():'light');
@@ -9511,6 +9522,7 @@ body.foco .wrap{padding-bottom:40px}
     if(act==='pdi'){ abrirPdi(); return; }
     if(act==='semana'){ abrirSemana(); return; }
     if(act==='uso'){ abrirUso(); return; }
+    if(act==='cadastro'){ abrirCadastro(); return; }
     if(act==='mentor'){ abrirMentor(); return; }
     if(act==='acessos'){ abrirAcessos(); return; }
     if(ehVend()) return;      /* vendedor não entra nas operações da supervisão */

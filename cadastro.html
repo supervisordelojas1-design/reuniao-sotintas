@@ -1,0 +1,268 @@
+<!doctype html><html lang="pt-BR" data-theme="dark" style="color-scheme:dark"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cadastro da Equipe · Só Tintas</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#0f1522; --surface:#1a2336; --surface2:#222d44; --ink:#eef2fb; --muted:#9aa5bb; --line:#2c3850;
+  --accent:#ff3b47; --navy:#6f95f5; --ok:#3fbf7f; --bad:#ff6b6b; --warn:#ffab5e;
+  --okbg:#12301f; --badbg:#3a1a20; --warnbg:#3a2717; --navybg:#1e2b4d;
+  --heat:111,149,245;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Public Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+html[data-theme="light"]{
+  --bg:#f5f7fb; --surface:#ffffff; --surface2:#eef2f8; --ink:#16233d; --muted:#5a677f; --line:#e4e9f3;
+  --navy:#1C3F8F; --ok:#178048; --bad:#c42a22; --warn:#b35600;
+  --okbg:#e1f3e8; --badbg:#fdeceb; --warnbg:#ffefdd; --navybg:#e7edf9;
+  --heat:28,63,143;
+  color-scheme:light;
+}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+.wrap{max-width:980px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-right,0px)) 60px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px}
+.topbar{height:8px;background:var(--accent);border-radius:0 0 6px 6px;margin:-20px 0 4px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(24px,4vw,34px);line-height:1.05;margin:4px 0 0;color:var(--accent)}
+h2{font-family:var(--f-display);font-size:18px;margin:0 0 4px}
+.sub{color:var(--muted);font-size:13px}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:9px 14px;font:700 13px var(--f-body);cursor:pointer}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:0 6px 20px rgba(0,0,0,.12);min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.kpi span{display:block;font-size:12px;color:var(--muted);font-weight:700}
+.kpi b{font-family:var(--f-display);font-size:28px;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi small{color:var(--muted);font-size:12.5px}
+.chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:800;white-space:nowrap}
+.s-hoje{background:var(--okbg);color:var(--ok)}.s-ativo{background:var(--okbg);color:var(--ok)}
+.s-sumido{background:var(--warnbg);color:var(--warn)}.s-nunca{background:var(--badbg);color:var(--bad)}.s-semacesso{background:var(--surface2);color:var(--muted)}
+.filtros{display:flex;flex-wrap:wrap;gap:6px}
+.filtros button,.abas button{border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:999px;padding:6px 12px;font:700 12.5px var(--f-body);cursor:pointer}
+.filtros button[aria-pressed="true"],.abas button[aria-selected="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.abas{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.grupo{margin:8px 0 2px;font-weight:800;font-size:13px}
+.lista{list-style:none;margin:0;padding:0}
+.lista li{display:flex;justify-content:space-between;gap:10px;font-size:13px;border-bottom:1px solid var(--line);padding:6px 0}
+.lista li span:last-child{color:var(--muted);white-space:nowrap;text-align:right}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--muted);font-size:11.5px;font-weight:700;padding:6px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tabw{overflow-x:auto}
+.barra{height:8px;border-radius:99px;background:var(--surface2);overflow:hidden;min-width:60px}
+.barra i{display:block;height:100%;background:var(--navy);border-radius:0 4px 4px 0}
+.hb{display:grid;grid-template-columns:minmax(90px,140px) 1fr 44px;gap:8px;align-items:center;margin:6px 0;font-size:13px}
+.hb .tr{height:12px;background:transparent;position:relative}
+.hb .tr i{display:block;height:100%;background:var(--navy);border-radius:0 4px 4px 0;min-width:2px}
+.hb .v{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+.colunas{display:flex;align-items:flex-end;gap:2px;height:130px;border-bottom:1px solid var(--line);padding-top:16px}
+.colunas .c{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;position:relative;cursor:default}
+.colunas .c i{display:block;width:100%;max-width:26px;background:var(--navy);border-radius:4px 4px 0 0;min-height:2px}
+.colunas .c b{position:absolute;top:-2px;font-size:11px;color:var(--ink)}
+.eixo{display:flex;gap:2px;font-size:10.5px;color:var(--muted);margin-top:4px}.eixo span{flex:1;text-align:center}
+.heat{display:grid;grid-template-columns:34px repeat(17,1fr);gap:2px;font-size:10.5px;color:var(--muted);align-items:center}
+.heat .cel{aspect-ratio:1/1;border-radius:3px;background:var(--surface2);min-width:10px}
+.heat .h{text-align:center}
+.escala{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);margin-top:8px}
+.escala i{width:16px;height:12px;border-radius:3px;display:inline-block}
+.busca{width:100%;background:var(--surface2);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:9px 12px;font:500 14px var(--f-body);margin:6px 0 8px}
+.aviso{background:var(--warnbg);color:var(--ink);border-radius:10px;padding:9px 12px;font-size:13px}
+.tip{position:fixed;z-index:50;pointer-events:none;background:#16233d;color:#fff;padding:6px 10px;border-radius:8px;font-size:12.5px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.35);max-width:240px}
+[data-tip]:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+.mais{background:none;border:0;color:var(--navy);font:700 12.5px var(--f-body);cursor:pointer;padding:6px 0}
+@media(max-width:560px){ .esc{display:none} .kpi b{font-size:24px} }
+.linha{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.cod{font:700 11.5px ui-monospace,Menlo,monospace;background:var(--surface2);border-radius:6px;padding:2px 6px;color:var(--muted)}
+.apel{font-size:12px;color:var(--muted)}
+.btnp{border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:8px;padding:5px 10px;font:700 12px var(--f-body);cursor:pointer}
+.btnp.azul{background:var(--navy);border-color:var(--navy);color:#fff}
+.btnp.verde{background:var(--ok);border-color:var(--ok);color:#06130b}
+.lib{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
+.lib input,.campo input,.campo select,.campo textarea{background:var(--surface2);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:8px;font:600 14px var(--f-body)}
+.lib input{width:110px}
+.modal{position:fixed;inset:0;background:rgba(6,10,20,.6);display:flex;align-items:center;justify-content:center;padding:16px;z-index:40}
+.modal .caixa{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;width:100%;max-width:480px;max-height:92vh;overflow:auto}
+.campo{display:flex;flex-direction:column;gap:4px;margin:8px 0;font-size:12px;color:var(--muted);font-weight:700}
+.campo textarea{min-height:80px;font-weight:500}
+.ok{color:var(--ok);font-weight:700}.ruim{color:var(--bad);font-weight:700}
+</style></head>
+<body>
+<div class="wrap">
+  <div class="topbar"></div>
+  <header>
+    <div><div class="eyebrow">Só Tintas · gestão</div><h1>Cadastro da Equipe</h1><div class="sub" id="sub">Carregando…</div></div>
+    <button type="button" class="btn" id="btnTema"><span id="temaIc">🌙</span> <span id="temaTx">Escuro</span></button>
+  </header>
+  <main id="raiz" style="display:flex;flex-direction:column;gap:14px"><p class="sub">Carregando o cadastro…</p></main>
+</div>
+<div id="modal" class="modal" hidden></div>
+<script>
+(function(){
+  function qp(n){try{return new URLSearchParams(location.search).get(n);}catch(e){return null;}}
+  function ls(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+  var p=(qp('tema')||'').toLowerCase(), t=(p==='claro'||p==='light')?'light':(p==='escuro'||p==='dark')?'dark':null;
+  if(!t){ var s=(ls('st_tema')||'').toLowerCase(); t=(s==='light'||s==='claro')?'light':'dark'; }
+  window.__setTema=function(tema){ document.documentElement.setAttribute('data-theme',tema); document.documentElement.style.colorScheme=tema;
+    var ic=document.getElementById('temaIc'), tx=document.getElementById('temaTx'); if(ic) ic.textContent=tema==='light'?'☀️':'🌙'; if(tx) tx.textContent=tema==='light'?'Claro':'Escuro';
+    try{localStorage.setItem('st_tema',tema);}catch(e){} try{ if(window.parent&&window.parent!==window) window.parent.postMessage({st_tema:tema},'*'); }catch(e){} };
+  window.__setTema(t);
+  window.addEventListener('message',function(ev){ var d=ev&&ev.data; if(d&&(d.st_tema==='light'||d.st_tema==='dark')) window.__setTema(d.st_tema); });
+  document.getElementById('btnTema').onclick=function(){ window.__setTema(document.documentElement.getAttribute('data-theme')==='light'?'dark':'light'); };
+})();
+</script>
+
+<script src="st-hora.js?v=1"></script>
+<script src="st-dados.js?v=89"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   CADASTRO DA EQUIPE — uma pessoa, um código. A coordenação corrige nomes,
+   cargos e lojas; gerente e supervisão liberam o acesso dos vendedores aqui.
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+  var ENVIO_URL='https://script.google.com/macros/s/AKfycbxC916U8rNw_-HFTW7vtFZz4AC_B1bHcTLE3bvMDWji6E5lAqkXgC0EIgQFtjHYTp8I/exec';
+  var $=function(id){return document.getElementById(id);};
+  var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
+  var sem=function(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();};
+  var z=function(n){return (n<10?'0':'')+n;};
+  function quando(ms){ if(!ms) return 'nunca entrou'; var d=window.STHora?STHora.data(ms):new Date(ms), h=window.STHora?STHora.data():new Date();
+    var dias=Math.round((new Date(h.getFullYear(),h.getMonth(),h.getDate())-new Date(d.getFullYear(),d.getMonth(),d.getDate()))/864e5);
+    return dias===0?'hoje, '+z(d.getHours())+':'+z(d.getMinutes()):dias===1?'ontem':dias<7?'há '+dias+' dias':z(d.getDate())+'/'+z(d.getMonth()+1); }
+  var CARGO={vend:'Vendedor',ger:'Gerente',sup:'Supervisor',coord:'Coordenação',outro:'Outro'};
+  var D=null, BUSCA='', FC='', LOJAS={}, ABERTO=null, ERRO_LIB={};
+  function sessao(){ try{ return JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); }catch(e){ return null; } }
+  function toast(m){ var t=document.createElement('div'); t.className='tip'; t.style.cssText='left:0;right:0;margin:auto;bottom:18px;top:auto;width:max-content;max-width:calc(100% - 24px)'; t.setAttribute('role','status'); t.textContent=m; document.body.appendChild(t); setTimeout(function(){t.remove();},3200); }
+  var coord=function(){ return D&&D.perfil==='coord'&&!(window.STDados&&STDados.visao&&STDados.visao()); };
+
+  function carregar(){
+    $('raiz').innerHTML='<p class="sub">Carregando o cadastro…</p>';
+    var s=sessao();
+    /* rótulos de loja do app principal ("34 - Cabo Frio"): é o formato que a liberação de acesso usa */
+    var lj=s&&s.nome?fetch(ENVIO_URL+'?acao=acessosVendedores&eu='+encodeURIComponent(s.nome)).then(function(r){return r.json();}).then(function(d){ (d&&d.lojas||[]).forEach(function(l){ var m=String(l).match(/^\s*(\d+)/); if(m) LOJAS[('00'+m[1]).slice(-3)]=l; }); }).catch(function(){}):Promise.resolve();
+    return Promise.all([STDados.chamar('pessoas'),lj]).then(function(r){
+      var j=r[0]; if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não respondeu.');
+      D=j; montar();
+    }).catch(function(e){ $('raiz').innerHTML='<div class="card"><h2>Não consegui abrir</h2><p class="sub">'+esc(e.message||e)+'</p><button class="btn" type="button" id="deNovo">Tentar de novo</button></div>'; $('deNovo').onclick=carregar; });
+  }
+
+  function montar(){
+    var P=D.pessoas, rot=D.perfil==='coord'?'Rede Só Tintas':D.perfil==='sup'?'Sua carteira':'Sua loja';
+    var nAt=P.filter(function(p){return p.ativo;}).length;
+    $('sub').textContent=rot+' · '+nAt+' pessoas ativas';
+    var h='';
+    if(coord()) h+='<div class="linha"><button class="btnp azul" type="button" data-novo="1">＋ Nova pessoa</button><button class="btnp" type="button" data-sinc="1">↻ Atualizar das bases</button><span class="sub">As bases (vendas, equipe e logins) entram sozinhas de hora em hora. O que você corrige aqui fica travado.</span></div>';
+    /* placar */
+    var vend=P.filter(function(p){return p.ativo&&p.cargo==='vend';}), sAc=vend.filter(function(p){return p.liberado===false;}).length;
+    h+='<div class="kpis"><div class="kpi"><span>Vendedores</span><b>'+vend.length+'</b></div><div class="kpi"><span>Gerentes</span><b>'+P.filter(function(p){return p.ativo&&p.cargo==='ger';}).length+'</b></div>'+
+      (D.liberadosConhecidos?'<div class="kpi"><span>Vendedores sem acesso</span><b>'+sAc+'</b> <small>libere abaixo</small></div>':'')+
+      (coord()?'<div class="kpi"><span>Nomes sem dono</span><b>'+D.semDono.length+'</b> <small>logins a conferir</small></div>':'')+'</div>';
+    if(coord()&&D.semDono.length) h+=blocoSemDono();
+    h+='<div class="linha"><input class="busca" id="busca" type="search" placeholder="Buscar por nome, apelido, código ou loja" value="'+esc(BUSCA)+'" style="flex:1 1 240px;margin:0" aria-label="Buscar">'+
+      '<div class="filtros" role="group" aria-label="Filtrar por cargo">'+[['','Todos'],['vend','Vendedores'],['ger','Gerentes'],['sup','Supervisores'],['semacesso','Sem acesso'],['inativo','Inativos']].map(function(f){return '<button type="button" data-fc="'+f[0]+'" aria-pressed="'+(FC===f[0])+'">'+f[1]+'</button>';}).join('')+'</div></div>';
+    h+=lista();
+    $('raiz').innerHTML=h;
+  }
+
+  function filtra(p){
+    if(FC==='inativo'){ if(p.ativo) return false; } else if(!p.ativo) return false;
+    if(FC&&FC!=='inativo'&&FC!=='semacesso'&&p.cargo!==FC) return false;
+    if(FC==='semacesso'&&!(p.cargo==='vend'&&p.liberado===false)) return false;
+    if(!BUSCA) return true;
+    return sem([p.nome,p.codigo,(p.apelidos||[]).join(' '),(p.lojas||[]).join(' '),p.supervisor].join(' ')).indexOf(BUSCA)>=0;
+  }
+  function lista(){
+    var P=D.pessoas.filter(filtra), g={};
+    P.forEach(function(p){ var k=p.cargo==='sup'||p.cargo==='coord'?'~sup':(p.lojas[0]||'—'); (g[k]=g[k]||[]).push(p); });
+    var ks=Object.keys(g).sort();
+    if(!ks.length) return '<p class="sub">Ninguém encontrado.</p>';
+    var ord={ger:0,vend:1};
+    return ks.map(function(k){ var L=g[k].sort(function(a,b){return (ord[a.cargo]-ord[b.cargo])||(a.nome<b.nome?-1:1);});
+      var tit=k==='~sup'?'Supervisão e coordenação':'Loja '+k+' '+esc((LOJAS[k]||'').replace(/^\s*\d+\s*-\s*/,''));
+      return '<section class="card"><h2>'+tit+' <span class="sub" style="font-weight:600">· '+L.length+'</span></h2><ul class="lista">'+L.map(item).join('')+'</ul></section>'; }).join('');
+  }
+  function item(p){
+    var ac=p.cargo==='vend'&&D.liberadosConhecidos?(p.liberado?'<span class="chip s-ativo">✓ com acesso</span>':'<span class="chip s-semacesso">🔒 sem acesso</span>'):'';
+    var h='<li style="display:block"><div class="linha" style="justify-content:space-between"><span><b>'+esc(p.nome)+'</b> <span class="cod">'+esc(p.codigo)+'</span> <span class="sub">'+esc(CARGO[p.cargo]||p.cargo)+(p.cargo!=='vend'&&p.lojas.length?' · lojas '+esc(p.lojas.join(', ')):'')+(p.cargo!=='sup'&&p.supervisor?' · sup. '+esc(p.supervisor):'')+'</span>'+
+      (p.travado?' <span class="sub" title="Corrigido pela coordenação">🔒</span>':'')+'</span><span class="linha">'+ac+'<span class="sub">'+esc(quando(p.ultimo))+'</span>'+
+      (coord()?'<button class="btnp" type="button" data-ed="'+esc(p.codigo)+'">editar</button>':'')+
+      (p.cargo==='vend'&&p.liberado===false&&!(STDados.visao&&STDados.visao())?'<button class="btnp verde" type="button" data-lib="'+esc(p.codigo)+'">Liberar acesso</button>':'')+'</span></div>';
+    if(p.apelidos&&p.apelidos.length) h+='<div class="apel">também aparece como: '+esc(p.apelidos.join(' · '))+'</div>';
+    if(ABERTO===p.codigo) h+='<div class="lib"><input id="libPin" inputmode="numeric" maxlength="6" placeholder="PIN inicial" aria-label="PIN inicial do vendedor"><input id="libMeu" type="password" inputmode="numeric" maxlength="6" placeholder="Seu PIN" aria-label="Seu PIN para confirmar"><button class="btnp azul" type="button" data-libok="'+esc(p.codigo)+'">Confirmar</button><button class="btnp" type="button" data-libx="1">Cancelar</button>'+
+      '<span class="sub" style="flex-basis:100%">O vendedor entra no Assistente ST com o nome <b>'+esc(p.nome)+'</b> e este PIN; no primeiro acesso o app pede para trocar.</span>'+(ERRO_LIB[p.codigo]?'<span class="ruim" style="flex-basis:100%">'+esc(ERRO_LIB[p.codigo])+'</span>':'')+'</div>';
+    return h+'</li>';
+  }
+  function blocoSemDono(){
+    var P=D.pessoas.filter(function(p){return p.ativo;});
+    return '<section class="card"><h2>🔎 Nomes sem dono</h2><p class="sub" style="margin:0 0 6px">Entraram no app com um nome que o cadastro não reconheceu. Diga quem é: o nome vira apelido da pessoa e passa a contar para ela.</p><ul class="lista">'+
+      D.semDono.map(function(s,i){ var pf=s.pf==='coord'?'sup':s.pf;
+        var op=P.filter(function(p){ return (pf==='sup'?(p.cargo==='sup'||p.cargo==='coord'):p.cargo===pf) && (!s.lojas.length||!p.lojas.length||p.lojas.some(function(l){return s.lojas.indexOf(l)>=0;})); });
+        if(!op.length) op=P;
+        return '<li><span><b>'+esc(s.nome)+'</b> <span class="sub">'+esc(CARGO[s.pf]||s.pf)+(s.lojas.length?' · loja '+esc(s.lojas.join(', ')):'')+' · '+s.n+' acesso(s)</span></span><span class="linha"><select id="sd'+i+'" aria-label="Quem é '+esc(s.nome)+'" style="max-width:200px"><option value="">Quem é?</option>'+op.map(function(p){return '<option value="'+esc(p.codigo)+'">'+esc(p.nome)+' ('+esc(p.codigo)+')</option>';}).join('')+'</select><button class="btnp azul" type="button" data-sd="'+i+'">Ok</button></span></li>'; }).join('')+'</ul></section>';
+  }
+
+  /* ── edição (coordenação) ── */
+  function abrirEdicao(codigo){
+    var p=codigo?D.pessoas.filter(function(x){return x.codigo===codigo;})[0]:{codigo:'',nome:'',cargo:'vend',lojas:[],supervisor:'',ativo:true,apelidos:[]};
+    var outros=D.pessoas.filter(function(x){return x.codigo!==p.codigo&&x.ativo&&(x.cargo===p.cargo);});
+    $('modal').innerHTML='<div class="caixa" role="dialog" aria-modal="true" aria-labelledby="mdTit"><h2 id="mdTit">'+(codigo?'Editar '+esc(p.codigo):'Nova pessoa')+'</h2>'+
+      '<label class="campo">Nome oficial<input id="fNome" value="'+esc(p.nome)+'"></label>'+
+      '<label class="campo">Cargo<select id="fCargo">'+Object.keys(CARGO).map(function(k){return '<option value="'+k+'"'+(p.cargo===k?' selected':'')+'>'+CARGO[k]+'</option>';}).join('')+'</select></label>'+
+      '<label class="campo">Lojas (códigos, separados por vírgula)<input id="fLojas" value="'+esc(p.lojas.join(', '))+'" placeholder="ex.: 034"></label>'+
+      '<label class="campo">Supervisor<input id="fSup" value="'+esc(p.supervisor)+'"></label>'+
+      '<label class="campo">Também aparece como (um por linha)<textarea id="fApel">'+esc((p.apelidos||[]).join('\n'))+'</textarea></label>'+
+      '<label class="linha" style="font-size:13px;margin:6px 0"><input type="checkbox" id="fAtivo"'+(p.ativo?' checked':'')+'> Ativo</label>'+
+      (codigo&&outros.length?'<label class="campo">Juntar com outro cadastro da mesma pessoa<select id="fJuntar"><option value="">—</option>'+outros.map(function(x){return '<option value="'+esc(x.codigo)+'">'+esc(x.nome)+' ('+esc(x.codigo)+')</option>';}).join('')+'</select></label>':'')+
+      '<p class="ruim" id="fErro" role="alert"></p><div class="linha" style="justify-content:flex-end"><button class="btnp" type="button" data-fx="1">Cancelar</button><button class="btnp azul" type="button" data-fok="'+esc(p.codigo)+'">Salvar</button></div></div>';
+    $('modal').hidden=false; setTimeout(function(){ $('fNome').focus(); },30);
+  }
+  function salvarEdicao(codigo){
+    var d={codigo:codigo,nome:$('fNome').value,cargo:$('fCargo').value,lojas:$('fLojas').value.split(/[,; ]+/).filter(Boolean),supervisor:$('fSup').value,ativo:$('fAtivo').checked,apelidos:$('fApel').value.split('\n')};
+    var j=$('fJuntar')&&$('fJuntar').value;
+    STDados.chamar('pessoaSalvar',d).then(function(r){
+      if(!r||!r.ok) throw new Error((r&&r.erro)||'Não salvou.');
+      return j?STDados.chamar('pessoaJuntar',{manter:r.codigo,juntar:j}).then(function(x){ if(!x||!x.ok) throw new Error((x&&x.erro)||'Não juntou.'); return r; }):r;
+    }).then(function(){ $('modal').hidden=true; toast('Cadastro salvo.'); carregar(); }).catch(function(e){ $('fErro').textContent=e.message; });
+  }
+  /* ── liberar acesso de vendedor (mesmo serviço do card "Acesso dos vendedores") ── */
+  function liberar(codigo){
+    var p=D.pessoas.filter(function(x){return x.codigo===codigo;})[0], s=sessao(), pin=$('libPin').value.trim(), meu=$('libMeu').value.trim();
+    ERRO_LIB[codigo]='';
+    if(!/^\d{4,6}$/.test(pin)){ ERRO_LIB[codigo]='O PIN inicial tem de 4 a 6 dígitos.'; montar(); return; }
+    if(!/^\d{4,6}$/.test(meu)){ ERRO_LIB[codigo]='Digite o seu PIN para confirmar.'; montar(); return; }
+    var loja=LOJAS[p.lojas[0]]; if(!loja){ ERRO_LIB[codigo]='Não achei a loja '+p.lojas[0]+' no seu escopo do app.'; montar(); return; }
+    fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({tipo:'liberarVendedor',eu:s.nome,pinEu:meu,nome:p.nome,loja:loja,pin:pin,acao:'liberar'})})
+      .then(function(r){return r.json();}).then(function(r){
+        if(!r||!r.ok) throw new Error((r&&r.erro)||'Não consegui gravar.');
+        ABERTO=null; toast('✓ '+(r.nome||p.nome)+' liberado. Passe o nome e o PIN '+pin+' para ele.'); carregar();
+      }).catch(function(e){ ERRO_LIB[codigo]=e.message||'Sem conexão: nada foi gravado.'; montar(); });
+  }
+
+  document.addEventListener('click',function(e){
+    var b=e.target.closest('button'); if(!b) return;
+    if(b.dataset.fc!=null){ FC=b.dataset.fc; montar(); return; }
+    if(b.dataset.ed){ abrirEdicao(b.dataset.ed); return; }
+    if(b.dataset.novo){ abrirEdicao(''); return; }
+    if(b.dataset.fx){ $('modal').hidden=true; return; }
+    if(b.dataset.fok!=null){ salvarEdicao(b.dataset.fok); return; }
+    if(b.dataset.lib){ ABERTO=b.dataset.lib; montar(); var i=$('libPin'); if(i) i.focus(); return; }
+    if(b.dataset.libx){ ABERTO=null; montar(); return; }
+    if(b.dataset.libok){ liberar(b.dataset.libok); return; }
+    if(b.dataset.sinc){ b.disabled=true; b.textContent='Atualizando…'; STDados.chamar('pessoasSincronizar').then(function(r){ toast(r&&r.ok?'Atualizado: '+r.novos+' novos, '+r.atualizados+' ajustados.':(r&&r.erro)||'Não atualizou.'); carregar(); }).catch(function(x){ toast(x.message); carregar(); }); return; }
+    if(b.dataset.sd!=null){ var s=D.semDono[+b.dataset.sd], cod=$('sd'+b.dataset.sd).value; if(!cod){ toast('Escolha a pessoa.'); return; }
+      STDados.chamar('pessoaApelido',{codigo:cod,apelido:s.nome}).then(function(r){ if(!r||!r.ok) throw new Error((r&&r.erro)||'Não salvou.'); toast('Pronto: "'+s.nome+'" agora conta para '+cod+'.'); carregar(); }).catch(function(x){ toast(x.message); }); return; }
+  });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&!$('modal').hidden) $('modal').hidden=true; });
+  var tB=null;
+  document.addEventListener('input',function(e){ if(e.target.id!=='busca') return; clearTimeout(tB); var v=e.target.value;
+    tB=setTimeout(function(){ BUSCA=sem(v).trim(); var pos=e.target.selectionStart; montar(); var i=$('busca'); if(i){ i.focus(); try{ i.setSelectionRange(pos,pos); }catch(x){} } },250); });
+
+  if(window.STDados) carregar(); else $('raiz').innerHTML='<p class="sub">Abra pelo Só Tintas App.</p>';
+})();
+</script>
+<script src="st-anima.js?v=3"></script>
+<script>(function(){ if(!window.STAnima) return; STAnima.esqueletos(document.body); STAnima.puxar(document.scrollingElement,function(){ location.reload(); }); })();</script>
+</body></html>
