@@ -9771,8 +9771,36 @@ button[id^="ov"][id$="Fechar"]:hover{transform:translateY(-1px);box-shadow:0 6px
     mostra();
   }
   window.STTour={ refazer:function(){ try{ var s=JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); localStorage.removeItem('st_tour_v1:'+String(s.nome).toLowerCase().trim()); }catch(e){} tour(); } };
+  /* boas-vindas do primeiro acesso: o vídeo institucional, uma vez por pessoa neste aparelho (depois vem o tour).
+     "Assistir depois" adia para o dia seguinte. O mesmo vídeo é o primeiro da Videoteca do Mentor. */
+  var VIDEO_INST='0iFyoDGttqk';
+  function boasVindas(depois){
+    var s=null; try{ s=JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); }catch(e){}
+    if(!s||!s.nome||(window.STDados&&STDados.visao&&STDados.visao())||document.querySelector('.st-bv')){ depois(); return; }
+    var ck='st_boasvindas_v1:'+String(s.nome).toLowerCase().trim(), hoje=new Date().toDateString(), v=null;
+    try{ v=localStorage.getItem(ck); }catch(e){ depois(); return; }
+    if(v==='visto'||v===hoje){ depois(); return; }
+    var nome=String(s.nome).trim().split(' ')[0];
+    var ov=document.createElement('div'); ov.className='st-bv'; ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-labelledby','stBvTit');
+    ov.style.cssText='position:fixed;inset:0;z-index:2147483300;background:rgba(6,10,20,.78);display:flex;align-items:center;justify-content:center;padding:14px';
+    ov.innerHTML='<div style="width:100%;max-width:640px;background:#fff;color:#16233d;border-radius:16px;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.45);font:500 14px \'Public Sans\',system-ui,sans-serif">'+
+      '<div style="background:#1C3F8F;color:#fff;padding:14px 16px;border-bottom:4px solid #FFD200"><div style="font-size:12px;opacity:.85;letter-spacing:.06em;text-transform:uppercase;font-weight:700">Só Tintas · Colorindo Vidas e Realizando Sonhos</div>'+
+      '<b id="stBvTit" style="display:block;font-size:19px;margin-top:2px">Bem-vindo, '+nome.replace(/</g,'&lt;')+'! 🎨</b><span style="font-size:13px;opacity:.9">Antes de começar, conheça a Só Tintas no nosso vídeo institucional.</span></div>'+
+      '<div style="position:relative;padding-top:56.25%;background:#000"><iframe title="Vídeo institucional Só Tintas" src="https://www.youtube-nocookie.com/embed/'+VIDEO_INST+'?rel=0&playsinline=1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe></div>'+
+      '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;padding:12px 14px"><button type="button" data-bv="depois" style="border:0;border-radius:10px;padding:10px 14px;background:#eef2f8;color:#16233d;font:800 13px inherit;cursor:pointer">Assistir depois</button>'+
+      '<button type="button" data-bv="ok" style="border:0;border-radius:10px;padding:10px 16px;background:#1C3F8F;color:#fff;font:800 13px inherit;cursor:pointer">Já assisti, vamos começar!</button></div></div>';
+    document.body.appendChild(ov);
+    function fecha(marca){ try{ localStorage.setItem(ck,marca); }catch(e){} ov.remove(); document.removeEventListener('keydown',esc); setTimeout(depois,400); }
+    function esc(e){ if(e.key==='Escape') fecha(hoje); }
+    document.addEventListener('keydown',esc);
+    ov.querySelector('[data-bv=depois]').onclick=function(){ fecha(hoje); };
+    ov.querySelector('[data-bv=ok]').onclick=function(){ fecha('visto'); };
+    setTimeout(function(){ var b=ov.querySelector('[data-bv=ok]'); if(b) b.focus(); },50);
+  }
+  window.STBoasVindas={ rever:function(){ try{ var s=JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); localStorage.removeItem('st_boasvindas_v1:'+String(s.nome).toLowerCase().trim()); }catch(e){} boasVindas(function(){}); } };
   (function esperaInicio(){ var o=document.getElementById('ovInicio'); if(!o) return;
-    function tenta(){ if(o.classList.contains('aberto')) setTimeout(tour, 2200); }
+    var ja=false;
+    function tenta(){ if(o.classList.contains('aberto')&&!ja){ ja=true; setTimeout(function(){ boasVindas(tour); }, 2200); } }
     tenta(); new MutationObserver(function(){ tenta(); }).observe(o,{attributes:true,attributeFilter:['class']}); })();
   function marcar(n){
     var card=document.querySelector('#ovInicio .ini-card[data-act="pdi"] .ini-txt'); if(!card) return;
@@ -9784,7 +9812,7 @@ button[id^="ov"][id$="Fechar"]:hover{transform:translateY(-1px);box-shadow:0 6px
   function alertaPdi(n,sem,tent){
     if(!n&&!sem) return;
     /* espera o tour do primeiro acesso terminar (e dá tempo dele começar) para não brigarem na tela */
-    tent=tent||0; if(tent<120 && (tent<4 || document.querySelector('.st-tour'))){ setTimeout(function(){ alertaPdi(n,sem,tent+1); },1000); return; }
+    tent=tent||0; if(tent<120 && (tent<4 || document.querySelector('.st-tour,.st-bv'))){ setTimeout(function(){ alertaPdi(n,sem,tent+1); },1000); return; }
     var hoje=new Date().toDateString(), ck='st_alerta_pdi_dia';
     try{ if(localStorage.getItem(ck)===hoje) return; localStorage.setItem(ck,hoje); }catch(e){}
     var d=document.createElement('div'); d.className='st-alerta-pdi'; d.setAttribute('role','alert');

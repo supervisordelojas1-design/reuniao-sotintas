@@ -147,6 +147,7 @@ CONTEUDO.valores = [
 
 /* ── Videoteca (cole o link do YouTube ou do Google Drive no painel) ── */
 CONTEUDO.videos = [
+  { id: 'v00', ordem: 0, categoria: 'Institucional', titulo: 'Institucional Só Tintas', descricao: 'Quem somos, onde estamos e o que nos move: o vídeo de boas-vindas de todo novo campeão.', url: 'https://youtu.be/0iFyoDGttqk', xp: 15, ativo: true },
   { id: 'v01', ordem: 1, categoria: 'Institucional', titulo: 'Boas-vindas da Diretoria', descricao: 'Rafael, Fred e Thiago Borba dão as boas-vindas aos novos campeões.', url: '', xp: 15, ativo: true },
   { id: 'v02', ordem: 2, categoria: 'Institucional', titulo: 'Nossa história em 3 minutos', descricao: 'De 1977 a 33 lojas em 22 municípios: a trajetória da Só Tintas.', url: '', xp: 15, ativo: true },
   { id: 'v03', ordem: 3, categoria: 'Produtos', titulo: 'Linha Coral: conhecendo os produtos', descricao: 'Acabamentos, linhas e embalagens que mais vendemos.', url: '', xp: 15, ativo: true },
