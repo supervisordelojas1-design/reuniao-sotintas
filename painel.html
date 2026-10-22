@@ -714,6 +714,14 @@ const cor=c=>c=='g'?'var(--ok)':c=='y'?'var(--warn)':'var(--bad)';
 
 /* ---------- perfis ---------- */
 let LOCK=__L__;
+/* O servidor manda a trava com o código da loja como está na planilha (22, "22" ou "022");
+   aqui a loja é sempre "022". Sem isto o gerente via "Loja não encontrada" e o vendedor
+   "Os seus números ainda não estão no painel". */
+const cod3=t=>{const m=String(t==null?'':t).match(/\d+/);return m?('00'+Number(m[0])).slice(-3):''};
+if(LOCK&&/^(loja|vend):/.test(String(LOCK))){
+ const p=String(LOCK).split(':'), c=cod3(p[1]);
+ if(c&&D.lojas.some(x=>x.cod==c)) LOCK=[p[0],c].concat(p.slice(2)).join(':');
+}
 /* "Ver como" do app (só coordenação): ?visao=sup:NOME ou ?visao=loja:034 — a coordenação já recebe a rede
    inteira, então o painel só se posiciona e se trava na região/loja escolhida, como a pessoa veria. */
 const VISAO=(function(){ try{ return new URLSearchParams(location.search).get('visao')||''; }catch(e){ return ''; } })();
@@ -737,7 +745,7 @@ const PERFIS=[];
 if(!LOCK){PERFIS.push({v:'geral',t:'👑 Diretoria — visão geral'});
  D.supervisores.forEach(s=>PERFIS.push({v:'sup:'+s.nome,t:'🧭 Supervisor — '+s.nome}));}
 else if(String(LOCK).indexOf('vend:')==0){ const lj=D.lojas.find(x=>x.cod==String(LOCK).slice(5)); const vv=lj&&(VEND_NOME?lj.vendedores.find(x=>x.nome==VEND_NOME):lj.vendedores[0]); PERFIS.push({v:LOCK,t:'👤 Meu painel — '+(vv?vv.nome:'')}); }
-else if(String(LOCK).indexOf('loja:')==0){ const lj=(_.L||[]).find(x=>x[0]==String(LOCK).slice(5)); PERFIS.push({v:LOCK,t:'🏪 Minha loja — '+(lj?lj[0]+' · '+lj[1]:String(LOCK).slice(5))}); }
+else if(String(LOCK).indexOf('loja:')==0){ const lj=D.lojas.find(x=>x.cod==String(LOCK).slice(5)); PERFIS.push({v:LOCK,t:'🏪 Minha loja — '+(lj?lj.cod+' · '+lj.nome:String(LOCK).slice(5))}); }
 else PERFIS.push({v:'sup:'+LOCK,t:'🧭 Minha região — '+LOCK});
 D.lojas.slice().filter(l=>!LOCK||l.sup==LOCK).sort((a,b)=>a.cod.localeCompare(b.cod))
  .forEach(l=>PERFIS.push({v:'loja:'+l.cod,t:'🏪 Gerente — '+l.cod+' '+l.nome}));
