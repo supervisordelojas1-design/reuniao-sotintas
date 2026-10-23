@@ -130,12 +130,14 @@ h3{font-size:14px;margin:0 0 6px}
   function visao(){ try{ return !!(window.STDados&&STDados.visao&&STDados.visao()); }catch(e){ return false; } }
   function prazoTxt(p){ if(!p) return ''; var x=p.split(' '); return dBr(x[0])+' às '+(x[1]||'').replace(':00','h'); }
 
-  var SUPD=null;
+  var SUPD=null, GERD=null, PEND=[];
   function carregar(){
     return STDados.chamar('semana').then(function(j){
       if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não respondeu.');
-      D=j;
-      if(j.perfil==='sup'||j.perfil==='coord') return STDados.chamar('semanaSup').then(function(k){ SUPD=(k&&k.ok)?k:null; }).catch(function(){ SUPD=null; });
+      D=j; var ps=[];
+      if(j.perfil==='sup'||j.perfil==='coord') ps.push(STDados.chamar('semanaSup').then(function(k){ SUPD=(k&&k.ok)?k:null; }).catch(function(){ SUPD=null; }));
+      if(j.perfil==='ger'||j.perfil==='sup'||j.perfil==='coord') ps.push(STDados.chamar('semanaGer').then(function(k){ GERD=(k&&k.ok)?k:null; }).catch(function(){ GERD=null; }));
+      return Promise.all(ps);
     }).then(function(){ montar(); }).catch(function(e){ $('raiz').innerHTML='<div class="card"><h2>Não consegui abrir</h2><p class="sub">'+esc(e.message||e)+'</p><button class="btn azul" type="button" id="deNovo">Tentar de novo</button></div>'; $('deNovo').onclick=carregar; });
   }
 
@@ -214,8 +216,8 @@ h3{font-size:14px;margin:0 0 6px}
     if(a.revisao) h+='<div style="margin-top:8px">'+a.revisao.map(function(r,i){return '<div class="rev"><span class="'+(r.ok?'ok':'x')+'">'+(r.ok?'✓':'✗')+'</span><span>'+(i+1)+'. '+(r.ok?'':'Resposta certa: ')+'<b>'+esc(r.certa)+'</b></span></div>';}).join('')+'</div>';
     return h;
   }
-  function montarQuestoes(linha,MT,px){
-    px=px||''; if(MT===undefined) MT=MENTOR;
+  function montarQuestoes(linha,MT,px,acao){
+    px=px||''; acao=acao||'semanaAval'; if(MT===undefined) MT=MENTOR;
     var Q=linha.questoes||[], h='';
     Q.forEach(function(q,i){ h+='<div class="q" data-q="'+px+i+'"><p>'+(i+1)+'. '+esc(q.t)+'</p>'+q.ops.map(function(o,k){return '<label><input type="radio" name="'+px+'q'+i+'" value="'+k+'"><span>'+esc(o)+'</span></label>';}).join('')+'</div>'; });
     if(MT&&MT.qs.length){
@@ -230,7 +232,7 @@ h3{font-size:14px;margin:0 0 6px}
       (MT?MT.qs:[]).forEach(function(q,i){ var x=document.querySelector('input[name="'+px+'m'+i+'"]:checked'); var box=document.querySelector('[data-m="'+px+i+'"]'); box.classList.toggle('erro',!x); if(!x) falta++; if(x&&Number(x.value)===q.correta) M++; });
       if(falta){ $(px+'falta').textContent='Faltam '+falta+' resposta(s).'; var e=document.querySelector('#'+px+'questoes .q.erro'); if(e) e.scrollIntoView({behavior:'smooth',block:'center'}); return; }
       var b=this; b.disabled=true; b.textContent='Enviando…';
-      STDados.chamar('semanaAval',{chave:linha.chave,respostas:R,mentor:MT?{modulo:MT.modulo,titulo:MT.titulo,acertos:M,total:MT.qs.length}:null}).then(function(j){
+      STDados.chamar(acao,{chave:linha.chave,respostas:R,mentor:MT?{modulo:MT.modulo,titulo:MT.titulo,acertos:M,total:MT.qs.length}:null}).then(function(j){
         if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não confirmou.');
         toast('Respostas enviadas!'); if(window.STAnima&&j.nota>=8) STAnima.confete();
         return carregar();
@@ -238,19 +240,84 @@ h3{font-size:14px;margin:0 0 6px}
     };
   }
 
+  /* ───────── PDI semanal do GERENTE com o supervisor (aba GERSEMANA) ───────── */
+  function gerAtual(cod){ return (GERD&&GERD.linhas||[]).filter(function(x){return x.semana===GERD.atual&&(!cod||x.loja===cod);}); }
+  function gerAnt(cod){ return (GERD&&GERD.linhas||[]).filter(function(x){return x.semana===GERD.anterior&&(!cod||x.loja===cod);}); }
+  function cumpTxt(c){ return c==='sim'?'cumprido':c==='parcial'?'cumprido em parte':c==='nao'?'não cumprido':'—'; }
+  function fichaGer(f){
+    if(!f) return '';
+    var h='<div class="kpis"><div class="kpi"><span>Meta do mês</span><b>'+brl(f.meta)+'</b></div><div class="kpi"><span>Realizado</span><b>'+brl(f.fat)+'</b></div><div class="kpi"><span>Projeção</span><b>'+pct(f.pp)+'</b></div><div class="kpi"><span>Precisa por dia útil</span><b>'+brl(f.dia)+'</b></div>'+
+      '<div class="kpi"><span>PDI feito (vendedores)</span><b>'+f.feitos+'/'+f.nV+'</b></div><div class="kpi"><span>Respondido</span><b>'+f.resp+'/'+f.nV+(f.media!=null?' · média '+String(f.media).replace('.',','):'')+'</b></div></div>';
+    h+='<ul class="lista">'+
+      '<li><span>Abaixo do ritmo</span><span>'+(f.abaixo&&f.abaixo.length?esc(f.abaixo.join(', ')):'ninguém')+'</span></li>'+
+      '<li><span>Não fizeram / não responderam o PDI</span><span>'+(f.naoResp&&f.naoResp.length?esc(f.naoResp.join(', ')):'ninguém')+'</span></li>'+
+      '<li><span>Orçamentos em aberto</span><span>'+f.orcN+' ('+brl(f.orcV)+') · parados +15 dias: '+f.paradosN+' ('+brl(f.paradosV)+')</span></li>'+
+      '<li><span>CNPJ da carteira sem compra no mês</span><span>'+f.semCompraN+' (média '+brl(f.semCompraV)+'/mês)</span></li>'+
+      '<li><span>Revisões de PDI Mensal vencidas</span><span>'+(f.pdiVenc&&f.pdiVenc.length?esc(f.pdiVenc.join(', ')):'nenhuma')+'</span></li>'+
+      '<li><span>Visitas do supervisor</span><span>semana passada: '+f.visitas+' · nesta: '+(f.planejadas&&f.planejadas.length?f.planejadas.map(dBr).join(', '):'nenhuma na agenda')+'</span></li></ul>';
+    if(f.ind&&f.ind.length) h+='<ul class="lista">'+f.ind.map(function(i){return '<li><span>'+esc(i.nome)+'</span><span>'+esc(i.atual)+' · meta '+esc(i.meta)+' '+(i.ok==null?'':i.ok?'🟢':'🔴')+'</span></li>';}).join('')+'</ul>';
+    return h;
+  }
+  function blocoCompGer(C){
+    if(!C||!C.length) return '<p class="sub">Sem compromissos registrados.</p>';
+    return C.map(function(c){return '<div class="comp"><span class="n">'+c.n+'</span><b>'+esc(c.titulo)+'</b><div style="margin-top:4px"><b>Ação:</b> '+esc(c.acao)+'</div>'+(c.obs?'<div><b>Observar:</b> '+esc(c.obs)+'</div>':'')+'</div>';}).join('');
+  }
+  /* o card do próprio gerente */
+  function cardMeuGer(x,i){
+    var f=x.ficha||{};
+    var h='<section class="card"><div class="vend-top"><h2 style="margin:0">Meu PDI semanal com o supervisor · Loja '+esc(x.loja)+'</h2><div class="linha">'+chip(x.situacao)+(x.aval?'<span class="chip c-respondido">'+x.aval.nota+'/'+x.aval.total+'</span>':'')+'</div></div>';
+    h+='<p class="sub" style="margin:4px 0 8px">Supervisor: '+esc(f.supervisor||'')+(x.feito_em?' · PDI feito '+esc(quando(x.feito_em))+(x.feito_por?' por '+esc(x.feito_por):''):'')+'</p>';
+    h+=fichaGer(f)+'<h3 style="margin-top:12px">Os 3 compromissos da semana</h3>'+blocoCompGer(x.comp);
+    h+='<h3 style="margin-top:12px">Avaliação da semana</h3>';
+    if(x.situacao==='aguardando') h+='<p>A avaliação libera quando o seu supervisor marcar que fez o PDI semanal com você'+(x.prazoFeito?' (até '+esc(prazoTxt(x.prazoFeito))+')':'')+'.</p>';
+    else if(x.situacao==='liberado'){ h+='<p class="aviso">Responda até <b>'+esc(prazoTxt(x.prazoAval))+'</b>. São '+(x.questoes||[]).length+' questões sobre a sua loja. Só dá para enviar uma vez.</p><div id="g'+i+'_questoes"><p class="sub">Preparando as questões…</p></div>'; PEND.push({linha:x,px:'g'+i+'_',acao:'semanaGerAval'}); }
+    else if(x.situacao==='respondido') h+=resultado(x.aval);
+    else h+='<p class="aviso">'+esc(SIT[x.situacao]||x.situacao)+'. Fale com o seu supervisor.</p>';
+    return h+'</section>';
+  }
+  function cardMeuGerAnt(x){
+    var f=x.fechamento;
+    return '<section class="card"><h3>Semana passada ('+dBr(x.semana)+') · PDI com o supervisor</h3>'+(x.aval?'<p>Avaliação: <b>'+x.aval.nota+'/'+x.aval.total+'</b></p>':'<p class="sub">'+esc(SIT[x.situacao]||'')+'</p>')+
+      (f?'<p>Fechamento do supervisor: combinado <b>'+esc(cumpTxt(f.cumprido))+'</b>'+(f.resultado?' · '+esc(f.resultado):'')+'</p>':'<p class="sub">O supervisor ainda não registrou o fechamento.</p>')+'</section>';
+  }
+  /* bloco dentro do card da loja (supervisor / coordenação) */
+  function blocoGerLoja(cod,ro){
+    var x=gerAtual(cod)[0]; if(!x) return '';
+    var ab=ABERTOS['g:'+x.chave], f=x.ficha||{};
+    var h='<div class="vend" style="border-color:var(--navy)"><div class="vend-top"><div><b>PDI semanal com o gerente · '+esc(nm(x.gerente||f.gerente||''))+'</b><div class="sub">'+esc(f.orient||'')+'</div></div><div class="linha">'+chip(x.situacao)+(x.aval?'<span class="chip c-respondido">'+x.aval.nota+'/'+x.aval.total+'</span>':'')+'</div></div>';
+    h+='<div class="linha" style="margin-top:8px">'+(x.situacao==='aguardando'&&!ro?'<button class="btn azul" type="button" data-gerfeito="'+esc(x.chave)+'">✓ Fiz o PDI com o gerente</button>':'')+
+      (x.feito_em?'<span class="sub">PDI feito '+esc(quando(x.feito_em))+(x.feito_por?' por '+esc(x.feito_por):'')+(x.situacao==='liberado'&&x.prazoAval?' · ele responde até '+esc(prazoTxt(x.prazoAval)):'')+'</span>':(x.prazoFeito&&x.situacao==='aguardando'?'<span class="sub">marcar até '+esc(prazoTxt(x.prazoFeito))+'</span>':''))+
+      '<button class="mais" type="button" data-abrir="g:'+esc(x.chave)+'">'+(ab?'Fechar ficha':'Ver ficha e compromissos')+'</button></div>';
+    if(ab) h+='<div style="margin-top:8px">'+fichaGer(f)+'<h3 style="margin-top:12px">Os 3 compromissos do gerente</h3>'+blocoCompGer(x.comp)+(x.aval?resultado(x.aval):'')+'</div>';
+    return h+'</div>';
+  }
+  function blocoGerFech(cod,ro){
+    var x=gerAnt(cod)[0]; if(!x) return '';
+    var f=x.fechamento||{}, at=gerAtual(cod)[0], fa=x.ficha||{}, fb=at&&at.ficha;
+    var evol=(fa.pp!=null&&fb&&fb.pp!=null)?'Projeção da loja: <b>'+pct(fa.pp)+' → '+pct(fb.pp)+'</b>'+(fb.feitos!=null?' · ritual de hoje '+fb.feitos+'/'+fb.nV:''):'';
+    var h='<div class="vend" style="border-color:var(--navy)"><div class="vend-top"><b>Fechamento com o gerente · '+esc(nm(x.gerente||fa.gerente||''))+'</b><span class="linha">'+chip(x.situacao)+(x.aval?'<span class="chip c-respondido">'+x.aval.nota+'/'+x.aval.total+'</span>':'')+'</span></div>'+
+      '<p class="sub" style="margin:4px 0">Combinado: '+esc(fa.esperado||'')+(evol?'<br>'+evol:'')+'</p>';
+    if(ro) h+=x.fechamento?'<p>Combinado <b>'+esc(cumpTxt(f.cumprido))+'</b>'+(f.resultado?' · '+esc(f.resultado):'')+'</p>':'<p class="sub">Sem fechamento.</p>';
+    else h+='<div class="fech"><label>Combinado cumprido?<select id="gfC_'+esc(x.chave)+'"><option value="">—</option>'+[['sim','Sim'],['parcial','Em parte'],['nao','Não']].map(function(o){return '<option value="'+o[0]+'"'+(f.cumprido===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></label>'+
+      '<label>Resultado<input type="text" id="gfR_'+esc(x.chave)+'" value="'+esc(f.resultado||'')+'" placeholder="Ex.: orçamentos parados de 3 para 1; projeção subiu para 82%"></label></div>'+
+      '<div class="linha" style="margin-top:8px"><button class="btn" type="button" data-gerfechar="'+esc(x.chave)+'">Salvar fechamento</button>'+(x.fechamento?'<span class="sub">salvo por '+esc(f.por||'')+'</span>':'')+'</div>';
+    return h+'</div>';
+  }
+
   /* ───────── tela do gerente / supervisão / coordenação ───────── */
   function telaLider(){
     var A=D.linhas.filter(function(l){return l.semana===D.atual;}), P=D.linhas.filter(function(l){return l.semana===D.anterior;});
     $('sub').textContent=D.atual?'Semana de '+dBr(D.atual)+(A[0]&&A[0].prazo?' · prazo dos vendedores: '+prazoTxt(A[0].prazo):''):'';
-    if(!A.length&&!P.length){ $('raiz').innerHTML='<div class="card"><h2>Ainda não há PDI semanal</h2><p class="sub">Ele é criado toda segunda de manhã, junto com o resumo semanal das lojas.</p></div>'; return; }
+    var ro=visao(), h='';
+    if(D.perfil==='ger'){ h+=gerAtual().map(cardMeuGer).join(''); gerAnt().forEach(function(x){ if(!gerAtual(x.loja).length||x.fechamento||x.aval) h+=cardMeuGerAnt(x); }); }
+    if(!A.length&&!P.length){ $('raiz').innerHTML=h+'<div class="card"><h2>Ainda não há PDI semanal'+(D.perfil==='ger'?' dos vendedores':'')+'</h2><p class="sub">Ele é criado toda segunda de manhã, junto com o resumo semanal das lojas.</p></div>'; PEND.forEach(function(q){ montarQuestoes(q.linha,null,q.px,q.acao); }); PEND=[]; return; }
     var lojas={}, so=lojasDoFiltro(); A.concat(P).forEach(function(l){ if(!so||so[l.loja]) lojas[l.loja]=1; });
-    var ro=visao();
-    var h='';
     Object.keys(lojas).sort().forEach(function(cod){
       var a=A.filter(function(l){return l.loja===cod;}), p=P.filter(function(l){return l.loja===cod;});
       var feitos=a.filter(function(l){return l.situacao!=='aguardando'&&l.situacao!=='nao_feito';}).length, resp=a.filter(function(l){return l.aval;});
       var media=resp.length?(resp.reduce(function(s,l){return s+l.aval.nota;},0)/resp.length):null;
       h+='<section class="card"><div class="vend-top"><h2 style="margin:0">Loja '+esc(cod)+'</h2><span class="sub">PDI feito <b>'+feitos+'/'+a.length+'</b> · respondido <b>'+resp.length+'/'+a.length+'</b>'+(media!=null?' · média <b>'+media.toFixed(1).replace('.',',')+'</b>':'')+'</span></div>';
+      if(D.perfil!=='ger') h+=blocoGerLoja(cod,ro);
       a.forEach(function(l){
         var aberto=ABERTOS[l.chave];
         h+='<div class="vend"><div class="vend-top"><div><b>'+esc(nm(l.comp?l.comp.nome:l.vendedor))+'</b><div class="sub">'+(l.comp&&l.comp.foco?'Foco: '+esc(l.comp.foco.nome):'Foco: volume')+' · projeção '+pct(l.comp&&l.comp.pp)+'</div></div><div class="linha">'+chip(l.situacao)+
@@ -261,8 +328,9 @@ h3{font-size:14px;margin:0 0 6px}
         if(aberto) h+=blocoComp(l.comp,l.chave)+(l.aval?resultado(l.aval):'');
         h+='</div>';
       });
-      if(p.length){
-        h+='<h3 style="margin-top:14px">Fechamento da semana de '+dBr(D.anterior)+'</h3><p class="sub" style="margin-top:0">Antes de fazer o PDI desta semana, registre o que cada vendedor cumpriu na semana passada.</p>';
+      var fech=D.perfil!=='ger'?blocoGerFech(cod,ro):'';
+      if(p.length||fech){
+        h+='<h3 style="margin-top:14px">Fechamento da semana de '+dBr(D.anterior)+'</h3>'+(p.length?'<p class="sub" style="margin-top:0">Antes de fazer o PDI desta semana, registre o que cada vendedor cumpriu na semana passada.</p>':'')+fech;
         p.forEach(function(l){
           var f=l.fechamento||{}, nO=((l.comp&&l.comp.orcs)||[]).length, meta=(l.comp&&l.comp.positMeta)||10;
           var dif=(l.posit_real!=null&&f.posit!=null&&l.fechamento)?(f.posit-l.posit_real):null;
@@ -280,6 +348,7 @@ h3{font-size:14px;margin:0 0 6px}
       h+='</section>';
     });
     $('raiz').innerHTML=h;
+    PEND.forEach(function(q){ if(visao()) $(q.px+'questoes').innerHTML='<p class="sub">Modo "Ver como": as questões só aparecem para a própria pessoa.</p>'; else montarQuestoes(q.linha,null,q.px,q.acao); }); PEND=[];
   }
 
   /* ───────── placar do ritual (coordenação): supervisores lado a lado + filtro ───────── */
@@ -299,18 +368,20 @@ h3{font-size:14px;margin:0 0 6px}
       var cs={}; codsDe(x).forEach(function(c){cs[String(c)]=1;});
       var a=A.filter(function(l){return cs[l.loja];}), f=a.filter(function(l){return l.situacao!=='aguardando'&&l.situacao!=='nao_feito';}).length, r=a.filter(function(l){return l.aval;});
       var med=r.length?r.reduce(function(s,l){return s+l.aval.nota/(l.aval.total||10)*10;},0)/r.length:null;
-      return { sup:x.supervisor, lojas:Object.keys(cs).length, n:a.length, f:f, r:r.length, pf:a.length?f/a.length:0, pr:a.length?r.length/a.length:0, med:med, plano:!!x.plano };
+      var G=gerAtual().filter(function(g){return cs[g.loja];}), gf=G.filter(function(g){return g.feito_em;}).length;
+      return { sup:x.supervisor, lojas:Object.keys(cs).length, n:a.length, f:f, r:r.length, pf:a.length?f/a.length:0, pr:a.length?r.length/a.length:0, med:med, plano:!!x.plano, sit:x.situacao, nota:x.aval?x.aval.nota+'/'+x.aval.total:'', gn:G.length, gf:gf };
     }).sort(function(a,b){ return (b.pf-a.pf)||(b.pr-a.pr)||((b.med||0)-(a.med||0)); });
     var tot=R.reduce(function(o,x){o.n+=x.n;o.f+=x.f;o.r+=x.r;return o;},{n:0,f:0,r:0});
     var cor=function(x){return x>=.8?'':x>=.5?'med':'ruim';};
     var h='<section class="card"><div class="vend-top"><h2 style="margin:0">🏆 Placar do ritual</h2><span class="sub">Rede: feito <b>'+tot.f+'/'+tot.n+'</b> · respondido <b>'+tot.r+'/'+tot.n+'</b></span></div>';
     h+='<div class="filtros" role="group" aria-label="Filtrar por supervisor"><button type="button" data-filtro="" aria-pressed="'+(!FILTRO)+'">Todos</button>'+
       R.map(function(x){return '<button type="button" data-filtro="'+esc(x.sup)+'" aria-pressed="'+(FILTRO===x.sup)+'">'+esc(String(x.sup).split(' ')[0])+'</button>';}).join('')+'</div>';
-    h+='<table class="placar"><thead><tr><th>Supervisor</th><th>PDI feito</th><th>Respondido</th><th class="n">Nota média</th><th class="esc">Plano</th></tr></thead><tbody>'+
+    h+='<table class="placar"><thead><tr><th>Supervisor</th><th>PDI feito</th><th>Respondido</th><th class="n">Nota média</th><th class="esc">Plano</th><th>Com a coordenação</th><th class="esc">Com os gerentes</th></tr></thead><tbody>'+
       R.map(function(x,i){ return '<tr'+(FILTRO===x.sup?' class="sel"':'')+'><td><span class="pos">'+(i+1)+'</span><b>'+esc(x.sup)+'</b><div class="sub">'+x.lojas+' lojas · '+x.n+' vendedores</div></td>'+
         '<td>'+pct(x.pf)+' <span class="sub">('+x.f+'/'+x.n+')</span><div class="barra"><i class="'+cor(x.pf)+'" style="width:'+Math.round(x.pf*100)+'%"></i></div></td>'+
         '<td>'+pct(x.pr)+' <span class="sub">('+x.r+'/'+x.n+')</span><div class="barra"><i class="'+cor(x.pr)+'" style="width:'+Math.round(x.pr*100)+'%"></i></div></td>'+
-        '<td class="n">'+(x.med!=null?x.med.toFixed(1).replace('.',','):'—')+'</td><td class="esc">'+(x.plano?'<span class="chip c-respondido">registrado</span>':'<span class="chip c-aguardando">pendente</span>')+'</td></tr>'; }).join('')+
+        '<td class="n">'+(x.med!=null?x.med.toFixed(1).replace('.',','):'—')+'</td><td class="esc">'+(x.plano?'<span class="chip c-respondido">registrado</span>':'<span class="chip c-aguardando">pendente</span>')+'</td>'+
+        '<td>'+(x.sit?chip(x.sit):'<span class="sub">—</span>')+(x.nota?' <span class="chip c-respondido">'+x.nota+'</span>':'')+'</td><td class="esc">'+(x.gn?x.gf+'/'+x.gn+' feitos':'<span class="sub">—</span>')+'</td></tr>'; }).join('')+
       '</tbody></table><p class="sub" style="margin:8px 0 0">Ordem: % de PDI feito, depois % respondido. Nota média em 0 a 10. Toque num nome acima para ver só a carteira dele.</p></section>';
     return h;
   }
@@ -322,7 +393,13 @@ h3{font-size:14px;margin:0 0 6px}
     var vale=function(x){ return !(D.perfil==='coord'&&FILTRO)||x.supervisor===FILTRO; };
     SUPD.linhas.filter(function(x){return x.semana===SUPD.atual&&vale(x);}).forEach(function(x){
       var d=x.dados||{}, p=x.plano||{}, f=d.foco, ed=x.meu&&x.prazoAberto&&!ro;
-      h+='<section class="card"><div class="vend-top"><h2 style="margin:0">'+(x.meu?'Meu PDI semanal':'PDI semanal de '+esc(x.supervisor))+'</h2>'+(x.plano?'<span class="chip c-respondido">Plano registrado</span>':(x.prazoAberto?'<span class="chip c-liberado">Plano até '+esc(prazoTxt(d.prazo))+'</span>':'<span class="chip c-nao_feito">Plano não registrado</span>'))+'</div>';
+      h+='<section class="card"><div class="vend-top"><h2 style="margin:0">'+(x.meu?'Meu PDI semanal':'PDI semanal de '+esc(x.supervisor))+'</h2><div class="linha">'+(x.plano?'<span class="chip c-respondido">Plano registrado</span>':(x.prazoAberto?'<span class="chip c-liberado">Plano até '+esc(prazoTxt(d.prazo))+'</span>':'<span class="chip c-nao_feito">Plano não registrado</span>'))+
+        (x.situacao?'<span class="chip c-'+esc(x.situacao)+'">Com a coordenação: '+esc(SIT[x.situacao]||x.situacao)+'</span>':'')+(x.aval?'<span class="chip c-respondido">'+x.aval.nota+'/'+x.aval.total+'</span>':'')+'</div></div>';
+      /* ritual da coordenação com o supervisor */
+      h+='<div class="linha" style="margin:6px 0 2px">'+(D.perfil==='coord'&&!ro&&x.situacao==='aguardando'?(x.temQuestoes?'<button class="btn azul" type="button" data-supfeito="'+esc(x.chave)+'">✓ Fiz o PDI com o supervisor</button>':'<span class="sub">As questões do supervisor saem às 12h15 de segunda.</span>'):'')+
+        (x.feito_em?'<span class="sub">PDI com a coordenação feito '+esc(quando(x.feito_em))+(x.feito_por?' por '+esc(x.feito_por):'')+(x.situacao==='liberado'&&x.prazoAval?' · responde até '+esc(prazoTxt(x.prazoAval)):'')+'</span>':(d.prazoFeito&&x.situacao==='aguardando'&&D.perfil==='coord'?'<span class="sub">marcar até '+esc(prazoTxt(d.prazoFeito))+'</span>':''))+'</div>';
+      if(x.meu&&x.situacao==='liberado'&&!ro){ h+='<h3 style="margin-top:8px">Avaliação da semana com a coordenação</h3><p class="aviso">Responda até <b>'+esc(prazoTxt(x.prazoAval))+'</b>. São '+(x.questoes||[]).length+' questões sobre a sua carteira. Só dá para enviar uma vez.</p><div id="s'+SUPD.linhas.indexOf(x)+'_questoes"><p class="sub">Preparando as questões…</p></div>'; PEND.push({linha:x,px:'s'+SUPD.linhas.indexOf(x)+'_',acao:'semanaSupAval'}); }
+      else if(x.aval&&(x.meu||D.perfil==='coord')) h+=resultado(x.aval);
       if(d.carteira) h+='<div class="kpis" style="margin-top:8px"><div class="kpi"><span>Carteira</span><b>'+d.carteira.lojas+' lojas</b></div><div class="kpi"><span>Atingido</span><b>'+pct(d.carteira.pct)+'</b></div><div class="kpi"><span>Projeção</span><b>'+pct(d.carteira.pp)+'</b></div><div class="kpi"><span>Falta</span><b>'+brl(d.carteira.falta)+'</b></div></div>';
       if(f) h+='<div class="comp"><span class="n">1</span><b>Loja foco: '+esc(f.cod)+' '+esc(f.nome)+'</b> — projeção '+pct(f.pp)+', faltam '+brl(f.gap)+'<div class="sub">Visita presencial até quarta e plano escrito com '+esc(f.gerente)+'.'+(f.planejadas&&f.planejadas.length?' Na agenda: '+f.planejadas.map(dBr).join(', '):' Ainda sem visita na agenda.')+'</div></div>';
       var A=d.auditoria||[];
@@ -347,7 +424,7 @@ h3{font-size:14px;margin:0 0 6px}
     });
     return h;
   }
-  function montar(){ if(D.perfil==='vend') telaVendedor(); else { var pl=placar(); telaLider(); var b=blocoSup(); if(b) $('raiz').insertAdjacentHTML('afterbegin',b); if(pl) $('raiz').insertAdjacentHTML('afterbegin',pl); } }
+  function montar(){ if(D.perfil==='vend') telaVendedor(); else { var pl=placar(); telaLider(); var b=blocoSup(); if(b) $('raiz').insertAdjacentHTML('afterbegin',b); if(pl) $('raiz').insertAdjacentHTML('afterbegin',pl); PEND.forEach(function(q){ if(visao()) $(q.px+'questoes').innerHTML='<p class="sub">Modo "Ver como": as questões só aparecem para a própria pessoa.</p>'; else montarQuestoes(q.linha,null,q.px,q.acao); }); PEND=[]; } }
 
   document.addEventListener('click',function(e){
     var t=e.target.closest('button'); if(!t) return;
@@ -358,6 +435,26 @@ h3{font-size:14px;margin:0 0 6px}
       t.disabled=true; t.textContent='Liberando…';
       STDados.chamar('semanaFeito',{chave:t.dataset.feito}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não confirmou.'); toast('Avaliação liberada para o vendedor.'); return carregar(); })
         .catch(function(err){ t.disabled=false; t.textContent='✓ Fiz o PDI semanal'; toast(err.message); });
+      return;
+    }
+    if(t.dataset.gerfeito){
+      t.disabled=true; t.textContent='Liberando…';
+      STDados.chamar('semanaGerFeito',{chave:t.dataset.gerfeito}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não confirmou.'); toast('Avaliação liberada para o gerente até '+prazoTxt(j.prazoAval)+'.'); return carregar(); })
+        .catch(function(err){ t.disabled=false; t.textContent='✓ Fiz o PDI com o gerente'; toast(err.message); });
+      return;
+    }
+    if(t.dataset.supfeito){
+      t.disabled=true; t.textContent='Liberando…';
+      STDados.chamar('semanaSupFeito',{chave:t.dataset.supfeito}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não confirmou.'); toast('Avaliação liberada para o supervisor até '+prazoTxt(j.prazoAval)+'.'); return carregar(); })
+        .catch(function(err){ t.disabled=false; t.textContent='✓ Fiz o PDI com o supervisor'; toast(err.message); });
+      return;
+    }
+    if(t.dataset.gerfechar){
+      var gch=t.dataset.gerfechar, gc=document.getElementById('gfC_'+gch).value, gr=document.getElementById('gfR_'+gch).value;
+      if(!gc){ toast('Informe se o combinado foi cumprido.'); return; }
+      t.disabled=true; t.textContent='Salvando…';
+      STDados.chamar('semanaGerFechar',{chave:gch,cumprido:gc,resultado:gr}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não confirmou.'); toast('Fechamento salvo.'); return carregar(); })
+        .catch(function(err){ t.disabled=false; t.textContent='Salvar fechamento'; toast(err.message); });
       return;
     }
     if(t.dataset.supplano){
