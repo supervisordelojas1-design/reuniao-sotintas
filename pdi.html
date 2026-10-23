@@ -219,6 +219,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
       <button type="button" class="themebtn" id="btnTema"><span id="temaIc">🌙</span> <span id="temaTx">Escuro</span></button>
     </div>
   </header>
+  <div class="pdi-tabs" id="nivelTabs" role="tablist" aria-label="Nível do PDI" hidden></div>
   <section class="cardx" id="cardBase" hidden>
     <h3>Atualizar a base do mês</h3>
     <p class="pdi-meta" style="margin:0">Escolha o arquivo <b>PDI_dados_&lt;mês&gt;.json</b> gerado pela rotina do PDI (todo dia 5, na pasta Downloads). A base nova vale para toda a rede; cada supervisor continua vendo só as lojas dele. O acompanhamento já registrado é mantido.</p>
@@ -809,6 +810,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
 })(window);
 
 </script>
+<script src="pdi-gestores.js?v=1"></script>
 <script>
 (function(){
   /* ====== Dados: Servidor de Dados ST (st-dados.js). O recorte por carteira/loja é feito NO SERVIDOR,
@@ -837,12 +839,31 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
     if(Object.keys(map).length) SUPMAP=map;
   }
 
-  var BASE=null, ACOMP={}, ATZ=null, ERRO=null, PERFIL=null;
+  var BASE=null, ACOMP={}, ATZ=null, ERRO=null, PERFIL=null, GEST=null, NIVEL='vend';
   function carregar(){
     return window.STDados.chamar('pdi').then(function(j){
       if(!j || !j.ok) throw new Error((j&&j.erro)||'resposta inválida do servidor');
       BASE=j.base||null; ACOMP=j.acomp||{}; ATZ=j.atualizado||null; ERRO=null; PERFIL=window.STDados.perfil();
+      /* PDI Mensal dos gestores (gerentes e supervisores): base do dia 1º, recortada pelo crachá */
+      return window.STDados.chamar('pdiGestores').then(function(k){ GEST=(k&&k.ok)?k:null; }).catch(function(){ GEST=null; });
     });
+  }
+  function salvarGestor(chave, estado){
+    return window.STDados.chamar('pdiGestoresSalvar',{chave:chave, estado:estado}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'o servidor não confirmou'); if(GEST) GEST.acomp[chave]=estado; });
+  }
+  /* coordenação: pede ao servidor do Painel para gerar a base dos gestores agora (com os números atuais) */
+  function gerarBaseGestores(){
+    var c=window.STDados.crachaGuardado&&window.STDados.crachaGuardado(true); if(!c||!c.tk) return Promise.reject(new Error('Confirme seu PIN no app.'));
+    return fetch(APP_EQUIPE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({tipo:'baseGestores',u:'cracha',p:c.tk})}).then(function(r){ return r.json(); })
+      .then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'o servidor não gerou a base'); return iniciar(); });
+  }
+  function abasNivel(){
+    var pf=PERFIL||'', el=$('nivelTabs'); if(!el) return;
+    var abas=[['vend','Vendedores']];
+    if(pf==='ger') abas.push(['G','Meu PDI']); else if(pf==='sup') abas.push(['G','Gerentes'],['S','Meu PDI']); else if(pf==='coord') abas.push(['G','Gerentes'],['S','Supervisores']);
+    el.hidden=abas.length<2;
+    el.innerHTML=abas.map(function(a){ return '<button type="button" role="tab" aria-selected="'+(NIVEL===a[0])+'" data-nivel="'+a[0]+'">'+a[1]+'</button>'; }).join('');
+    el.onclick=function(e){ var b=e.target.closest('[data-nivel]'); if(!b||b.dataset.nivel===NIVEL) return; NIVEL=b.dataset.nivel; montar(); };
   }
   function salvarAcomp(v, estado){
     return window.STDados.chamar('pdiSalvar',{chave:v.id, loja:v.c, estado:estado}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'o servidor não confirmou'); ACOMP[v.id]=estado; });
@@ -859,15 +880,30 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
 
   function montar(){
     var root=$('pdi-root'), s=sess();
-    $('btnBase').hidden=!ehCoord();
+    abasNivel();
+    $('btnBase').hidden=!ehCoord()||NIVEL!=='vend';
     $('status').innerHTML = '🔒 recorte pelo seu crachá'+(ATZ?' · base de <b>'+fmtAtz(ATZ)+'</b>':'');
     if(!s){ root.innerHTML='<div class="cardx erro"><h3>Entre no app primeiro</h3><p class="pdi-meta" style="margin:0">Abra o PDI pelo Só Tintas App, já logado.</p></div>'; return; }
     if(ERRO){ root.innerHTML='<div class="cardx erro"><h3>Não consegui carregar o PDI</h3><p class="pdi-meta" style="margin:0 0 10px">'+esc(ERRO)+'</p><button type="button" class="btn pequeno azul" id="pdiDeNovo">Tentar de novo</button></div>'; $('pdiDeNovo').onclick=iniciar; return; }
+    if(NIVEL!=='vend'){ montarGestores(root,s); return; }
     var lojas=[...new Set((BASE&&BASE.V||[]).map(function(v){return v.c;}))];
     var pf=PERFIL||'', rot = pf==='coord' ? 'Rede Só Tintas' : pf==='ger' ? (lojas.length===1&&BASE?'Loja '+lojaNomeDe(BASE)(lojas[0]):'Suas lojas') : 'Carteira de '+tc(s.nome);
     $('sub').textContent=rot+(BASE&&BASE.rotulo?' · '+BASE.rotulo:'');
     if(!BASE || !BASE.V || !BASE.V.length){ root.innerHTML='<div class="cardx info"><h3>'+(BASE?'Nenhum vendedor do seu escopo na base':'Base do mês ainda não publicada')+'</h3><p class="pdi-meta" style="margin:0">'+(ehCoord()?'Toque em <b>Atualizar base do mês</b> e escolha o arquivo PDI_dados_&lt;mês&gt;.json gerado pela rotina mensal (pasta Downloads).':'A coordenação publica a base do mês. Quando ela publicar, seus vendedores aparecem aqui.')+'</p></div>'; return; }
     window.PdiUI.montar(root,{ base:BASE, acomp:ACOMP, pode:!(window.STDados&&STDados.visao()), usuario:s.nome||'', regiaoDe:supDe, lojaNome:lojaNomeDe(BASE), nivel: pf==='coord'?'rede':pf==='ger'?'loja':'regiao', salvar:function(v,estado){ return salvarAcomp(v,estado); } });
+  }
+
+  function montarGestores(root,s){
+    var pf=PERFIL||'', tipo=NIVEL, b=GEST&&GEST.base;
+    var rot = pf==='coord' ? 'Rede Só Tintas' : pf==='ger' ? 'Meu PDI com o supervisor' : (tipo==='S' ? 'Meu PDI com a coordenação' : 'Gerentes da carteira de '+tc(s.nome));
+    $('sub').textContent=rot+(b&&b.rotulo?' · '+b.rotulo:'');
+    if(!b || !((tipo==='G'?b.G:b.S)||[]).length){
+      root.innerHTML='<div class="cardx info"><h3>'+(b?'Ninguém do seu escopo na base do mês':'Base dos gestores ainda não publicada')+'</h3><p class="pdi-meta" style="margin:0">Ela é gerada sozinha no dia 1º de cada mês, com os números fechados do Painel de Metas.'+(ehCoord()?' Para gerar agora, com os números atuais, toque no botão.':'')+'</p>'+(ehCoord()?'<div><button type="button" class="btn pequeno azul" id="btnGerarGest">⟳ Gerar base dos gestores agora</button></div>':'')+'</div>';
+      if(ehCoord()&&$('btnGerarGest')) $('btnGerarGest').onclick=function(){ var bt=this; bt.disabled=true; bt.textContent='Gerando…'; gerarBaseGestores().catch(function(e){ bt.disabled=false; bt.textContent='⟳ Gerar base dos gestores agora'; alert('Não gerou: '+(e.message||e)); }); };
+      return;
+    }
+    var pode={}; Object.keys(GEST.pode||{}).forEach(function(k){ if(k.charAt(0)===tipo) pode[k]=GEST.pode[k]; });
+    window.PdiGestoresUI.montar(root,{ tipo:tipo, base:b, acomp:GEST.acomp||{}, pode:pode, usuario:s.nome||'', salvar:salvarGestor, gerarBase: ehCoord()&&!(window.STDados&&STDados.visao()) ? gerarBaseGestores : null });
   }
 
   /* ===== Publicar base (só coordenação; o servidor confere pelo crachá) ===== */
