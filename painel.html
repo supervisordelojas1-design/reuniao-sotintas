@@ -684,7 +684,7 @@ function mesRot(i,longo){const r=KM[i]||''; return longo?r:r.slice(0,3).toLowerC
 function anoSerie(){ if(!NM) return ''; const ano=Number(String(P.dataBase||'').slice(0,4))||new Date().getFullYear();
  const a=MES_N[String(KM[0]).toLowerCase()]||0, b=MES_N[String(KM[NM-1]).toLowerCase()]||0;
  return a&&b&&a>b?' · '+(ano-1)+'/'+ano:' de '+ano }
-const KC=n=>{n=Math.abs(n||0); return n>=1e6?(n/1e6).toLocaleString('pt-BR',{maximumFractionDigits:1})+' mi':n>=1e4?Math.round(n/1e3).toLocaleString('pt-BR')+' mil':n>=1e3?(n/1e3).toLocaleString('pt-BR',{maximumFractionDigits:1})+' mil':Math.round(n).toLocaleString('pt-BR')};
+const KC=n=>{const neg=(n||0)<0; n=Math.abs(n||0); return (neg?'−':'')+(n>=1e6?(n/1e6).toLocaleString('pt-BR',{maximumFractionDigits:1})+' mi':n>=1e4?Math.round(n/1e3).toLocaleString('pt-BR')+' mil':n>=1e3?(n/1e3).toLocaleString('pt-BR',{maximumFractionDigits:1})+' mil':Math.round(n).toLocaleString('pt-BR'))};
 const farolCor=p=>p==null?'var(--tx3)':p>=1?'var(--ok)':p>=.85?'var(--warn)':'var(--bad)';
 function evoProj(m){ const s=[]; for(let i=0;i<NM;i++) s.push(Number(m&&m[i])||0); if(NM) s[NM-1]=FRAC?s[NM-1]/FRAC:s[NM-1]; return s }
 function evoMeta(m){ if(!m||NM<2) return 0; let t=0; for(let i=0;i<NM-1;i++) t+=Number(m[i])||0; return t/(NM-1) }
