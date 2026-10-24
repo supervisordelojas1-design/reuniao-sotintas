@@ -328,6 +328,15 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
 .pdoc .ptab tr:nth-child(even) td{background:var(--panel2)}
 .nota{font-size:12px;color:var(--tx3);text-align:center;padding:16px 8px;line-height:1.6}
 .empty{padding:30px 16px;text-align:center;color:var(--tx3);font-size:13.5px}
+/* evolução da carteira */
+.evoc{padding:10px 12px 4px}.evosvg{width:100%;height:auto;display:block}
+.evtw{overflow:auto}.evt{width:100%;border-collapse:collapse;font-size:12.5px;min-width:560px}
+.evt th{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--panel2)}
+.evt td{padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap}.evt .r{text-align:right}.evt tr.cur td{background:var(--tintb)}.evt tr.tot td{font-weight:700;background:var(--panel2);white-space:normal}.evt .mut{color:var(--tx3);font-weight:400}
+.est{font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:4px;margin-left:6px;letter-spacing:.2px;white-space:nowrap;display:inline-block;vertical-align:middle}
+.evsp{margin-top:6px}.spk{display:block;max-width:100%}
+.evomini{display:flex;align-items:center;gap:14px;padding:12px 16px;border-top:1px solid var(--line);cursor:pointer;flex-wrap:wrap}.evomini:hover{background:var(--panel2)}
+.evogo{font-size:12.5px;font-weight:800;color:var(--navy-ink);margin-left:auto;white-space:nowrap}
 
 @media(max-width:640px){
  .ttl h2{font-size:20px}.kpi .vl{font-size:22px}.f2{grid-template-columns:1fr}
@@ -535,6 +544,7 @@ function grupaCart(cli,n){return {meses:n,cli:cli,
    const perfil=c[2]>=5?'recorrente':c[2]>=2?'ocasional':'compra única';
    const pv=String(c[0]).split(/ - VEND\.?:\s*/i);
    const o={nome:pv[0].trim(),vend:pv.length>1?normVend(pv[1]):'',media:c[1],ativos:c[2],proj:c[3],perfil:perfil,meses:n};
+   o.m=Array.isArray(c[5])?c[5].map(Number):null;   /* valor faturado em cada mês (fechados + corrente) */
    o.fat=(c[4]!=null&&c[4]!=='')?Number(c[4]):Math.round(o.proj*FRAC);
    o.lacuna=Math.max(o.media-o.proj,0);
    o.var=o.media?o.proj/o.media-1:0;
@@ -654,6 +664,219 @@ function KAT(){ if(!ST.loja&&ST.sup) return KSoma(ST.sup);
  const K=KL(ST.loja); if(!K) return null;
  if(ST.vend&&K.V&&K.V[ST.vend]) return K.V[ST.vend]; return K}
 const lojaTag=c=>c.loja?`<span class="cper" style="background:var(--tintb);color:#1F4E79">Loja ${esc(c.loja)}${c.lojaNome?' · '+esc(c.lojaNome):''}</span>`:'';
+/* carteira da REDE: todas as lojas com carteira, cada cliente marcado com a loja */
+let KREDE;
+function KRede(){ if(KREDE!==undefined) return KREDE; let cli=[], n=0, com=0;
+ D.lojas.forEach(function(l){ const Kx=KL(l.cod); if(!Kx) return; com++; n=Math.max(n,Kx.meses||0);
+  Kx.cli.forEach(function(c){ cli.push(Object.assign({},c,{loja:l.cod,lojaNome:l.nome})); }); });
+ KREDE=cli.length?Object.assign(grupaCart(cli,n),{regiao:'Rede',lojas:D.lojas.length,lojasCom:com}):null; return KREDE }
+
+/* ---------- EVOLUÇÃO MÊS A MÊS DA CARTEIRA CNPJ ----------
+   c.m = valor faturado pelo cliente em cada mês do export (fechados + mês corrente); KM = rótulos dos meses.
+   Meta do mês de cada cliente = média mensal da série (soma dos meses fechados ÷ nº de meses fechados).
+   Status = tendência: média dos últimos 3 meses (mês atual projetado) × média dos meses anteriores,
+   ±15%. Zerado nos 3 últimos = sumiu; primeira compra nos 3 últimos = novo. */
+const KM=Array.isArray(_.KM)?_.KM.map(String):[], NM=KM.length;
+const EVO_ST={sub:['Subindo','▲','#0B7A55','var(--okbg)'],med:['Na média','●','#1F4E79','var(--tintb)'],cai:['Caindo','▼','#8A5A00','var(--warnbg)'],sum:['Sumiu','✖','#8E1318','var(--badbg)'],nov:['Novo','★','#5B3A78','var(--tintp)']};
+const EVO_ORD=['sub','med','cai','sum','nov'];
+const MES_N={janeiro:1,fevereiro:2,marco:3,'março':3,abril:4,maio:5,junho:6,julho:7,agosto:8,setembro:9,outubro:10,novembro:11,dezembro:12};
+function mesRot(i,longo){const r=KM[i]||''; return longo?r:r.slice(0,3).toLowerCase()}
+function anoSerie(){ if(!NM) return ''; const ano=Number(String(P.dataBase||'').slice(0,4))||new Date().getFullYear();
+ const a=MES_N[String(KM[0]).toLowerCase()]||0, b=MES_N[String(KM[NM-1]).toLowerCase()]||0;
+ return a&&b&&a>b?' · '+(ano-1)+'/'+ano:' de '+ano }
+const KC=n=>{n=Math.abs(n||0); return n>=1e6?(n/1e6).toLocaleString('pt-BR',{maximumFractionDigits:1})+' mi':n>=1e4?Math.round(n/1e3).toLocaleString('pt-BR')+' mil':n>=1e3?(n/1e3).toLocaleString('pt-BR',{maximumFractionDigits:1})+' mil':Math.round(n).toLocaleString('pt-BR')};
+const farolCor=p=>p==null?'var(--tx3)':p>=1?'var(--ok)':p>=.85?'var(--warn)':'var(--bad)';
+function evoProj(m){ const s=[]; for(let i=0;i<NM;i++) s.push(Number(m&&m[i])||0); if(NM) s[NM-1]=FRAC?s[NM-1]/FRAC:s[NM-1]; return s }
+function evoMeta(m){ if(!m||NM<2) return 0; let t=0; for(let i=0;i<NM-1;i++) t+=Number(m[i])||0; return t/(NM-1) }
+function evoStatus(m){
+ if(!NM) return null; const s=evoProj(m), n=s.length;
+ let first=-1; for(let i=0;i<n;i++) if(s[i]>0){first=i;break}
+ if(first<0) return 'sum';
+ if(n<=3){ const meta=evoMeta(m), p=s[n-1]; if(p<=0) return 'sum'; if(!meta) return 'nov'; const r=p/meta; return r>=1.15?'sub':r<=0.85?'cai':'med' }
+ if(first>=n-3) return 'nov';
+ const rec=s.slice(n-3), base=s.slice(0,n-3);
+ const mr=rec.reduce((a,b)=>a+b,0)/rec.length, mb=base.reduce((a,b)=>a+b,0)/base.length;
+ if(mr<=0) return 'sum';
+ const r=mb>0?mr/mb:9; return r>=1.15?'sub':r<=0.85?'cai':'med' }
+function evoCli(c){ if(c.evo!==undefined) return c.evo; if(!c.m||!NM){c.evo=null;return null}
+ const meta=evoMeta(c.m), atual=Number(c.m[NM-1])||0, proj=FRAC?atual/FRAC:atual;
+ c.evo={meta:meta,atual:atual,proj:proj,pct:meta?proj/meta:null,st:evoStatus(c.m)}; return c.evo }
+/* agregado de uma lista de clientes: por mês, faturamento, positivados, novos, voltaram, pararam */
+function evoSerie(cli){
+ if(!NM||!cli) return null; const L=cli.filter(c=>c.m); if(!L.length) return null;
+ const n=NM, fat=[],pos=[],nov=[],par=[],vol=[]; for(let i=0;i<n;i++){fat.push(0);pos.push(0);nov.push(0);par.push(0);vol.push(0)}
+ const st={sub:0,med:0,cai:0,sum:0,nov:0}; let meta=0, atual=0;
+ L.forEach(c=>{ const m=c.m; let antes=false, prev=0;
+  for(let i=0;i<n;i++){ const v=Number(m[i])||0; fat[i]+=v;
+   if(v>0){ pos[i]++; if(!antes) nov[i]++; else if(prev<=0) vol[i]++; antes=true } else if(prev>0) par[i]++;
+   prev=v }
+  const e=evoCli(c); if(e){ st[e.st]++; meta+=e.meta; atual+=e.atual } });
+ const proj=FRAC?atual/FRAC:atual, fech=pos.slice(0,n-1);
+ return {n:n,fat:fat,pos:pos,nov:nov,par:par,vol:vol,clientes:L.length,meta:meta,atual:atual,proj:proj,pct:meta?proj/meta:null,st:st,
+  serie:fat.slice(0,n-1).concat([proj]),mediaPos:fech.length?fech.reduce((a,b)=>a+b,0)/fech.length:0,tend:evoStatus(fat)} }
+const estChip=st=>{const e=EVO_ST[st]; return e?`<span class="est" style="background:${e[3]};color:${e[2]}">${e[1]} ${e[0]}</span>`:''};
+/* mini-gráfico: barras dos meses (mês atual = realizado + projeção clara) e a meta tracejada */
+function spark(m,meta,grande){
+ const n=NM; if(!n) return ''; const s=evoProj(m), raw=[]; for(let i=0;i<n;i++) raw.push(Number(m&&m[i])||0);
+ const w=grande?24:8, g=grande?6:2, H=grande?48:22, W=n*(w+g)-g;
+ const mx=Math.max(meta||0,...s,1), y=v=>H-1-(H-6)*(v/mx);
+ let h=`<svg class="spk${grande?' g':''}" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Meses">`;
+ for(let i=0;i<n;i++){ const x=i*(w+g), cur=i==n-1;
+  h+=`<g><title>${mesRot(i,true)}: ${BRL(raw[i])}${cur?' → projeta '+BRL(s[i]):''}</title>`;
+  if(cur&&s[i]>raw[i]) h+=`<rect x="${x}" y="${y(s[i]).toFixed(1)}" width="${w}" height="${Math.max(0,y(raw[i])-y(s[i])).toFixed(1)}" rx="1.5" fill="#9FB6CC" opacity=".75"/>`;
+  h+=`<rect x="${x}" y="${y(raw[i]).toFixed(1)}" width="${w}" height="${Math.max(0,H-1-y(raw[i])).toFixed(1)}" rx="1.5" fill="${cur?'#173D62':'#1C3F8F'}"/></g>`; }
+ if(meta>0) h+=`<line x1="0" x2="${W}" y1="${y(meta).toFixed(1)}" y2="${y(meta).toFixed(1)}" stroke="#D32027" stroke-width="1" stroke-dasharray="3 2"/>`;
+ return h+'</svg>' }
+/* card de entrada do sub painel (Rede, Região, Loja e Vendedor) */
+function evoBox(Kc,titulo,vend){
+ if(!NM||!Kc||!Kc.cli) return ''; const S=evoSerie(Kc.cli); if(!S) return '';
+ const cur=S.n-1, alvo=`goEvo(${vend?`'${esc(vend).replace(/'/g,"")}'`:'null'})`, e=EVO_ST[S.tend];
+ return `<div class="grp evob"><div class="grph"><span class="tg cnpj">CNPJ</span><h3>${esc(titulo)}</h3><span class="cnt">${mesRot(0,true)} a ${mesRot(cur,true)}${anoSerie()} · ${S.clientes} clientes</span></div>
+  <div class="ind">
+   <div class="indc cl" onclick="${alvo}"><div class="l">Mês atual × meta</div><div class="v" style="color:${farolCor(S.pct)}">${PPCT(S.pct)}</div><div class="s">projeta ${BRL(S.proj)} · meta ${BRL(S.meta)}</div></div>
+   <div class="indc cl" onclick="${alvo}"><div class="l">Tendência da carteira</div><div class="v" style="color:${e[2]}">${e[1]} ${e[0]}</div><div class="s">últimos 3 meses × anteriores</div></div>
+   <div class="indc cl" onclick="${alvo}"><div class="l">Positivados no mês</div><div class="v">${S.pos[cur]}</div><div class="s">média de ${S.mediaPos.toFixed(0)} por mês</div></div>
+   <div class="indc cl" onclick="${alvo}"><div class="l">Caindo ou sumiram</div><div class="v" style="color:var(--bad)">${S.st.cai+S.st.sum}</div><div class="s">${S.st.sub} subindo · ${S.st.nov} novos</div></div>
+  </div>
+  <div class="evomini" onclick="${alvo}">${spark(S.fat,S.meta,true)}<span class="evogo">📈 Evolução mês a mês ›</span></div></div>`}
+/* escopo da tela conforme o nível: rede, região, loja ou vendedor */
+function evoEscopo(){
+ const l=ST.loja?D.lojas.find(x=>x.cod==ST.loja):null;
+ if(ST.loja){ const Kx=KL(ST.loja);
+  if(ST.vend){ const V=Kx&&Kx.V?(Kx.V[ST.vend]||subVend(Kx.V,ST.vend)):null;
+   return {nivel:'vend',titulo:ST.vend+' · Loja '+ST.loja,cli:V?V.cli:[],filhos:[],tag:'vend'} }
+  const filhos=[]; if(Kx&&Kx.V){
+   const ativo=v=>!l||!l.vendedores.length||l.vendedores.some(x=>mesmoVend(x.nome,v));
+   let orf=[]; Object.keys(Kx.V).forEach(v=>{ if(v===ORF) return; if(ativo(v)) filhos.push({nome:v,cli:Kx.V[v].cli,click:`goEvo('${esc(v).replace(/'/g,"")}')`}); else orf=orf.concat(Kx.V[v].cli) });
+   orf=orf.concat(Kx.SEMDONO||[]);
+   if(orf.length) filhos.push({nome:ORF,cli:orf,click:`goEvo('${ORF}')`}); if(!Kx.V[ORF]&&orf.length) Kx.V[ORF]=grupaCart(orf,Kx.meses); }
+  return {nivel:'loja',titulo:'Loja '+(l?l.cod+' · '+l.nome:ST.loja),cli:Kx?Kx.cli:[],filhos:filhos,tag:'vend',rotFilho:'Vendedores'} }
+ if(ST.sup){ const Kx=KSoma(ST.sup);
+  const filhos=D.lojas.filter(x=>x.sup==ST.sup).map(x=>({nome:x.cod+' · '+x.nome,cli:(KL(x.cod)||{cli:[]}).cli,click:`goEvoSub('loja','${x.cod}')`}));
+  return {nivel:'sup',titulo:'Região '+ST.sup,cli:Kx?Kx.cli:[],filhos:filhos,tag:'loja',rotFilho:'Lojas da região'} }
+ const Kx=KRede();
+ const filhos=(D.supervisores||[]).map(x=>({nome:x.nome,cli:(KSoma(x.nome)||{cli:[]}).cli,click:`goEvoSub('sup','${esc(x.nome)}')`}));
+ return {nivel:'rede',titulo:'Rede Só Tintas',cli:Kx?Kx.cli:[],filhos:filhos,tag:'loja',rotFilho:'Regiões por supervisor'} }
+const evoW=()=>{const c=document.getElementById('app'); return Math.max(320,Math.min(720,(c&&c.clientWidth?c.clientWidth:720)-50))};
+function evoChart(S){
+ const n=S.n, W=evoW(), H=Math.max(170,Math.round(W*0.33)), pL=8, pR=8, pT=30, pB=26, cw=(W-pL-pR)/n, bw=Math.min(cw*0.62,52);
+ const vals=S.serie, top=Math.max(S.meta,...vals,1), mx=top*1.15, y=v=>pT+(H-pT-pB)*(1-v/mx);
+ let iMax=0; for(let i=0;i<n;i++) if(vals[i]>vals[iMax]) iMax=i;
+ const comRot=i=>cw>=46||i==n-1||i==iMax||(cw>=40&&i==n-2);
+ let h=`<svg class="evosvg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Faturamento da carteira por mês">`;
+ [0.25,0.5,0.75,1].forEach(f=>{const v=top*f; h+=`<line x1="${pL}" x2="${W-pR}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" stroke="#E3E9F0" stroke-width="1"/>`});
+ for(let i=0;i<n;i++){ const x=pL+i*cw+(cw-bw)/2, cur=i==n-1, real=S.fat[i], v=vals[i];
+  h+=`<g><title>${mesRot(i,true)}: ${BRL(real)}${cur?' realizado → projeta '+BRL(v):''} · ${S.pos[i]} positivados</title>`;
+  if(cur&&v>real) h+=`<rect x="${x.toFixed(1)}" y="${y(v).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0,y(real)-y(v)).toFixed(1)}" rx="3" fill="#9FB6CC" opacity=".7"/>`;
+  h+=`<rect x="${x.toFixed(1)}" y="${y(real).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0,H-pB-y(real)).toFixed(1)}" rx="3" fill="${cur?'#173D62':'#1C3F8F'}"/>`;
+  if(comRot(i)) h+=`<text x="${(x+bw/2).toFixed(1)}" y="${(y(v)-5).toFixed(1)}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#5A6B7D" stroke="#fff" stroke-width="3" paint-order="stroke">${KC(v)}</text>`;
+  h+=`<text x="${(x+bw/2).toFixed(1)}" y="${H-9}" text-anchor="middle" font-size="11" font-weight="${cur?800:600}" fill="${cur?'#0F2B46':'#8494A5'}">${mesRot(i)}${cur?'*':''}</text></g>`; }
+ if(S.meta>0){ h+=`<line x1="${pL}" x2="${W-pR}" y1="${y(S.meta).toFixed(1)}" y2="${y(S.meta).toFixed(1)}" stroke="#D32027" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+  h+=`<line x1="${W-pR-150}" x2="${W-pR-128}" y1="11" y2="11" stroke="#D32027" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${W-pR-122}" y="14.5" font-size="10.5" font-weight="700" fill="#D32027">meta ${BRL(S.meta)} / mês</text>`; }
+ return h+'</svg>' }
+function evoChartPos(S){
+ const n=S.n, W=evoW(), H=Math.max(120,Math.round(W*0.21)), pL=8, pR=8, pT=24, pB=24, cw=(W-pL-pR)/n, bw=Math.min(cw*0.62,52);
+ const top=Math.max(S.mediaPos,...S.pos,1), mx=top*1.2, y=v=>pT+(H-pT-pB)*(1-v/mx);
+ let h=`<svg class="evosvg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Clientes positivados por mês">`;
+ for(let i=0;i<n;i++){ const x=pL+i*cw+(cw-bw)/2, cur=i==n-1, v=S.pos[i];
+  h+=`<g><title>${mesRot(i,true)}: ${v} positivados · ${S.nov[i]} novos · ${S.vol[i]} voltaram · ${S.par[i]} pararam</title>`;
+  h+=`<rect x="${x.toFixed(1)}" y="${y(v).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0,H-pB-y(v)).toFixed(1)}" rx="3" fill="${cur?'#5B86B5':'#7FA3C8'}"/>`;
+  h+=`<text x="${(x+bw/2).toFixed(1)}" y="${(y(v)-5).toFixed(1)}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#5A6B7D" stroke="#fff" stroke-width="3" paint-order="stroke">${v}</text>`;
+  h+=`<text x="${(x+bw/2).toFixed(1)}" y="${H-8}" text-anchor="middle" font-size="11" font-weight="${cur?800:600}" fill="${cur?'#0F2B46':'#8494A5'}">${mesRot(i)}${cur?'*':''}</text></g>`; }
+ if(S.mediaPos>0){ h+=`<line x1="${pL}" x2="${W-pR}" y1="${y(S.mediaPos).toFixed(1)}" y2="${y(S.mediaPos).toFixed(1)}" stroke="#D32027" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+  h+=`<line x1="${W-pR-150}" x2="${W-pR-128}" y1="9" y2="9" stroke="#D32027" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${W-pR-122}" y="12.5" font-size="10.5" font-weight="700" fill="#D32027">média ${S.mediaPos.toFixed(0)} clientes / mês</text>`; }
+ return h+'</svg>' }
+function evoTabela(S){
+ const n=S.n; let h=`<div class="sec"><div class="sech"><h3>Mês a mês</h3><span class="cnt">faturamento da carteira · clientes positivados · quem entrou, voltou e parou</span></div><div class="evtw"><table class="evt"><tr><th>Mês</th><th class="r">Faturamento</th><th class="r">vs. mês anterior</th><th class="r">Positivados</th><th class="r">Novos</th><th class="r">Voltaram</th><th class="r">Pararam</th><th class="r">Ticket médio</th></tr>`;
+ for(let i=0;i<n;i++){ const cur=i==n-1, fat=cur?S.proj:S.fat[i], prev=i>0?S.fat[i-1]:0, d=prev>0?fat/prev-1:null;
+  const dc=d==null?'var(--tx3)':d>=.05?'var(--ok)':d<=-.05?'var(--bad)':'var(--tx2)';
+  h+=`<tr class="${cur?'cur':''}"><td><b>${mesRot(i,true)}</b>${cur?' <span class="mut">parcial</span>':''}</td><td class="r">${cur?`${BRL(S.fat[i])} <span class="mut">→ ${BRL(S.proj)}</span>`:BRL(fat)}</td><td class="r" style="color:${dc};font-weight:700">${d==null?'—':(d>0?'+':'')+PPCT(d)}</td><td class="r">${S.pos[i]}</td><td class="r">${S.nov[i]||'—'}</td><td class="r">${S.vol[i]||'—'}</td><td class="r">${S.par[i]||'—'}</td><td class="r">${S.pos[i]?BRL(S.fat[i]/S.pos[i]):'—'}</td></tr>` }
+ h+=`<tr class="tot"><td>Média mensal (meses fechados)</td><td class="r">${BRL(S.meta)}</td><td></td><td class="r">${S.mediaPos.toFixed(0)}</td><td colspan="4" class="mut">meta do mês da carteira = esta média · * mês atual projetado com ${PPCT(FRAC)} do mês</td></tr></table></div></div>`;
+ return h }
+function evoFilhos(E){
+ const rows=E.filhos.map(f=>({f:f,S:evoSerie(f.cli)})).filter(x=>x.S).sort((a,b)=>b.S.meta-a.S.meta);
+ if(!rows.length) return '';
+ let h=`<div class="sec"><div class="sech"><h3>${E.rotFilho}</h3><span class="cnt">${rows.length} com histórico · ordenado pela meta (média mensal)</span></div>`;
+ rows.forEach((x,i)=>{ const S=x.S;
+  h+=`<div class="row" onclick="${x.f.click}"><div class="pos">${i+1}</div><div><div class="nm">${esc(x.f.nome)}${estChip(S.tend)}</div>
+   <div class="mt">meta ${BRL(S.meta)} · mês atual ${BRL(S.atual)} → projeta <b>${BRL(S.proj)}</b> · positivados ${S.pos[S.n-1]} (média ${S.mediaPos.toFixed(0)}) · ${S.clientes} ${S.clientes==1?'cliente':'clientes'} · ▲ ${S.st.sub} ● ${S.st.med} ▼ ${S.st.cai} ✖ ${S.st.sum} ★ ${S.st.nov}</div>
+   <div class="evsp">${spark(S.fat,S.meta,true)}</div></div>
+   <div class="rt"><div class="v" style="color:${farolCor(S.pct)}">${PPCT(S.pct)}</div><div class="s">da meta</div><span class="chev">›</span></div></div>` });
+ return h+'</div>' }
+function evoLista(E){ return E.cli.filter(c=>c.m&&evoCli(c)).sort((a,b)=>b.evo.meta-a.evo.meta) }
+function evoClientes(E,S){
+ const all=evoLista(E), L=ST.ef?all.filter(c=>c.evo.st==ST.ef):all;
+ let h=`<div class="sec"><div class="sech"><h3>Clientes${ST.ef?' — '+EVO_ST[ST.ef][0]:''}</h3><span class="cnt">${L.length} de ${all.length} · meta do mês = média mensal · ordenado pela meta</span></div>`;
+ h+=`<div class="chips" style="padding:12px 16px 0">`+EVO_ORD.map(k=>`<button class="chip ${ST.ef==k?'on':''}" onclick="evoFiltro('${k}')"><i class="cg" style="background:${EVO_ST[k][3]};color:${EVO_ST[k][2]}">${EVO_ST[k][1]}</i> ${EVO_ST[k][0]} <b style="opacity:.7">${S.st[k]}</b></button>`).join('')+`</div>`;
+ if(!L.length) h+='<div class="empty">Nenhum cliente nesta situação.</div>';
+ L.slice(0,ST.en).forEach((c,i)=>{ const e=c.evo;
+  h+=`<div class="row nc"><div class="pos">${i+1}</div><div><div class="nm">${esc(c.nome)}${E.tag=='loja'&&c.loja?lojaTag(c):''}${E.tag=='vend'&&E.nivel!='vend'?`<span class="cper">${esc(c.vend||'sem vendedor')}</span>`:''}${estChip(e.st)}</div>
+   <div class="mt">meta <b>${BRL(e.meta)}</b> · mês atual ${BRL(e.atual)} → projeta <b>${BRL(e.proj)}</b> · ativo em ${c.ativos} de ${NM-1} meses${e.atual<=0?' · <b style="color:var(--bad)">sem compra no mês</b>':''}</div>
+   <div class="evsp">${spark(c.m,e.meta,false)}</div></div>
+   <div class="rt"><div class="v" style="color:${farolCor(e.pct)}">${e.pct==null?'—':PPCT(Math.min(e.pct,99))}</div><div class="s">da meta</div></div></div>` });
+ if(L.length>ST.en) h+=`<div class="empty" style="padding:14px"><button class="b gh" onclick="evoMais()">Mostrar mais ${Math.min(60,L.length-ST.en)} (faltam ${L.length-ST.en})</button></div>`;
+ return h+'</div>' }
+function vEvo(){
+ const E=evoEscopo(), S=evoSerie(E.cli);
+ if(!NM||!S) return btnVoltar()+'<div class="sec"><div class="empty">Ainda não há a série mês a mês desta carteira.<br><br>Ela passa a existir na próxima atualização da carteira (export <b>Evolução Mensal por Cliente</b>).</div></div>';
+ const n=S.n, cur=n-1; let iMax=0; for(let i=0;i<n;i++) if(S.serie[i]>S.serie[iMax]) iMax=i;
+ let h=btnVoltar();
+ h+=`<div class="btns" style="margin:0 0 13px"><button class="b sec" onclick="waEvo()">📲 WhatsApp do resumo</button><button class="b gh" onclick="pdfEvo()">📄 PDF da evolução</button></div>`;
+ h+=`<div class="pp"><div class="pph"><div><h2>Evolução da carteira CNPJ — ${esc(E.titulo)}</h2>
+   <span>${mesRot(0,true)} a ${mesRot(cur,true)}${anoSerie()} · meta de cada cliente = média mensal dos ${n-1} meses fechados · mês atual projetado com ${PPCT(FRAC)} do mês</span></div>
+   <div class="ppb">${S.clientes} clientes com histórico</div></div>
+  <div class="ppg">
+   <div class="ppc"><div class="l">Mês atual (${mesRot(cur,true)}) × meta</div><div class="v">${PPCT(S.pct)}</div><div class="f">realizado ${BRL(S.atual)} → projeta ${BRL(S.proj)}</div></div>
+   <div class="ppc"><div class="l">Meta da carteira no mês</div><div class="v">${BRL(S.meta)}</div><div class="f">média mensal dos meses fechados</div></div>
+   <div class="ppc"><div class="l">Positivados no mês</div><div class="v">${S.pos[cur]}</div><div class="f">média de ${S.mediaPos.toFixed(0)} por mês fechado</div></div>
+   <div class="ppc"><div class="l">Melhor mês</div><div class="v">${BRL(S.serie[iMax])}</div><div class="f">${mesRot(iMax,true)}${iMax==cur?' (projeção)':''}</div></div>
+  </div></div>`;
+ const e=EVO_ST[S.tend];
+ h+=`<div class="alert" style="background:${e[3]};border-color:transparent"><span>${e[1]}</span><span><b style="color:${e[2]}">Carteira ${e[0].toLowerCase()}</b> — últimos 3 meses contra os anteriores. ${S.st.sub} ${S.st.sub==1?'cliente':'clientes'} subindo · ${S.st.med} na média · ${S.st.cai} caindo · ${S.st.sum} sumiram · ${S.st.nov} novos. Toque num status na lista de clientes para filtrar.</span></div>`;
+ h+=`<div class="sec"><div class="sech"><h3>Faturamento da carteira, mês a mês</h3><span class="cnt">barra clara = projeção do mês atual · tracejado = meta (média mensal)</span></div><div class="evoc">${evoChart(S)}</div></div>`;
+ h+=`<div class="sec"><div class="sech"><h3>Clientes positivados, mês a mês</h3><span class="cnt">quantos clientes compraram em cada mês</span></div><div class="evoc">${evoChartPos(S)}</div></div>`;
+ h+=evoTabela(S);
+ if(E.filhos.length) h+=evoFilhos(E);
+ h+=evoClientes(E,S);
+ return h+btnVoltar('bot') }
+function goEvo(vend){ ST.view='evo'; ST.vend=vend||null; ST.ef=null; ST.en=60; render(); window.scrollTo({top:0,behavior:'smooth'}) }
+function goEvoSub(v,id){ ST.vend=null; ST.ef=null; ST.en=60; if(v=='sup'){ST.sup=id;ST.loja=null} if(v=='loja'){ST.loja=id;const l=D.lojas.find(x=>x.cod==id);if(l)ST.sup=l.sup} ST.view='evo'; render(); window.scrollTo({top:0,behavior:'smooth'}) }
+function evoFiltro(st){ ST.ef=ST.ef==st?null:st; ST.en=60; render() }
+function evoMais(){ ST.en+=60; render() }
+function waEvo(){
+ const E=evoEscopo(), S=evoSerie(E.cli); if(!S) return; const n=S.n;
+ const lin=['*EVOLUÇÃO DA CARTEIRA CNPJ — '+E.titulo+'*', mesRot(0,true)+' a '+mesRot(n-1,true)+anoSerie()+' · '+S.clientes+' clientes','',
+  'Mês atual: '+BRL(S.atual)+' → projeta '+BRL(S.proj)+' ('+PPCT(S.pct)+' da meta de '+BRL(S.meta)+')',
+  'Positivados: '+S.pos[n-1]+' (média '+S.mediaPos.toFixed(0)+'/mês)',
+  'Carteira '+EVO_ST[S.tend][0].toLowerCase()+': ▲ '+S.st.sub+' subindo · ● '+S.st.med+' na média · ▼ '+S.st.cai+' caindo · ✖ '+S.st.sum+' sumiram · ★ '+S.st.nov+' novos','','*Mês a mês*'];
+ for(let i=0;i<n;i++) lin.push(mesRot(i,true)+': '+BRL(i==n-1?S.proj:S.fat[i])+(i==n-1?' (proj.)':'')+' · '+S.pos[i]+' positivados');
+ const L=evoLista(E), tag=c=>E.tag=='loja'&&c.loja?' ['+c.loja+']':E.tag=='vend'&&E.nivel!='vend'&&c.vend?' ['+c.vend+']':'';
+ [['cai','Caindo'],['sum','Sumiram']].forEach(function(p){ const G=L.filter(c=>c.evo.st==p[0]).slice(0,10); if(!G.length) return;
+  lin.push('','*'+p[1]+' — maiores metas*'); G.forEach((c,i)=>lin.push((i+1)+'. '+c.nome+tag(c)+' — meta '+BRL(c.evo.meta)+' · projeta '+BRL(c.evo.proj))); });
+ window.open('https://wa.me/?text='+encodeURIComponent(lin.join('\n')),'_blank','noopener,noreferrer') }
+function pdfEvo(){
+ const E=evoEscopo(), S=evoSerie(E.cli); if(!S) return; const n=S.n, l=D.lojas.find(x=>x.cod==ST.loja);
+ let corpo='<div class="kp"><div><b>Mês atual × meta</b><span>'+PPCT(S.pct)+'</span></div><div><b>Projeção do mês</b><span>'+BRL(S.proj)+'</span></div><div><b>Meta (média mensal)</b><span>'+BRL(S.meta)+'</span></div><div><b>Positivados</b><span>'+S.pos[n-1]+' <small>(média '+S.mediaPos.toFixed(0)+')</small></span></div><div><b>Tendência</b><span>'+EVO_ST[S.tend][1]+' '+EVO_ST[S.tend][0]+'</span></div></div>';
+ corpo+='<h2>Mês a mês</h2><table class="ptab"><tr><th>Mês</th><th>Faturamento</th><th>vs. anterior</th><th>Positivados</th><th>Novos</th><th>Voltaram</th><th>Pararam</th><th>Ticket médio</th></tr>';
+ for(let i=0;i<n;i++){ const cur=i==n-1, fat=cur?S.proj:S.fat[i], prev=i>0?S.fat[i-1]:0, d=prev>0?fat/prev-1:null;
+  corpo+='<tr><td>'+mesRot(i,true)+(cur?' (parcial → proj.)':'')+'</td><td>'+(cur?BRL(S.fat[i])+' → '+BRL(S.proj):BRL(fat))+'</td><td>'+(d==null?'—':(d>0?'+':'')+PPCT(d))+'</td><td>'+S.pos[i]+'</td><td>'+(S.nov[i]||'—')+'</td><td>'+(S.vol[i]||'—')+'</td><td>'+(S.par[i]||'—')+'</td><td>'+(S.pos[i]?BRL(S.fat[i]/S.pos[i]):'—')+'</td></tr>' }
+ corpo+='</table>';
+ const rows=E.filhos.map(f=>({f:f,S:evoSerie(f.cli)})).filter(x=>x.S).sort((a,b)=>b.S.meta-a.S.meta);
+ if(rows.length){ corpo+='<h2>'+esc(E.rotFilho)+'</h2><table class="ptab"><tr><th>#</th><th>Nome</th><th>Meta (média)</th><th>Mês atual</th><th>Projeção</th><th>% meta</th><th>Positivados</th><th>Tendência</th><th>▲ ● ▼ ✖ ★</th></tr>';
+  rows.forEach((x,i)=>{ const T=x.S; corpo+='<tr><td>'+(i+1)+'</td><td>'+esc(x.f.nome)+'</td><td>'+BRL(T.meta)+'</td><td>'+BRL(T.atual)+'</td><td>'+BRL(T.proj)+'</td><td>'+PPCT(T.pct)+'</td><td>'+T.pos[n-1]+' (média '+T.mediaPos.toFixed(0)+')</td><td>'+EVO_ST[T.tend][1]+' '+EVO_ST[T.tend][0]+'</td><td>'+T.st.sub+' · '+T.st.med+' · '+T.st.cai+' · '+T.st.sum+' · '+T.st.nov+'</td></tr>' });
+  corpo+='</table>'; }
+ const all=evoLista(E), L=(ST.ef?all.filter(c=>c.evo.st==ST.ef):all).slice(0,150);
+ corpo+='<h2>Clientes'+(ST.ef?' — '+EVO_ST[ST.ef][0]:'')+' ('+L.length+(all.length>L.length?' de '+all.length:'')+')</h2><table class="ptab" style="font-size:9px"><tr><th>#</th><th>Cliente</th>'+(E.tag=='loja'?'<th>Loja</th>':E.nivel!='vend'?'<th>Vendedor</th>':'')+'<th>Status</th><th>Meta</th>'+KM.map((r,i)=>'<th>'+mesRot(i)+(i==n-1?'*':'')+'</th>').join('')+'<th>Proj.</th><th>% meta</th></tr>';
+ L.forEach((c,i)=>{ const e=c.evo; corpo+='<tr><td>'+(i+1)+'</td><td>'+esc(c.nome)+'</td>'+(E.tag=='loja'?'<td>'+esc(c.loja||'')+'</td>':E.nivel!='vend'?'<td>'+esc(c.vend||'—')+'</td>':'')+'<td>'+EVO_ST[e.st][1]+' '+EVO_ST[e.st][0]+'</td><td>'+KC(e.meta)+'</td>'+c.m.map(v=>'<td>'+(v>0?KC(v):'·')+'</td>').join('')+'<td>'+KC(e.proj)+'</td><td>'+(e.pct==null?'—':PPCT(Math.min(e.pct,99)))+'</td></tr>' });
+ corpo+='</table>';
+ document.getElementById('parea').innerHTML='<div class="pdoc">'+
+  '<div class="ph"><div><h1>Evolução da Carteira CNPJ — '+esc(E.titulo)+'</h1>'+
+  '<div class="sub">Só Tintas · Coordenação de Supervisão · '+mesRot(0,true)+' a '+mesRot(n-1,true)+anoSerie()+' · '+S.clientes+' clientes · meta do mês = média mensal dos meses fechados</div></div>'+
+  '<div class="dt">Emitido em '+new Date().toLocaleDateString('pt-BR')+'<br>Base '+new Date(D.periodo.dataBase+'T12:00').toLocaleDateString('pt-BR')+' · '+UD+' de '+UT+' dias úteis</div></div>'+
+  corpo+'<div class="fo">* mês atual parcial, projetado com '+PPCT(FRAC)+' do mês. Status: tendência dos últimos 3 meses contra os anteriores (±15%). Valores em R$ (mil / mi).</div></div>';
+ document.body.classList.add('impr');
+ imprimirComo(nomePdf('Evolucao da carteira',(ST.vend||null)));
+}
 const D={periodo:P,meta_info:{vendExcluidos:_.x[0],lojasForaPainel:new Array(_.x[1])},
  geral:geral,supervisores:sups,lojas:lojas};
 
@@ -762,7 +985,7 @@ else PERFIS.push({v:'sup:'+LOCK,t:'🧭 Minha região — '+LOCK});
 D.lojas.slice().filter(l=>!LOCK||l.sup==LOCK).sort((a,b)=>a.cod.localeCompare(b.cod))
  .forEach(l=>PERFIS.push({v:'loja:'+l.cod,t:'🏪 Gerente — '+l.cod+' '+l.nome}));
 
-let ST={perfil:'geral',view:'geral',sup:null,loja:null,vend:null,ovend:null,og:'F',ind:null,nvT:null,nvN:null,cg:'POS'};
+let ST={perfil:'geral',view:'geral',sup:null,loja:null,vend:null,ovend:null,og:'F',ind:null,nvT:null,nvN:null,cg:'POS',ef:null,en:60};
 
 /* ---------- persistencia local (F3 migra p/ planilha) ---------- */
 const KEY='stcoord_v1';
@@ -1370,6 +1593,7 @@ function vGeral(){
  D.supervisores.forEach((s,i)=>h+=linha(s,i,`${s.nLojas} lojas · ${s.nVend} vendedores · falta ${K(s.restLoja)}`,`go('sup','${esc(s.nome)}')`));
  h+='</div>'+novBox(novSoma(D.lojas.map(l=>l.cod)),'Clientes novos — rede',g.I&&g.I.novos,g.fat,false)
   +orcBox(OSoma(D.lojas.map(l=>l.cod)),'Orçamentos em aberto — rede',g.restLoja,null)
+  +evoBox(KRede(),'Evolução da carteira — rede',null)
   +resumoBox('geral',g,'a rede');
  return h;
 }
@@ -1383,6 +1607,7 @@ function vSup(nome){
  h+='</div>'+novBox(novSoma(ls.map(l=>l.cod)),'Clientes novos — região '+nome,s.I&&s.I.novos,s.fat,false)
   +orcBox(OSoma(ls.map(l=>l.cod)),'Orçamentos em aberto — região '+nome,s.restLoja,null)
   +cartBox(KSoma(nome),'Carteira de clientes — região '+nome,null)
+  +evoBox(KSoma(nome),'Evolução da carteira — região '+nome,null)
   +resumoBox('sup:'+nome,s,'a região de '+nome);
  return h;
 }
@@ -1412,7 +1637,7 @@ function vVendedor(){
   +vExp(v,0,l)+'</div>';
  const OO=OL(l.cod), KK=KL(l.cod);
  const orc=VEND_NOME?subVend(OO&&OO.V,v.nome):OO, cart=VEND_NOME?subVend(KK&&KK.V,v.nome):KK;
- h+=orcBox(orc,'Seus orçamentos em aberto',v.rest,null)+cartBox(cart,'Sua carteira de clientes',null);
+ h+=orcBox(orc,'Seus orçamentos em aberto',v.rest,null)+cartBox(cart,'Sua carteira de clientes',null)+evoBox(cart,'Evolução da sua carteira',v.nome);
  return h;
 }
 function vLoja(cod){
@@ -1438,6 +1663,7 @@ function vLoja(cod){
  h+='</div>'+novBox(novDe(CK),'Clientes novos',l.I&&l.I.novos,l.fat,true)
   +orcBox(OL(cod),'Orçamentos em aberto',l.restLoja,null)
   +cartBox(CK,'Carteira de clientes',null)
+  +evoBox(CK,'Evolução da carteira da loja',null)
   +(orf.length?`<div class="alert"><span>👤</span><span><b>${orf.length} dos ${CK.cli.length} clientes estão sem vendedor ativo</b> — valem <b>${BRL(orf.reduce((a,c)=>a+c.media,0))}/mês</b>.
    Entram na base da loja, mas em vendedor nenhum: são contas de quem saiu, de cadastro genérico ou de quem está fora do painel. Redistribuir é venda que já existe.</span></div>`
    +cartBox(CK.V[ORF],'Clientes sem vendedor ativo',ORF):'')
@@ -2122,7 +2348,7 @@ function render(){
 
  const bc=document.getElementById('bc'); let b=[];
  const niv=podeSubir();
- const I_=ST.view=='ind'||ST.view=='nivel'||ST.view=='cart';
+ const I_=ST.view=='ind'||ST.view=='nivel'||ST.view=='cart'||ST.view=='evo';
  if(niv>=2) b.push(I_?`<button onclick="ST.sup=null;ST.loja=null;render()">Rede</button>`:`<button onclick="go('geral')">Rede</button>`);
  if(ST.sup&&niv>=1) b.push(I_?`<button onclick="ST.loja=null;render()">${esc(ST.sup)}</button>`:`<button onclick="go('sup','${esc(ST.sup)}')">${esc(ST.sup)}</button>`);
  if(I_) b.push(`<button onclick="go(ST.loja?'loja':ST.sup?'sup':'geral',ST.loja||ST.sup)">↩ voltar ao painel</button>`);
@@ -2131,7 +2357,8 @@ function render(){
  bc.innerHTML=b.join('<span>›</span>');
 
  let t,s,html;
- if(ST.view=='cart'){const l=D.lojas.find(x=>x.cod==ST.loja);
+ if(ST.view=='evo'){const E=evoEscopo();t='Evolução da carteira';s='Carteira CNPJ mês a mês · '+E.titulo;html=vEvo()}
+ else if(ST.view=='cart'){const l=D.lojas.find(x=>x.cod==ST.loja);
   t=CGRUPO[ST.cg||'POS'][0]; s='Carteira CNPJ · '+(l?l.cod+' · '+l.nome:ST.sup?'Região '+ST.sup:'loja'); html=vCart()}
  else if(ST.view=='orc'){t='Orçamentos '+ORCG[ST.og||'F'][0];
   s=(ST.ovend?ST.ovend+' · ':'')+(ST.loja?('Loja '+ST.loja):ST.sup?('Região '+ST.sup):'Rede Só Tintas'); html=vOrc()}
@@ -2175,7 +2402,7 @@ sel.onchange=()=>{
 };
 render();
 /* expoe as funcoes que o HTML chama por onclick */
-window.goCartV=goCartV;window.goOrc=goOrc;window.waOrc=waOrc;window.pdfOrc=pdfOrc;window.orcBox=orcBox;window.OL=OL;window.OSoma=OSoma;window.OAT=OAT;window.cartBox=cartBox;window.KL=KL;window.KAT=KAT;window.enviarWA=enviarWA;window.goSub=goSub;window.toggleV=toggleV;window.ST=ST;window.render=render;window.gerarResumo=gerarResumo;window.go=go;window.goCart=goCart;window.goInd=goInd;window.goNivel=goNivel;window.pdfCart=pdfCart;window.pdfOrient=pdfOrient;window.pdfPlano=pdfPlano;window.printTela=printTela;window.salvarAcao=salvarAcao;window.salvarJustificativa=salvarJustificativa;window.waCart=waCart;window.waOrient=waOrient;
+window.goCartV=goCartV;window.goOrc=goOrc;window.waOrc=waOrc;window.pdfOrc=pdfOrc;window.orcBox=orcBox;window.OL=OL;window.OSoma=OSoma;window.OAT=OAT;window.cartBox=cartBox;window.KL=KL;window.KAT=KAT;window.enviarWA=enviarWA;window.goSub=goSub;window.toggleV=toggleV;window.ST=ST;window.render=render;window.gerarResumo=gerarResumo;window.go=go;window.goCart=goCart;window.goInd=goInd;window.goNivel=goNivel;window.pdfCart=pdfCart;window.pdfOrient=pdfOrient;window.pdfPlano=pdfPlano;window.printTela=printTela;window.salvarAcao=salvarAcao;window.salvarJustificativa=salvarJustificativa;window.waCart=waCart;window.waOrient=waOrient;window.goEvo=goEvo;window.goEvoSub=goEvoSub;window.evoFiltro=evoFiltro;window.evoMais=evoMais;window.waEvo=waEvo;window.pdfEvo=pdfEvo;
 if(!EMBUTIDO){var lk=document.getElementById('lnkSair');if(lk)lk.style.display='inline';}
 }
 /*FIM_PAINEL*/

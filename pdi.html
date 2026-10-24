@@ -816,6 +816,8 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
   /* ====== Dados: Servidor de Dados ST (st-dados.js). O recorte por carteira/loja é feito NO SERVIDOR,
      pelo crachá de quem está logado: coordenação vê a rede, supervisor a carteira, gerente a loja. ====== */
   var APP_EQUIPE_URL = 'https://script.google.com/macros/s/AKfycbxC916U8rNw_-HFTW7vtFZz4AC_B1bHcTLE3bvMDWji6E5lAqkXgC0EIgQFtjHYTp8I/exec';
+  /* servidor do Painel de Metas (planilha BANCO): é ele que gera a base mensal dos gestores */
+  var PAINEL_API_URL = 'https://script.google.com/macros/s/AKfycbzVe8joykFt0rWX9CjFgpeOaABckMFttVwV8u4e-yJh8qXPr6JTmlAzfgNjiAPAHGEwLg/exec';
 
   function $(id){ return document.getElementById(id); }
   /* sessão efetiva: com "Ver como" ativo (coordenação), a da pessoa da visão */
@@ -854,7 +856,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
   /* coordenação: pede ao servidor do Painel para gerar a base dos gestores agora (com os números atuais) */
   function gerarBaseGestores(){
     var c=window.STDados.crachaGuardado&&window.STDados.crachaGuardado(true); if(!c||!c.tk) return Promise.reject(new Error('Confirme seu PIN no app.'));
-    return fetch(APP_EQUIPE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({tipo:'baseGestores',u:'cracha',p:c.tk})}).then(function(r){ return r.json(); })
+    return fetch(PAINEL_API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({tipo:'baseGestores',u:'cracha',p:c.tk})}).then(function(r){ return r.json(); })
       .then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'o servidor não gerou a base'); return iniciar(); });
   }
   function abasNivel(){
