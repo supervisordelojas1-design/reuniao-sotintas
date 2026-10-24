@@ -639,9 +639,21 @@ function OSoma(cods){
 function OL(cod){return ORC[cod]||ORC[('000'+cod).slice(-3)]||ORC[String(Number(cod))]||null}
 /* busca tolerante ao formato do codigo */
 function KL(cod){return CART[cod]||CART[('000'+cod).slice(-3)]||CART[String(Number(cod))]||null}
-/* carteira ativa: do vendedor, se houver um selecionado; senao a da loja */
-function KAT(){const K=KL(ST.loja); if(!K) return null;
+/* carteira da REGIÃO: soma das lojas do supervisor, cada cliente marcado com a loja (cod e nome) */
+const KREG={};
+function KSoma(nome){
+ if(KREG[nome]!==undefined) return KREG[nome];
+ const ls=D.lojas.filter(l=>l.sup==nome); let cli=[], n=0;
+ ls.forEach(function(l){ const K=KL(l.cod); if(!K) return; n=Math.max(n,K.meses||0);
+  K.cli.forEach(function(c){ cli.push(Object.assign({},c,{loja:l.cod,lojaNome:l.nome})); }); });
+ KREG[nome]=cli.length?Object.assign(grupaCart(cli,n),{regiao:nome,lojas:ls.length,lojasCom:ls.filter(l=>KL(l.cod)).length}):null;
+ return KREG[nome];
+}
+/* carteira ativa: do vendedor, se houver um selecionado; senao a da loja; sem loja, a da região */
+function KAT(){ if(!ST.loja&&ST.sup) return KSoma(ST.sup);
+ const K=KL(ST.loja); if(!K) return null;
  if(ST.vend&&K.V&&K.V[ST.vend]) return K.V[ST.vend]; return K}
+const lojaTag=c=>c.loja?`<span class="cper" style="background:var(--tintb);color:#1F4E79">Loja ${esc(c.loja)}${c.lojaNome?' · '+esc(c.lojaNome):''}</span>`:'';
 const D={periodo:P,meta_info:{vendExcluidos:_.x[0],lojasForaPainel:new Array(_.x[1])},
  geral:geral,supervisores:sups,lojas:lojas};
 
@@ -1370,6 +1382,7 @@ function vSup(nome){
  ls.forEach((l,i)=>h+=linha(l,i,`Loja ${l.cod} · Méd.90d ${K(l.med90)} · ${l.vendedores.length} vendedores · falta ${K(l.restLoja)}`,`go('loja','${l.cod}')`,bdgL(l)));
  h+='</div>'+novBox(novSoma(ls.map(l=>l.cod)),'Clientes novos — região '+nome,s.I&&s.I.novos,s.fat,false)
   +orcBox(OSoma(ls.map(l=>l.cod)),'Orçamentos em aberto — região '+nome,s.restLoja,null)
+  +cartBox(KSoma(nome),'Carteira de clientes — região '+nome,null)
   +resumoBox('sup:'+nome,s,'a região de '+nome);
  return h;
 }
@@ -1958,17 +1971,18 @@ function waCart(){
  const K=KAT(); if(!K) return;
  const g=ST.cg||'REC', L=K[g]||[], info=CGRUPO[g];
  const l=D.lojas.find(x=>x.cod==ST.loja);
- var lin=['*'+info[0].toUpperCase()+' — '+(ST.vend?ST.vend:(l?l.cod+' · '+l.nome:'Carteira'))+'*',
+ const REG=!ST.loja&&ST.sup;
+ var lin=['*'+info[0].toUpperCase()+' — '+(ST.vend?ST.vend:l?l.cod+' · '+l.nome:REG?'Região '+ST.sup:'Carteira')+'*',
   (ST.vend&&l?'Loja '+l.cod+' · '+l.nome:''),
   D.periodo.mes+'/'+D.periodo.ano+' · '+L.length+' clientes',''];
  L.slice(0,30).forEach(function(c,i){
-  lin.push((i+1)+'. '+c.nome+' — '+BRL(g=='SUB'?c.lacuna:c.media)+'/mês ('+c.ativos+' de '+K.meses+')');});
+  lin.push((i+1)+'. '+c.nome+(REG&&c.loja?' ['+c.loja+(c.lojaNome?' '+c.lojaNome:'')+']':'')+' — '+BRL(g=='SUB'?c.lacuna:c.media)+'/mês ('+c.ativos+' de '+K.meses+')');});
  if(L.length>30){lin.push('');lin.push('… e mais '+(L.length-30)+' clientes — lista completa no PDF.');}
  window.open('https://wa.me/?text='+encodeURIComponent(lin.join('\n')),'_blank','noopener,noreferrer');
 }
 function pdfCart(completo){
  const K=KAT(); if(!K) return;
- const l=D.lojas.find(x=>x.cod==ST.loja);
+ const l=D.lojas.find(x=>x.cod==ST.loja), REG=!ST.loja&&ST.sup;
  const grupos = completo?['REC','POS','SUB','CRE']:[ST.cg||'REC'];
  var corpo='';
  grupos.forEach(function(g){
@@ -1976,13 +1990,13 @@ function pdfCart(completo){
   const soma=L.reduce(function(a,c){return a+(g=='SUB'?c.lacuna:g=='CRE'?c.proj-c.media:c.media)},0);
   corpo+='<h2 style="color:'+info[2]+'">'+info[0]+' — '+L.length+' clientes · '+BRL(soma)+'/mês</h2>';
   if(!L.length){corpo+='<p style="font-size:11px;color:#67728c">Nenhum cliente nesta situação.</p>';return}
-  corpo+='<table class="ptab"><tr><th>#</th><th>Cliente</th><th>Média/mês</th><th>Meses ativos</th><th>'+(g=='SUB'?'Lacuna':'Projeta')+'</th><th>Perfil</th><th>Contato</th></tr>';
+  corpo+='<table class="ptab"><tr><th>#</th><th>Cliente</th>'+(REG?'<th>Loja</th>':'')+'<th>Média/mês</th><th>Meses ativos</th><th>'+(g=='SUB'?'Lacuna':'Projeta')+'</th><th>Perfil</th><th>Contato</th></tr>';
   L.forEach(function(c,i){
-   corpo+='<tr><td>'+(i+1)+'</td><td>'+esc(c.nome)+'</td><td>'+BRL(c.media)+'</td><td>'+c.ativos+' de '+K.meses+'</td><td>'+(g=='SUB'?BRL(c.lacuna):(c.proj>0?BRL(c.proj):'SEM COMPRA'))+'</td><td>'+c.perfil+'</td><td></td></tr>'});
+   corpo+='<tr><td>'+(i+1)+'</td><td>'+esc(c.nome)+'</td>'+(REG?'<td>'+esc(c.loja+(c.lojaNome?' · '+c.lojaNome:''))+'</td>':'')+'<td>'+BRL(c.media)+'</td><td>'+c.ativos+' de '+K.meses+'</td><td>'+(g=='SUB'?BRL(c.lacuna):(c.proj>0?BRL(c.proj):'SEM COMPRA'))+'</td><td>'+c.perfil+'</td><td></td></tr>'});
   corpo+='</table>';
  });
  document.getElementById('parea').innerHTML='<div class="pdoc">'+
-  '<div class="ph"><div><h1>Carteira de Clientes — '+esc(ST.vend?ST.vend+' · Loja '+(l?l.cod:''):(l?l.cod+' · '+l.nome:''))+'</h1>'+
+  '<div class="ph"><div><h1>Carteira de Clientes — '+esc(ST.vend?ST.vend+' · Loja '+(l?l.cod:''):l?l.cod+' · '+l.nome:REG?'Região '+ST.sup:'')+'</h1>'+
   '<div class="sub">Só Tintas · Coordenação de Supervisão · '+D.periodo.mes+'/'+D.periodo.ano+'</div></div>'+
   '<div class="dt">Emitido em '+new Date().toLocaleDateString('pt-BR')+'<br>Base '+new Date(D.periodo.dataBase+'T12:00').toLocaleDateString('pt-BR')+' · '+UD+' de '+UT+' dias úteis</div></div>'+
   corpo+
@@ -2004,8 +2018,8 @@ function cartChips(){
   h+=`<button class="chip ${ST.cg==g?'on':''}" onclick="${cl}">${CGRUPO[g][0]} <b style="opacity:.7">${c?c[g].length:0}</b></button>`});
  return h+'</div>'}
 function vCart(){
- const l=D.lojas.find(x=>x.cod==ST.loja), K=KAT();
- if(!K) return btnVoltar()+'<div class="sec"><div class="empty">Esta loja ainda não tem carteira carregada.<br><br>Para habilitar, exporte a <b>Evolução Mensal por Cliente</b> desta loja e me envie.</div></div>';
+ const l=D.lojas.find(x=>x.cod==ST.loja), K=KAT(), REG=!ST.loja&&ST.sup;
+ if(!K) return btnVoltar()+'<div class="sec"><div class="empty">'+(REG?'Nenhuma loja desta região tem carteira carregada.':'Esta loja ainda não tem carteira carregada.')+'<br><br>Para habilitar, exporte a <b>Evolução Mensal por Cliente</b> '+(REG?'das lojas':'desta loja')+' e me envie.</div></div>';
  const g=ST.cg||'REC', L=K[g]||[], info=CGRUPO[g];
  const soma=L.reduce((a,c)=>a+(g=='SUB'?c.lacuna:g=='CRE'?c.proj-c.media:c.media),0);
  const rot=g=='SUB'?'Lacuna do mês':g=='CRE'?'Ganho acima da média':'Potencial se voltarem à própria média';
@@ -2016,7 +2030,7 @@ function vCart(){
   <button class="b gh" onclick="pdfCart(false)">📄 PDF desta análise</button>
   <button class="b gh" onclick="pdfCart(true)">📄 PDF completo (4 análises)</button></div>`;
  h+=`<div class="pp"><div class="pph"><div><h2>${info[0]} — Carteira CNPJ${ST.vend?' · '+esc(ST.vend):''}</h2>
-   <span>Loja ${l?l.cod+' · '+l.nome:ST.loja} · ${info[1]} · base ${K.meses} meses fechados</span></div>
+   <span>${REG?'Região '+esc(ST.sup)+' · '+K.lojasCom+' de '+K.lojas+' lojas com carteira':'Loja '+(l?l.cod+' · '+l.nome:ST.loja)} · ${info[1]} · base ${K.meses} meses fechados</span></div>
    <div class="ppb">${K.cli.length} clientes na carteira</div></div>
   <div class="ppg">
    <div class="ppc"><div class="l">Clientes nesta lista</div><div class="v">${L.length}</div><div class="f">${PPCT(K.cli.length?L.length/K.cli.length:0)} da carteira</div></div>
@@ -2039,7 +2053,7 @@ function vCart(){
    :g=='SUB'?`média ${BRL(c.media)} · projeta ${BRL(c.proj)} · ${PPCT(c.var)}`
    :`média ${BRL(c.media)} · projeta ${BRL(c.proj)} · +${PPCT(Math.abs(c.var))}`;
   h+=`<div class="row nc"><div class="pos">${i+1}</div>
-   <div><div class="nm">${esc(c.nome)}${c.prio?`<span class="cpri ${pc}">${c.prio}</span>`:''}<span class="cper ${c.perfil=='compra única'?'u':''}">${c.perfil}</span></div>
+   <div><div class="nm">${esc(c.nome)}${REG?lojaTag(c):''}${c.prio?`<span class="cpri ${pc}">${c.prio}</span>`:''}<span class="cper ${c.perfil=='compra única'?'u':''}">${c.perfil}</span></div>
     <div class="mt">${sub}</div>
     <div class="bars"><div class="bl"><span class="tag">${g=='SUB'?'LACUNA':g=='CRE'?'GANHO':'MÉDIA'}</span>
      <span class="bar"><i style="width:${w}%;background:${info[2]}"></i></span>
@@ -2118,7 +2132,7 @@ function render(){
 
  let t,s,html;
  if(ST.view=='cart'){const l=D.lojas.find(x=>x.cod==ST.loja);
-  t=CGRUPO[ST.cg||'POS'][0]; s='Carteira CNPJ · '+(l?l.cod+' · '+l.nome:'loja'); html=vCart()}
+  t=CGRUPO[ST.cg||'POS'][0]; s='Carteira CNPJ · '+(l?l.cod+' · '+l.nome:ST.sup?'Região '+ST.sup:'loja'); html=vCart()}
  else if(ST.view=='orc'){t='Orçamentos '+ORCG[ST.og||'F'][0];
   s=(ST.ovend?ST.ovend+' · ':'')+(ST.loja?('Loja '+ST.loja):ST.sup?('Região '+ST.sup):'Rede Só Tintas'); html=vOrc()}
  else if(ST.view=='nivel'){t=(ST.nvT=='L'?'Lojas Nível '+ST.nvN:'Vendedores V'+ST.nvN);

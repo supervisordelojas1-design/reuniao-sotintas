@@ -33,6 +33,30 @@
     S: { n: 'Planejador (S)', t: 'Explique o passo a passo e o porquê de cada mudança. Uma mudança por vez, com apoio por perto. Não cobre em público.', ex: '"Neste mês, só o ritual de segunda sem falhar. Eu passo na loja na quarta para ajudar."', an: 'Como o Bernardinho montando o time: treino repetido, rotina, segurança antes da pressão.' },
     C: { n: 'Analista (C)', t: 'Mostre os dados e a regra. Ele precisa entender a lógica do indicador e ver a evolução em números. Dê tempo para pensar.', ex: '"A projeção da loja caiu de 92% para 84%: veja de onde vem a diferença, vendedor a vendedor."', an: 'Como o Senna estudando a telemetria: melhora quando entende o dado de cada curva.' }
   };
+  /* comportamentos e habilidades do papel (nota 1 a 5): [chave, nome, o que observar, como desenvolver] */
+  const HAB = {
+    S: [
+      ['presenca', 'Presença em loja', 'Visita com plano escrito e combinado registrado no app', 'Fechar toda visita com 1 combinado escrito no app e voltar na semana seguinte para conferir.'],
+      ['ritual', 'Ritual de segunda', 'Cobra pelo app e confere a evidência; não aceita só "fiz"', 'Abrir o placar do ritual toda segunda às 12h e pedir ao gerente que mostre no app quem fez e qual foi a nota.'],
+      ['feedback', 'Feedback ao gerente', 'Específico, na hora, com o exemplo do dado', 'Usar o roteiro situação → dado → impacto → combinado em cada conversa; nada de "melhora isso aí".'],
+      ['pessoas', 'Desenvolvimento de pessoas', 'PDI dos gerentes feito e revisões em dia', 'Marcar a revisão de cada PDI no app no dia da conversa e cumprir a data, mesmo por telefone.'],
+      ['numeros', 'Leitura dos números', 'Explica a carteira: onde falta, por quê e o que fazer', 'Antes de cada visita, escrever em 3 linhas o diagnóstico da loja a partir do Painel; conferir na loja se bate.'],
+      ['cnpj', 'Carteira CNPJ', 'Positivação e orçamentos parados cobrados loja a loja', 'Toda segunda, conferir a lista de positivação de cada loja e cobrar os orçamentos parados há mais de 15 dias.'],
+      ['comunica', 'Comunicação com a coordenação', 'Antecipa o problema e já traz a solução', 'Avisar a coordenação no mesmo dia em que a loja sai do ritmo, com a causa e a ação, não com a justificativa.'],
+      ['atitude', 'Exemplo e atitude', 'Pontualidade, postura e resiliência com o time', 'Chegar na loja no horário combinado e manter o tom firme e respeitoso mesmo com resultado ruim.']
+    ],
+    G: [
+      ['ritual', 'Ritual de segunda', 'PDI com cada vendedor até 12h, marcado no app, e fechamento na segunda seguinte', 'Reservar a manhã de segunda para o ritual: 10 minutos por vendedor, app aberto, nenhum "aguardando" depois das 12h.'],
+      ['balcao', 'Presença no balcão', 'Acompanha atendimentos e corrige na hora (CPF, kit, linha superior)', 'Assistir 3 atendimentos por dia e dar o retorno ao vendedor no mesmo atendimento, não no fim do mês.'],
+      ['feedback', 'Feedback ao vendedor', 'Específico, na hora, com o exemplo do dado', 'Usar situação → dado → impacto → combinado; registrar o combinado no PDI semanal.'],
+      ['pessoas', 'Desenvolvimento do time', 'PDI Mensal e revisões em dia; integra o novato com padrinho', 'Marcar a revisão de cada PDI no app e cumprir a data; novato sem padrinho não começa.'],
+      ['numeros', 'Leitura dos números', 'Sabe o número do dia e de cada vendedor; age antes das 16h', 'Abrir o dia com o número da loja e de cada um; quem está abaixo recebe a reação no mesmo dia.'],
+      ['cnpj', 'Carteira CNPJ e orçamentos', 'Lista de positivação distribuída e orçamentos retornados', 'Toda segunda, entregar a lista de 20 clientes a cada vendedor e cobrar os 5 orçamentos na quarta.'],
+      ['operacao', 'Operação da loja', 'Caixa, estoque, exposição e limpeza em dia', 'Checklist de abertura e fechamento todo dia; ruptura de item comunicada ao supervisor no mesmo dia.'],
+      ['atitude', 'Exemplo e atitude', 'Pontualidade, postura e energia com o time e com o cliente', 'Ser o primeiro a chegar e o último a reclamar: o time copia o gerente, não o cartaz.']
+    ]
+  };
+  const SIT_CLI = { ok: ['Comprando', 'pdi-ok'], caiu: ['Caiu', 'pdi-warn'], sem: ['Sem compra', 'pdi-bad'] };
   const ACAO_IND = {
     ident: ['Pedir o CPF antes do preço em todo atendimento', 'Ouvir 3 atendimentos por dia no balcão, cobrar o CPF antes do preço e dar o retorno ao vendedor na hora.', 'O % de vendas identificadas do dia conferido no fechamento, todo dia.', 'É o garçom do boteco que anota o nome do cliente fiel: sem nome, todo cliente é desconhecido.'],
     itens: ['Kit completo em toda venda de tinta', 'Conferir se o vendedor ofereceu fundo, massa, rolo, fita e lixa; fazer a oferta junto com ele nos 3 primeiros atendimentos do dia.', 'Olhar 5 cupons por dia e contar itens por venda.', 'É como servir feijoada: ninguém leva só o feijão.'],
@@ -134,6 +158,10 @@
       c: `${P} acompanha a média de 90 dias dessas lojas toda semana e celebra a subida com o time.`,
       e: `${x.perto.length} loja(s) a menos de 15% da próxima faixa.`,
       an: 'É o time na zona de acesso: as últimas rodadas decidem a série do ano que vem.' });
+    (x.habBaixas || []).forEach((h, i) => A.push({ k: 'hab_' + h[0], peso: 1.4 - i * 0.1 + (3 - h[4]) * 0.3, t: 'Habilidade a desenvolver: ' + h[1],
+      a: h[3], c: `${P}: ${h[2].charAt(0).toLowerCase() + h[2].slice(1)} — observado em pelo menos 2 das próximas 4 semanas.`,
+      e: `Nota ${h[4]} de 5 na observação de comportamentos${x.habData ? ' (' + dt(x.habData) + ')' : ''}.`,
+      an: 'Habilidade é como saque no vôlei: não melhora assistindo, melhora repetindo com alguém olhando e corrigindo a cada bola.' }));
     A.sort((a, b) => b.peso - a.peso);
     if (!A.length) A.push({ k: 'mult', peso: 0, t: 'Multiplicador da rede', a: `${P} está com ${unidade} no ritmo e o ritual em dia: apadrinhar um ${x.tipo === 'G' ? 'gerente' : 'supervisor'} com resultado abaixo, com 1 visita conjunta por mês.`, c: `${P} explica o próprio método no PDI do colega e o colega melhora pelo menos 1 indicador em 30 dias.`, e: `Projeção de ${pct(x.pp)} e ritual ${r.n ? pct(r.feitos / r.n) : '—'}.`, an: 'É o camisa 10 que, além de fazer gol, organiza o meio-campo e faz o time inteiro jogar melhor.' });
     return A;
@@ -145,12 +173,21 @@
     const S = { tab: 'lista', q: '', abertos: new Set(), REG: Object.assign({}, opts.acomp || {}) };
     const xPor = ch => L.find(x => x.chave === ch);
     const pode = x => !!(opts.pode && opts.pode[x.chave]);
+    const habDe = x => HAB[x.tipo] || HAB.S;
+    /* notas de comportamento registradas → as 2 mais baixas (abaixo de 4) entram no plano de ação */
+    function aplicarHab(x) {
+      const r = S.REG[x.chave] || {}, hb = (r.hab && r.hab.itens) || {};
+      const notas = habDe(x).filter(h => hb[h[0]]).map(h => h.concat([hb[h[0]]]));
+      x.habBaixas = notas.filter(h => h[4] < 4).sort((a, b) => a[4] - b[4]).slice(0, 2); x.habData = r.hab && r.hab.data;
+      x.habMedia = notas.length ? notas.reduce((a, h) => a + h[4], 0) / notas.length : null; x.habN = notas.length;
+    }
+    L.forEach(aplicarHab);
     let toastT = null;
     function toast(m) { let t = document.querySelector('body > .pdi-toast'); if (!t) { t = document.createElement('div'); t.className = 'pdi-toast'; t.setAttribute('role', 'status'); document.body.appendChild(t); } t.textContent = m; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 1800); }
     async function salvar(x, patch) {
       if (!pode(x)) { toast('Somente leitura'); return false; }
       const novo = Object.assign({}, S.REG[x.chave] || {}, patch, { atualizado: hojeIso(), por: opts.usuario || '' });
-      S.REG[x.chave] = novo;
+      S.REG[x.chave] = novo; aplicarHab(x);
       try { await opts.salvar(x.chave, novo); toast('Salvo'); return true; } catch (e) { toast('Não foi possível salvar: ' + (e.message || e)); return false; }
     }
     const progresso = x => { const r = S.REG[x.chave]; if (!r) return null; const AA = acoesDe(x); return { feitas: AA.filter(a => r.acoes && r.acoes[a.k] && r.acoes[a.k].s === 'feito').length, total: AA.length, ult: (r.revisoes || []).slice(-1)[0], prox: r.prox }; };
@@ -170,6 +207,8 @@
     }
     function acompHTML(x) {
       const r = S.REG[x.chave] || {}, au = r.auto || {}, M = metasDe(x), dis = pode(x) ? '' : 'disabled';
+      const hb = r.hab || {}, hbi = hb.itens || {}, ruim = (x.pp != null && x.pp < 0.95 ? 1 : 0) + (x.ritual && x.ritual.n && x.ritual.feitos < x.ritual.n ? 1 : 0) + IND.filter(i => x.ind && x.ind[i[0]] && x.ind[i[0]].ok === false).length;
+      const habDiag = x.habMedia == null ? null : x.habMedia < 3 ? ['treinar', 'Não sabe fazer: o problema é de habilidade. Treinar junto (visita conjunta, ritual acompanhado) e repetir a observação em 15 dias.'] : ruim >= 2 ? ['cobrar', 'Sabe fazer, mas não faz no dia a dia: o problema é de rotina e combinado. Firmar o compromisso por escrito e acompanhar semana a semana.'] : ['ok', 'Sabe e faz: manter o reconhecimento e usar como referência para os outros ' + (tipo === 'G' ? 'gerentes' : 'supervisores') + '.'];
       const q = tipo === 'G' ? ['1. Na sua visão, o que mais atrapalha o resultado da loja hoje?', '2. Em que você é bom e pode ensinar a outro gerente?', '3. Que ajuda você precisa do supervisor ou da coordenação?'] : ['1. Na sua visão, o que mais atrapalha o resultado da carteira hoje?', '2. Em que você é bom e pode ensinar a outro supervisor?', '3. Que ajuda você precisa da coordenação ou da diretoria?'];
       return `<div class="pdi-grid2">
         <div class="pdi-box"><h4>Conversa de PDI</h4>
@@ -178,6 +217,14 @@
           ${r.disc ? `<p><span class="pdi-lbl">Como conduzir</span>${DISC[r.disc].t}</p><p><span class="pdi-lbl">Exemplo</span>${DISC[r.disc].ex}</p><p><span class="pdi-lbl">Analogia</span>${DISC[r.disc].an}</p>` : ''}
           ${q.map((t, i) => `<label class="pdi-q">${t}<textarea data-auto="q${i + 1}" data-v="${esc(x.chave)}" ${dis}>${esc(au['q' + (i + 1)])}</textarea></label>`).join('')}
           <label class="pdi-q">Meta que ${tipo === 'G' ? 'o gerente' : 'o supervisor'} escolheu como "a minha"<select data-minha="${esc(x.chave)}" ${dis}><option value="">Ainda não escolheu</option>${M.map(m => `<option value="${m[0]}" ${au.meta === m[0] ? 'selected' : ''}>${esc(m[1])}: ${esc(m[2])} → ${esc(m[3])}</option>`).join('')}</select></label>
+        </div>
+        <div class="pdi-box"><h4>Comportamentos e habilidades</h4>
+          <p class="pdi-meta">${tipo === 'G' ? 'Observar na loja (visita, ritual de segunda, balcão)' : 'Observar em visitas conjuntas, no placar do ritual e nas conversas com os gerentes'} e dar nota de 1 (não faz) a 5 (faz sempre, com qualidade).</p>
+          <div class="pdi-scale">${habDe(x).map(h => `<span><b>${h[1]}</b><br><span class="pdi-meta">${h[2]}</span></span><span class="pdi-pts">${[1, 2, 3, 4, 5].map(n => `<button type="button" class="pdi-pt" aria-pressed="${hbi[h[0]] === n}" data-hab="${h[0]}" data-n="${n}" data-v="${esc(x.chave)}" ${dis} aria-label="${h[1]}: nota ${n}">${n}</button>`).join('')}</span>`).join('')}</div>
+          ${habDiag ? `<div class="pdi-diag ${habDiag[0]}">Média ${n1(x.habMedia)} em ${x.habN} de ${habDe(x).length} · ${habDiag[1]}</div>` : ''}
+          ${(x.habBaixas || []).length ? `<p><span class="pdi-lbl">A desenvolver</span>${x.habBaixas.map(h => esc(h[1]) + ' (' + h[4] + ')').join(' · ')} — já no plano de ação.</p>` : ''}
+          <label class="pdi-q">Comportamento observado<textarea data-habobs="${esc(x.chave)}" ${dis} placeholder="${tipo === 'G' ? 'Ex.: fez o ritual com 3 de 4 vendedores; no balcão corrigiu o CPF na hora; não distribuiu a lista de positivação.' : 'Ex.: visita à 034 sem plano escrito; no placar cobrou pelo WhatsApp e aceitou "fiz" sem olhar o app; leitura da carteira precisa.'}">${esc(hb.obs)}</textarea></label>
+          ${hb.data ? `<p class="pdi-meta">Última observação: ${dt(hb.data)}</p>` : ''}
         </div>
         <div class="pdi-box"><h4>Revisões</h4>
           <label class="pdi-q pdi-inline">Próxima revisão <input type="date" data-prox="${esc(x.chave)}" value="${esc(r.prox || '')}" ${dis}>${r.prox && r.prox < hojeIso() ? '<span class="pdi-bad pdi-venc">vencida</span>' : ''}</label>
@@ -199,12 +246,13 @@
       const cartTxt = tipo === 'G'
         ? `<p>Carteira CNPJ da loja: <b>${ct.clientes || 0}</b> clientes, <b class="pdi-bad">${ct.semCompra || 0}</b> sem compra no mês (média de ${brl(ct.semCompraV)}/mês). Orçamentos em aberto: <b>${ct.orcN || 0}</b> (${brl(ct.orcV)}), parados há mais de 15 dias: <b class="pdi-bad">${ct.paradosN || 0}</b> (${brl(ct.paradosV)}).${(x.vendAbaixo || []).length ? ` Abaixo do ritmo: <b>${esc(x.vendAbaixo.join(', '))}</b>.` : ' Todo o time no ritmo.'}</p>`
         : `<p>Carteira de clientes da regional: <b>${ct.clientes || 0}</b> clientes CNPJ, <b class="pdi-bad">${ct.semCompra || 0}</b> sem compra no mês (média de ${brl(ct.semCompraV)}/mês). Orçamentos em aberto: <b>${ct.orcN || 0}</b> (${brl(ct.orcV)}), parados: <b class="pdi-bad">${ct.paradosN || 0}</b> (${brl(ct.paradosV)}). Loja foco: <b>${esc(x.lojaFoco)}</b>.${(x.lojasAbaixo || []).length ? ` Lojas abaixo de 95%: <b>${esc(x.lojasAbaixo.join(', '))}</b>.` : ''}${(x.visitas && x.visitas.semVisita || []).length ? ` Sem visita no mês: <b>${esc(x.visitas.semVisita.join(', '))}</b>.` : ''}</p>`;
-      const topSem = (ct.topSem || []).slice(0, 6);
+      const topC = (ct.top || []).slice(0, 20), topSem = topC.length ? [] : (ct.topSem || []).slice(0, 6);
       return `<div class="pdi-ficha">
         <div class="pdi-facts">${facts}</div>
         <div class="pdi-grid2">
           <div><h4>Situação ${tipo === 'G' ? 'da loja' : 'da carteira'}</h4><div class="pdi-tw"><table class="pdi-t"><thead><tr><th>Indicador</th><th>${esc(base.rotulo || 'Mês')}</th><th>Meta</th></tr></thead><tbody>
             <tr><td>Meta × realizado</td><td>${brl(x.fat)} de ${brl(x.meta)}</td><td>${x.dia ? 'faltam ' + brl(x.dia) + ' por dia útil' : 'meta batida'}</td></tr>${ind}${extra}</tbody></table></div>${hist}${cartTxt}
+            ${topC.length ? `<h4 class="mt-1">${topC.length} principais clientes ${tipo === 'G' ? 'da loja' : 'da regional'}</h4><div class="pdi-tw"><table class="pdi-t"><thead><tr><th>#</th><th>Cliente</th>${tipo === 'S' ? '<th>Loja</th>' : '<th>Vendedor</th>'}<th>Média/mês</th><th>Meses c/ compra</th><th>Mês atual</th><th>Situação</th></tr></thead><tbody>${topC.map((c, i) => `<tr><td>${i + 1}</td><td>${esc(c.cli)}</td><td>${tipo === 'S' ? esc(c.loja + (c.lojaNome ? ' · ' + tc(c.lojaNome) : '')) : esc(c.vend || '—')}</td><td>${brl(c.media)}</td><td>${c.meses || '—'}</td><td>${brl(c.atual)}</td><td class="${(SIT_CLI[c.sit] || SIT_CLI.ok)[1]}">${(SIT_CLI[c.sit] || SIT_CLI.ok)[0]}</td></tr>`).join('')}</tbody></table></div>` : ''}
             ${topSem.length ? `<div class="pdi-tw"><table class="pdi-t"><thead><tr><th>Cliente CNPJ sem compra</th><th>Média/mês</th><th>${tipo === 'G' ? 'Vendedor' : 'Loja'}</th></tr></thead><tbody>${topSem.map(c => `<tr><td>${esc(c.cli)}</td><td>${brl(c.media)}</td><td>${esc(tipo === 'G' ? (c.vend || '—') : (c.loja || ''))}</td></tr>`).join('')}</tbody></table></div>` : ''}</div>
           <div><h4>Metas do PDI · 90 dias</h4><ul class="pdi-metas">${M.map(m => `<li class="${(r.auto || {}).meta === m[0] ? 'minha' : ''}"><span>${esc(m[1])}${(r.auto || {}).meta === m[0] ? ' <span class="pdi-ok">· a meta dele</span>' : ''}</span><b>${esc(m[2])} → ${esc(m[3])}</b></li>`).join('')}</ul>
             <h4 class="mt-1">Nota de prioridade</h4><p class="pdi-meta">${x.sc.final}/100 · resultado ${x.sc.res}/40 · ritual ${x.sc.ritual}/25 · indicadores CPF ${x.sc.cpf}/20 · ${tipo === 'G' ? 'CNPJ, revisões e avaliação' : 'visitas, gerentes e revisões'} ${x.sc.outros}/15. Faixa ${TN[x.tier]}.</p>
@@ -219,7 +267,7 @@
     }
     function texto(x) {
       const AA = acoesDe(x).slice(0, 3), M = metasDe(x), r = S.REG[x.chave] || {};
-      return `*PDI ${x.nome}* — ${x.rotulo}\nPrioridade: ${TN[x.tier]} (${x.sc.final}/100)${r.tema ? `\nTema: ${r.tema}` : ''}\n\n*Metas 90 dias*\n${M.map(m => `• ${m[1]}: ${m[2]} → ${m[3]}${(r.auto || {}).meta === m[0] ? ' (a minha meta)' : ''}`).join('\n')}\n\n*Ações*\n${AA.map((a, i) => `${i + 1}. ${a.t}\n   O que fazer: ${a.a}\n   O que vou observar: ${a.c}`).join('\n')}${r.prox ? `\n\nPróxima revisão: ${dt(r.prox)}` : ''}`;
+      return `*PDI ${x.nome}* — ${x.rotulo}\nPrioridade: ${TN[x.tier]} (${x.sc.final}/100)${r.tema ? `\nTema: ${r.tema}` : ''}\n\n*Metas 90 dias*\n${M.map(m => `• ${m[1]}: ${m[2]} → ${m[3]}${(r.auto || {}).meta === m[0] ? ' (a minha meta)' : ''}`).join('\n')}\n\n*Ações*\n${AA.map((a, i) => `${i + 1}. ${a.t}\n   O que fazer: ${a.a}\n   O que vou observar: ${a.c}`).join('\n')}${x.habMedia != null ? `\n\n*Comportamentos*: média ${n1(x.habMedia)}${(x.habBaixas || []).length ? ' · a desenvolver: ' + x.habBaixas.map(h => h[1]).join(', ') : ''}` : ''}${r.prox ? `\n\nPróxima revisão: ${dt(r.prox)}` : ''}`;
     }
     function painelAcomp() {
       return `<p class="pdi-meta">Situação de cada PDI: ações concluídas, meta escolhida e revisões. Revisão vencida aparece em vermelho.</p><div class="pdi-tw"><table class="pdi-t"><thead><tr><th>${tipo === 'G' ? 'Gerente' : 'Supervisor'}</th><th>Faixa</th><th>${tipo === 'G' ? 'Loja' : 'Lojas'}</th><th>Ações</th><th>Meta escolhida</th><th>Última revisão</th><th>Próxima</th></tr></thead><tbody>${filtra().map(x => { const r = S.REG[x.chave], pg = progresso(x), M = metasDe(x), mm = r && r.auto && M.find(m => m[0] === r.auto.meta);
@@ -233,6 +281,8 @@
         <tr><td>CPF</td><td>20</td><td>Identificadas ≥ 80%, itens ≥ 2,5, ticket ≥ R$ 200, desconto &lt; 7%: 5 por indicador fora.</td></tr>
         <tr><td>${tipo === 'G' ? 'CNPJ, revisões e avaliação' : 'Visitas, gerentes e revisões'}</td><td>15</td><td>${tipo === 'G' ? 'Positivados abaixo de 50% da carteira ativa (5), revisões de PDI vencidas (5) e avaliação semanal com o supervisor sem resposta (5).' : 'Lojas sem visita no mês (até 5), PDI semanal não feito com os gerentes (até 5) e revisões de PDI vencidas nas lojas (5).'}</td></tr></tbody></table></div>
         <p><b>Faixas:</b> P1 Crítico ≥ 65 · P2 Alta 50–65 · P3 Desenvolver 35–50 · P4 Potencializar &lt; 35.</p>
+        <p><b>Comportamentos e habilidades:</b> 8 itens do papel, nota 1 a 5 na observação direta. Média abaixo de 3 indica habilidade a treinar junto; média 3 ou mais com números ruins indica rotina a combinar e cobrar. As 2 notas mais baixas (abaixo de 4) entram no plano de ação como "Habilidade a desenvolver".</p>
+        <p><b>Carteira:</b> os 20 principais clientes CNPJ ${tipo === 'G' ? 'da loja' : 'da regional (com a loja)'} por média de compra; "Caiu" = mês atual abaixo de 70% da própria média; "Sem compra" = zerado no mês.</p>
         <p><b>Base:</b> ${esc(base.rotulo || 'base do mês')}${base.geradoEm ? ' · gerada em ' + esc(String(base.geradoEm).slice(0, 10).split('-').reverse().join('/')) : ''}. Fontes: Painel de Metas (meta, realizado, indicadores), Níveis (Ouro/Prata/Bronze), PDI Semanal (ritual dos vendedores, gerentes e supervisores), Agenda (visitas), PDI Mensal dos vendedores (revisões) e carteira CNPJ.</p></div>`;
     }
     function render() {
@@ -267,11 +317,15 @@
       top.forEach((a, i) => { const st = ((r.acoes || {})[a.k] || {}).s, prazo = somaDias(t.data, i < 2 ? 30 : 60);
         B.push(`${i === 0 ? '<section class="tm-sec"><h3>4. Plano de ação</h3>' : '<section class="tm-sec">'}<div class="tm-acao"><div class="tm-acao-t"><b>${i + 1}. ${a.t}</b><span>Prazo: ${dt(prazo)}${st === 'feito' ? ' · concluída' : st === 'andamento' ? ' · em andamento' : ''}</span></div><p><em>O que fazer</em>${a.a}</p><p><em>Comportamento esperado (o que a liderança vai observar)</em>${a.c}</p><p><em>Ponto de partida</em>${a.e}</p></div></section>`); });
       const q = tipo === 'G' ? ['O que mais atrapalha o resultado da loja hoje?', 'Em que você é bom e pode ensinar a outro gerente?', 'Que ajuda você precisa do supervisor ou da coordenação?'] : ['O que mais atrapalha o resultado da carteira hoje?', 'Em que você é bom e pode ensinar a outro supervisor?', 'Que ajuda você precisa da coordenação ou da diretoria?'];
-      B.push(`<section class="tm-sec"><h3>5. Autoavaliação do gestor</h3>${r.disc && DISC[r.disc] ? `<p style="margin:0 0 4px"><b>Perfil DISC:</b> ${DISC[r.disc].n}</p>` : ''}${q.map((p, i) => `<div class="tm-q"><em>${p}</em>${resp(au['q' + (i + 1)], 2)}</div>`).join('')}</section>`);
-      B.push(`<section class="tm-sec"><h3>6. Compromissos</h3><div class="tm-q"><em>Compromisso do gestor</em>${resp(t.compromisso, 3)}</div><div class="tm-q"><em>Apoio da liderança</em>${resp(t.apoio, 3)}</div></section>`);
+      const hbT = r.hab || {}, hbiT = hbT.itens || {}, habLinhas = habDe(x).map(h => [h[1], h[2], hbiT[h[0]] || null]);
+      B.push(`<section class="tm-sec"><h3>5. Comportamentos e habilidades</h3><table class="tm-t"><thead><tr><th>Comportamento</th><th>O que se observa</th><th style="width:12%">Nota (1–5)</th></tr></thead><tbody>${habLinhas.map(z => `<tr><td>${esc(z[0])}</td><td>${esc(z[1])}</td><td>${z[2] ? '<b>' + z[2] + '</b>' : ''}</td></tr>`).join('')}</tbody></table>${x.habMedia != null ? `<p style="margin:4px 0 0"><b>Média:</b> ${n1(x.habMedia)}${(x.habBaixas || []).length ? ' · <b>A desenvolver:</b> ' + esc(x.habBaixas.map(h => h[1]).join(', ')) : ''}${hbT.data ? ' · observado em ' + dt(hbT.data) : ''}</p>` : ''}${hbT.obs ? `<div class="tm-q"><em>Comportamento observado</em><p class="tm-resp">${esc(hbT.obs)}</p></div>` : ''}</section>`);
+      const topT = ((x.carteira || {}).top || []).slice(0, 20);
+      if (topT.length) B.push(`<section class="tm-sec"><h3>6. ${topT.length} principais clientes ${tipo === 'G' ? 'da loja' : 'da regional'}</h3><table class="tm-t"><thead><tr><th>#</th><th>Cliente</th><th>${tipo === 'S' ? 'Loja' : 'Vendedor'}</th><th>Média/mês</th><th>Meses</th><th>Mês atual</th><th>Situação</th></tr></thead><tbody>${topT.map((c, i) => `<tr><td>${i + 1}</td><td>${esc(c.cli)}</td><td>${tipo === 'S' ? esc(c.loja + (c.lojaNome ? ' · ' + tc(c.lojaNome) : '')) : esc(c.vend || '—')}</td><td>${brl(c.media)}</td><td>${c.meses || '—'}</td><td>${brl(c.atual)}</td><td>${c.sit === 'sem' ? '<span class="tm-no">Sem compra</span>' : c.sit === 'caiu' ? 'Caiu' : '<span class="tm-ok">Comprando</span>'}</td></tr>`).join('')}</tbody></table></section>`);
+      B.push(`<section class="tm-sec"><h3>7. Autoavaliação do gestor</h3>${r.disc && DISC[r.disc] ? `<p style="margin:0 0 4px"><b>Perfil DISC:</b> ${DISC[r.disc].n}</p>` : ''}${q.map((p, i) => `<div class="tm-q"><em>${p}</em>${resp(au['q' + (i + 1)], 2)}</div>`).join('')}</section>`);
+      B.push(`<section class="tm-sec"><h3>8. Compromissos</h3><div class="tm-q"><em>Compromisso do gestor</em>${resp(t.compromisso, 3)}</div><div class="tm-q"><em>Apoio da liderança</em>${resp(t.apoio, 3)}</div></section>`);
       const rv1 = r.prox && r.prox > t.data ? r.prox : somaDias(t.data, 30);
-      B.push(`<section class="tm-sec"><h3>7. Revisões do PDI</h3><table class="tm-t tm-rev"><thead><tr><th style="width:15%">Revisão</th><th style="width:16%">Data prevista</th><th style="width:16%">Realizada em</th><th>O que mudou no comportamento e nos números</th><th style="width:17%">Rubrica</th></tr></thead><tbody>${[['1ª · 30 dias', rv1], ['2ª · 60 dias', somaDias(t.data, 60)], ['3ª · 90 dias', somaDias(t.data, 90)]].map(z => `<tr><td>${z[0]}</td><td>${dt(z[1])}</td><td></td><td></td><td></td></tr>`).join('')}</tbody></table></section>`);
-      B.push(`<section class="tm-sec"><h3>8. Ciência e assinaturas</h3><p class="tm-decl">Declaro que participei da conversa de Plano de Desenvolvimento Individual, que entendi a situação atual, as metas e as ações descritas neste termo, e que me comprometo a colocá-las em prática nos próximos 90 dias, com o apoio da liderança, nas datas de revisão acima.</p>
+      B.push(`<section class="tm-sec"><h3>9. Revisões do PDI</h3><table class="tm-t tm-rev"><thead><tr><th style="width:15%">Revisão</th><th style="width:16%">Data prevista</th><th style="width:16%">Realizada em</th><th>O que mudou no comportamento e nos números</th><th style="width:17%">Rubrica</th></tr></thead><tbody>${[['1ª · 30 dias', rv1], ['2ª · 60 dias', somaDias(t.data, 60)], ['3ª · 90 dias', somaDias(t.data, 90)]].map(z => `<tr><td>${z[0]}</td><td>${dt(z[1])}</td><td></td><td></td><td></td></tr>`).join('')}</tbody></table></section>`);
+      B.push(`<section class="tm-sec"><h3>10. Ciência e assinaturas</h3><p class="tm-decl">Declaro que participei da conversa de Plano de Desenvolvimento Individual, que entendi a situação atual, as metas e as ações descritas neste termo, e que me comprometo a colocá-las em prática nos próximos 90 dias, com o apoio da liderança, nas datas de revisão acima.</p>
         <div class="tm-ass"><div>${esc(x.nome)}<small>${tipo === 'G' ? 'Gerente' : 'Supervisor'}</small></div><div>${t.lider ? esc(t.lider) : '&nbsp;'}<small>${tipo === 'G' ? 'Supervisor' : 'Coordenação'}</small></div><div>&nbsp;<small>${tipo === 'G' ? 'Coordenação' : 'Diretoria'}</small></div></div>
         <p class="tm-local">Local e data: ______________________________, ____/____/________</p></section>`);
       return B;
@@ -337,7 +391,8 @@
 
     /* ═════════════ eventos ═════════════ */
     el.onclick = async (e) => {
-      const t = e.target.closest('[data-tab],[data-gerar],.pdi-row,[data-copy],[data-termo],[data-rev],[data-abrir]'); if (!t || !el.contains(t)) return;
+      const t = e.target.closest('[data-tab],[data-gerar],.pdi-row,[data-copy],[data-termo],[data-rev],[data-abrir],[data-hab]'); if (!t || !el.contains(t)) return;
+      if (t.dataset.hab) { const x = xPor(t.dataset.v), r = S.REG[x.chave] || {}, hb = Object.assign({ itens: {} }, r.hab || {}); hb.itens = Object.assign({}, hb.itens, { [t.dataset.hab]: +t.dataset.n }); hb.data = hojeIso(); if (await salvar(x, { hab: hb })) render(); return; }
       if (t.dataset.termo) { abrirTermo(xPor(t.dataset.termo)); return; }
       if (t.dataset.tab) { S.tab = t.dataset.tab; render(); return; }
       if (t.hasAttribute('data-gerar')) { if (!opts.gerarBase) return; t.disabled = true; t.textContent = 'Gerando…'; try { await opts.gerarBase(); toast('Base gerada'); } catch (err) { toast('Não gerou: ' + (err.message || err)); t.disabled = false; t.textContent = '⟳ Gerar base agora'; } return; }
@@ -355,6 +410,7 @@
       else if (t.dataset.disc) { const w = xPor(t.dataset.disc); if (await salvar(w, { disc: t.value })) render(); }
       else if (t.dataset.prox) { const w = xPor(t.dataset.prox); if (await salvar(w, { prox: t.value })) render(); }
       else if (t.dataset.tema) { const w = xPor(t.dataset.tema); await salvar(w, { tema: t.value.slice(0, 120) }); }
+      else if (t.dataset.habobs) { const w = xPor(t.dataset.habobs), r = S.REG[w.chave] || {}; await salvar(w, { hab: Object.assign({ itens: {} }, r.hab || {}, { obs: t.value.slice(0, 600), data: hojeIso() }) }); }
     };
     el.oninput = (e) => { if (e.target.matches('[data-busca]')) { S.q = e.target.value; clearTimeout(S._qt); S._qt = setTimeout(() => { const pos = e.target.selectionStart; render(); const i = el.querySelector('[data-busca]'); if (i) { i.focus(); try { i.setSelectionRange(pos, pos); } catch (er) {} } }, 250); } };
     render();
