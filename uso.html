@@ -123,7 +123,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
     return dias===0?'hoje, '+hm:dias===1?'ontem, '+hm:dias<7?'há '+dias+' dias':dBr(d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate()));
   }
   var TELA={inicio:'Tela inicial',painel:'Painel de Metas',ranking:'Ranking',niveis:'Níveis',pdi:'PDI Mensal',semana:'PDI Semanal',mentor:'Mentor ST PRO',tv:'Modo TV',
-    agenda:'Agenda',agendar:'Agendar',proposta:'Proposta',acessos:'Acesso dos vendedores',uso:'Acessos ao App',rotina:'Rotina',agora:'Reunião agora',despesas:'Despesas'};
+    agenda:'Agenda',agendar:'Agendar',proposta:'Proposta',acessos:'Acesso de usuários',uso:'Acessos ao App',rotina:'Rotina',agora:'Reunião agora',despesas:'Despesas'};
   var PAPEL={vend:'Vendedor',ger:'Gerente',sup:'Supervisor'};
   var ST={hoje:'✓ Entrou hoje',ativo:'✓ Ativo na semana',sumido:'⚠ Sumido',nunca:'✕ Não entrou',semacesso:'🔒 Sem acesso liberado'};
   var D=null, FILTRO='', ABA='semacesso', BUSCA='', VER_TODOS=false;
@@ -186,7 +186,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
     eq.forEach(function(p){ if(grupos[p.st]) grupos[p.st].push(p); });
     if(!grupos[ABA].length){ ABA=['semacesso','nunca','sumido'].filter(function(k){return grupos[k].length;})[0]||'semacesso'; }
     var lab={semacesso:'🔒 Sem acesso liberado',nunca:'✕ Não entraram',sumido:'⚠ Sumidos há 7+ dias'};
-    var dica={semacesso:'O gerente libera no app, no card "Acesso dos vendedores": nome e PIN inicial. O vendedor troca o PIN no primeiro acesso.',
+    var dica={semacesso:'O gerente libera no app, no card "Acesso de usuários": nome e PIN inicial. O vendedor troca o PIN no primeiro acesso.',
       nunca:'Têm acesso, mas não abriram o app. Cobrança direta do gerente: "abre o app e responde o PDI semanal".',
       sumido:'Já entraram, mas não abrem há 7 dias ou mais. Vale perguntar o que está travando.'};
     h+='<section class="card"><h2>🎯 Quem cobrar</h2><div class="abas" role="tablist">'+['semacesso','nunca','sumido'].map(function(k){return '<button type="button" role="tab" data-aba="'+k+'" aria-selected="'+(ABA===k)+'">'+lab[k]+' ('+grupos[k].length+')</button>';}).join('')+'</div>'+
