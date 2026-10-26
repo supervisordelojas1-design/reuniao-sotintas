@@ -863,9 +863,9 @@ html[data-tema="escuro"] .dpq, html[data-theme="dark"] .dpq{border-color:#5a4a1c
     <div id="lgErro" class="hidden" style="margin-top:12px;padding:10px 13px;border-radius:8px;background:var(--tint-red);color:var(--red);font-size:13px;font-weight:700"></div>
     <div id="lgVersao" style="margin-top:16px;text-align:center;font-size:11px;color:var(--muted);
       letter-spacing:.5px;font-weight:700"></div>
-    <div class="hint" style="margin-top:10px">Primeiro acesso: o PIN e <b>1234</b>. Troque na aba
-    <b>USUARIOS</b> da planilha. Isto nao e seguranca de banco — e a fechadura do vestiario: nao impede
-    quem quer invadir, impede o olhar casual e registra quem lancou o que.</div>
+    <div class="hint" style="margin-top:10px">Primeiro acesso: o PIN é <b>1234</b>. Depois de entrar, você tem
+    <b>10 minutos</b> para trocar por um PIN só seu. Esqueceu o PIN ou passou do prazo? Vendedor: fale com o
+    seu gerente. Gerente e supervisor: fale com a coordenação.</div>
   </div>
 </div>
 
@@ -6980,11 +6980,9 @@ function abrirApp(sessao){
   $('btnUser').classList.toggle('alerta', !!sessao.pinPadrao);
   /* v61: vendedor usa o app só pelos cards (Mentor, Ranking, Níveis) */
   document.body.classList.toggle('modo-vendedor', ehVendedorSessao(sessao));
-  if(sessao.pinPadrao && ehVendedorSessao(sessao)){
-    /* PIN inicial dado pelo gerente: a troca é a primeira coisa */
-    setTimeout(function(){ abrirConta(); toast('Primeiro acesso: troque o PIN que o gerente te passou.'); }, 900);
-  } else if(sessao.pinPadrao){
-    setTimeout(function(){ toast(sessao.trocarPin ? 'Troque o PIN inicial — toque no seu nome, no topo.' : 'Seu PIN ainda é 1234 — toque no seu nome, no topo, para trocar.'); }, 1500);
+  if(sessao.pinPadrao){
+    /* out/2026: PIN inicial (1234 ou o que o gerente passou) — troca obrigatória para todos, em até 10 minutos */
+    setTimeout(function(){ abrirConta(); toast('Primeiro acesso: troque o PIN agora. Você tem 10 minutos; depois disso o PIN inicial deixa de funcionar.'); }, 900);
   }
   carregarEquipe();
   /* a tela inicial (cards) é a primeira coisa após o login */
@@ -7089,7 +7087,9 @@ function abrirConta(){
   $('cnAviso').classList.toggle('hidden', !SESSAO.pinPadrao);
   $('modalConta').classList.add('show');
 }
-$('cnFechar').onclick=function(){ $('modalConta').classList.remove('show'); };
+$('cnFechar').onclick=function(){
+  if(SESSAO && SESSAO.pinPadrao){ cnBox('erro','Troque o PIN inicial para continuar usando o app (prazo de 10 minutos).'); return; }
+  $('modalConta').classList.remove('show'); };
 $('cnSair').onclick=function(){
   if(!confirm('Sair e entrar com outro nome?')) return;
   try{ localStorage.removeItem(LS_SESSAO); }catch(e){}
