@@ -9502,14 +9502,15 @@ body.foco .wrap{padding-bottom:40px}
   function acRender(){
     var d=AC.dados, box=acEl('acLista'); if(!box||!d) return;
     var loja=acEl('acLoja').value, cod=(String(loja).match(/^\s*(\d+)/)||[])[1]; cod=cod?('00'+cod).slice(-3):'';
-    var vs=(d.vendedores||[]).filter(function(v){ return v.cod===cod; });
+    var vs=(d.vendedores||[]).filter(function(v){ return v.cod===cod; }).sort(function(a,b){ return (b.ger?1:0)-(a.ger?1:0); });
     if(!vs.length){ box.innerHTML='<p class="sub">Nenhum vendedor desta loja no Níveis. Use o campo abaixo para liberar pelo nome.</p>'; return; }
     box.innerHTML='<div class="rolar"><table class="pnl"><tr><th>Vendedor</th><th>Situação</th><th style="min-width:220px">Ação</th></tr>'+
       vs.map(function(v,i){
         var sit=!v.liberado?'<span style="color:var(--muted)">sem acesso</span>':!v.ativo?'<b style="color:#D32027">desativado</b>':v.trocarPin?'<b style="color:#B7791F">liberado · falta trocar o PIN</b>':'<b style="color:var(--ok,#177a4d)">com acesso</b>';
         var acoes=(!v.liberado||!v.ativo)?'<input data-pin="'+i+'" placeholder="PIN inicial" inputmode="numeric" maxlength="6" style="width:96px"> <button type="button" class="btn btn-primary btn-sm" data-lib="'+i+'">Liberar</button>'
           :'<input data-pin="'+i+'" placeholder="PIN novo" inputmode="numeric" maxlength="6" style="width:90px"> <button type="button" class="btn btn-ghost btn-sm" data-lib="'+i+'">Novo PIN</button> <button type="button" class="btn btn-ghost btn-sm" data-des="'+i+'">Desativar</button>';
-        return '<tr><td><b>'+acEsc(v.nome)+'</b></td><td>'+sit+'</td><td>'+acoes+'</td></tr>';
+        if(v.ger) acoes='<input data-pin="'+i+'" placeholder="PIN novo" inputmode="numeric" maxlength="6" style="width:90px"> <button type="button" class="btn btn-ghost btn-sm" data-lib="'+i+'">Novo PIN</button>';
+        return '<tr><td><b>'+acEsc(v.nome)+'</b>'+(v.ger?' <span style="font-size:11px;font-weight:700;color:#FFD100;border:1px solid #FFD100;border-radius:6px;padding:1px 6px;margin-left:4px">GERENTE</span>':'')+'</td><td>'+sit+'</td><td>'+acoes+'</td></tr>';
       }).join('')+'</table></div>';
     Array.prototype.forEach.call(box.querySelectorAll('[data-lib]'),function(b){ b.onclick=function(){
       var v=vs[+b.getAttribute('data-lib')], pin=(box.querySelector('[data-pin="'+b.getAttribute('data-lib')+'"]')||{}).value||'';
@@ -9523,7 +9524,7 @@ body.foco .wrap{padding-bottom:40px}
     var s=sessao(); if(!s) return;
     var meu=(acEl('acMeuPin').value||'').trim();
     if(!/^\d{4,6}$/.test(meu)){ acStatus('Digite <b>o seu PIN</b> no campo "Seu PIN (confirma)".','#D32027'); acEl('acMeuPin').focus(); return; }
-    if(o.acao!=='desativar' && !/^\d{4,6}$/.test(o.pin||'')){ acStatus('O PIN inicial do vendedor tem de 4 a 6 dígitos.','#D32027'); return; }
+    if(o.acao!=='desativar' && !/^\d{4,6}$/.test(o.pin||'')){ acStatus('O PIN novo tem de 4 a 6 dígitos.','#D32027'); return; }
     acStatus('Gravando…','');
     fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({tipo:'liberarVendedor', eu:s.nome, pinEu:meu, nome:o.nome, loja:o.loja, pin:o.pin||'', acao:o.acao})})
@@ -9939,5 +9940,104 @@ button[id^="ov"][id$="Fechar"]:hover{transform:translateY(-1px);box-shadow:0 6px
   if(aberto) contarVencidas();
 })();
 </script>
+
+<!-- ===== TEMA PADRÃO REALISTA (tela inicial) — v1 26/10/2026 =====
+     Camada só visual: luz, volume, vidro e profundidade. Não muda dados nem navegação.
+     A faixa #iniFaixa é o lugar onde os temas de data vão entrar depois. -->
+<style id="stTemaReal">
+#ovInicio{--grao:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .5  0 0 0 0 .5  0 0 0 0 .5  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  background:radial-gradient(90% 55% at 100% 0%,rgba(28,63,143,.10),transparent 60%),radial-gradient(70% 45% at 0% 35%,rgba(255,209,0,.10),transparent 60%),radial-gradient(80% 50% at 100% 85%,rgba(211,32,39,.07),transparent 60%),var(--bg,#f5f7fb)}
+html[data-theme="dark"] #ovInicio{background:radial-gradient(90% 55% at 100% 0%,rgba(60,110,230,.22),transparent 60%),radial-gradient(70% 45% at 0% 40%,rgba(255,209,0,.07),transparent 60%),radial-gradient(80% 50% at 100% 90%,rgba(211,32,39,.10),transparent 60%),#0b1122}
+#stFx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+#ovInicio .ini-body,#ovInicio .ini-foot{position:relative;z-index:1}
+/* topo: vidro azul com grão e brilho */
+#ovInicio .ini-top{background:var(--grao),radial-gradient(120% 160% at 0% 0%,rgba(255,255,255,.18),transparent 50%),linear-gradient(135deg,#2652b3 0%,#1C3F8F 45%,#0f2459 100%);
+  background-blend-mode:overlay,normal,normal;box-shadow:0 10px 30px -8px rgba(10,25,60,.55),inset 0 -1px 0 rgba(255,255,255,.12)}
+#ovInicio .ini-logo{background:radial-gradient(120% 120% at 30% 20%,#ff6b70 0%,#D32027 45%,#8e1016 100%)!important;
+  box-shadow:0 6px 14px -2px rgba(0,0,0,.45),inset 0 2px 1px rgba(255,255,255,.45),inset 0 -3px 6px rgba(0,0,0,.30)!important;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+#ovInicio .ini-theme{background:linear-gradient(180deg,rgba(255,255,255,.24),rgba(255,255,255,.08));box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 4px 10px -4px rgba(0,0,0,.4);backdrop-filter:blur(6px)}
+/* faixa principal (vira o tema da data no futuro) */
+#iniFaixa{position:relative;overflow:hidden;border-radius:22px;min-height:118px;padding:20px 22px;color:#fff;margin:2px 0 12px;
+  background:var(--grao),radial-gradient(90% 140% at 88% 18%,rgba(255,209,0,.30),transparent 55%),radial-gradient(70% 120% at 0% 100%,rgba(211,32,39,.35),transparent 60%),linear-gradient(125deg,#2a5bc4 0%,#1C3F8F 48%,#0c1f4f 100%);
+  background-blend-mode:overlay,normal,normal,normal;box-shadow:0 22px 40px -18px rgba(10,25,60,.65),inset 0 1px 0 rgba(255,255,255,.30),inset 0 -1px 0 rgba(0,0,0,.25)}
+#iniFaixa .fx-varre{position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.22) 46%,transparent 62%);transform:translateX(-130%);animation:stVarre 7s ease-in-out infinite;pointer-events:none}
+@keyframes stVarre{55%,100%{transform:translateX(130%)}}
+#iniFaixa .fx-tag{display:inline-block;font:800 10.5px system-ui,sans-serif;letter-spacing:1px;text-transform:uppercase;background:rgba(255,209,0,.95);color:#0f2459;border-radius:999px;padding:3px 9px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+#iniFaixa h2{position:relative;color:#fff!important;-webkit-text-fill-color:#fff;background:none;margin:9px 0 5px;font-size:21px;line-height:1.12;font-weight:850;text-shadow:0 2px 12px rgba(0,0,0,.35)}
+#iniFaixa p{position:relative;color:#fff!important;margin:0;font-size:12.5px;font-weight:600;opacity:.92;text-shadow:0 1px 6px rgba(0,0,0,.35)}
+#iniFaixa svg{position:absolute;right:-4px;bottom:-14px;width:168px;height:168px;filter:drop-shadow(0 14px 16px rgba(0,0,0,.45))}
+@media(min-width:620px){#iniFaixa{min-height:130px}#iniFaixa h2{font-size:24px}}
+/* cartões de vidro */
+#ovInicio .ini-hoje,#ovInicio .ini-grid .ini-card{background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,255,255,.78))!important;
+  backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);border:1px solid rgba(255,255,255,.9)!important;
+  box-shadow:0 1px 1px rgba(20,35,70,.04),0 10px 26px -12px rgba(20,35,70,.28),inset 0 1px 0 #fff!important}
+html[data-theme="dark"] #ovInicio .ini-hoje,html[data-theme="dark"] #ovInicio .ini-grid .ini-card{background:linear-gradient(180deg,rgba(30,42,70,.78),rgba(18,26,46,.72))!important;
+  border:1px solid rgba(255,255,255,.08)!important;box-shadow:0 12px 30px -12px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.07)!important}
+#ovInicio .ini-hoje{border-left:5px solid var(--yellow,#FFD100)!important}
+#ovInicio .ini-hoje.ini-pontos{border-left-color:var(--navy,#1C3F8F)!important}
+html[data-theme="dark"] #ovInicio .ini-hoje.ini-pontos{border-left-color:#7aa2ff!important}
+#ovInicio .ip-k{background:linear-gradient(180deg,rgba(28,63,143,.07),rgba(28,63,143,.03));box-shadow:inset 0 1px 0 rgba(255,255,255,.8),inset 0 0 0 1px rgba(28,63,143,.06)}
+html[data-theme="dark"] #ovInicio .ip-k{background:rgba(255,255,255,.04);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+/* cards de Gestão: azul com volume, grão e reflexo */
+#ovInicio .ini-card.feat{background:var(--grao),radial-gradient(110% 130% at 0% 0%,rgba(255,255,255,.16),transparent 45%),linear-gradient(135deg,#2556bd 0%,#1C3F8F 50%,#11295f 100%)!important;
+  background-blend-mode:overlay,normal,normal;box-shadow:0 18px 32px -16px rgba(10,25,60,.7),0 2px 4px rgba(10,25,60,.25),inset 0 1px 0 rgba(255,255,255,.22),inset 0 -2px 0 rgba(0,0,0,.18)!important}
+#ovInicio .ini-card.feat::after{background:radial-gradient(circle at 40% 40%,rgba(255,209,0,.16),transparent 65%)!important;width:160px!important;height:160px!important;right:-50px!important;top:-60px!important}
+#ovInicio .ini-card.feat .ini-ic{background:linear-gradient(160deg,rgba(255,255,255,.30),rgba(255,255,255,.06))!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -2px 4px rgba(0,0,0,.25),0 6px 12px -4px rgba(0,0,0,.45)!important;backdrop-filter:blur(4px)}
+#ovInicio .ini-card.feat .ini-ic .ic{filter:drop-shadow(0 0 6px rgba(255,209,0,.55)) drop-shadow(0 1px 1px rgba(0,0,0,.4))}
+#ovInicio .ini-card.feat .ini-go{text-shadow:0 0 10px rgba(255,209,0,.6)}
+/* ícones de Operação: pastilhas 3D */
+#ovInicio .ini-grid .ini-ic{position:relative;box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -3px 6px rgba(0,0,0,.18),0 6px 12px -6px rgba(0,0,0,.45)}
+#ovInicio .ini-grid .ini-ic .ic{color:#fff;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+#ovInicio .ini-card[data-ac=azul] .ini-ic{background:radial-gradient(120% 120% at 30% 15%,#7aa7ff,#2660d6 55%,#173f96)!important}
+#ovInicio .ini-card[data-ac=verde] .ini-ic{background:radial-gradient(120% 120% at 30% 15%,#62e0a1,#128a52 55%,#0a5a35)!important}
+#ovInicio .ini-card[data-ac=vermelho] .ini-ic{background:radial-gradient(120% 120% at 30% 15%,#ff8085,#D32027 55%,#8e1016)!important}
+#ovInicio .ini-card[data-ac=ambar] .ini-ic{background:radial-gradient(120% 120% at 30% 15%,#ffd36b,#d9951f 55%,#94600b)!important}
+#ovInicio .ini-card[data-ac=roxo] .ini-ic{background:radial-gradient(120% 120% at 30% 15%,#c9a6ff,#7a46c9 55%,#4f2491)!important}
+#ovInicio .ini-card[data-ac=cinza] .ini-ic{background:radial-gradient(120% 120% at 30% 15%,#b9c3d6,#5a677f 55%,#363f52)!important}
+#ovInicio .ini-sec{display:flex;align-items:center;gap:10px}
+#ovInicio .ini-sec::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(103,114,140,.35),transparent)}
+body.modo-vendedor #iniFaixa{margin-top:2px}
+@media (prefers-reduced-motion:reduce){#stFx,#iniFaixa .fx-varre{display:none}}
+</style>
+<script>
+/* Faixa principal + luzes de fundo da tela inicial */
+(function(){
+  var ov=document.getElementById('ovInicio'), body=document.getElementById('iniBody');
+  if(!ov||!body||document.getElementById('iniFaixa')) return;
+  var LATA='';
+  var f=document.createElement('div'); f.id='iniFaixa';
+  f.innerHTML='<div class="fx-varre"></div><span class="fx-tag">Só Tintas</span><h2>Colorindo Vidas e Realizando Sonhos</h2><p>Cada atendimento pinta um sonho. Bom trabalho hoje!</p>'+LATA;
+  body.insertBefore(f, body.firstChild);
+  f.addEventListener('click',function(){ f.querySelector('.fx-varre').style.animation='none'; void f.offsetWidth; f.querySelector('.fx-varre').style.animation=''; });
+
+  /* luzes de fundo (bokeh) — leve, para quando a tela inicial está fechada */
+  var red=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches; if(red) return;
+  var cv=document.createElement('canvas'); cv.id='stFx'; ov.insertBefore(cv, ov.firstChild);
+  var cx=cv.getContext('2d'), W=0, H=0, D=Math.min(2,window.devicePixelRatio||1), L=[], raf=0;
+  function tam(){ W=innerWidth; H=innerHeight; cv.width=W*D; cv.height=H*D; cx.setTransform(D,0,0,D,0,0); }
+  var CORES=[[28,63,143],[255,209,0],[211,32,39],[80,140,255]];
+  function nova(){ var z=Math.random(); return {x:Math.random()*W,y:Math.random()*H,r:30+z*90,z:z,c:CORES[Math.random()*4|0],vx:(Math.random()-.5)*.12,vy:(Math.random()-.5)*.10,f:Math.random()*6.28}; }
+  function iniciar(){ tam(); L=[]; var n=W<600?9:14; for(var i=0;i<n;i++) L.push(nova()); }
+  var poeira=[]; for(var k=0;k<26;k++) poeira.push({x:Math.random(),y:Math.random(),s:.6+Math.random()*1.6,v:.02+Math.random()*.05,f:Math.random()*6.28});
+  function quadro(t){
+    if(!ov.classList.contains('aberto')){ raf=0; return; }
+    var esc=document.documentElement.getAttribute('data-theme')==='dark', a0=esc?.16:.10;
+    cx.clearRect(0,0,W,H);
+    L.forEach(function(b){ b.x+=b.vx; b.y+=b.vy; if(b.x<-b.r)b.x=W+b.r; if(b.x>W+b.r)b.x=-b.r; if(b.y<-b.r)b.y=H+b.r; if(b.y>H+b.r)b.y=-b.r;
+      var a=a0*(.6+.4*Math.sin(t/2400+b.f)), g=cx.createRadialGradient(b.x,b.y,0,b.x,b.y,b.r);
+      g.addColorStop(0,'rgba('+b.c+','+a+')'); g.addColorStop(.6,'rgba('+b.c+','+(a*.35)+')'); g.addColorStop(1,'rgba('+b.c+',0)');
+      cx.fillStyle=g; cx.beginPath(); cx.arc(b.x,b.y,b.r,0,7); cx.fill(); });
+    poeira.forEach(function(p){ p.y-=p.v/100; if(p.y<-.02)p.y=1.02; var x=(p.x+Math.sin(t/3000+p.f)*.01)*W, y=p.y*H, a=(esc?.55:.35)*(.5+.5*Math.sin(t/900+p.f));
+      cx.fillStyle=esc?'rgba(255,240,200,'+a+')':'rgba(28,63,143,'+(a*.5)+')'; cx.beginPath(); cx.arc(x,y,p.s,0,7); cx.fill(); });
+    raf=requestAnimationFrame(quadro);
+  }
+  function liga(){ if(!raf&&ov.classList.contains('aberto')) raf=requestAnimationFrame(quadro); }
+  iniciar(); addEventListener('resize',iniciar);
+  new MutationObserver(liga).observe(ov,{attributes:true,attributeFilter:['class']}); liga();
+  document.addEventListener('visibilitychange',function(){ if(document.hidden){ cancelAnimationFrame(raf); raf=0; } else liga(); });
+})();
+</script>
+
 </body>
 </html>
