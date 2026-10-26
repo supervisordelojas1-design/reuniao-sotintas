@@ -8976,7 +8976,7 @@ syncNav();
  function podeVerPainel(){ var s=sessao(); if(!s) return false;
   var p=((s&&s.papel)||'').trim().toLowerCase();
   if(!p) return true;                      /* sessao antiga sem papel: mostra e deixa o servidor decidir */
-  return p.indexOf('coorden')>=0 || p.indexOf('supervis')>=0 || p.indexOf('gerente')>=0 || p.indexOf('vendedor')>=0 || (s&&(s.escopo==='lojas'||s.vendedor)); }
+  return p.indexOf('coorden')>=0 || p.indexOf('supervis')>=0 || p.indexOf('gerente')>=0 || p.indexOf('vendedor')>=0 || p==='analista' || (s&&(s.escopo==='lojas'||s.vendedor)); }
  /* Painel saiu da barra de abas — acesso passa a ser só pela tela inicial (cards).
     Mantemos a aba oculta como gatilho do overlay (a tela inicial a aciona por .click()). */
  function sincronizarAba(){ var ver=podeVerPainel(); b.style.display='none'; if(!ver){ ov.style.display='none'; document.body.style.overflow=''; } }
@@ -9302,12 +9302,12 @@ body.foco .wrap{padding-bottom:40px}
   function sessao(){ try{ return (window.STDados&&STDados.sessaoVisao())||JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); }catch(e){ return null; } }
   function logado(){ var s=sessao(); return !!(s&&s.nome) && !document.body.classList.contains('travado'); }
   function podeVer(){ var s=sessao(); if(!s) return false; var p=((s&&s.papel)||'').trim().toLowerCase();
-    if(!p) return true; return p.indexOf('coorden')>=0 || p.indexOf('supervis')>=0; }
+    if(!p) return true; return p.indexOf('coorden')>=0 || p.indexOf('supervis')>=0 || p==='analista'; }   /* analista: vê como a coordenação, sem administrar */
 
   function ehVend(){ var s=sessao(); return !!(s && (s.vendedor || /vendedor/i.test(String(s.papel||'')))); }
   function ehGer(){ var s=sessao(); if(!s||ehVend()) return false; return s.escopo==='lojas' || /gerente/i.test(String(s.papel||'')); }
   function ehLider(){ var s=sessao(); if(!s||ehVend()) return false; var p=String(s.papel||'').toLowerCase();
-    return s.escopo==='todos' || s.escopo==='lojas' || p.indexOf('coorden')>=0 || p.indexOf('supervis')>=0 || p.indexOf('gerente')>=0; }
+    return s.escopo==='todos' || s.escopo==='lojas' || p.indexOf('coorden')>=0 || p.indexOf('supervis')>=0 || p.indexOf('gerente')>=0 || p==='analista'; }
   function aplicarGate(){
     var ver=podeVer(), vend=ehVend();
     document.body.classList.toggle('modo-vendedor', vend);

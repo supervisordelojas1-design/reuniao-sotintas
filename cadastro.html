@@ -153,7 +153,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
   }
 
   function montar(){
-    var P=D.pessoas, rot=D.perfil==='coord'?'Rede Só Tintas':D.perfil==='sup'?'Sua carteira':'Sua loja';
+    var P=D.pessoas, rot=(D.perfil==='coord'||D.perfil==='anl')?'Rede Só Tintas':D.perfil==='sup'?'Sua carteira':'Sua loja';
     var nAt=P.filter(function(p){return p.ativo;}).length;
     $('sub').textContent=rot+' · '+nAt+' pessoas ativas';
     var h='';

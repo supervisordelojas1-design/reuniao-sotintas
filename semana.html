@@ -135,8 +135,8 @@ h3{font-size:14px;margin:0 0 6px}
     return STDados.chamar('semana').then(function(j){
       if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não respondeu.');
       D=j; var ps=[];
-      if(j.perfil==='sup'||j.perfil==='coord') ps.push(STDados.chamar('semanaSup').then(function(k){ SUPD=(k&&k.ok)?k:null; }).catch(function(){ SUPD=null; }));
-      if(j.perfil==='ger'||j.perfil==='sup'||j.perfil==='coord') ps.push(STDados.chamar('semanaGer').then(function(k){ GERD=(k&&k.ok)?k:null; }).catch(function(){ GERD=null; }));
+      if(j.perfil==='sup'||j.perfil==='coord'||j.perfil==='anl') ps.push(STDados.chamar('semanaSup').then(function(k){ SUPD=(k&&k.ok)?k:null; }).catch(function(){ SUPD=null; }));
+      if(j.perfil==='ger'||j.perfil==='sup'||j.perfil==='coord'||j.perfil==='anl') ps.push(STDados.chamar('semanaGer').then(function(k){ GERD=(k&&k.ok)?k:null; }).catch(function(){ GERD=null; }));
       return Promise.all(ps);
     }).then(function(){ montar(); }).catch(function(e){ $('raiz').innerHTML='<div class="card"><h2>Não consegui abrir</h2><p class="sub">'+esc(e.message||e)+'</p><button class="btn azul" type="button" id="deNovo">Tentar de novo</button></div>'; $('deNovo').onclick=carregar; });
   }
@@ -390,7 +390,7 @@ h3{font-size:14px;margin:0 0 6px}
   function blocoSup(){
     if(!SUPD||!SUPD.linhas||!SUPD.linhas.length) return '';
     var ro=visao(), h='';
-    var vale=function(x){ return !(D.perfil==='coord'&&FILTRO)||x.supervisor===FILTRO; };
+    var vale=function(x){ return !((D.perfil==='coord'||D.perfil==='anl')&&FILTRO)||x.supervisor===FILTRO; };
     SUPD.linhas.filter(function(x){return x.semana===SUPD.atual&&vale(x);}).forEach(function(x){
       var d=x.dados||{}, p=x.plano||{}, f=d.foco, ed=x.meu&&x.prazoAberto&&!ro;
       h+='<section class="card"><div class="vend-top"><h2 style="margin:0">'+(x.meu?'Meu PDI semanal':'PDI semanal de '+esc(x.supervisor))+'</h2><div class="linha">'+(x.plano?'<span class="chip c-respondido">Plano registrado</span>':(x.prazoAberto?'<span class="chip c-liberado">Plano até '+esc(prazoTxt(d.prazo))+'</span>':'<span class="chip c-nao_feito">Plano não registrado</span>'))+
@@ -399,7 +399,7 @@ h3{font-size:14px;margin:0 0 6px}
       h+='<div class="linha" style="margin:6px 0 2px">'+(D.perfil==='coord'&&!ro&&x.situacao==='aguardando'?(x.temQuestoes?'<button class="btn azul" type="button" data-supfeito="'+esc(x.chave)+'">✓ Fiz o PDI com o supervisor</button>':'<span class="sub">As questões do supervisor saem às 12h15 de segunda.</span>'):'')+
         (x.feito_em?'<span class="sub">PDI com a coordenação feito '+esc(quando(x.feito_em))+(x.feito_por?' por '+esc(x.feito_por):'')+(x.situacao==='liberado'&&x.prazoAval?' · responde até '+esc(prazoTxt(x.prazoAval)):'')+'</span>':(d.prazoFeito&&x.situacao==='aguardando'&&D.perfil==='coord'?'<span class="sub">marcar até '+esc(prazoTxt(d.prazoFeito))+'</span>':''))+'</div>';
       if(x.meu&&x.situacao==='liberado'&&!ro){ h+='<h3 style="margin-top:8px">Avaliação da semana com a coordenação</h3><p class="aviso">Responda até <b>'+esc(prazoTxt(x.prazoAval))+'</b>. São '+(x.questoes||[]).length+' questões sobre a sua carteira. Só dá para enviar uma vez.</p><div id="s'+SUPD.linhas.indexOf(x)+'_questoes"><p class="sub">Preparando as questões…</p></div>'; PEND.push({linha:x,px:'s'+SUPD.linhas.indexOf(x)+'_',acao:'semanaSupAval'}); }
-      else if(x.aval&&(x.meu||D.perfil==='coord')) h+=resultado(x.aval);
+      else if(x.aval&&(x.meu||D.perfil==='coord'||D.perfil==='anl')) h+=resultado(x.aval);
       if(d.carteira) h+='<div class="kpis" style="margin-top:8px"><div class="kpi"><span>Carteira</span><b>'+d.carteira.lojas+' lojas</b></div><div class="kpi"><span>Atingido</span><b>'+pct(d.carteira.pct)+'</b></div><div class="kpi"><span>Projeção</span><b>'+pct(d.carteira.pp)+'</b></div><div class="kpi"><span>Falta</span><b>'+brl(d.carteira.falta)+'</b></div></div>';
       if(f) h+='<div class="comp"><span class="n">1</span><b>Loja foco: '+esc(f.cod)+' '+esc(f.nome)+'</b> — projeção '+pct(f.pp)+', faltam '+brl(f.gap)+'<div class="sub">Visita presencial até quarta e plano escrito com '+esc(f.gerente)+'.'+(f.planejadas&&f.planejadas.length?' Na agenda: '+f.planejadas.map(dBr).join(', '):' Ainda sem visita na agenda.')+'</div></div>';
       var A=d.auditoria||[];

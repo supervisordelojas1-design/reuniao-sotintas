@@ -157,12 +157,12 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 
   function montar(){
     var P=D.pessoas.filter(noFiltro), eq=P.filter(function(p){return p.tipo!=='sup';});
-    var rot=D.perfil==='coord'?(FILTRO?'Carteira de '+FILTRO:'Rede Só Tintas'):D.perfil==='sup'?'Sua carteira':'Sua loja';
+    var rot=(D.perfil==='coord'||D.perfil==='anl')?(FILTRO?'Carteira de '+FILTRO:'Rede Só Tintas'):D.perfil==='sup'?'Sua carteira':'Sua loja';
     $('sub').textContent=rot+' · atualizado às '+(window.STHora?STHora.hm():'')+' (Brasília)';
     var h='';
     if(D.desde>=D.hoje) h+='<div class="aviso">📅 O registro de acessos começou <b>hoje ('+dBr(D.hoje)+')</b>. "Não entrou" quer dizer "ainda não entrou desde que o registro começou". O quadro fica mais completo a cada dia.</div>';
     else h+='<p class="sub" style="margin:0">Registro de acessos desde '+dBr(D.desde)+'.</p>';
-    if(D.perfil==='coord'){
+    if(D.perfil==='coord'||D.perfil==='anl'){
       var S=sups();
       if(S.length>1) h+='<div class="filtros" role="group" aria-label="Filtrar por supervisor"><button type="button" data-filtro="" aria-pressed="'+(!FILTRO)+'">Todos</button>'+S.map(function(s){return '<button type="button" data-filtro="'+esc(s)+'" aria-pressed="'+(FILTRO===s)+'">'+esc(s)+'</button>';}).join('')+'</div>';
     }
@@ -193,7 +193,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
     h+='<div class="grid2">'+blocoDias()+blocoTelas()+'</div>'+blocoHeat();
     /* ── pessoas ── */
     h+=blocoPessoas(P);
-    if(D.perfil==='coord'&&D.outros&&D.outros.length&&!FILTRO) h+='<section class="card"><h2>Outros acessos</h2><p class="sub" style="margin:0 0 6px">Coordenação, marketing e nomes que não estão no cadastro das lojas.</p><ul class="lista">'+
+    if((D.perfil==='coord'||D.perfil==='anl')&&D.outros&&D.outros.length&&!FILTRO) h+='<section class="card"><h2>Outros acessos</h2><p class="sub" style="margin:0 0 6px">Coordenação, marketing e nomes que não estão no cadastro das lojas.</p><ul class="lista">'+
       D.outros.sort(function(a,b){return b.ultimo-a.ultimo;}).map(function(o){return '<li><span><b>'+esc(nm(o.nome))+'</b> <span class="sub">'+esc(PAPEL[o.pf]||o.pf||'')+'</span></span><span>'+quando(o.ultimo)+' · '+o.d7+' dia(s) na semana</span></li>';}).join('')+'</ul></section>';
     $('raiz').innerHTML=h;
   }
@@ -238,12 +238,12 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
     var med=function(a){ return a.reduce(function(s,o){return s+D.proj[o.cod];},0)/a.length; };
     var leitura=com.length&&sem.length?'<p class="sub" style="margin:6px 0 0">📈 Lojas com metade ou mais da equipe ativa no app projetam <b>'+pct(med(com))+'</b>; as demais, <b>'+pct(med(sem))+'</b> (média simples, '+com.length+' × '+sem.length+' lojas).</p>':'';
     var h='<section class="card"><h2>🏆 Ranking das lojas</h2><p class="sub" style="margin:0 0 6px">% da equipe (gerente + vendedores) que entrou nos últimos 7 dias.</p><div class="tabw"><table><thead><tr><th>#</th><th>Loja</th><th>Equipe ativa</th><th class="n">Projeção</th><th class="n esc">Gerente</th><th class="n esc">PDI feito</th></tr></thead><tbody>'+
-      L.map(function(o,i){ return '<tr><td>'+(i+1)+'</td><td><b>'+esc(o.cod)+'</b> '+esc(o.nome||'')+(D.perfil==='coord'&&!FILTRO&&o.sup?'<div class="sub">'+esc(curto(o.sup))+'</div>':'')+'</td>'+
+      L.map(function(o,i){ return '<tr><td>'+(i+1)+'</td><td><b>'+esc(o.cod)+'</b> '+esc(o.nome||'')+((D.perfil==='coord'||D.perfil==='anl')&&!FILTRO&&o.sup?'<div class="sub">'+esc(curto(o.sup))+'</div>':'')+'</td>'+
         '<td style="min-width:120px"><span data-tip="'+esc(o.a+' de '+o.n+' entraram nos últimos 7 dias')+'" tabindex="0">'+pct(o.p)+' <span class="sub">('+o.a+'/'+o.n+')</span></span><div class="barra"><i style="width:'+Math.round(o.p*100)+'%"></i></div></td>'+
         '<td class="n">'+(D.proj&&D.proj[o.cod]!=null?'<span style="color:'+(D.proj[o.cod]>=1?'var(--ok)':D.proj[o.cod]>=.9?'var(--warn)':'var(--bad)')+';font-weight:800">'+pct(D.proj[o.cod])+'</span>':'—')+'</td>'+
         '<td class="n esc">'+(o.ger?(o.ger.d7>0?'<span class="chip s-ativo">✓ '+o.ger.d7+'d</span>':'<span class="chip s-nunca">✕</span>'):'—')+'</td>'+
         '<td class="n esc">'+(o.total?o.feito+'/'+o.total:'—')+'</td></tr>'; }).join('')+'</tbody></table></div>'+leitura+'</section>';
-    if(D.perfil==='coord'&&!FILTRO){
+    if((D.perfil==='coord'||D.perfil==='anl')&&!FILTRO){
       var S={};
       P.forEach(function(p){ var k=curto(p.sup||'').split(' ')[0]; if(!k) return; var o=S[k]=S[k]||{nome:k,n:0,a:0,eu:null}; if(p.tipo==='sup'){ o.eu=p; return; } o.n++; if(p.d7>0) o.a++; });
       var SL=Object.keys(S).map(function(k){var o=S[k]; o.p=o.n?o.a/o.n:0; return o;}).sort(function(a,b){return b.p-a.p;});
