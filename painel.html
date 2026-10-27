@@ -206,7 +206,7 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
 .ppbar .wc.alt{background:rgba(255,255,255,.06)}
 .ppbar .wc.on{background:rgba(255,209,0,.16)}
 /* régua de semanas — base (barras de loja/vendedor, fundo claro) */
-.wkruler{position:relative;height:26px;margin:1px 58px 4px 44px}
+.wkruler{position:relative;height:26px;margin:1px 140px 4px 44px}
 .wkruler .wl{position:absolute;transform:translateX(-50%);top:0;text-align:center;line-height:1.05;cursor:default;
  padding:2px 5px;border-radius:7px;transition:background .12s}
 .wkruler .wl b{display:block;font-size:9.5px;font-weight:800;color:var(--tx2)}
@@ -215,7 +215,10 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
 .wkruler .wl.on{background:#FFD100}
 .wkruler .wl.on b,.wkruler .wl.on i{color:#0F2B46}
 /* régua no resumo grande (ppbar, fundo navy) */
-.ppbar .wkruler{height:28px;margin:2px 60px 6px 52px}
+.ppbar .wkruler{height:28px;margin:2px 152px 6px 52px}
+.ppbar .bl .pjt{width:84px;font-size:12.5px}
+.ppbar .bl .pjt small{color:#8FA9C2;font-size:10px}
+.ppbar .bar .pj{opacity:.55}
 .ppbar .wkruler .wl b{color:#C7DAEE}
 .ppbar .wkruler .wl i{color:#8FA9C2}
 .ppbar .wkruler .wl:hover{background:rgba(255,255,255,.12)}
@@ -348,7 +351,7 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
 @media(max-width:640px){
  .ttl h2{font-size:20px}.kpi .vl{font-size:22px}.f2{grid-template-columns:1fr}
  .row{grid-template-columns:22px 1fr;gap:9px}.rt{grid-column:2;text-align:left;margin-top:6px}
- .bl .pc{width:46px}.bl .pjt{width:62px;font-size:10px}.bl .pjt small{display:none}.rgrid{grid-template-columns:1fr}
+ .bl .pc{width:46px}.bl .pjt{width:62px;font-size:10px}.bl .pjt small{display:none}.wkruler{margin-right:124px}.ppbar .wkruler{margin-right:132px}.ppbar .bl .pjt{width:62px;font-size:11px}.rgrid{grid-template-columns:1fr}
 }
 #parea{display:none}
 .pdoc{font-family:'Segoe UI',system-ui,sans-serif;color:#12212F;padding:8mm}
@@ -1049,6 +1052,7 @@ function ritmoBox(o){
 }
 
 /* projecao: X% hoje -> Y% no fim do mes (dias uteis, mesma conta do termometro) */
+const corPjNavy=p=>p==null?'#8FA9C2':p>=1?'#2FD08E':p>=.9?'#FFC94D':'#FF6B70';
 const corProj=p=>p==null?'var(--tx3)':p>=1?'var(--ok)':p>=.9?'var(--warn)':'var(--bad)';
 function projBar(pct,pj){
  if(pj==null||!(pj>(pct||0))) return '';
@@ -1056,7 +1060,7 @@ function projBar(pct,pj){
  return (b>a?`<span class="pj" style="left:${a.toFixed(1)}%;width:${(b-a).toFixed(1)}%"></span>`:'')
   +`<span class="pjk" style="left:${b.toFixed(1)}%"></span>`;
 }
-function projTxt(pj){return `<span class="pjt" style="color:${corProj(pj)}" title="Projeção de fechamento no ritmo atual (dias úteis)"><small>proj.</small>${PC(pj)}</span>`}
+function projTxt(pj,c){return `<span class="pjt" style="color:${c||corProj(pj)}" title="Projeção de fechamento no ritmo atual (dias úteis)"><small>proj.</small>${PC(pj)}</span>`}
 function barras(o){
  const fL=farol(o.pctLoja), fT=farol(o.pctTime);
  const pjL=o.metaLoja?o.proj/o.metaLoja:null, pjT=o.metaTime?o.proj/o.metaTime:null;
@@ -1164,9 +1168,9 @@ function painelPrincipal(){
   </div>`;
  h+=`<div class="ppbar">
   ${wkRuler(g.metaLoja,g.metaTime)}
-  <div class="bl"><span class="tag">LOJA</span><span class="bar">${wkCells()}<span class="mk" style="left:${(RE*100).toFixed(1)}%"></span><i style="width:${Math.min(g.pctLoja*100,100)}%;background:${g.pctLoja>=RE?'#2FD08E':'#FF6B70'}"></i></span><span class="pc">${PPCT(g.pctLoja)}</span></div>
-  <div class="bl"><span class="tag">TIME</span><span class="bar">${wkCells()}<span class="mk" style="left:${(RE*100).toFixed(1)}%"></span><i style="width:${Math.min(g.pctTime*100,100)}%;background:${g.pctTime>=RE?'#2FD08E':'#FF6B70'};opacity:.65"></i></span><span class="pc">${PPCT(g.pctTime)}</span></div>
-  <div class="ppleg">Cada bloco é uma semana do mês (seg–sáb). Passe o mouse em uma semana para ver a meta da semana e a meta/dia. A faixa amarela é a semana atual (<b>S${SEMATUAL}</b>); a linha branca em <b>${PPCT(RE)}</b> marca o quanto do mês já passou (${UD} de ${UT} dias úteis). Barra além da linha = no ritmo.</div>
+  <div class="bl"><span class="tag">LOJA</span><span class="bar" style="--pjc:${corPjNavy(g.metaLoja?g.proj/g.metaLoja:null)}">${wkCells()}<span class="mk" style="left:${(RE*100).toFixed(1)}%"></span><i style="width:${Math.min(g.pctLoja*100,100)}%;background:${g.pctLoja>=RE?'#2FD08E':'#FF6B70'}"></i>${projBar(g.pctLoja,g.metaLoja?g.proj/g.metaLoja:null)}</span><span class="pc">${PPCT(g.pctLoja)}</span>${projTxt(g.metaLoja?g.proj/g.metaLoja:null,corPjNavy(g.metaLoja?g.proj/g.metaLoja:null))}</div>
+  <div class="bl"><span class="tag">TIME</span><span class="bar" style="--pjc:${corPjNavy(g.metaTime?g.proj/g.metaTime:null)}">${wkCells()}<span class="mk" style="left:${(RE*100).toFixed(1)}%"></span><i style="width:${Math.min(g.pctTime*100,100)}%;background:${g.pctTime>=RE?'#2FD08E':'#FF6B70'};opacity:.65"></i>${projBar(g.pctTime,g.metaTime?g.proj/g.metaTime:null)}</span><span class="pc">${PPCT(g.pctTime)}</span>${projTxt(g.metaTime?g.proj/g.metaTime:null,corPjNavy(g.metaTime?g.proj/g.metaTime:null))}</div>
+  <div class="ppleg">Cada bloco é uma semana do mês (seg–sáb). Passe o mouse em uma semana para ver a meta da semana e a meta/dia. A faixa amarela é a semana atual (<b>S${SEMATUAL}</b>); a linha branca em <b>${PPCT(RE)}</b> marca o quanto do mês já passou (${UD} de ${UT} dias úteis). Barra além da linha = no ritmo. O trecho listrado e o <b>proj.</b> mostram onde o mês fecha se o ritmo de hoje continuar (dias úteis).</div>
  </div></div>`;
  h+=gaugeBox(g,'Atingimento da rede');
  h+=`<div class="grp"><div class="grph"><h3>Resumo de níveis</h3><span class="cnt">régua ${NOVA?'a partir de Out/26':'Jul–Set/26'} · base Méd. 90 dias</span></div><div class="ind">`;
