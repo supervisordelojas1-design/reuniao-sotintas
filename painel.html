@@ -495,7 +495,10 @@ const FRAC=UT?UD/UT:1;
 const sm=(a,f)=>a.reduce((s,x)=>s+f(x),0);
 const _m=+P.dataBase.slice(5,7), NOVA=(P.ano>2026)||(P.ano==2026&&_m>=10);
 const LIMLJ=NOVA?[250000,150000]:[180000,100000];
-const REG={3:[130000,85000,65000,50000],2:[95000,70000,55000,40000],1:[80000,60000,45000,30000]};
+/* régua do vendedor por nível da loja: [V5 acima de, V4 a partir de, V3, V2]
+   a partir de out/2026 vale a régua nova (mesma do painel Níveis) */
+const REG=NOVA?{3:[150000,100000,70000,50000],2:[110000,90000,60000,40000],1:[85000,65000,50000,30000]}
+             :{3:[130000,85000,65000,50000],2:[95000,70000,55000,40000],1:[80000,60000,45000,30000]};
 const ROTL={3:['Ouro','#B8912B','#FBF3DC'],2:['Prata','#6C7885','#EDF1F5'],1:['Bronze','#A9682F','#F8EDE3']};
 const ROTV={5:'Elite',4:'Sênior',3:'Pleno',2:'Júnior',1:'Iniciante'};
 const nvLoja=m=>m>LIMLJ[0]?3:m>=LIMLJ[1]?2:1;
