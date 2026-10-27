@@ -2832,7 +2832,7 @@ function resumoPontos(){
   function pinta(D){
     if(!D||!D.ok||!D.pessoas){ box.classList.remove('show'); return; }
     var cat=D.eu?(D.eu.cargo==='sup'?'sup':D.eu.cargo==='ger'?'ger':'vend'):'vend';
-    var CATS={vend:'vendedores',ger:'gerentes',sup:'supervisores'}, PERS={s:'Semana',m:'Mês',a:'Ano'}, med=['🥇','🥈','🥉'];
+    var CATS={vend:'vendedores',ger:'gerentes',sup:'supervisores'}, PERS={d:'Dia',s:'Semana',m:'Mês',a:'Ano'}, med=['🥇','🥈','🥉'];
     var h='<div class="ih-h">⭐ Pontos ST<span class="ip-sem">semana de '+dBr(D.semana)+'</span></div>';
     if(D.eu){
       h+='<div class="ip-kpis">'+['s','m','a'].map(function(p){
@@ -2853,19 +2853,15 @@ function resumoPontos(){
     /* versão compacta na barra do topo (junto da saudação) */
     try{ var tp=document.getElementById('iniTopPts'); if(tp){
       var th='';
-      if(D.eu) th+=['s','m','a'].map(function(p){
+      /* bloco Dia (o servidor manda "d" = pontos de hoje, horário de Brasília) */
+      var temDia=(D.pessoas||[]).some(function(p){ return p.d!==undefined; });
+      if(D.eu&&temDia&&D.eu.d===undefined){ var eud=(D.pessoas||[]).filter(function(p){ return p.codigo===D.eu.codigo; })[0]; D.eu.d=eud?eud.d:0; }
+      if(D.eu) th+=(temDia?['d','s','m','a']:['s','m','a']).map(function(p){
         var L=lista(D,cat,p), me=L.filter(function(x){ return x.id===D.eu.codigo; })[0];
         return '<span class="tp-k"><small>'+PERS[p]+'</small><b>'+nf(D.eu[p])+' ST</b>'+(me?'<i>'+me.pos+'º de '+L.length+'</i>':'')+'</span>';
       }).join('');
       if(top.length) th+='<span class="tp-pod" title="Pódio da semana · '+CATS[cat]+'"><small>Pódio da semana</small><span>'+top.map(function(x,i){
         var eu=D.eu&&x.id===D.eu.codigo; return '<em'+(eu?' class="tp-eu"':'')+'>'+med[i]+' '+ec(curto(x.nome).split(' ')[0])+'</em>'; }).join('')+'</span></span>';
-      /* pódio do dia (o servidor manda "d" = pontos de hoje, horário de Brasília) */
-      var temDia=(D.pessoas||[]).some(function(p){ return p.d!==undefined; });
-      if(temDia){
-        var topD=lista(D,cat,'d').filter(function(x){ return x.v>0; }).slice(0,3);
-        th+='<span class="tp-pod" title="Pódio do dia · '+CATS[cat]+'"><small>Pódio do dia</small><span>'+(topD.length?topD.map(function(x,i){
-          var eu=D.eu&&x.id===D.eu.codigo; return '<em'+(eu?' class="tp-eu"':'')+'>'+med[i]+' '+ec(curto(x.nome).split(' ')[0])+'</em>'; }).join(''):'<em class="tp-vz">ninguém pontuou hoje</em>')+'</span></span>';
-      }
       tp.innerHTML='<span class="tp-ic">⭐</span>'+th+'<span class="tp-go" aria-hidden="true">›</span>';
       tp.hidden=!th;
     } }catch(eTp){}
@@ -10010,7 +10006,6 @@ html[data-theme="dark"] #ovInicio{background:radial-gradient(90% 55% at 100% 0%,
 #ovInicio .ini-tpts .tp-pod span{display:flex;gap:9px;margin-top:2px}
 #ovInicio .ini-tpts .tp-pod em{font-style:normal;font-size:12.5px;font-weight:800}
 #ovInicio .ini-tpts .tp-pod em.tp-eu{color:#FFD100}
-#ovInicio .ini-tpts .tp-pod em.tp-vz{font-weight:600;opacity:.75;font-size:11.5px}
 #ovInicio .ini-tpts .tp-go{background:none;box-shadow:none;padding:0 2px;font-size:24px;font-weight:800;color:#FFD100}
 #ovInicio .ini-tpts:hover>span:not(.tp-ic):not(.tp-go){background:linear-gradient(180deg,rgba(255,255,255,.26),rgba(255,255,255,.10))}
 /* com a faixa no topo, o cartão grande de pontos sai do corpo */
