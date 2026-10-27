@@ -93,6 +93,11 @@ input{width:100%}
 .st{display:inline-block;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;line-height:1.3}
 .st.ok{background:var(--okbg);color:var(--ok)}.st.lk{background:var(--warnbg);color:var(--warn)}.st.no{background:var(--badbg);color:var(--bad)}.st.nd{background:var(--surface2);color:var(--muted);border:1px solid var(--line)}
 .zero{color:var(--muted)}
+.ind .rs b.up{color:var(--ok)}
+.sx{border:1px dashed var(--navy);background:transparent;color:var(--navy);font:800 10.5px var(--fb);padding:2px 8px;border-radius:999px;cursor:pointer;margin-left:4px;text-transform:none;letter-spacing:0;vertical-align:middle}
+.sx.on{background:var(--navy);color:#fff;border-style:solid}
+.simtag{display:inline-flex;gap:6px;align-items:center;font:800 11.5px var(--fb);color:#fff;background:var(--navy);padding:3px 10px;border-radius:999px}
+.simtag button{border:0;background:rgba(255,255,255,.2);color:#fff;font:800 10.5px var(--fb);border-radius:999px;padding:1px 7px;cursor:pointer}
 
 /* complete */
 .comp{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px 12px}
@@ -180,7 +185,7 @@ function calcular(x,pct){
  ].forEach(function(a){var bate=a[3],paga=bate&&cpfPre;
   T({g:'Indicadores CPF · R$ 20 cada · você e a loja ≥ 95%',k:a[0],nm:a[1],rg:a[2],nu:a[4],ok:paga,
     st:bate&&!cpfPre?['lk','bateu · falta 95%']:null,hoje:paga?20:0,max:20,
-    falta:bate?(cpfPre?'—':(p95?'loja em '+P(x.alcLoja,0)+' (precisa 95%)':'você chegar a 95%')):(a[5]==null?'sem dado':(a[6]==='R$'?R(a[5]):a[5].toFixed(1).replace('.',',')+' '+a[6])),
+    falta:bate?(cpfPre?'—':(p95?'loja em '+P(x.alcLoja,0)+' (precisa 95%)':'você chegar a 95%')):(a[5]==null?'sem dado':(a[6]==='R$'?R(a[5]):a[5].toFixed(a[6]==='item'?2:1).replace('.',',')+' '+a[6])),
     ganhoProx:paga?0:20})});
  /* 4) CNPJ: pré-req ≥10 positivados + 95% + 50% da carteira; teto R$ 500 */
  var cnpjPre=p95&&x.posit>=10&&x.pctPosit!=null&&x.pctPosit>=.5;
@@ -220,7 +225,7 @@ function calcular(x,pct){
 }
 
 /* ═════════ DADOS (Painel de Metas + Níveis) ═════════ */
-var BASE=null, NIV=null, LOCK=null, S=null, ESC='', ATUAL=null, SIMPCT=null;
+var BASE=null, NIV=null, LOCK=null, S=null, ESC='', ATUAL=null, SIMPCT=null, SIMX={};
 function vendedorDe(loja,vd,p){
  var C=vd.slice(4), meta=vd[1], fat=vd[2], UD=p[4], UT=p[3];
  var nl=nvLoja(loja[7]), v=nvVend(vd[3],nl);
@@ -228,7 +233,7 @@ function vendedorDe(loja,vd,p){
  if(NIV&&NIV.LOJAS){var lj=NIV.LOJAS.filter(function(z){return code3(z.id)===code3(loja[0])})[0]; if(lj&&!(NIV.VENDS||[]).length) nl=+lj.niv||nl;}
  return {nome:vd[0],loja:code3(loja[0]),lojaNome:loja[1],sup:loja[2],nl:nl,v:v,med90:vd[3],meta:meta,fat:fat,UD:UD,UT:UT,
   pct:meta?fat/meta:0, proj:UD?fat/UD*UT:fat, alcLoja:loja[3]?loja[5]/loja[3]:null, projLoja:loja[3]?loja[6]/loja[3]:null,
-  fatCNPJ:C[1]||0, metaCNPJ:C[0]||0, posit:C[5]||0, pctPosit:C[3]?C[5]/C[3]:null, novos:C[4]||0,
+  fatCNPJ:C[1]||0, metaCNPJ:C[0]||0, posit:C[5]||0, pctPosit:C[3]?C[5]/C[3]:null, ativos:C[3]||0, novos:C[4]||0,
   ident:C[7], itens:C[8], ticket:C[9], descCPF:C[10]};
 }
 /* o que o app não sabe: o vendedor completa (fica guardado no aparelho) */
@@ -239,15 +244,17 @@ function guardaExtra(x,k,v){try{var all=JSON.parse(localStorage.getItem(EXTRA_K)
  all[key]=all[key]||{};all[key][k]=v;localStorage.setItem(EXTRA_K,JSON.stringify(all))}catch(z){}}
 
 /* ═════════ TELA ═════════ */
-function grupoHtml(L){
- var h='',g=null;
- L.forEach(function(o){
-  if(o.g!==g){g=o.g;h+='<div class="grupo">'+esc(g)+'</div>';}
+function grupoHtml(L,Lh,x){
+ var h='',g=null, sim=!!Lh;
+ L.forEach(function(o,i){
+  if(o.g!==g){g=o.g;h+='<div class="grupo">'+esc(g)+((/CNPJ/.test(g)&&x&&(x.pctPosit==null||x.pctPosit<.5))?' <button type="button" class="sx'+(SIMX.carteira?' on':'')+'" data-sx="carteira">'+(SIMX.carteira?'✓ 50% da carteira simulado':'simular 50% da carteira')+'</button>':'')+'</div>';}
+  var hj=Lh?Lh[i]:o, pode=SIMVEL[o.k]&&!hj.ok&&!(hj.st&&hj.st[0]==='lk')&&o.k!=='meta';
+  var bt=pode?'<button type="button" class="sx'+(SIMX[o.k]?' on':'')+'" data-sx="'+o.k+'">'+(SIMX[o.k]?'✓ simulado':'simular ✓')+'</button>':'';
   var st=o.st?'<span class="st '+o.st[0]+'">'+esc(o.st[1])+'</span>':o.ok?'<span class="st ok">garantido ✓</span>':'<span class="st no">ainda não</span>';
   h+='<div class="ind"><div><div class="nm">'+esc(o.nm)+'</div><div class="rg">'+esc(o.rg)+'</div></div>'+
    '<div class="c2"><span class="nu">'+esc(o.nu)+'</span></div>'+
-   '<div class="c3">'+st+'<div class="rg" style="margin-top:3px">'+(o.falta&&o.falta!=='—'?'falta: '+esc(o.falta):'&nbsp;')+'</div></div>'+
-   '<div class="rs"><b class="'+(o.hoje?'':'zero')+'">'+R(o.hoje)+'</b><small>de '+R(o.max)+'</small></div></div>';
+   '<div class="c3">'+st+' '+bt+'<div class="rg" style="margin-top:3px">'+(o.falta&&o.falta!=='—'?'falta: '+esc(o.falta):'&nbsp;')+'</div></div>'+
+   '<div class="rs"><b class="'+(o.hoje?(sim&&o.hoje>hj.hoje?'up':''):'zero')+'">'+R(o.hoje)+'</b><small>'+(sim&&o.hoje!==hj.hoje?'hoje '+R(hj.hoje)+' · ':'')+'de '+R(o.max)+'</small></div></div>';
  });
  return h;
 }
@@ -271,17 +278,50 @@ function passos(x,c){
   .sort(function(a,b){return b.ganhoProx-a.ganhoProx}).forEach(function(o){out.push({t:o.nm,d:'Falta '+o.falta+' · regra: '+o.rg,v:o.ganhoProx})});
  return out.filter(function(o){return o.v>0}).slice(0,3);
 }
+/* "e se eu bater este indicador?": copia os números e coloca o indicador marcado no ponto que paga */
+var SIMVEL={ident:'% identificadas',itens:'itens',ticket:'ticket',descCPF:'desconto CPF',fatCNPJ:'faturamento CNPJ',descCNPJ:'desconto CNPJ',
+ posit:'positivados',novos:'clientes novos',carteira:'50% da carteira',metaCNPJ:'meta CNPJ',euc:'Eucatex'};
+function cenario(x){
+ var y={}; for(var k in x) y[k]=x[k];
+ var prox=function(v,fx){for(var i=0;i<fx.length;i++) if(v<fx[i]) return fx[i]; return v};
+ if(SIMX.ident) y.ident=Math.max(y.ident||0,.8);
+ if(SIMX.itens) y.itens=Math.max(y.itens||0,2.5);
+ if(SIMX.ticket) y.ticket=Math.max(y.ticket||0,200);
+ if(SIMX.descCPF) y.descCPF=Math.min(y.descCPF==null?1:y.descCPF,.069);
+ if(SIMX.fatCNPJ) y.fatCNPJ=prox(y.fatCNPJ||0,[30000,50000,80000,120000]);
+ if(SIMX.descCNPJ) y.descCNPJ=Math.min(y.descCNPJ==null?1:y.descCNPJ,.169);
+ if(SIMX.posit) y.posit=prox(y.posit||0,[10,15,20]);
+ if(SIMX.novos) y.novos=prox(y.novos||0,[4,8,10]);
+ if(SIMX.carteira) y.pctPosit=Math.max(y.pctPosit||0,.5);
+ else if(SIMX.posit&&y.ativos) y.pctPosit=Math.max(y.pctPosit||0,y.posit/y.ativos);
+ if(SIMX.metaCNPJ&&y.metaCNPJ) y.fatCNPJ=Math.max(y.fatCNPJ,y.metaCNPJ);
+ if(SIMX.euc){ if(!(y.metaEuc>0)){y.metaEuc=1;} y.litEuc=Math.max(y.litEuc||0,y.metaEuc); }
+ return y;
+}
+function simAtivos(){return Object.keys(SIMX).filter(function(k){return SIMX[k]})}
 function simRes(cs,c){
  var sg=function(re){return R(cs.L.filter(function(o){return re.test(o.g)}).reduce(function(a,o){return a+o.hoje},0))};
- return '<div class="l">Você receberia</div><div class="v">'+R(cs.hoje)+'</div><div class="d">'+(cs.hoje>c.hoje?'+'+R(cs.hoje-c.hoje)+' sobre o garantido hoje · ':'')+'mantendo os indicadores de hoje</div>'+
+ return '<div class="l">Você receberia</div><div class="v">'+R(cs.hoje)+'</div><div class="d">'+(cs.hoje>c.hoje?'+'+R(cs.hoje-c.hoje)+' sobre o garantido hoje · ':'')+(simAtivos().length?'com '+simAtivos().length+' indicador(es) simulado(s) na lista abaixo':'mantendo os indicadores de hoje · marque “simular ✓” nos indicadores abaixo')+'</div>'+
   '<div class="d" style="margin-top:6px">Meta de faturamento: <b>'+R(cs.L[0].hoje)+'</b> · CPF: <b>'+sg(/CPF ·/)+'</b> · CNPJ: <b>'+sg(/CNPJ/)+'</b> · loja e extras: <b>'+sg(/Loja e extras/)+'</b></div>';
+}
+/* lista de indicadores: sem simulação mostra hoje; com a barra mexida ou indicadores marcados mostra o cenário */
+function indCard(x,c,sp){
+ var simulando=SIMPCT!=null||simAtivos().length;
+ var cs=calcular(cenario(x),SIMPCT==null?x.pct:sp);
+ return '<h3>Seu bônus, indicador por indicador'+(simulando?'<span class="simtag">simulando '+P(SIMPCT==null?x.pct:sp,0)+(simAtivos().length?' + '+simAtivos().length+' indicador(es)':'')+' <button type="button" id="simLimpa">limpar</button></span>':'<small>hoje · de quanto pode chegar · marque “simular ✓” para ver o ganho</small>')+'</h3>'+
+  grupoHtml(simulando?cs.L:c.L,simulando?c.L:null,x);
+}
+function ligaInd(x,c){
+ Array.prototype.forEach.call(document.querySelectorAll('.sx'),function(b){b.onclick=function(){SIMX[b.dataset.sx]=!SIMX[b.dataset.sx];render();
+  var a=document.querySelector('.sx[data-sx="'+b.dataset.sx+'"]'); if(a) a.scrollIntoView({block:'nearest'})}});
+ var l=$('simLimpa'); if(l) l.onclick=function(){SIMPCT=null;SIMX={};render()};
 }
 function render(){
  var x=ATUAL; if(!x){return}
  var ex=extras(x); x.contagem=ex.contagem; x.descCNPJ=ex.descCNPJ; x.metaEuc=ex.metaEuc; x.litEuc=ex.litEuc;
  if(x.alcLoja==null&&ex.alcLoja!=null) x.alcLoja=ex.alcLoja;
  var c=calcular(x,x.pct), pp=x.meta?x.proj/x.meta:0, cp=calcular(x,pp);
- var sp=SIMPCT==null?Math.max(pp,x.pct):SIMPCT, cs=calcular(x,sp);
+ var sp=SIMPCT==null?Math.max(pp,x.pct):SIMPCT, cs=calcular(cenario(x),sp);
  $('sub').textContent=x.nome+' · Loja '+x.loja+' · '+x.lojaNome+' · '+BASE.p[0].charAt(0)+BASE.p[0].slice(1).toLowerCase()+' de '+BASE.p[1]+' · '+x.UD+' de '+x.UT+' dias úteis';
  var h='';
  /* hero */
@@ -304,7 +344,7 @@ function render(){
   '<div class="chipsrap"><button class="cr" data-p="'+x.pct+'">hoje ('+P(x.pct,0)+')</button><button class="cr" data-p="'+pp+'">no ritmo ('+P(pp,0)+')</button><button class="cr" data-p=".95">95%</button><button class="cr" data-p="1">100%</button><button class="cr" data-p="1.3">130%</button></div></div>'+
   '<div class="res" id="simRes">'+simRes(cs,c)+'</div></div></div>';
  /* indicadores */
- h+='<div class="card"><h3>Seu bônus, indicador por indicador<small>hoje · de quanto pode chegar</small></h3>'+grupoHtml(c.L)+'</div>';
+ h+='<div class="card" id="indCard">'+indCard(x,c,sp)+'</div>';
  /* complete */
  h+='<div class="card" id="comp"><h3>Complete o que o app ainda não sabe<small>fica guardado no seu aparelho</small></h3><div class="pad comp">'+
   '<label><span>Contagem de estoque da loja em dia?</span><select id="xCont"><option value="SIM"'+(x.contagem?' selected':'')+'>Sim</option><option value="NAO"'+(!x.contagem?' selected':'')+'>Não</option></select></label>'+
@@ -316,8 +356,10 @@ function render(){
  h+='<div class="acts"><button class="btn wa" id="btnWa" type="button">Enviar resumo no WhatsApp</button><button class="btn gh" type="button" onclick="window.print()">Imprimir / PDF</button></div>';
  $('app').innerHTML=h;
  /* eventos */
- var r=$('simR'); r.oninput=function(){SIMPCT=r.value/100; var cs2=calcular(x,SIMPCT);
-  $('simPct').innerHTML=P(SIMPCT,0)+' <span style="font-size:15px;color:var(--muted)">· '+R(SIMPCT*x.meta)+'</span>'; $('simRes').innerHTML=simRes(cs2,c)};
+ var r=$('simR'); r.oninput=function(){SIMPCT=r.value/100; var cs2=calcular(cenario(x),SIMPCT);
+  $('simPct').innerHTML=P(SIMPCT,0)+' <span style="font-size:15px;color:var(--muted)">· '+R(SIMPCT*x.meta)+'</span>'; $('simRes').innerHTML=simRes(cs2,c);
+  $('indCard').innerHTML=indCard(x,c,SIMPCT); ligaInd(x,c)};
+ ligaInd(x,c);
  Array.prototype.forEach.call(document.querySelectorAll('.cr'),function(b){b.onclick=function(){SIMPCT=+b.dataset.p;render()}});
  var liga=function(id,k,f){var e=$(id);if(e)e.onchange=function(){guardaExtra(x,k,f?f(e.value):e.value);render()}};
  liga('xCont','contagem');liga('xDesc','descCNPJ');liga('xMEuc','metaEuc');liga('xLEuc','litEuc');liga('xAlc','alcLoja');
@@ -341,8 +383,8 @@ function montarSeletor(lojas,soLoja){
  el.innerHTML='<span class="lb">Ver como</span>'+(lj.length>1?'<select id="sLoja">'+lj.slice().sort(function(a,b){return code3(a[0])<code3(b[0])?-1:1}).map(function(l){return '<option value="'+code3(l[0])+'"'+(code3(l[0])===code3(L[0])?' selected':'')+'>'+code3(l[0])+' · '+esc(l[1])+'</option>'}).join('')+'</select>':'<b>Loja '+code3(L[0])+' · '+esc(L[1])+'</b>')+
   '<select id="sVend">'+L[9].map(function(v,i){return '<option value="'+i+'"'+(ATUAL&&ATUAL.nome===v[0]?' selected':'')+'>'+esc(v[0])+'</option>'}).join('')+'</select>';
  var pick=function(){var l=lojas.filter(function(z){return code3(z[0])===($('sLoja')?$('sLoja').value:code3(L[0]))})[0];
-  var i=+($('sVend').value||0); if(!l[9][i]) i=0; ATUAL=vendedorDe(l,l[9][i],BASE.p); ATUAL._semLoja=!l[3]; SIMPCT=null; montarSeletor(lojas,soLoja); render()};
- if($('sLoja')) $('sLoja').onchange=function(){ATUAL=null;var l=lojas.filter(function(z){return code3(z[0])===$('sLoja').value})[0];ATUAL=vendedorDe(l,l[9][0],BASE.p);ATUAL._semLoja=!l[3];SIMPCT=null;montarSeletor(lojas,soLoja);render()};
+  var i=+($('sVend').value||0); if(!l[9][i]) i=0; ATUAL=vendedorDe(l,l[9][i],BASE.p); ATUAL._semLoja=!l[3]; SIMPCT=null; SIMX={}; montarSeletor(lojas,soLoja); render()};
+ if($('sLoja')) $('sLoja').onchange=function(){ATUAL=null;var l=lojas.filter(function(z){return code3(z[0])===$('sLoja').value})[0];ATUAL=vendedorDe(l,l[9][0],BASE.p);ATUAL._semLoja=!l[3];SIMPCT=null;SIMX={};montarSeletor(lojas,soLoja);render()};
  $('sVend').onchange=pick;
  if(!ATUAL){ATUAL=vendedorDe(L,L[9][0],BASE.p);ATUAL._semLoja=!L[3]}
 }
