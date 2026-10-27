@@ -28,7 +28,7 @@
       if(tx) tx.textContent = tema==='dark'?'Escuro':'Claro';
       var mt=document.querySelector('meta[name="theme-color"]'); if(mt) mt.setAttribute('content', tema==='dark'?'#0f1522':'#1C3F8F');
       // repassa para os iframes abertos (Painel, Níveis, PDI, Ranking, Mentor, Proposta)
-      try{ ['ifrPainel','ifrNiveis','ifrPdi','ifrRanking','ifrMentor','ifrProposta'].forEach(function(id){ var f=document.getElementById(id); if(f&&f.contentWindow) f.contentWindow.postMessage({st_tema:tema},'*'); }); }catch(e){}
+      try{ ['ifrPainel','ifrNiveis','ifrBonus','ifrPdi','ifrRanking','ifrMentor','ifrProposta'].forEach(function(id){ var f=document.getElementById(id); if(f&&f.contentWindow) f.contentWindow.postMessage({st_tema:tema},'*'); }); }catch(e){}
     },
     toggle:function(){ this.set(this.get()==='dark'?'light':'dark'); }
   };
@@ -9089,6 +9089,14 @@ syncNav();
   .tabs .tab{flex:1 1 auto}
 }
 </style>
+<!-- ===== BONIFICACOES (aba embutida, espelha Niveis) ===== -->
+<div id="ovBonus" style="position:fixed;inset:0;z-index:99999;background:#0f1522;display:none;flex-direction:column">
+ <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;color:#fff;font:600 14px system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
+  <button id="ovBnFechar" style="border:0;border-radius:8px;padding:9px 13px;background:#FFD100;color:#0F2B46;font:inherit;cursor:pointer">&larr; Voltar ao início</button>
+  <span style="opacity:.85">Bonificações</span>
+ </div>
+ <iframe id="ifrBonus" title="Bonificações" style="flex:1;width:100%;border:0;background:#0f1522"></iframe>
+</div>
 <!-- ===== NIVEIS (aba embutida, espelha o Painel) ===== -->
 <div id="ovNiveis" style="position:fixed;inset:0;z-index:99999;background:#0f1522;display:none;flex-direction:column">
  <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;color:#fff;font:600 14px system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
@@ -9184,6 +9192,11 @@ syncNav();
       <button type="button" class="ini-card feat" data-act="niveis" data-gate="1" data-vend="1" data-ger="1">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-target"/></svg></span>
         <span class="ini-txt"><span class="ini-nm">Níveis</span><span class="ini-ds">Lojas, vendedores e prazos</span></span>
+        <span class="ini-go" aria-hidden="true">&rarr;</span>
+      </button>
+      <button type="button" class="ini-card feat" data-act="bonus" data-gate="1" data-vend="1" data-ger="1">
+        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-wallet"/></svg></span>
+        <span class="ini-txt"><span class="ini-nm">Bonificações</span><span class="ini-ds">Quanto vale cada nível e o próximo</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
       <button type="button" class="ini-card feat" data-act="proposta" data-gate="1">
@@ -9445,6 +9458,16 @@ body.foco .wrap{padding-bottom:40px}
   }
   if(xN){ xN.addEventListener('click', function(){ ovN.style.display='none'; document.body.style.overflow=''; try{ if(window.abrirInicio) window.abrirInicio(); }catch(e){} }); }
 
+  // overlay de Bonificações (espelha o de Níveis)
+  var ovB=document.getElementById('ovBonus'), ifrB=document.getElementById('ifrBonus'), xB=document.getElementById('ovBnFechar');
+  function abrirBonus(){
+    if(!ovB||!ifrB) return;
+    var tema=(window.STtema?window.STtema.get():'light');
+    ifrB.setAttribute('src','bonus.html?tema='+tema+'&v='+Date.now());
+    ovB.style.display='flex'; document.body.style.overflow='hidden';
+  }
+  if(xB){ xB.addEventListener('click', function(){ ovB.style.display='none'; ifrB.removeAttribute('src'); document.body.style.overflow=''; try{ if(window.abrirInicio) window.abrirInicio(); }catch(e){} }); }
+
   // overlay de Ranking (espelha o de Níveis)
   var ovR=document.getElementById('ovRanking'), ifrR=document.getElementById('ifrRanking'),
       xR=document.getElementById('ovRkFechar');
@@ -9622,6 +9645,7 @@ body.foco .wrap{padding-bottom:40px}
     fecharInicio();
     if(act==='painel'){ var tp=document.getElementById('tabPainel'); if(tp) tp.click(); return; }
     if(act==='niveis'){ abrirNiveis(); return; }
+    if(act==='bonus'){ abrirBonus(); return; }
     if(act==='ranking'){ abrirRanking(); return; }
     if(act==='proposta'){ abrirProposta(); return; }
     if(act==='pdi'){ abrirPdi(); return; }
@@ -9817,7 +9841,7 @@ button[id^="ov"][id$="Fechar"]:hover{transform:translateY(-1px);box-shadow:0 6px
   var aberto=ov.classList.contains('aberto');
   new MutationObserver(function(){ var a=ov.classList.contains('aberto'); if(a&&!aberto) animar(); aberto=a; }).observe(ov,{attributes:true,attributeFilter:['class']});
   if(aberto) animar();
-  ['ovPainel','ovNiveis','ovRanking','ovPdi','ovMentor','ovProposta'].forEach(function(id){
+  ['ovPainel','ovNiveis','ovBonus','ovRanking','ovPdi','ovMentor','ovProposta'].forEach(function(id){
     var o=document.getElementById(id); if(!o) return; var vis=false;
     new MutationObserver(function(){ var v=o.style.display&&o.style.display!=='none'; if(v&&!vis){ o.classList.remove('st-ov-entra'); void o.offsetWidth; o.classList.add('st-ov-entra'); } vis=!!v; }).observe(o,{attributes:true,attributeFilter:['style']});
   });
