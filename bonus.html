@@ -1,0 +1,195 @@
+<!doctype html><html data-theme="dark" style="color-scheme:dark"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Bonificações · Só Tintas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#0f1522; --surface:#1a2336; --surface2:#141c2c; --ink:#eef2fb; --muted:#9aa5bb; --line:#2c3850;
+  --accent:#ff3b47; --navy:#4f7cf0; --ok:#2FD08E; --warn:#FFC94D;
+  --ouro:#E6B935; --ouro-ink:#2a2000; --prata:#C3CBD8; --prata-ink:#1a2030; --bronze:#D98A3D; --bronze-ink:#2a1500;
+  --v1:#111319; --v1-ink:#ffffff; --v2:#d32531; --v2-ink:#ffffff; --v3:#E6B935; --v3-ink:#2a2000; --v4:#178048; --v4-ink:#ffffff; --v5:#2d6ae0; --v5-ink:#ffffff;
+  --eu:rgba(79,124,240,.22); --prox:rgba(47,208,142,.13);
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Public Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+html[data-theme="light"]{
+  --bg:#f5f7fb; --surface:#ffffff; --surface2:#f7f9fd; --ink:#16233d; --muted:#5a677f; --line:#e4e9f3;
+  --navy:#1C3F8F; --ok:#128a52; --warn:#b77900; --v1:#15181f;
+  --eu:rgba(28,63,143,.12); --prox:rgba(18,138,82,.10);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 48px;display:flex;flex-direction:column;gap:18px}
+.topbar{height:8px;background:var(--accent);border-radius:0 0 6px 6px;margin:-20px -16px 4px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(24px,4vw,36px);line-height:1.05;margin:4px 0 0;color:var(--accent)}
+.sub{color:var(--muted);font-size:13px}
+.themebtn{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:700 13px var(--f-body);padding:7px 12px;border-radius:999px;cursor:pointer}
+html.embutido .themebtn{display:none}
+.controls{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 16px}
+.controls .lb{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.chip{border:1px solid var(--line);background:var(--bg);color:var(--muted);font:700 12px var(--f-body);padding:6px 12px;border-radius:8px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+.regua{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:12.5px;color:var(--muted);align-items:center}
+.nl{display:inline-flex;align-items:center;gap:5px;font-weight:800;font-size:11.5px;padding:3px 9px;border-radius:999px;letter-spacing:.02em}
+.nl.n3{background:var(--ouro);color:var(--ouro-ink)}.nl.n2{background:var(--prata);color:var(--prata-ink)}.nl.n1{background:var(--bronze);color:var(--bronze-ink)}
+.vc{display:inline-grid;place-items:center;min-width:30px;height:20px;padding:0 6px;border-radius:6px;font-weight:800;font-size:11px}
+.vc.v1{background:var(--v1);color:var(--v1-ink);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}.vc.v2{background:var(--v2);color:var(--v2-ink)}.vc.v3{background:var(--v3);color:var(--v3-ink)}.vc.v4{background:var(--v4);color:var(--v4-ink)}.vc.v5{background:var(--v5);color:var(--v5-ink)}
+
+/* hero (vendedor / gerente) */
+.hero{background:linear-gradient(135deg,#1C3F8F,#0f2b5c);color:#fff;border-radius:16px;padding:18px 20px;display:grid;grid-template-columns:1.1fr 2fr;gap:18px;align-items:center}
+html[data-theme="light"] .hero{background:linear-gradient(135deg,#1C3F8F,#14306f)}
+.hero .quem{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:#9fb6e6}
+.hero .nv{font-family:var(--f-display);font-weight:800;font-size:28px;line-height:1.1;margin:4px 0 8px}
+.hero .tags{display:flex;gap:6px;flex-wrap:wrap}
+.cen{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.cen .c{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:11px 12px}
+.cen .c .l{font-size:11px;font-weight:800;color:#9fb6e6;text-transform:uppercase;letter-spacing:.05em}
+.cen .c .v{font-family:var(--f-display);font-weight:800;font-size:24px;margin:2px 0}
+.cen .c .d{font-size:11.5px;color:#c9d6f2}
+.cen .c .up{margin-top:6px;font-size:12px;font-weight:800;color:#7CF0B6}
+.cen .c.sup{border-color:rgba(255,209,0,.55);background:rgba(255,209,0,.10)}
+.nota{font-size:12px;color:#c9d6f2;grid-column:1/-1;border-top:1px solid rgba(255,255,255,.14);padding-top:10px}
+
+#app{display:flex;flex-direction:column;gap:16px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.card h3{margin:0;padding:13px 16px;font-family:var(--f-display);font-weight:800;font-size:16px;display:flex;justify-content:space-between;align-items:baseline;gap:10px;border-bottom:1px solid var(--line)}
+.card h3 small{font-family:var(--f-body);font-size:11.5px;color:var(--muted);font-weight:700}
+.card.full{grid-column:1/-1}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:800;text-align:right;padding:10px 14px;background:var(--surface2)}
+th:first-child,td:first-child{text-align:left}
+td{padding:9px 14px;border-top:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+td.zero{color:var(--muted);font-weight:500}
+td .rot{font-weight:600;color:var(--muted);margin-left:6px;font-size:12.5px}
+td.eu,th.eu{background:var(--eu)}
+td.prox,th.prox{background:var(--prox)}
+td.eu.cel{box-shadow:inset 0 0 0 2px var(--navy);border-radius:4px}
+td.prox.cel{box-shadow:inset 0 0 0 2px var(--ok);border-radius:4px}
+.tg{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.05em;padding:1px 6px;border-radius:999px;margin-left:6px;vertical-align:middle;text-transform:uppercase}
+.tg.eu{background:var(--navy);color:#fff}.tg.prox{background:var(--ok);color:#06281a}
+.leg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--muted);padding:10px 16px;border-top:1px solid var(--line)}
+.rodape{font-size:12px;color:var(--muted);line-height:1.6}
+.rodape b{color:var(--ink)}
+@media(max-width:820px){.grid{grid-template-columns:1fr}.hero{grid-template-columns:1fr}}
+@media(max-width:520px){.cen{grid-template-columns:1fr}.cen .c .v{font-size:22px}td,th{padding:8px 10px}table{font-size:13px}}
+</style></head>
+<body>
+<div class="wrap">
+ <div class="topbar"></div>
+ <header>
+  <div><div class="eyebrow">Só Tintas · Regras de bonificação</div>
+   <h1>Bonificações</h1>
+   <div class="sub" id="sub">Valores por nível de loja e nível de vendedor</div></div>
+  <button class="themebtn" id="btnTema">◐ Tema</button>
+ </header>
+
+ <div class="controls" id="ctlVer">
+  <span class="lb">Prévia · ver como</span>
+  <button class="chip" data-v="coord">Coordenação / Supervisão</button>
+  <button class="chip" data-v="ger">Gerente · loja N2 Prata</button>
+  <button class="chip" data-v="vend">Vendedor · V3 na loja N2</button>
+ </div>
+
+ <div class="regua" id="regua"></div>
+ <div id="app"></div>
+ <div class="rodape" id="rodape"></div>
+</div>
+<script>
+(function(){
+/* ===== Parâmetros do fechamento (planilha "Só Tintas — parâmetros do fechamento") ===== */
+var B={
+ perf:{1:[0,0,0,350,500],2:[0,0,300,500,600],3:[0,250,400,600,800]},          /* pago no dia 20 */
+ m95:{1:[100,120,150,180,220],2:[220,250,280,320,380],3:[250,280,350,420,500]},
+ m100:{1:[280,300,330,380,440],2:[290,330,380,440,530],3:[330,380,450,550,750]},
+ sup:{1:[480,500,530,550,650],2:[420,480,550,650,800],3:[480,550,750,850,1500]},
+ ger:{1:[400,900,1500],2:[600,1200,2000],3:[800,1500,2500]},                    /* 95% · 100% · 130% */
+ inv:{1:500,2:700,3:1000}                                                      /* pré-requisito: loja ≥ 90% da meta */
+};
+var NL={1:['N1','Bronze'],2:['N2','Prata'],3:['N3','Ouro']};
+var VR={1:'Iniciante',2:'Júnior',3:'Pleno',4:'Sênior',5:'Elite'};
+var R=function(n){return 'R$ '+Number(n||0).toLocaleString('pt-BR')};
+var nl=function(n){return '<span class="nl n'+n+'">'+NL[n][0]+' · '+NL[n][1]+'</span>'};
+var vc=function(v){return '<span class="vc v'+v+'">V'+v+'</span>'};
+var $=function(id){return document.getElementById(id)};
+
+/* tema */
+try{var q=new URLSearchParams(location.search),t=q.get('tema');if(t){document.documentElement.dataset.theme=t;document.documentElement.classList.add('embutido')}}catch(e){}
+$('btnTema').onclick=function(){var h=document.documentElement;h.dataset.theme=h.dataset.theme=='light'?'dark':'light'};
+
+$('regua').innerHTML='<b style="color:var(--ink)">Régua das lojas (Méd. 90 dias):</b> '+nl(3)+' acima de R$ 250 mil '+nl(2)+' R$ 150–250 mil '+nl(1)+' abaixo de R$ 150 mil';
+
+/* tabela de vendedor: linhas V1..V5, colunas = níveis de loja visíveis */
+function tabV(tit,obs,key,cols,eu){
+ var h='<div class="card"><h3>'+tit+'<small>'+obs+'</small></h3><table><tr><th>Nível</th>';
+ cols.forEach(function(n){h+='<th class="'+(eu&&eu.nl==n?'eu':eu&&eu.nlProx==n?'prox':'')+'">'+NL[n][0]+' · '+NL[n][1]+(eu&&eu.nl==n?'<span class="tg eu">sua loja</span>':eu&&eu.nlProx==n?'<span class="tg prox">próximo</span>':'')+'</th>'});
+ h+='</tr>';
+ [1,2,3,4,5].forEach(function(v){
+  if(eu&&eu.v&&v!==eu.v&&v!==eu.v+1) return;
+  h+='<tr><td>'+vc(v)+'<span class="rot">'+VR[v]+'</span>'+(eu&&eu.v==v?'<span class="tg eu">você</span>':eu&&eu.v&&eu.v+1==v?'<span class="tg prox">próximo</span>':'')+'</td>';
+  cols.forEach(function(n){var x=B[key][n][v-1],c=[];
+   if(!x)c.push('zero');
+   if(eu&&eu.v){ if(n==eu.nl&&v==eu.v)c.push('eu','cel'); else if(n==eu.nl&&v==eu.v+1)c.push('prox','cel'); }
+   else if(eu){ if(n==eu.nl)c.push('eu'); else if(n==eu.nlProx)c.push('prox'); }
+   h+='<td class="'+c.join(' ')+'">'+(x?R(x):'—')+'</td>'});
+  h+='</tr>'});
+ return h+'</table></div>';
+}
+function tabGer(rows,eu){
+ var h='<div class="card full"><h3>Meta de faturamento do gerente<small>por nível de loja · bônus de inventário exige loja ≥ 90% da meta</small></h3><table><tr><th>Loja</th><th>Meta 1 (95%)</th><th>Meta 2 (100%)</th><th>Super (130%)</th><th>Inventário</th></tr>';
+ rows.forEach(function(n){var c=eu?(n==eu.nl?'eu':n==eu.nlProx?'prox':''):'';
+  h+='<tr><td>'+nl(n)+(eu&&n==eu.nl?'<span class="tg eu">sua loja</span>':eu&&n==eu.nlProx?'<span class="tg prox">próximo</span>':'')+'</td>'+
+   B.ger[n].map(function(x){return '<td class="'+c+'">'+R(x)+'</td>'}).join('')+'<td class="'+c+'">'+R(B.inv[n])+'</td></tr>'});
+ return h+'</table></div>';
+}
+function cenarios(perf,t95,t100,t130,pp,p95,p100,p130,rotPerf){
+ function c(l,base,x,px,cls){var tot=base+x,ptot=pp==null?null:pp+px;
+  return '<div class="c '+(cls||'')+'"><div class="l">Se bater '+l+'</div><div class="v">'+R(tot)+'</div><div class="d">'+(base?R(base)+' '+rotPerf+' + ':'')+R(x)+' da meta</div>'+
+   (ptot!=null?'<div class="up">no próximo nível: '+R(ptot)+(ptot>tot?' (+'+R(ptot-tot)+')':'')+'</div>':'')+'</div>'}
+ return '<div class="cen">'+c('95%',perf,t95,p95)+c('100%',perf,t100,p100)+c('130%',perf,t130,p130,'sup')+'</div>';
+}
+
+function render(ver){
+ Array.prototype.forEach.call(document.querySelectorAll('#ctlVer .chip'),function(b){b.setAttribute('aria-pressed',b.dataset.v==ver)});
+ var h='';
+ if(ver=='coord'){
+  $('sub').textContent='Visão completa da rede · todos os níveis';
+  var cols=[1,2,3];
+  h+='<div class="grid">'+tabV('Bônus performance do vendedor','pago no dia 20','perf',cols)+tabV('Meta de faturamento — Meta 1','95% da meta','m95',cols)
+   +tabV('Meta de faturamento — Meta 2','100% da meta','m100',cols)+tabV('Meta de faturamento — Super','130% da meta','sup',cols)+tabGer([1,2,3])+'</div>';
+ }
+ if(ver=='ger'){
+  var n=2,np=n<3?n+1:null,eu={nl:n,nlProx:np};
+  $('sub').textContent='Loja 030 · Barão1 · você vê o nível da sua loja e o próximo';
+  var g=B.ger[n],gp=np?B.ger[np]:null;
+  h+='<div class="hero"><div><div class="quem">Gerente · sua loja</div><div class="nv">'+NL[n][0]+' · '+NL[n][1]+'</div><div class="tags">'+nl(n)+(np?' <span class="tg prox" style="font-size:10.5px;padding:3px 9px">próximo: '+NL[np][0]+' · '+NL[np][1]+'</span>':'')+'</div></div>'
+   +cenarios(0,g[0],g[1],g[2],gp?0:null,gp&&gp[0],gp&&gp[1],gp&&gp[2],'')
+   +'<div class="nota">Bônus de inventário: <b>'+R(B.inv[n])+'</b> com a loja em pelo menos 90% da meta'+(np?' · no '+NL[np][0]+' '+NL[np][1]+': <b>'+R(B.inv[np])+'</b>':'')+'. A loja sobe de nível pela Méd. 90 dias.</div></div>';
+  var cols=np?[n,np]:[n];
+  h+='<div class="grid">'+tabGer(cols,eu)+tabV('Bônus performance do vendedor','pago no dia 20','perf',cols,eu)+tabV('Meta 1 do vendedor','95% da meta','m95',cols,eu)
+   +tabV('Meta 2 do vendedor','100% da meta','m100',cols,eu)+tabV('Super meta do vendedor','130% da meta','sup',cols,eu)+'</div>';
+ }
+ if(ver=='vend'){
+  var n=2,v=3,vp=v<5?v+1:null,eu={nl:n,v:v};
+  $('sub').textContent='Luan Pinto · Loja 030 · você vê o seu nível e o próximo';
+  var i=v-1,j=vp?vp-1:null,pf=B.perf[n][i];
+  h+='<div class="hero"><div><div class="quem">Seu nível</div><div class="nv">V'+v+' · '+VR[v]+'</div><div class="tags">'+vc(v)+' '+nl(n)+(vp?' <span class="tg prox" style="font-size:10.5px;padding:3px 9px">próximo: V'+vp+' · '+VR[vp]+'</span>':'')+'</div></div>'
+   +cenarios(pf,B.m95[n][i],B.m100[n][i],B.sup[n][i],vp?B.perf[n][j]:null,vp&&B.m95[n][j],vp&&B.m100[n][j],vp&&B.sup[n][j],'performance')
+   +'<div class="nota">Bônus performance de <b>'+R(pf)+'</b> pago no dia 20, somado ao bônus da faixa de meta que você bater. Você sobe de V pela Méd. 90 dias.</div></div>';
+  var cols=[n];
+  h+='<div class="grid">'+tabV('Bônus performance','pago no dia 20','perf',cols,eu)+tabV('Meta 1','95% da meta','m95',cols,eu)
+   +tabV('Meta 2','100% da meta','m100',cols,eu)+tabV('Super meta','130% da meta','sup',cols,eu)+'</div>';
+ }
+ $('app').innerHTML=h;
+ $('rodape').innerHTML='Valores em reais por mês. A faixa de meta paga é a maior atingida (95%, 100% ou 130%); o bônus performance é pago à parte, no dia 20. Fonte: parâmetros do fechamento Só Tintas.';
+}
+Array.prototype.forEach.call(document.querySelectorAll('#ctlVer .chip'),function(b){b.onclick=function(){render(b.dataset.v)}});
+render('coord');
+})();
+</script>
+</body></html>
