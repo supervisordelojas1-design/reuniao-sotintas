@@ -2859,6 +2859,13 @@ function resumoPontos(){
       }).join('');
       if(top.length) th+='<span class="tp-pod" title="Pódio da semana · '+CATS[cat]+'"><small>Pódio da semana</small><span>'+top.map(function(x,i){
         var eu=D.eu&&x.id===D.eu.codigo; return '<em'+(eu?' class="tp-eu"':'')+'>'+med[i]+' '+ec(curto(x.nome).split(' ')[0])+'</em>'; }).join('')+'</span></span>';
+      /* pódio do dia (o servidor manda "d" = pontos de hoje, horário de Brasília) */
+      var temDia=(D.pessoas||[]).some(function(p){ return p.d!==undefined; });
+      if(temDia){
+        var topD=lista(D,cat,'d').filter(function(x){ return x.v>0; }).slice(0,3);
+        th+='<span class="tp-pod" title="Pódio do dia · '+CATS[cat]+'"><small>Pódio do dia</small><span>'+(topD.length?topD.map(function(x,i){
+          var eu=D.eu&&x.id===D.eu.codigo; return '<em'+(eu?' class="tp-eu"':'')+'>'+med[i]+' '+ec(curto(x.nome).split(' ')[0])+'</em>'; }).join(''):'<em class="tp-vz">ninguém pontuou hoje</em>')+'</span></span>';
+      }
       tp.innerHTML='<span class="tp-ic">⭐</span>'+th+'<span class="tp-go" aria-hidden="true">›</span>';
       tp.hidden=!th;
     } }catch(eTp){}
@@ -10003,6 +10010,7 @@ html[data-theme="dark"] #ovInicio{background:radial-gradient(90% 55% at 100% 0%,
 #ovInicio .ini-tpts .tp-pod span{display:flex;gap:9px;margin-top:2px}
 #ovInicio .ini-tpts .tp-pod em{font-style:normal;font-size:12.5px;font-weight:800}
 #ovInicio .ini-tpts .tp-pod em.tp-eu{color:#FFD100}
+#ovInicio .ini-tpts .tp-pod em.tp-vz{font-weight:600;opacity:.75;font-size:11.5px}
 #ovInicio .ini-tpts .tp-go{background:none;box-shadow:none;padding:0 2px;font-size:24px;font-weight:800;color:#FFD100}
 #ovInicio .ini-tpts:hover>span:not(.tp-ic):not(.tp-go){background:linear-gradient(180deg,rgba(255,255,255,.26),rgba(255,255,255,.10))}
 /* com a faixa no topo, o cartão grande de pontos sai do corpo */

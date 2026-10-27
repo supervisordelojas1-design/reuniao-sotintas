@@ -7,7 +7,7 @@
  * Troque o número da versão sempre que subir um index.html novo — é o que
  * faz o aparelho baixar a versão nova em vez de servir a antiga.
  */
-var VERSAO = 'ast-v121';
+var VERSAO = 'ast-v122';
 var CASCA  = ['./', './index.html', './niveis.html', './bonus.html', './ranking.html', './proposta.html', './pdi.html', './pdi-gestores.js?v=2', './pdi-logo.jpg', './st-hora.js?v=1', './st-dados.js?v=90', './st-anima.js?v=3', './st-mascote.js?v=2', './mascote-soldado.webp?v=1', './st-mascote3d.js?v=1', './mascote-3d.glb?v=1', './agenda.html', './tv.html', './semana.html', './uso.html', './cadastro.html', './pontos.html', './manifest.json'];
 
 self.addEventListener('install', function (e) {
