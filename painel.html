@@ -137,7 +137,20 @@ html[data-theme="dark"] .bar .wc.on{background:rgba(224,165,58,.16)}
 .bar .pj{position:absolute;top:0;bottom:0;z-index:1;opacity:.45;
  background:repeating-linear-gradient(90deg,var(--pjc) 0 4px,transparent 4px 7px)}
 .bar .pjk{position:absolute;top:-1px;bottom:-1px;width:3px;margin-left:-3px;border-radius:2px;z-index:2;background:var(--pjc)}
-.bl .pjt{font-size:10.5px;font-weight:800;width:74px;text-align:right;white-space:nowrap;letter-spacing:-.2px}
+.bl .pjt{font-size:10.5px;font-weight:800;width:92px;text-align:right;white-space:nowrap;letter-spacing:-.2px}
+.bl .pjt em{font-style:normal;margin-right:3px;font-size:11px}
+.bar .lk{position:absolute;top:0;bottom:0;z-index:0;background:rgba(15,43,70,.10)}
+html[data-theme="dark"] .bar .lk{background:rgba(255,255,255,.045)}
+.bar .c100{position:absolute;top:-1px;bottom:-1px;width:2px;border-radius:1px;background:var(--tx3);opacity:.85;z-index:3}
+.bar .tk{position:absolute;top:0;bottom:0;width:1px;background:var(--tx3);opacity:.45;z-index:2}
+.ppbar .bar .lk{background:rgba(255,255,255,.05)}
+.ppbar .bar .c100{background:rgba(255,255,255,.72);opacity:1}
+.ppbar .bar .tk{background:rgba(255,255,255,.38);opacity:1}
+.wkruler .wf{position:absolute;transform:translateX(-50%);bottom:0;font-size:8.5px;font-weight:700;
+ color:var(--tx3);letter-spacing:-.2px;white-space:nowrap}
+.wkruler .wf.cem{color:var(--tx2);font-weight:800}
+.ppbar .wkruler .wf{color:#8FA9C2}
+.ppbar .wkruler .wf.cem{color:#C7DAEE}
 .bl .pjt small{font-size:9px;font-weight:700;color:var(--tx3);margin-right:3px;letter-spacing:.3px}
 .bd.lj{margin-left:5px}
 .rt{text-align:right;min-width:88px}
@@ -206,7 +219,7 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
 .ppbar .wc.alt{background:rgba(255,255,255,.06)}
 .ppbar .wc.on{background:rgba(255,209,0,.16)}
 /* régua de semanas — base (barras de loja/vendedor, fundo claro) */
-.wkruler{position:relative;height:26px;margin:1px 140px 4px 44px}
+.wkruler{position:relative;height:34px;margin:1px 158px 4px 44px}
 .wkruler .wl{position:absolute;transform:translateX(-50%);top:0;text-align:center;line-height:1.05;cursor:default;
  padding:2px 5px;border-radius:7px;transition:background .12s}
 .wkruler .wl b{display:block;font-size:9.5px;font-weight:800;color:var(--tx2)}
@@ -215,8 +228,8 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
 .wkruler .wl.on{background:#FFD100}
 .wkruler .wl.on b,.wkruler .wl.on i{color:#0F2B46}
 /* régua no resumo grande (ppbar, fundo navy) */
-.ppbar .wkruler{height:28px;margin:2px 152px 6px 52px}
-.ppbar .bl .pjt{width:84px;font-size:12.5px}
+.ppbar .wkruler{height:36px;margin:2px 168px 6px 52px}
+.ppbar .bl .pjt{width:100px;font-size:12.5px}
 .ppbar .bl .pjt small{color:#8FA9C2;font-size:10px}
 .ppbar .bar .pj{opacity:.55}
 .ppbar .wkruler .wl b{color:#C7DAEE}
@@ -345,13 +358,18 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
 .evt td{padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap}.evt .r{text-align:right}.evt tr.cur td{background:var(--tintb)}.evt tr.tot td{font-weight:700;background:var(--panel2);white-space:normal}.evt .mut{color:var(--tx3);font-weight:400}
 .est{font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:4px;margin-left:6px;letter-spacing:.2px;white-space:nowrap;display:inline-block;vertical-align:middle}
 .evsp{margin-top:6px}.spk{display:block;max-width:100%}
+.wkfx{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 16px;border-top:1px solid var(--line);font-size:12px;color:var(--tx2)}
+.wkfx b{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3)}
+.wkfx .fxp{background:var(--panel2);border-radius:6px;padding:3px 9px;font-weight:800;color:var(--tx);white-space:nowrap;font-size:11.5px}
+.wkfx .fxp.cem{color:var(--navy-ink)}
+.wkfx .mut{color:var(--tx3);font-size:11px}
 .evomini{display:flex;align-items:center;gap:14px;padding:12px 16px;border-top:1px solid var(--line);cursor:pointer;flex-wrap:wrap}.evomini:hover{background:var(--panel2)}
 .evogo{font-size:12.5px;font-weight:800;color:var(--navy-ink);margin-left:auto;white-space:nowrap}
 
 @media(max-width:640px){
  .ttl h2{font-size:20px}.kpi .vl{font-size:22px}.f2{grid-template-columns:1fr}
  .row{grid-template-columns:22px 1fr;gap:9px}.rt{grid-column:2;text-align:left;margin-top:6px}
- .bl .pc{width:46px}.bl .pjt{width:62px;font-size:10px}.bl .pjt small{display:none}.wkruler{margin-right:124px}.ppbar .wkruler{margin-right:132px}.ppbar .bl .pjt{width:62px;font-size:11px}.rgrid{grid-template-columns:1fr}
+ .bl .pc{width:46px}.bl .pjt{width:70px;font-size:10px}.bl .pjt small{display:none}.wkruler{margin-right:132px;height:32px}.ppbar .wkruler{margin-right:134px;height:34px}.ppbar .bl .pjt{width:72px;font-size:11px}.wkruler .wf{font-size:8px}.rgrid{grid-template-columns:1fr}
 }
 #parea{display:none}
 .pdoc{font-family:'Segoe UI',system-ui,sans-serif;color:#12212F;padding:8mm}
@@ -925,14 +943,36 @@ const SEMANAS = (function(){
 })();
 const UTSEM = SEMANAS.reduce(function(a,w){return a+w.nd;},0) || UT;
 const SEMATUAL = (function(){ var acc=0; for(var i=0;i<SEMANAS.length;i++){ acc+=SEMANAS[i].nd; if(UD<=acc) return i+1; } return SEMANAS.length||1; })();
+/* ---------- escala da barra: 0-100% ocupa BMW; as faixas de bonus abrem depois ---------- */
+const BMW=71, BBW=29, BTOPO=135, BFX=[110,115,120,130];
+function SX(p){ p=+p||0; return p<=100 ? p/100*BMW : BMW+Math.min((p-100)/(BTOPO-100),1)*BBW; }
+const bmFig=p=>p==null?'':p>=1.30?'\ud83d\udca5':p>=1.15?'\ud83c\udfc6':p>=1.10?'\ud83d\udd25':p>=1?'\ud83d\ude80':p>=.9?'\u23f3':'\ud83d\udd3b';
+/* zona de bonus: trancada ate bater a meta; aberta mostra os degraus 110/115/120/130 */
+function bmFx(pct){
+ var at=(pct||0)*100, h='', i;
+ if(at<100) h+='<span class="lk" style="left:'+SX(100).toFixed(2)+'%;right:0"></span>';
+ else for(i=0;i<BFX.length;i++) h+='<span class="tk" style="left:'+SX(BFX[i]).toFixed(2)+'%"></span>';
+ return h+'<span class="c100" style="left:'+SX(100).toFixed(2)+'%"></span>';
+}
+function bmMk(){ return '<span class="mk" style="left:'+SX(RE*100).toFixed(2)+'%"></span>'; }
+function bmFill(pct,bg,op){ var at=Math.min((pct||0)*100,BTOPO);
+ return '<i style="width:'+SX(at).toFixed(2)+'%;background:'+bg+(op?';opacity:'+op:'')+'"></i>'; }
+/* interior completo da barra - usado em rede, regiao, loja, time e vendedor */
+function barIn(pct,pj,bg,op){ return wkCells()+bmFx(pct)+bmMk()+bmFill(pct,bg,op)+projBar(pct,pj); }
+/* rotulos de 100% e das faixas de bonus na regua */
+function wkFaixas(){
+ var h='<span class="wf cem" style="left:'+SX(100).toFixed(2)+'%">100%</span>', i;
+ for(i=0;i<BFX.length;i++) h+='<span class="wf" style="left:'+SX(BFX[i]).toFixed(2)+'%">'+BFX[i]+'</span>';
+ return h;
+}
 /* faixas de semana (zebra) + semana atual destacada + divisórias */
 function wkCells(){
  var h='';
  SEMANAS.forEach(function(w){
-  var l=w.fIni*100, wid=(w.fFim-w.fIni)*100, on=(w.n===SEMATUAL);
+  var l=SX(w.fIni*100), wid=SX(w.fFim*100)-l, on=(w.n===SEMATUAL);
   h+='<span class="wc'+(w.n%2?'':' alt')+(on?' on':'')+'" style="left:'+l.toFixed(2)+'%;width:'+wid.toFixed(2)+'%"></span>';
  });
- SEMANAS.forEach(function(w,i){ if(i>0) h+='<span class="wk" style="left:'+(w.fIni*100).toFixed(1)+'%"></span>'; });
+ SEMANAS.forEach(function(w,i){ if(i>0) h+='<span class="wk" style="left:'+SX(w.fIni*100).toFixed(2)+'%"></span>'; });
  return h;
 }
 /* régua: chips S1 + intervalo de dias (01–03); carregam a meta da semana p/ o hover */
@@ -940,14 +980,15 @@ function wkRuler(mL,mT){
  var dL=(mL||0)/UTSEM, dT=(mT==null?null:(mT||0)/UTSEM);   // meta diária
  var h='';
  SEMANAS.forEach(function(w){
-  var c=(w.fIni+w.fFim)/2*100, on=(w.n===SEMATUAL), range=_dd(w.ini)+'–'+_dd(w.fim);
+  var c=(SX(w.fIni*100)+SX(w.fFim*100))/2, on=(w.n===SEMATUAL), range=_dd(w.ini)+'–'+_dd(w.fim);
   var d=' data-sem="'+w.n+'" data-dr="'+range+'" data-nd="'+w.nd+'"'
+       +' data-pcsem="'+(w.nd/UTSEM*100).toFixed(1).replace('.',',')+'"'
        +' data-dl="'+Math.round(dL)+'" data-mlsem="'+Math.round(dL*w.nd)+'"'
        +' data-single="'+(mT==null?1:0)+'"'
        +' data-dt="'+(dT==null?'':Math.round(dT))+'" data-mtsem="'+(dT==null?'':Math.round(dT*w.nd))+'"';
   h+='<span class="wl'+(on?' on':'')+'" style="left:'+c.toFixed(1)+'%"'+d+'><b>S'+w.n+'</b><i>'+range+'</i></span>';
  });
- return '<div class="wkruler">'+h+'</div>';
+ return '<div class="wkruler">'+h+wkFaixas()+'</div>';
 }
 
 /* farol: compara % atingido com o % do mes ja decorrido */
@@ -1059,19 +1100,18 @@ const corPjNavy=p=>p==null?'#8FA9C2':p>=1?'#2FD08E':p>=.9?'#FFC94D':'#FF6B70';
 const corProj=p=>p==null?'var(--tx3)':p>=1?'var(--ok)':p>=.9?'var(--warn)':'var(--bad)';
 function projBar(pct,pj){
  if(pj==null||!(pj>(pct||0))) return '';
- const a=Math.min((pct||0)*100,100), b=Math.min(pj*100,100);
- return (b>a?`<span class="pj" style="left:${a.toFixed(1)}%;width:${(b-a).toFixed(1)}%"></span>`:'')
-  +`<span class="pjk" style="left:${b.toFixed(1)}%"></span>`;
+ const a=SX(Math.min((pct||0)*100,BTOPO)), b=SX(Math.min(pj*100,BTOPO));
+ return (b>a?`<span class="pj" style="left:${a.toFixed(2)}%;width:${(b-a).toFixed(2)}%"></span>`:'')
+  +`<span class="pjk" style="left:${b.toFixed(2)}%"></span>`;
 }
-function projTxt(pj,c){return `<span class="pjt" style="color:${c||corProj(pj)}" title="Projeção de fechamento no ritmo atual (dias úteis)"><small>proj.</small>${PC(pj)}</span>`}
+function projTxt(pj,c){return `<span class="pjt" style="color:${c||corProj(pj)}" title="Projeção de fechamento no ritmo atual (dias úteis)"><em>${bmFig(pj)}</em><small>proj.</small>${PC(pj)}</span>`}
 function barras(o){
  const fL=farol(o.pctLoja), fT=farol(o.pctTime);
  const pjL=o.metaLoja?o.proj/o.metaLoja:null, pjT=o.metaTime?o.proj/o.metaTime:null;
- const mk=`${wkCells()}<span class="mk" style="left:${(RE*100).toFixed(1)}%"></span>`;
  return `<div class="bars">
   ${wkRuler(o.metaLoja,o.metaTime)}
-  <div class="bl"><span class="tag">LOJA</span><span class="bar" style="--pjc:${corProj(pjL)}">${mk}<i style="width:${Math.min((o.pctLoja||0)*100,100)}%;background:${cor(fL.c)}"></i>${projBar(o.pctLoja,pjL)}</span><span class="pc" style="color:${cor(fL.c)}">${PC(o.pctLoja)}</span>${projTxt(pjL)}</div>
-  <div class="bl"><span class="tag">TIME</span><span class="bar" style="--pjc:${corProj(pjT)}">${mk}<i style="width:${Math.min((o.pctTime||0)*100,100)}%;background:${cor(fT.c)};opacity:.62"></i>${projBar(o.pctTime,pjT)}</span><span class="pc" style="color:var(--tx2)">${PC(o.pctTime)}</span>${projTxt(pjT)}</div>
+  <div class="bl"><span class="tag">LOJA</span><span class="bar" style="--pjc:${corProj(pjL)}">${barIn(o.pctLoja,pjL,cor(fL.c))}</span><span class="pc" style="color:${cor(fL.c)}">${PC(o.pctLoja)}</span>${projTxt(pjL)}</div>
+  <div class="bl"><span class="tag">TIME</span><span class="bar" style="--pjc:${corProj(pjT)}">${barIn(o.pctTime,pjT,cor(fT.c),.62)}</span><span class="pc" style="color:var(--tx2)">${PC(o.pctTime)}</span>${projTxt(pjT)}</div>
  </div>`;
 }
 
@@ -1089,9 +1129,9 @@ function linha(o,i,meta,click,bd){
  </div>`;
 }
 function miniBar(o){
- const f=farol(o.pct), mk=`${wkCells()}<span class="mk" style="left:${(RE*100).toFixed(1)}%"></span>`;
+ const f=farol(o.pct);
  const pj=o.meta?(o.proj||0)/o.meta:null;
- return `<div class="bars">${wkRuler(o.meta,null)}<div class="bl"><span class="tag">META</span><span class="bar" style="--pjc:${corProj(pj)}">${mk}<i style="width:${Math.min((o.pct||0)*100,100)}%;background:${cor(f.c)}"></i>${projBar(o.pct,pj)}</span><span class="pc" style="color:${cor(f.c)}">${PC(o.pct)}</span>${projTxt(pj)}</div></div>`;
+ return `<div class="bars">${wkRuler(o.meta,null)}<div class="bl"><span class="tag">META</span><span class="bar" style="--pjc:${corProj(pj)}">${barIn(o.pct,pj,cor(f.c))}</span><span class="pc" style="color:${cor(f.c)}">${PC(o.pct)}</span>${projTxt(pj)}</div></div>`;
 }
 
 function mapaNiveis(){
@@ -1171,11 +1211,12 @@ function painelPrincipal(){
   </div>`;
  h+=`<div class="ppbar">
   ${wkRuler(g.metaLoja,g.metaTime)}
-  <div class="bl"><span class="tag">LOJA</span><span class="bar" style="--pjc:${corPjNavy(g.metaLoja?g.proj/g.metaLoja:null)}">${wkCells()}<span class="mk" style="left:${(RE*100).toFixed(1)}%"></span><i style="width:${Math.min(g.pctLoja*100,100)}%;background:${g.pctLoja>=RE?'#2FD08E':'#FF6B70'}"></i>${projBar(g.pctLoja,g.metaLoja?g.proj/g.metaLoja:null)}</span><span class="pc">${PPCT(g.pctLoja)}</span>${projTxt(g.metaLoja?g.proj/g.metaLoja:null,corPjNavy(g.metaLoja?g.proj/g.metaLoja:null))}</div>
-  <div class="bl"><span class="tag">TIME</span><span class="bar" style="--pjc:${corPjNavy(g.metaTime?g.proj/g.metaTime:null)}">${wkCells()}<span class="mk" style="left:${(RE*100).toFixed(1)}%"></span><i style="width:${Math.min(g.pctTime*100,100)}%;background:${g.pctTime>=RE?'#2FD08E':'#FF6B70'};opacity:.65"></i>${projBar(g.pctTime,g.metaTime?g.proj/g.metaTime:null)}</span><span class="pc">${PPCT(g.pctTime)}</span>${projTxt(g.metaTime?g.proj/g.metaTime:null,corPjNavy(g.metaTime?g.proj/g.metaTime:null))}</div>
-  <div class="ppleg">Cada bloco é uma semana do mês (seg–sáb). Passe o mouse em uma semana para ver a meta da semana e a meta/dia. A faixa amarela é a semana atual (<b>S${SEMATUAL}</b>); a linha branca em <b>${PPCT(RE)}</b> marca o quanto do mês já passou (${UD} de ${UT} dias úteis). Barra além da linha = no ritmo. O trecho listrado e o <b>proj.</b> mostram onde o mês fecha se o ritmo de hoje continuar (dias úteis).</div>
+  <div class="bl"><span class="tag">LOJA</span><span class="bar" style="--pjc:${corPjNavy(g.metaLoja?g.proj/g.metaLoja:null)}">${barIn(g.pctLoja,g.metaLoja?g.proj/g.metaLoja:null,g.pctLoja>=RE?'#2FD08E':'#FF6B70')}</span><span class="pc">${PPCT(g.pctLoja)}</span>${projTxt(g.metaLoja?g.proj/g.metaLoja:null,corPjNavy(g.metaLoja?g.proj/g.metaLoja:null))}</div>
+  <div class="bl"><span class="tag">TIME</span><span class="bar" style="--pjc:${corPjNavy(g.metaTime?g.proj/g.metaTime:null)}">${barIn(g.pctTime,g.metaTime?g.proj/g.metaTime:null,g.pctTime>=RE?'#2FD08E':'#FF6B70',.65)}</span><span class="pc">${PPCT(g.pctTime)}</span>${projTxt(g.metaTime?g.proj/g.metaTime:null,corPjNavy(g.metaTime?g.proj/g.metaTime:null))}</div>
+  <div class="ppleg">Cada bloco é uma semana do mês (seg–sáb). Passe o mouse em uma semana para ver a meta da semana e a meta/dia. A faixa amarela é a semana atual (<b>S${SEMATUAL}</b>); a linha branca em <b>${PPCT(RE)}</b> marca o quanto do mês já passou (${UD} de ${UT} dias úteis). Barra além da linha = no ritmo. O trecho listrado e o <b>proj.</b> mostram onde o mês fecha se o ritmo de hoje continuar (dias úteis). Depois dos <b>100%</b> ficam as faixas <b>110 · 115 · 120 · 130</b>, trancadas até a meta ser batida; acima de 130%, \ud83d\udca5.</div>
  </div></div>`;
  h+=gaugeBox(g,'Atingimento da rede');
+ h+=semanaBox(g.metaLoja,g.metaTime,'Rede \u00b7 '+D.periodo.mes+'/'+D.periodo.ano);
  h+=`<div class="grp"><div class="grph"><h3>Resumo de níveis</h3><span class="cnt">régua ${NOVA?'a partir de Out/26':'Jul–Set/26'} · base Méd. 90 dias</span></div><div class="ind">`;
  [3,2,1].forEach(n=>{const c=ROTL[n];
   h+=`<div class="indc cl" onclick="goNivel('L',${n})"><div class="l">Lojas N${n} · ${c[0]}</div><div class="v" style="color:${c[1]}">${pl(n)}</div><div class="s">${dl[n]} de ${g.nLojas} lojas</div></div>`});
@@ -1199,7 +1240,7 @@ function vExp(v,i,ref){
   <div class="indc"><div class="l">$ Ticket Médio CPF</div><div class="v" style="color:${corMeta('ticket',I.ticket)}">${BRL(I.ticket)}</div>${chipMeta('ticket',I.ticket)}</div>
   <div class="indc"><div class="l">% Desconto CPF</div><div class="v" style="color:${corMeta('descCPF',I.descCPF)}">${PPCT(I.descCPF)}</div>${chipMeta('descCPF',I.descCPF)}</div>
   <div class="indc"><div class="l">Atendimentos</div><div class="v">${NUM(I.atend)}</div><div class="s">no mês</div></div>
- </div>${novBox(novDe(((KL(ST.loja)||{}).V||{})[v.nome]),'Clientes novos de '+v.nome,I.novos,v.fat,true)}${orcBox(((OL(ST.loja)||{}).V||{})[v.nome],'Orçamentos em aberto de '+v.nome,v.rest,v.nome)}${cartBox(((KL(ST.loja)||{}).V||{})[v.nome],'Carteira de clientes de '+v.nome,v.nome)}${alinhBtnVend(v.nome)}</div>`}
+ </div>${novBox(novDe(((KL(ST.loja)||{}).V||{})[v.nome]),'Clientes novos de '+v.nome,I.novos,v.fat,true)}${orcBox(((OL(ST.loja)||{}).V||{})[v.nome],'Orçamentos em aberto de '+v.nome,v.rest,v.nome)}${cartBox(((KL(ST.loja)||{}).V||{})[v.nome],'Carteira de clientes de '+v.nome,v.nome)}${semanaBox(v.meta,null,esc(v.nome))}${alinhBtnVend(v.nome)}</div>`}
 
 /* bloco de orcamentos em aberto — rede, regiao, loja e vendedor */
 function orcBox(O,titulo,escopoFalta,chave){
@@ -1628,7 +1669,7 @@ function vSup(nome){
  const s=D.supervisores.find(x=>x.nome==nome);
  if(!s) return '<div class="empty">Supervisor não encontrado.</div>';
  const ls=D.lojas.filter(l=>l.sup==nome).sort((a,b)=>(b.pctLoja||0)-(a.pctLoja||0));
- let h=kpiGrid(s,'da região')+gaugeBox(s,'Atingimento da região '+s.nome)+indBloco(s,D.geral)+ritmoBox(s);
+ let h=kpiGrid(s,'da região')+gaugeBox(s,'Atingimento da região '+s.nome)+indBloco(s,D.geral)+ritmoBox(s)+semanaBox(s.metaLoja,s.metaTime,'Região '+s.nome);
  h+=`<div class="sec"><div class="sech"><h3>Lojas da região</h3><span class="cnt">${ls.length} lojas</span></div>`;
  ls.forEach((l,i)=>h+=linha(l,i,`Loja ${l.cod} · Méd.90d ${K(l.med90)} · ${l.vendedores.length} vendedores · falta ${K(l.restLoja)}`,`go('loja','${l.cod}')`,bdgL(l)));
  h+='</div>'+novBox(novSoma(ls.map(l=>l.cod)),'Clientes novos — região '+nome,s.I&&s.I.novos,s.fat,false)
@@ -1672,7 +1713,7 @@ function vLoja(cod){
  if(!l) return '<div class="empty">Loja não encontrada.</div>';
  if((l.pctLoja||0)>=1&&window.STAnima) setTimeout(function(){ STAnima.comemorarUmaVez('meta-l-'+l.cod+'-'+D.periodo.mes,function(){ STAnima.confete(); STAnima.faixa('A loja '+l.cod+' bateu a meta! 🎯','#128a52'); }); },500);
  const vs=l.vendedores.slice().sort((a,b)=>(b.pct||0)-(a.pct||0));
- let h=termometro('Termômetro da meta da loja',l.metaLoja,l.fat,l.proj,l.restLoja,l.ritmoNec)+kpiGrid(l,'da loja')+gaugeBox(l,'Atingimento da loja '+l.cod)+indBloco(l,D.geral)+ritmoBox(l);
+ let h=termometro('Termômetro da meta da loja',l.metaLoja,l.fat,l.proj,l.restLoja,l.ritmoNec)+kpiGrid(l,'da loja')+gaugeBox(l,'Atingimento da loja '+l.cod)+indBloco(l,D.geral)+ritmoBox(l)+semanaBox(l.metaLoja,l.metaTime,'Loja '+l.cod+' · '+l.nome);
  h+=`<div class="sec"><div class="sech"><h3>Vendedores</h3><span class="cnt">${vs.length} com meta ativa</span></div>`;
  if(!vs.length) h+='<div class="empty">Nenhum vendedor com meta cadastrada nesta loja.</div>';
  vs.forEach((v,i)=>{h+=linha(v,i,`Méd.90d ${K(v.med90)} · meta ${K(v.meta)} · falta ${K(v.rest)} · ${BRL(v.ritmoNec)}/dia` +
@@ -1713,6 +1754,30 @@ function nivelLoja(l){
  [5,4,3,2,1].forEach(n=>{h+=`<div class="nvc indc cl" style="cursor:pointer" onclick="goNivel('V',${n})"><div class="n" style="color:${dist[n]?'var(--navy)':'var(--tx3)'}">${tl?(dist[n]/tl*100).toFixed(0):0}%</div><div class="l">V${n} · ${ROTV[n]}</div><div class="subir">${dist[n]} de ${tl}</div></div>`});
  h+=`</div></div>`;
  return h}
+
+/* ---------- semana a semana: a meta do mes repartida pelos dias uteis + faixas de bonus ---------- */
+function semanaBox(mL,mT,tit){
+ if(!mL||!SEMANAS.length) return '';
+ var dL=mL/UTSEM, dT=(mT==null?null:mT/UTSEM), acc=0;
+ var h='<div class="sec"><div class="sech"><h3>Semana a semana</h3><span class="cnt">'+esc(tit)+
+  ' \u00b7 meta repartida pelos dias \u00fateis de cada semana</span></div><div class="evtw"><table class="evt">'+
+  '<tr><th>Semana</th><th class="r">Dias \u00fateis</th><th class="r">% do m\u00eas</th>'+
+  '<th class="r">Meta da semana</th><th class="r">Meta por dia</th><th class="r">Acumulado at\u00e9 o fim da semana</th></tr>';
+ SEMANAS.forEach(function(w){
+  acc+=w.nd;
+  var pcs=(w.nd/UTSEM*100).toFixed(1).replace('.',','), ac=acc/UTSEM;
+  h+='<tr'+(w.n===SEMATUAL?' class="cur"':'')+'><td><b>S'+w.n+'</b> \u00b7 dias '+_dd(w.ini)+'\u2013'+_dd(w.fim)+
+    (w.n===SEMATUAL?' <span class="mut">(semana atual)</span>':'')+'</td>'+
+   '<td class="r">'+w.nd+'</td><td class="r">'+pcs+'%</td>'+
+   '<td class="r">'+BRL(dL*w.nd)+(dT!=null?' <span class="mut">time '+BRL(dT*w.nd)+'</span>':'')+'</td>'+
+   '<td class="r">'+BRL(dL)+(dT!=null?' <span class="mut">time '+BRL(dT)+'</span>':'')+'</td>'+
+   '<td class="r">'+BRL(mL*ac)+' <span class="mut">'+(ac*100).toFixed(1).replace('.',',')+'%</span></td></tr>';
+ });
+ h+='</table></div><div class="wkfx"><b>Faixas</b><span class="fxp cem">100% '+BRL(mL)+'</span>';
+ for(var i=0;i<BFX.length;i++) h+='<span class="fxp">'+BFX[i]+'% '+BRL(mL*BFX[i]/100)+'</span>';
+ h+='<span class="mut">as faixas s\u00f3 abrem na barra depois que a meta \u00e9 batida</span></div></div>';
+ return h;
+}
 
 /* ---------- plano de acao ---------- */
 function acaoBox(id,nome){
@@ -2602,7 +2667,8 @@ window.abrirUpload=abrirUpload;window.enviarUpload=enviarUpload;
  function mostra(el){
   var s=el.getAttribute('data-sem'), dr=el.getAttribute('data-dr'), nd=el.getAttribute('data-nd');
   var single=el.getAttribute('data-single')==='1';
-  var h='<div class="tt">Semana '+s+' · dias '+dr+' <span style="font-weight:600;opacity:.75">('+nd+' dias úteis)</span></div>';
+  var pcs=el.getAttribute('data-pcsem');
+  var h='<div class="tt">Semana '+s+' · dias '+dr+' <span style="font-weight:600;opacity:.75">('+nd+' dias úteis'+(pcs?' · '+pcs+'% do mês':'')+')</span></div>';
   if(single){
    h+='<div class="rw"><span>Meta da semana</span><b>'+brl(el.getAttribute('data-mlsem'))+'</b></div>'
     + '<div class="rw"><span>Meta por dia</span><b>'+brl(el.getAttribute('data-dl'))+'</b></div>';
