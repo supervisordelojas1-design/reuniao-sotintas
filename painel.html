@@ -989,12 +989,12 @@ function wkCells(){
  return h;
 }
 /* régua: chips S1 + intervalo de dias (01–03); carregam a meta da semana p/ o hover */
-function wkRuler(mL,mT){
+function wkRuler(mL,mT,un){
  var dL=(mL||0)/UTSEM, dT=(mT==null?null:(mT||0)/UTSEM);   // meta diária
  var h='';
  SEMANAS.forEach(function(w){
   var c=(SX(w.fIni*100)+SX(w.fFim*100))/2, on=(w.n===SEMATUAL), range=_dd(w.ini)+'–'+_dd(w.fim);
-  var d=' data-sem="'+w.n+'" data-dr="'+range+'" data-nd="'+w.nd+'"'
+  var d=' data-sem="'+w.n+'" data-dr="'+range+'" data-nd="'+w.nd+'" data-un="'+(un||'')+'"'
        +' data-pcsem="'+(w.nd/UTSEM*100).toFixed(1).replace('.',',')+'"'
        +' data-dl="'+Math.round(dL)+'" data-mlsem="'+Math.round(dL*w.nd)+'"'
        +' data-single="'+(mT==null?1:0)+'"'
@@ -1196,6 +1196,14 @@ function eucVends(o){
  if(o&&o.vendedores) return o.vendedores;
  if(o&&o.nome&&D.supervisores.some(s=>s.nome==o.nome)) return D.lojas.filter(l=>l.sup==o.nome).reduce((a,l)=>a.concat(l.vendedores),[]);
  return D.lojas.reduce((a,l)=>a.concat(l.vendedores),[]);
+}
+/* detalhe em texto: vendido, falta, baldes de 18 L e ritmo por dia util */
+function eucDet(I){
+ if(!I||!I.metaEuc) return 'sem meta Eucatex';
+ const falta=Math.max(I.metaEuc-(I.litEuc||0),0), bd=falta/18, bdDia=UR?bd/UR:0;
+ return `${LT(I.litEuc)} de ${LT(I.metaEuc)}`+(falta
+  ?` · falta ${LT(falta)} · 🪣 ${NUM(Math.ceil(bd))} baldes de 18 L · ${DEC(bdDia,1)}/dia em ${UR} dia${UR==1?'':'s'}`
+  :' · ✔ meta batida');
 }
 function eucGrupo(o,vend){
  const I=o&&o.I; if(!I||I.metaEuc==null) return '';
@@ -2144,7 +2152,7 @@ const IND=[
  {k:'itens',g:'CPF',n:'Itens CPF',t:'dec',b:1,i:1,meta:2.5,d:o=>`${NUM(o.I.atend)} atendimentos`},
  {k:'ticket',g:'CPF',n:'$ Ticket Médio CPF',t:'brl',b:1,i:1,meta:200,d:o=>`${NUM(o.I.atend)} atendimentos`},
  {k:'descCPF',g:'CPF',n:'% Desconto CPF',t:'pct',b:0,i:1,meta:0.07,d:o=>`sobre o faturamento CPF`},
- {k:'pctEuc',g:'EUC',n:'% Meta Eucatex',t:'pct',b:1,i:1,meta:1,d:o=>(o.I&&o.I.metaEuc!=null)?`${LT(o.I.litEuc)} de ${LT(o.I.metaEuc)}`:'sem meta Eucatex'}
+ {k:'pctEuc',g:'EUC',n:'% Meta Eucatex',t:'pct',b:1,i:1,meta:1,d:o=>eucDet(o&&o.I)}
 ];
 const gv=(o,m)=>m.k=='pctEuc'?eucPct(o&&o.I):(o?(m.i?(o.I?o.I[m.k]:null):o[m.k]):null);
 function fmtI(m,v){if(v==null)return '—';
@@ -2191,14 +2199,20 @@ function vInd(){
   const v=gv(f,m), w=mx?Math.max((v||0)/mx*100,0):0, ok=bom(v);
   const cl=v==null?'var(--tx3)':ok?'var(--ok)':'var(--bad)';
   const clic=rot=='região'?`goSub('sup','${esc(f.nome)}')`:rot=='loja'?`goSub('loja','${f.cod}')`:null;
+  const euc=m.k=='pctEuc'&&f.I&&f.I.metaEuc;
+  const bars=euc
+   ?`<div class="bars">${wkRuler(f.I.metaEuc,null,'L')}<div class="bl"><span class="tag">EUC</span>
+     <span class="bar">${barIn(v,null,cl)}</span>
+     <span class="pc" style="color:${cl}">${PPCT(v)}</span></div></div>`
+   :`<div class="bars"><div class="bl"><span class="tag">${m.g}</span>
+     <span class="bar"><span class="mk" style="left:${mx?Math.min((m.meta!=null?m.meta:(vR||0))/mx*100,100).toFixed(1):0}%"></span>
+     <i style="width:${Math.min(w,100)}%;background:${cl}"></i></span>
+     <span class="pc" style="color:${cl}">${fmtI(m,v)}</span></div></div>`;
   h+=`<div class="row ${clic?'':'nc'}" ${clic?`onclick="${clic}"`:''}>
    <div class="pos ${i<3&&m.b?'p'+(i+1):''}">${i+1}</div>
    <div><div class="nm">${esc(f.nome)}${f.nv&&f.cod?bdgL(f):f.nv?bdgV(f):''}</div>
     <div class="mt">${(m.i?f.I:1)?m.d(f):''}</div>
-    <div class="bars"><div class="bl"><span class="tag">${m.g}</span>
-     <span class="bar"><span class="mk" style="left:${mx?Math.min((m.meta!=null?m.meta:(vR||0))/mx*100,100).toFixed(1):0}%"></span>
-     <i style="width:${Math.min(w,100)}%;background:${cl}"></i></span>
-     <span class="pc" style="color:${cl}">${fmtI(m,v)}</span></div></div></div>
+    ${bars}</div>
    <div class="rt"><div class="v" style="color:${cl}">${fmtI(m,v)}</div>
     <div class="s ${v==null?'y':ok?'g':'r'}">${v==null?'sem dado':m.meta!=null?(ok?'meta batida':m.b?'abaixo da meta':'acima da meta'):(ok?'acima da rede':'abaixo da rede')}</div>
     ${clic?'<span class="chev">›</span>':''}</div></div>`});
@@ -2723,20 +2737,22 @@ window.abrirUpload=abrirUpload;window.enviarUpload=enviarUpload;
 /* tooltip da meta semanal — delegação em document, sobrevive aos re-render */
 (function(){
  var tip=document.getElementById('wktip'); if(!tip) return;
- function brl(n){ n=Math.round(+n||0); return 'R$ '+n.toLocaleString('pt-BR'); }
+ function brl(n,un){ n=Math.round(+n||0);
+  if(un==='L') return n.toLocaleString('pt-BR')+' L · '+Math.ceil(n/18).toLocaleString('pt-BR')+' baldes';
+  return 'R$ '+n.toLocaleString('pt-BR'); }
  function alvo(e){ return (e.target&&e.target.closest)?e.target.closest('.wl[data-sem]'):null; }
  function mostra(el){
   var s=el.getAttribute('data-sem'), dr=el.getAttribute('data-dr'), nd=el.getAttribute('data-nd');
   var single=el.getAttribute('data-single')==='1';
-  var pcs=el.getAttribute('data-pcsem');
+  var pcs=el.getAttribute('data-pcsem'), un=el.getAttribute('data-un')||'';
   var h='<div class="tt">Semana '+s+' · dias '+dr+' <span style="font-weight:600;opacity:.75">('+nd+' dias úteis'+(pcs?' · '+pcs+'% do mês':'')+')</span></div>';
   if(single){
-   h+='<div class="rw"><span>Meta da semana</span><b>'+brl(el.getAttribute('data-mlsem'))+'</b></div>'
-    + '<div class="rw"><span>Meta por dia</span><b>'+brl(el.getAttribute('data-dl'))+'</b></div>';
+   h+='<div class="rw"><span>Meta da semana</span><b>'+brl(el.getAttribute('data-mlsem'),un)+'</b></div>'
+    + '<div class="rw"><span>Meta por dia</span><b>'+brl(el.getAttribute('data-dl'),un)+'</b></div>';
   } else {
-   h+='<div class="rw"><span>Meta da semana · Loja</span><b>'+brl(el.getAttribute('data-mlsem'))+'</b></div>'
-    + '<div class="rw"><span>Meta da semana · Time</span><b>'+brl(el.getAttribute('data-mtsem'))+'</b></div>'
-    + '<div class="ac">Meta por dia · Loja '+brl(el.getAttribute('data-dl'))+' · Time '+brl(el.getAttribute('data-dt'))+'</div>';
+   h+='<div class="rw"><span>Meta da semana · Loja</span><b>'+brl(el.getAttribute('data-mlsem'),un)+'</b></div>'
+    + '<div class="rw"><span>Meta da semana · Time</span><b>'+brl(el.getAttribute('data-mtsem'),un)+'</b></div>'
+    + '<div class="ac">Meta por dia · Loja '+brl(el.getAttribute('data-dl'),un)+' · Time '+brl(el.getAttribute('data-dt'),un)+'</div>';
   }
   tip.innerHTML=h;
   tip.style.display='block';
