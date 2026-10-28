@@ -1234,7 +1234,7 @@ function painelPrincipal(){
  h+=`</div></div>`;
  return h}
 
-function vExp(v,i,ref){
+function vExp(v,i,ref,semSem){
  const I=v.I;
  return `<div class="vexp" id="ve${i}"><div class="ind">
   <div class="indc"><div class="l">% Alc. Meta CNPJ</div><div class="v">${PPCT(I.alcCNPJ)}</div><div class="s">${BRL(I.fatCNPJ)} de ${BRL(I.metaCNPJ)}</div></div>
@@ -1248,7 +1248,7 @@ function vExp(v,i,ref){
   <div class="indc"><div class="l">$ Ticket Médio CPF</div><div class="v" style="color:${corMeta('ticket',I.ticket)}">${BRL(I.ticket)}</div>${chipMeta('ticket',I.ticket)}</div>
   <div class="indc"><div class="l">% Desconto CPF</div><div class="v" style="color:${corMeta('descCPF',I.descCPF)}">${PPCT(I.descCPF)}</div>${chipMeta('descCPF',I.descCPF)}</div>
   <div class="indc"><div class="l">Atendimentos</div><div class="v">${NUM(I.atend)}</div><div class="s">no mês</div></div>
- </div>${novBox(novDe(((KL(ST.loja)||{}).V||{})[v.nome]),'Clientes novos de '+v.nome,I.novos,v.fat,true)}${orcBox(((OL(ST.loja)||{}).V||{})[v.nome],'Orçamentos em aberto de '+v.nome,v.rest,v.nome)}${cartBox(((KL(ST.loja)||{}).V||{})[v.nome],'Carteira de clientes de '+v.nome,v.nome)}${semanaBox(v.meta,null,esc(v.nome))}${alinhBtnVend(v.nome)}</div>`}
+ </div>${novBox(novDe(((KL(ST.loja)||{}).V||{})[v.nome]),'Clientes novos de '+v.nome,I.novos,v.fat,true)}${orcBox(((OL(ST.loja)||{}).V||{})[v.nome],'Orçamentos em aberto de '+v.nome,v.rest,v.nome)}${cartBox(((KL(ST.loja)||{}).V||{})[v.nome],'Carteira de clientes de '+v.nome,v.nome)}${semSem?'':semanaBox(v.meta,null,esc(v.nome))}${alinhBtnVend(v.nome)}</div>`}
 
 /* bloco de orcamentos em aberto — rede, regiao, loja e vendedor */
 function orcBox(O,titulo,escopoFalta,chave){
@@ -1708,9 +1708,10 @@ function vVendedor(){
   <div class="kpi"><div class="lb">Seu nível</div><div class="vl">V${v.nv} · ${esc(v.nvRot)}</div>
    <div class="ft">${bdgLV(l,'margin:0 0 4px')}<br>${v.prox?'faltam '+K(v.prox.falta)+' de Méd.90d para V'+v.prox.nv:'topo da régua'}</div></div>
  </div>`;
+ h+=semanaBox(v.meta,null,'Sua meta · '+esc(v.nome));
  h+=`<div class="sec"><div class="sech"><h3>Seus indicadores</h3><span class="cnt">Méd.90d ${K(v.med90)}</span></div>`
   +linha(v,0,`meta ${K(v.meta)} · falta ${K(v.rest)} · ${BRL(v.ritmoNec)}/dia · <b style="color:var(--red)">ver indicadores ▾</b>`,`toggleV(0)`,bdgV(v)+bdgLV(l)).replace('class="row "','class="row exp"')
-  +vExp(v,0,l)+'</div>';
+  +vExp(v,0,l,true)+'</div>';
  const OO=OL(l.cod), KK=KL(l.cod);
  const orc=VEND_NOME?subVend(OO&&OO.V,v.nome):OO, cart=VEND_NOME?subVend(KK&&KK.V,v.nome):KK;
  h+=orcBox(orc,'Seus orçamentos em aberto',v.rest,null)+cartBox(cart,'Sua carteira de clientes',null)+evoBox(cart,'Evolução da sua carteira',v.nome);
