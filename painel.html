@@ -1206,8 +1206,10 @@ function eucGrupo(o,vend){
   <div class="v" style="color:${corEuc(p)}">${PPCT(p)}</div>
   <div class="d ${p!=null&&p>=1?'up':'dn'}">${p!=null&&p>=1?'✔ meta batida':'esperado hoje: '+PPCT(RE)}</div>
   <div class="s">${LT(I.litEuc)} de ${LT(I.metaEuc)}</div></div>`;
+ const bd=falta/18, bdDia=UR?bd/UR:0;
  h+=`<div class="indc"><div class="l">Falta para 100%</div><div class="v">${falta?LT(falta):'—'}</div>
-  <div class="s">${falta?(UR?DEC(falta/UR,1)+' L por dia útil · '+UR+' dias':'último dia'):'meta batida'}</div></div>`;
+  <div class="d ${falta?'dn':'up'}">${falta?'🪣 '+NUM(Math.ceil(bd))+' baldes de 18 L':'✔ meta batida'}</div>
+  <div class="s">${falta?(UR?DEC(falta/UR,0)+' L/dia · '+DEC(bdDia,1)+' balde'+(bdDia>=2?'s':'')+'/dia em '+UR+' dias úteis':'último dia do mês'):'nada a fazer'}</div></div>`;
  h+=`<div class="indc"><div class="l">Projeção de fechamento</div><div class="v" style="color:${corEuc(pj)}">${PPCT(pj)}</div>
   <div class="s">no ritmo de hoje</div></div>`;
  if(vend){
