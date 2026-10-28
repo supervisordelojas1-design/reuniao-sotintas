@@ -359,6 +359,14 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
 .est{font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:4px;margin-left:6px;letter-spacing:.2px;white-space:nowrap;display:inline-block;vertical-align:middle}
 .evsp{margin-top:6px}.spk{display:block;max-width:100%}
 .wkfx{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 16px;border-top:1px solid var(--line);font-size:12px;color:var(--tx2)}
+.semsec .evtw,.semsec .wkfx{display:none}
+.semsec:not(.open) .sech{border-bottom:0}
+.semsec.open .evtw{display:block}
+.semsec.open .wkfx{display:flex}
+.semb{margin-left:auto;background:none;border:1px solid var(--line);border-radius:6px;padding:4px 10px;
+ font:inherit;font-size:11px;font-weight:800;color:var(--navy-ink);cursor:pointer;white-space:nowrap}
+.semb:hover{background:var(--panel2)}
+.semb:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
 .wkfx b{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3)}
 .wkfx .fxp{background:var(--panel2);border-radius:6px;padding:3px 9px;font-weight:800;color:var(--tx);white-space:nowrap;font-size:11.5px}
 .wkfx .fxp.cem{color:var(--navy-ink)}
@@ -1755,12 +1763,21 @@ function nivelLoja(l){
  h+=`</div></div>`;
  return h}
 
+/* abre e fecha o bloco Semana a semana */
+function semToggle(b){
+ var sec=b.closest('.semsec'); if(!sec) return;
+ var aberto=sec.classList.toggle('open');
+ b.innerHTML=aberto?'fechar \u25b4':'abrir \u25be';
+ b.setAttribute('aria-expanded',aberto?'true':'false');
+}
+window.semToggle=semToggle;
 /* ---------- semana a semana: a meta do mes repartida pelos dias uteis + faixas de bonus ---------- */
 function semanaBox(mL,mT,tit){
  if(!mL||!SEMANAS.length) return '';
  var dL=mL/UTSEM, dT=(mT==null?null:mT/UTSEM), acc=0;
- var h='<div class="sec"><div class="sech"><h3>Semana a semana</h3><span class="cnt">'+esc(tit)+
-  ' \u00b7 meta repartida pelos dias \u00fateis de cada semana</span></div><div class="evtw"><table class="evt">'+
+ var h='<div class="sec semsec"><div class="sech"><h3>Semana a semana</h3><span class="cnt">'+esc(tit)+
+  ' \u00b7 meta repartida pelos dias \u00fateis de cada semana</span>'+
+  '<button class="semb" type="button" onclick="semToggle(this)">abrir \u25be</button></div><div class="evtw"><table class="evt">'+
   '<tr><th>Semana</th><th class="r">Dias \u00fateis</th><th class="r">% do m\u00eas</th>'+
   '<th class="r">Meta da semana</th><th class="r">Meta por dia</th><th class="r">Acumulado at\u00e9 o fim da semana</th></tr>';
  SEMANAS.forEach(function(w){
