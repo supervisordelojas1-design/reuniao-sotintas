@@ -276,7 +276,7 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
 .chip:hover{border-color:var(--navy);color:var(--navy-ink)}
 .chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
 .chip .cg{font-style:normal;font-size:8.5px;font-weight:800;padding:2px 5px;border-radius:4px;letter-spacing:.4px}
-.cg.cnpj{background:var(--tintb);color:#1F4E79}.cg.cpf{background:var(--tintp);color:#5B3A78}.cg.meta{background:var(--badbg);color:#A3181E}
+.cg.cnpj{background:var(--tintb);color:#1F4E79}.cg.cpf{background:var(--tintp);color:#5B3A78}.cg.meta{background:var(--badbg);color:#A3181E}.cg.euc{background:var(--okbg);color:#08674A}
 .chip.on .cg{background:rgba(255,255,255,.2);color:#fff}
 .indc.cl{cursor:pointer;transition:background .14s;position:relative}
 .indc.cl:hover{background:var(--panel2)}
@@ -298,6 +298,7 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
 .grph h3{font-size:13.5px;font-weight:800;letter-spacing:-.2px}
 .grph .tg{font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;letter-spacing:.5px}
 .tg.cnpj{background:var(--tintb);color:#1F4E79}.tg.cpf{background:var(--tintp);color:#5B3A78}
+.tg.euc{background:var(--okbg);color:#08674A}
 .grph .cnt{font-size:11px;color:var(--tx3);font-weight:600;margin-left:auto}
 .grph .selo{font-size:11px;font-weight:700;width:100%;margin-top:-1px}
 .ppselo{font-size:11px;font-weight:700;display:block;margin-top:3px}
@@ -454,7 +455,7 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
   <div class="plogo">ST</div>
   <h2>Painel de Coordenação</h2>
   <p>Entre com o mesmo nome e PIN do Assistente ST</p>
-  <div style="font-size:10px;color:#8fa0b8;margin:-10px 0 12px;font-weight:700">versão 33</div>
+  <div style="font-size:10px;color:#8fa0b8;margin:-10px 0 12px;font-weight:700">versão 34</div>
   <input id="plNome" placeholder="Seu nome" autocomplete="username">
   <input id="plPin" placeholder="PIN" type="password" inputmode="numeric" maxlength="6" autocomplete="current-password">
   <button id="plBtn" onclick="fazerLogin()">Entrar</button>
@@ -466,7 +467,7 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
   <div class="hdtop">
    <div class="brand">
     <div class="logo">ST</div>
-    <div><h1 id="hTit">Coordenação de Supervisão</h1><span id="hSub">Só Tintas · Painel de Performance · <b style="color:#FFD100">v38</b></span></div>
+    <div><h1 id="hTit">Coordenação de Supervisão</h1><span id="hSub">Só Tintas · Painel de Performance · <b style="color:#FFD100">v39</b></span></div>
    </div>
    <div class="per"><b id="hPer">—</b><span id="hDias">—</span><span id="btnUp" style="display:none" onclick="abrirUpload()"> · ⚙️ atualizar dados</span><span id="lnkSair" style="display:none" onclick="sairPainel()"> · sair</span></div>
   </div>
@@ -534,14 +535,17 @@ function proxV(m,nl){const n=nvVend(m,nl);if(n==5)return null;
 function proxL(m){const n=nvLoja(m);if(n==3)return null;
  const alvo=n==1?LIMLJ[1]:LIMLJ[0]+1;return{nv:n+1,alvo:alvo,falta:alvo-m}}
 const nvLojaNova=m=>m>250000?3:m>=150000?2:1;
-/* C = [metaCNPJ,fatCNPJ,cadastr,ativos,novos,posit,atend,%ident,itens,ticket,%descCPF] */
+/* C = [metaCNPJ,fatCNPJ,cadastr,ativos,novos,posit,atend,%ident,itens,ticket,%descCPF,metaEuc,litEuc] */
 function ind(C,fat){return{metaCNPJ:C[0],fatCNPJ:C[1],cad:C[2],ativos:C[3],novos:C[4],posit:C[5],
  atend:C[6],pctIdent:C[7],itens:C[8],ticket:C[9],descCPF:C[10],
+ metaEuc:C[11]?C[11]:null,litEuc:C[12]||0,
  alcCNPJ:C[0]?C[1]/C[0]:null,repCNPJ:fat?C[1]/fat:null,
  ativCNPJ:C[2]?C[3]/C[2]:null,posCNPJ:C[3]?C[5]/C[3]:null}}
 function roll(arr){const s=i=>arr.reduce((a,x)=>a+x[i],0),A=s(6);
  const w=i=>A?arr.reduce((a,x)=>a+x[i]*x[6],0)/A:0;
- return [s(0),s(1),s(2),s(3),s(4),s(5),A,w(7),w(8),w(9),w(10)]}
+ const sg=i=>arr.reduce((a,x)=>a+(x[i]||0),0);
+ const temEuc=arr.some(x=>x[11]!=null);
+ return [s(0),s(1),s(2),s(3),s(4),s(5),A,w(7),w(8),w(9),w(10)].concat(temEuc?[sg(11),sg(12)]:[])}
 function blk(ml,mt,f,pr){return{metaLoja:ml,metaTime:mt,fat:f,proj:pr,
  pctLoja:ml?f/ml:null,pctTime:mt?f/mt:null,pctProj:ml?pr/ml:null,
  restLoja:Math.max(ml-f,0),restTime:Math.max(mt-f,0),
@@ -926,6 +930,7 @@ const K=n=>BRL(n);  /* numeros cheios, sem abreviacao */
 const NUM=n=>(n||0).toLocaleString('pt-BR');
 const DEC=(n,c)=>(n||0).toLocaleString('pt-BR',{minimumFractionDigits:c,maximumFractionDigits:c});
 const PC=p=>p==null?'—':(p*100).toFixed(1).replace('.',',')+'%';
+const LT=n=>n==null?'—':(n||0).toLocaleString('pt-BR',{maximumFractionDigits:0})+' L';
 const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 // ritmo esperado ate hoje
@@ -1181,6 +1186,41 @@ function chipMeta(k,v){
  const dif=Math.abs(v-m.meta);
  const txt=m.t=='pct'?(dif*100).toFixed(1).replace('.',',')+' p.p.':m.t=='brl'?BRL(dif):DEC(dif,2);
  return `<div class="d dn">${m.b?'faltam '+txt+' p/ '+alvo:txt+' acima de '+alvo}</div>`}
+/* ===== EUCATEX — meta de litragem (bônus tudo ou nada em 100%) ===== */
+const eucPct=I=>(I&&I.metaEuc)?(I.litEuc||0)/I.metaEuc:null;
+const eucProj=I=>{const p=eucPct(I);return (p==null||!RE)?null:p/RE};
+const corEuc=p=>p==null?'var(--tx3)':p>=1?'var(--ok)':p>=RE?'var(--warn)':'var(--bad)';
+const TEM_EUC=()=>!!(D.geral&&D.geral.I&&D.geral.I.metaEuc!=null);
+/* vendedores do escopo: loja (o.vendedores), região (lojas do sup) ou rede */
+function eucVends(o){
+ if(o&&o.vendedores) return o.vendedores;
+ if(o&&o.nome&&D.supervisores.some(s=>s.nome==o.nome)) return D.lojas.filter(l=>l.sup==o.nome).reduce((a,l)=>a.concat(l.vendedores),[]);
+ return D.lojas.reduce((a,l)=>a.concat(l.vendedores),[]);
+}
+function eucGrupo(o,vend){
+ const I=o&&o.I; if(!I||I.metaEuc==null) return '';
+ const p=eucPct(I), pj=eucProj(I), falta=Math.max((I.metaEuc||0)-(I.litEuc||0),0);
+ let h=`<div class="grp"><div class="grph"><span class="tg euc">EUCATEX</span><h3>Meta de litragem Eucatex</h3>
+  <span class="cnt">meta ${LT(I.metaEuc)} · vendido ${LT(I.litEuc)}</span></div><div class="ind">`;
+ h+=`<div class="indc cl" onclick="goInd('pctEuc')"><div class="l">% da meta Eucatex</div>
+  <div class="v" style="color:${corEuc(p)}">${PPCT(p)}</div>
+  <div class="d ${p!=null&&p>=1?'up':'dn'}">${p!=null&&p>=1?'✔ meta batida':'esperado hoje: '+PPCT(RE)}</div>
+  <div class="s">${LT(I.litEuc)} de ${LT(I.metaEuc)}</div></div>`;
+ h+=`<div class="indc"><div class="l">Falta para 100%</div><div class="v">${falta?LT(falta):'—'}</div>
+  <div class="s">${falta?(UR?DEC(falta/UR,1)+' L por dia útil · '+UR+' dias':'último dia'):'meta batida'}</div></div>`;
+ h+=`<div class="indc"><div class="l">Projeção de fechamento</div><div class="v" style="color:${corEuc(pj)}">${PPCT(pj)}</div>
+  <div class="s">no ritmo de hoje</div></div>`;
+ if(vend){
+  h+=`<div class="indc"><div class="l">Bônus Eucatex</div><div class="v" style="color:${p!=null&&p>=1?'var(--ok)':'var(--tx2)'}">R$ 50</div>
+   <div class="s">tudo ou nada em 100%</div></div>`;
+ }else{
+  const vs=eucVends(o).filter(v=>v.I&&v.I.metaEuc!=null), ok=vs.filter(v=>eucPct(v.I)>=1).length;
+  h+=`<div class="indc"><div class="l">Vendedores em 100%</div><div class="v" style="color:${vs.length&&ok/vs.length>=.5?'var(--ok)':'var(--bad)'}">${NUM(ok)}</div>
+   <div class="s">de ${NUM(vs.length)} com meta Eucatex</div></div>`;
+ }
+ h+=`</div></div>`;
+ return h;
+}
 function indBloco(o,ref,esc_){
  const I=o.I, R=ref?ref.I:null;
  let h=`<div class="grp"><div class="grph"><span class="tg cnpj">CNPJ</span><h3>Indicadores de performance CNPJ</h3>
@@ -1198,7 +1238,7 @@ function indBloco(o,ref,esc_){
  h+=`<div class="indc cl" onclick="goInd('ticket')"><div class="l">$ Ticket Médio CPF</div><div class="v" style="color:${corMeta('ticket',I.ticket)}">${BRL(I.ticket)}</div>${chipMeta('ticket',I.ticket)}<div class="s">por atendimento</div></div>`;
  h+=`<div class="indc cl" onclick="goInd('descCPF')"><div class="l">% Desconto CPF</div><div class="v" style="color:${corMeta('descCPF',I.descCPF)}">${PPCT(I.descCPF)}</div>${chipMeta('descCPF',I.descCPF)}<div class="s">quanto menor, melhor</div></div>`;
  h+=`</div></div>`;
- return h}
+ return h+eucGrupo(o)}
 
 function painelPrincipal(){
  const g=D.geral, dl={3:0,2:0,1:0}, dv={1:0,2:0,3:0,4:0,5:0};
@@ -1248,7 +1288,7 @@ function vExp(v,i,ref,semSem){
   <div class="indc"><div class="l">$ Ticket Médio CPF</div><div class="v" style="color:${corMeta('ticket',I.ticket)}">${BRL(I.ticket)}</div>${chipMeta('ticket',I.ticket)}</div>
   <div class="indc"><div class="l">% Desconto CPF</div><div class="v" style="color:${corMeta('descCPF',I.descCPF)}">${PPCT(I.descCPF)}</div>${chipMeta('descCPF',I.descCPF)}</div>
   <div class="indc"><div class="l">Atendimentos</div><div class="v">${NUM(I.atend)}</div><div class="s">no mês</div></div>
- </div>${novBox(novDe(((KL(ST.loja)||{}).V||{})[v.nome]),'Clientes novos de '+v.nome,I.novos,v.fat,true)}${orcBox(((OL(ST.loja)||{}).V||{})[v.nome],'Orçamentos em aberto de '+v.nome,v.rest,v.nome)}${cartBox(((KL(ST.loja)||{}).V||{})[v.nome],'Carteira de clientes de '+v.nome,v.nome)}${semSem?'':semanaBox(v.meta,null,esc(v.nome))}${alinhBtnVend(v.nome)}</div>`}
+ </div>${eucGrupo(v,true)}${novBox(novDe(((KL(ST.loja)||{}).V||{})[v.nome]),'Clientes novos de '+v.nome,I.novos,v.fat,true)}${orcBox(((OL(ST.loja)||{}).V||{})[v.nome],'Orçamentos em aberto de '+v.nome,v.rest,v.nome)}${cartBox(((KL(ST.loja)||{}).V||{})[v.nome],'Carteira de clientes de '+v.nome,v.nome)}${semSem?'':semanaBox(v.meta,null,esc(v.nome))}${alinhBtnVend(v.nome)}</div>`}
 
 /* bloco de orcamentos em aberto — rede, regiao, loja e vendedor */
 function orcBox(O,titulo,escopoFalta,chave){
@@ -2101,16 +2141,17 @@ const IND=[
  {k:'pctIdent',g:'CPF',n:'% Identificados',t:'pct',b:1,i:1,meta:0.80,d:o=>`${NUM(Math.round(o.I.atend*o.I.pctIdent))} de ${NUM(o.I.atend)} atendimentos`},
  {k:'itens',g:'CPF',n:'Itens CPF',t:'dec',b:1,i:1,meta:2.5,d:o=>`${NUM(o.I.atend)} atendimentos`},
  {k:'ticket',g:'CPF',n:'$ Ticket Médio CPF',t:'brl',b:1,i:1,meta:200,d:o=>`${NUM(o.I.atend)} atendimentos`},
- {k:'descCPF',g:'CPF',n:'% Desconto CPF',t:'pct',b:0,i:1,meta:0.07,d:o=>`sobre o faturamento CPF`}
+ {k:'descCPF',g:'CPF',n:'% Desconto CPF',t:'pct',b:0,i:1,meta:0.07,d:o=>`sobre o faturamento CPF`},
+ {k:'pctEuc',g:'EUC',n:'% Meta Eucatex',t:'pct',b:1,i:1,meta:1,d:o=>(o.I&&o.I.metaEuc!=null)?`${LT(o.I.litEuc)} de ${LT(o.I.metaEuc)}`:'sem meta Eucatex'}
 ];
-const gv=(o,m)=>o?(m.i?(o.I?o.I[m.k]:null):o[m.k]):null;
+const gv=(o,m)=>m.k=='pctEuc'?eucPct(o&&o.I):(o?(m.i?(o.I?o.I[m.k]:null):o[m.k]):null);
 function fmtI(m,v){if(v==null)return '—';
  return m.t=='pct'?PPCT(v):m.t=='brl'?BRL(v):m.t=='dec'?DEC(v,2):NUM(v)}
 
 function goInd(k){ST.view='ind';ST.ind=k;render();window.scrollTo({top:0,behavior:'smooth'})}
 function indChips(){
  let h='<div class="chips">';
- ['META','CNPJ','CPF'].forEach(g=>{
+ ['META','CNPJ','CPF'].concat(TEM_EUC()?['EUC']:[]).forEach(g=>{
   IND.filter(m=>m.g==g).forEach(m=>{
    h+=`<button class="chip ${ST.ind==m.k?'on':''}" onclick="goInd('${m.k}')"><i class="cg ${g.toLowerCase()}">${g}</i>${m.n}</button>`})});
  return h+'</div>'}
