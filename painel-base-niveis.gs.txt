@@ -4,12 +4,19 @@
    CONFIG) e Servidor de Dados ST versão 20 (mesBase na ação 'niveis', lido do
    blob de níveis). Nada aqui precisa ser colado de novo.
 
-   PENDENTE, e sem isso o mês não aparece em lugar nenhum:
-   1. a célula NIVEIS_MES ainda NÃO existe na aba CONFIG do BANCO;
-   2. o blob de níveis não guarda o mês — quem publica a base (a tela de
-      Níveis) precisa mandar 'MES' dentro de d.data para o mesBase nascer.
-   Até lá as duas telas dizem "da última apuração publicada", sem arriscar um
-   mês errado.
+   FECHADO TAMBÉM NO MESMO DIA:
+   1. a célula NIVEIS_MES existe na aba CONFIG do BANCO (linha 27), com
+      "setembro de 2026" — escrita assim, com "de", porque a planilha converte
+      "setembro/2026" em DATA e a tela passa a mostrar o Date cru. O Painel
+      (ast-v138) também traduz data em mês/ano, caso alguém digite com barra;
+   2. ao publicar a base na tela de Níveis, a coordenação confirma o mês
+      fechado (sugestão: o mês anterior), que vai dentro de d.data como MES —
+      o servidor guarda no blob e devolve como mesBase.
+   Sem esses dois, as telas dizem "da última apuração publicada", sem arriscar
+   um mês errado.
+
+   Conferido no ar: o card "Seu nível" mostra "base: Méd. 90 dias de setembro
+   de 2026".
    ========================================================================== */
 
 /* ============================================================================
