@@ -101,6 +101,7 @@ h3{font-size:14px;margin:0 0 6px}
 </script>
 <script src="st-hora.js?v=1"></script>
 <script src="st-dados.js?v=90"></script>
+<script src="st-indicadores.js?v=1"></script>
 <script src="mentor/assets/conteudo-base.js"></script>
 <script src="mentor/assets/conteudo-questoes.js"></script>
 <script>
@@ -141,11 +142,28 @@ h3{font-size:14px;margin:0 0 6px}
     }).then(function(){ montar(); }).catch(function(e){ $('raiz').innerHTML='<div class="card"><h2>Não consegui abrir</h2><p class="sub">'+esc(e.message||e)+'</p><button class="btn azul" type="button" id="deNovo">Tentar de novo</button></div>'; $('deNovo').onclick=carregar; });
   }
 
+  /* ───────── Eucatex: o que falta da meta do mes, convertido na conta da semana ─────────
+     A litragem so aparece quando a ficha do servidor traz euc={meta,lit}. */
+  function eucDe(c){ return (c&&c.euc&&window.STInd)?STInd.euc(c.euc.meta,c.euc.lit):null; }
+  function kpiEuc(c){
+    var e=eucDe(c); if(!e) return '';
+    return '<div class="kpi"><span>Eucatex</span><b>'+(e.batida?'✔ meta batida':'🪣 '+e.baldesSemana+' balde'+(e.baldesSemana===1?'':'s')+' nesta semana')+'</b></div>';
+  }
+  function compEuc(c){
+    var e=eucDe(c); if(!e||e.batida) return '';
+    return '<div class="comp"><span class="n">🪣</span><b>Eucatex: '+e.baldesSemana+' balde'+(e.baldesSemana===1?'':'s')+' de 18 L nesta semana</b>'+
+      '<div class="sub">'+esc(e.texto)+'</div>'+
+      '<div style="margin-top:4px"><b>Ação:</b> oferecer Eucatex em toda cotação de parede interna, antes de o cliente perguntar o preço.</div>'+
+      '<div><b>O gerente observa:</b> o vendedor sabe de cabeça quantos baldes faltam na semana.</div>'+
+      '<div class="sub">Tudo ou nada em 100%: 99% da meta paga o mesmo que zero.</div></div>';
+  }
+
   /* ───────── compromissos (mesma ficha para vendedor e gerente) ───────── */
   function blocoComp(c, id){
     if(!c) return '<p class="sub">Sem compromissos registrados.</p>';
     var h='<div class="kpis"><div class="kpi"><span>Meta do mês</span><b>'+brl(c.meta)+'</b></div><div class="kpi"><span>Realizado</span><b>'+brl(c.fat)+'</b></div>'+
-      '<div class="kpi"><span>Projeção</span><b>'+pct(c.pp)+'</b></div><div class="kpi"><span>Precisa por dia útil</span><b>'+brl(c.dia)+'</b></div></div>';
+      '<div class="kpi"><span>Projeção</span><b>'+pct(c.pp)+'</b></div><div class="kpi"><span>Precisa por dia útil</span><b>'+brl(c.dia)+'</b></div>'+kpiEuc(c)+'</div>';
+    h+=compEuc(c);
     h+='<div class="comp"><span class="n">1</span><b>'+(c.foco?'Indicador: '+esc(c.foco.nome)+' — de '+esc(c.foco.atual)+' para '+esc(c.foco.meta):'Indicadores CPF na meta: foco em volume')+'</b>'+
       (c.foco?'<div style="margin-top:4px"><b>Ação:</b> '+esc(c.foco.acao)+'</div><div><b>O gerente observa:</b> '+esc(c.foco.obs)+'</div>':'')+'</div>';
     var L=c.lista||[], ab=ABERTOS[id+':l'];
@@ -247,7 +265,7 @@ h3{font-size:14px;margin:0 0 6px}
   function fichaGer(f){
     if(!f) return '';
     var h='<div class="kpis"><div class="kpi"><span>Meta do mês</span><b>'+brl(f.meta)+'</b></div><div class="kpi"><span>Realizado</span><b>'+brl(f.fat)+'</b></div><div class="kpi"><span>Projeção</span><b>'+pct(f.pp)+'</b></div><div class="kpi"><span>Precisa por dia útil</span><b>'+brl(f.dia)+'</b></div>'+
-      '<div class="kpi"><span>PDI feito (vendedores)</span><b>'+f.feitos+'/'+f.nV+'</b></div><div class="kpi"><span>Respondido</span><b>'+f.resp+'/'+f.nV+(f.media!=null?' · média '+String(f.media).replace('.',','):'')+'</b></div></div>';
+      kpiEuc(f)+'<div class="kpi"><span>PDI feito (vendedores)</span><b>'+f.feitos+'/'+f.nV+'</b></div><div class="kpi"><span>Respondido</span><b>'+f.resp+'/'+f.nV+(f.media!=null?' · média '+String(f.media).replace('.',','):'')+'</b></div></div>';
     h+='<ul class="lista">'+
       '<li><span>Abaixo do ritmo</span><span>'+(f.abaixo&&f.abaixo.length?esc(f.abaixo.join(', ')):'ninguém')+'</span></li>'+
       '<li><span>Não fizeram / não responderam o PDI</span><span>'+(f.naoResp&&f.naoResp.length?esc(f.naoResp.join(', ')):'ninguém')+'</span></li>'+

@@ -1,0 +1,64 @@
+/* ============================================================================
+   INDICADORES COMPLETOS NO PDI — o que falta mandar do servidor
+   Assistente ST · Só Tintas · outubro/2026 (app sw ast-v133)
+
+   O app já sabe mostrar e calcular tudo (st-indicadores.js). O que falta é o
+   servidor mandar três números que hoje só chegam ao Painel de Metas. Cada
+   linha nova só aparece na tela quando o campo vem preenchido — enquanto não
+   vier, o PDI fica exatamente como está hoje, sem travessão e sem erro.
+
+   Os números já existem na planilha: são os mesmos que o Painel lê da aba
+   INDICADORES no upload mensal (metaEuc, litEuc, ativos, cadastrados, fatCNPJ).
+
+   ──────────────────────────────────────────────────────────────────────────
+   1) SERVIDOR DE DADOS ST — ação 'pdi' (PDI mensal do vendedor)
+
+   Em cada vendedor do pacote, acrescentar:
+
+     v.euc = { meta: <meta de litragem do mês, em L>, lit: <litragem vendida> };
+     v.cn.pativos = <ativos / cadastrados>;      // 0 a 1
+     v.cn.repcnpj = <fatCNPJ / faturamento>;     // 0 a 1
+     v.oi.pativos = <o mesmo, só do mês atual>;
+     v.oi.repcnpj = <o mesmo, só do mês atual>;
+
+   O app faz sozinho: % da meta, litros que faltam, baldes de 18 L, baldes por
+   dia útil e por semana, e a ação do plano quando está abaixo de 100%.
+
+   ──────────────────────────────────────────────────────────────────────────
+   2) SERVIDOR DE DADOS ST — ação 'semana' (ritual de segunda)
+
+   Na ficha de compromissos do vendedor e na ficha do gerente:
+
+     c.euc = { meta: <meta de litragem do mês>, lit: <litragem vendida> };
+     f.euc = { meta: <meta da loja>,            lit: <litragem da loja> };
+
+   É o que liga o KPI "Eucatex" e o compromisso 🪣 da semana. O número da
+   semana sai dos dias úteis que faltam (segunda a sábado), não do mês.
+
+   ──────────────────────────────────────────────────────────────────────────
+   3) SERVIDOR BANCO — rsBaseGestores_ (PDI mensal de gerentes e supervisores)
+
+   Em cada gerente (loja) e supervisor (soma das lojas da carteira):
+
+     x.ind.euc = { meta: <meta de litragem>, lit: <litragem vendida> };
+
+   Entra como linha na tabela de indicadores e como ação do plano, com a
+   litragem que falta dividida entre os vendedores (gerente) ou entre as
+   lojas (supervisor).
+
+   ──────────────────────────────────────────────────────────────────────────
+   LENDO DA ABA INDICADORES (modelo; ajuste os nomes das colunas aos seus)
+
+   function indEuc_(linha, cab) {
+     var iMeta = cab.indexOf('META EUCATEX'), iLit = cab.indexOf('LITRAGEM EUCATEX');
+     if (iMeta < 0 || iLit < 0) return null;
+     var m = Number(linha[iMeta] || 0);
+     return m ? { meta: m, lit: Number(linha[iLit] || 0) } : null;
+   }
+
+   Depois de alterar o BANCO: Implantar → Gerenciar implantações → lápis →
+   Nova versão (senão o Painel e o PDI continuam vendo o código antigo).
+
+   NÃO mexer na nota de prioridade: os 20 pontos de indicador seguem só com
+   os quatro do CPF, como combinado.
+   ========================================================================== */

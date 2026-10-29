@@ -2,6 +2,44 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v133",
+      "data": "29/10/2026",
+      "hora": "09:05",
+      "itens": [
+        {
+          "painel": "PDI Mensal",
+          "o_que": "A tabela de indicadores passou a trazer a meta de cada um, incluindo a litragem Eucatex em litros e em baldes de 18 L. Eucatex abaixo de 100% vira ação do plano, por fora das outras.",
+          "para": [
+            "coord",
+            "anl",
+            "sup",
+            "ger",
+            "vend"
+          ]
+        },
+        {
+          "painel": "PDI Semanal",
+          "o_que": "Entrou o quanto falta de Eucatex nesta semana, em baldes de 18 L, pelos dias úteis que ainda restam — na sua ficha e na ficha da loja.",
+          "para": [
+            "coord",
+            "anl",
+            "sup",
+            "ger",
+            "vend"
+          ]
+        },
+        {
+          "painel": "Painel de Metas",
+          "o_que": "A lista de indicadores e metas passou a ser a mesma do PDI: mudou a meta em um lugar, muda nos dois.",
+          "para": [
+            "coord",
+            "anl",
+            "sup"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v132",
       "data": "29/10/2026",
       "hora": "08:20",
@@ -9,7 +47,13 @@
         {
           "painel": "Tela inicial",
           "o_que": "Agora o app avisa quando é atualizado: aparece este quadro no primeiro acesso depois de cada publicação e fica o sino 🔔 Novidades no topo para reler quando quiser.",
-          "para": ["coord", "anl", "sup", "ger", "vend"]
+          "para": [
+            "coord",
+            "anl",
+            "sup",
+            "ger",
+            "vend"
+          ]
         }
       ]
     }

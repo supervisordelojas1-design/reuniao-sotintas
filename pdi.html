@@ -234,6 +234,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
 </div>
 <script src="st-hora.js?v=1"></script>
 <script src="st-dados.js?v=90"></script>
+<script src="st-indicadores.js?v=1"></script>
 <script src="st-anima.js?v=3"></script>
 <script>try{if(window.self!==window.top)document.documentElement.classList.add('embutido');}catch(e){document.documentElement.classList.add('embutido');}</script>
 <script>
@@ -394,12 +395,24 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
       c: `${P} usa o Checklist Rápido da Parede com o cliente e pede ao padrinho para revisar o orçamento antes de fechar nas primeiras semanas.`,
       e: `${v.m} mês(es) fechado(s) com meta; o mês atual projeta ${pct(v.pj)}.`,
       an: 'É a base do clube: antes de subir para o profissional, o garoto treina com os titulares e aprende o jeito do time.' });
+    /* Eucatex: tudo ou nada em 100%. Enquanto nao bater, vira acao propria, fora do corte das 3. */
+    const EU = (window.STInd && v.euc) ? STInd.euc(v.euc.meta, v.euc.lit) : null;
+    if (EU && !EU.batida) A.push({ k: 'euc', peso: 99, t: 'Meta de litragem Eucatex',
+      a: `Faltam ${EU.falta.toLocaleString('pt-BR')} L — ${EU.baldes} baldes de 18 L — para ${P} fechar os 100%: ${EU.semanaTexto.replace('🪣 ', '')}. Oferecer Eucatex no lugar da marca de entrada em toda cotação de parede interna e fechar o dia conferindo quantos baldes sairam.`,
+      c: `${P} sabe de cabeça quantos baldes faltam na semana e oferece Eucatex antes do cliente perguntar o preço, sem esperar o gerente cobrar.`,
+      e: `${EU.texto}.`,
+      an: 'Bonus Eucatex e penalti: nao tem meio gol. 99% da meta paga o mesmo que zero — R$ 50 que ficam na mesa.' });
     if (v.tier === 'P4' || A.length === 0) A.push({ k: 'mult', peso: 0, t: 'Multiplicador da loja',
       a: `Tornar ${P} padrinho de um vendedor P1 ou P2 da mesma loja ou região: 2 atendimentos por semana em dupla, mostrando como faz o que dá certo.`,
       c: `${P} explica o próprio método (abordagem, kit, identificação) sem precisar do gerente, e o afilhado melhora pelo menos 1 indicador em 30 dias.`,
       e: `Atingimento médio de ${pct(v.a3)} nos últimos 3 meses, ${v.bt} mês(es) batendo 100% no ano.`,
       an: 'É o camisa 10 que, além de fazer gol, organiza o meio-campo e faz o time inteiro jogar melhor.' });
     return A;
+  }
+  /* o corte do plano: no maximo 3 acoes (2 para quem ja esta bem) e, por fora, a de Eucatex */
+  function topDe(AA, v) {
+    const euc = AA.filter(a => a.k === 'euc'), resto = AA.filter(a => a.k !== 'euc');
+    return resto.slice(0, (['P1', 'P2', 'PI'].includes(v.tier)) ? 3 : 2).concat(euc);
   }
   function metasDe(v) {
     const M = [], res = v.a3 == null ? v.pj : v.a3;
@@ -508,9 +521,10 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
     }
 
     function ficha(v) {
-      const L = (opts.base.L || {})[v.c] || {}, AA = A(v), M = metasDe(v), r = S.REG[v.id] || {}, top = (['P1', 'P2', 'PI'].includes(v.tier)) ? AA.slice(0, 4) : AA.slice(0, 2);
+      const L = (opts.base.L || {})[v.c] || {}, AA = A(v), M = metasDe(v), r = S.REG[v.id] || {}, top = topDe(AA, v);
       const ind = (lab, val, meta, ok, out) => `<tr><td>${lab}</td><td class="${ok ? 'pdi-ok' : 'pdi-bad'}">${val}</td><td>${out}</td><td>${meta}</td></tr>`;
       const cv = v.cpf, cn = v.cn, ck = v.cnk, oi = v.oi, p = v.perda || {}, orf = (opts.base.ORF || {})[v.c] || [], cart = v.cart || [];
+      const EUF = (window.STInd && v.euc) ? STInd.euc(v.euc.meta, v.euc.lit) : null;
       return `<div class="pdi-ficha">
         <div class="pdi-facts">
           <div class="pdi-fact"><span>Média 3 meses</span><b>${pct(v.a3)}</b></div>
@@ -543,6 +557,11 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
             ${ind('Positivados CNPJ', Math.round(cn.posit || 0), '≥ 10', ck.posit, oi.posit == null ? '—' : Math.round(oi.posit))}
             ${ind('% positivados', pct(cn.pposit), '≥ 50%', ck.pposit, '—')}
             ${ind('Clientes novos CNPJ', n1(cn.novos), '≥ 4', ck.novos, oi.novos == null ? '—' : Math.round(oi.novos))}
+            ${cn.pativos == null ? '' : ind('% Ativos CNPJ', pct(cn.pativos), '—', cn.pativos >= 0.5, oi.pativos == null ? '—' : pct(oi.pativos))}
+            ${cn.repcnpj == null ? '' : ind('% Represent. CNPJ', pct(cn.repcnpj), '—', true, oi.repcnpj == null ? '—' : pct(oi.repcnpj))}
+            ${ind('% da meta (individual)', pct(v.a3), '≥ 100%', v.a3 >= 1, pct(v.pj))}
+            ${(L.out && L.out.p != null) ? ind('% da meta do time (loja)', pct(L.set && L.set.a), '≥ 100%', (L.set && L.set.a) >= 1, pct(L.out.p)) : ''}
+            ${EUF ? ind('% Meta Eucatex', pct(EUF.pct), '≥ 100% · tudo ou nada', EUF.batida, EUF.texto) : ''}
           </tbody></table></div>
           ${v.cnloja ? `<p class="pdi-meta">Média dos colegas da loja: ${brl(v.cnloja.fat)} de fat. CNPJ, ${n1(v.cnloja.posit)} positivados e ${n1(v.cnloja.novos)} novos por mês. Quando o vendedor está na média da loja, o item não pesa na nota.</p>` : ''}</div>
           <div><h4>Metas do PDI · 90 dias</h4><ul class="pdi-metas">${M.map(m => `<li class="${(r.auto || {}).meta === m[0] ? 'minha' : ''}"><span>${esc(m[1])}${(r.auto || {}).meta === m[0] ? ' <span class="pdi-ok">· a meta dele</span>' : ''}</span><b>${esc(m[2])} → ${esc(m[3])}</b></li>`).join('')}</ul>
@@ -631,7 +650,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
 
     /* ═════════════ Termo de PDI: formulário timbrado → PDF → WhatsApp ═════════════ */
     function termoBlocos(v, t) {
-      const AA = A(v), top = (['P1', 'P2', 'PI'].includes(v.tier)) ? AA.slice(0, 4) : AA.slice(0, 3);
+      const AA = A(v), top = topDe(AA, v);
       const M = metasDe(v), r = S.REG[v.id] || {}, au = r.auto || {}, cv = v.cpf, cn = v.cn, ck = v.cnk_aj || v.cnk, cp = v.cpk;
       const linhas = n => '<div class="tm-linhas">' + '<i></i>'.repeat(n) + '</div>';
       const resp = (s, n) => s && String(s).trim() ? `<p class="tm-resp">${esc(String(s).trim())}</p>` : linhas(n);
@@ -644,6 +663,11 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
       B.push(`<section class="tm-sec"><h3>1. Identificação</h3><div class="tm-id">${id.map(([k, x, c]) => `<div class="${c || ''}"><span>${k}</span><b>${x ? esc(x) : '&nbsp;'}</b></div>`).join('')}</div></section>`);
       const ind = [['Vendas identificadas (CPF)', pct(cv.ident), '≥ 80%', cp.ident], ['Itens por venda CPF', n1(cv.itens), '≥ 2,5', cp.itens], ['Ticket médio CPF', brl(cv.ticket), '≥ R$ 200', cp.ticket], ['Desconto CPF', pct1(cv.desccpf), 'abaixo de 7%', cp.desccpf],
         ['Faturamento CNPJ', brl(cn.fatcnpj), '≥ R$ 30 mil', ck.fatcnpj], ['Positivados CNPJ por mês', Math.round(cn.posit || 0), '≥ 10', ck.posit], ['Clientes novos CNPJ por mês', n1(cn.novos), '≥ 4', ck.novos], ['Desconto CNPJ', pct1(cn.desccnpj), 'abaixo de 17%', ck.desccnpj]];
+      if (cn.pativos != null) ind.push(['% Ativos CNPJ', pct(cn.pativos), '—', cn.pativos >= 0.5]);
+      if (cn.repcnpj != null) ind.push(['% Representatividade CNPJ', pct(cn.repcnpj), '—', true]);
+      ind.unshift(['% da meta (individual)', pct(v.a3), '≥ 100%', v.a3 >= 1]);
+      const EUT = (window.STInd && v.euc) ? STInd.euc(v.euc.meta, v.euc.lit) : null;
+      if (EUT) ind.push(['Litragem Eucatex', EUT.texto, '≥ 100% · tudo ou nada', EUT.batida]);
       B.push(`<section class="tm-sec"><h3>2. Situação atual</h3><div class="tm-fatos"><div><span>Atingimento · 3 meses</span><b>${pct(v.a3)}</b></div><div><span>Mês atual (projeção)</span><b>${pct(v.pj)}</b></div><div><span>Meses com 100%</span><b>${v.bt} de ${v.m}</b></div><div class="din"><span>Bônus não recebido · 3 meses</span><b>${brl(v.perda_tot)}</b></div></div>
         <table class="tm-t"><thead><tr><th>Indicador</th><th>Média 3 meses</th><th>Meta</th><th>Situação</th></tr></thead><tbody>${ind.map(x => `<tr><td>${x[0]}</td><td>${x[1]}</td><td>${x[2]}</td><td>${sit(x[3])}</td></tr>`).join('')}</tbody></table></section>`);
       B.push(`<section class="tm-sec"><h3>3. Metas para os próximos 90 dias</h3><table class="tm-t"><thead><tr><th>Indicador</th><th>Hoje</th><th>Meta em 90 dias</th></tr></thead><tbody>${M.map(m => `<tr><td>${esc(m[1])}${au.meta === m[0] ? ' <span class="tm-star">★ meta escolhida pelo colaborador</span>' : ''}</td><td>${esc(m[2])}</td><td><b>${esc(m[3])}</b></td></tr>`).join('')}</tbody></table></section>`);
