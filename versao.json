@@ -2,6 +2,46 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v134",
+      "data": "29/10/2026",
+      "hora": "14:44",
+      "itens": [
+        {
+          "painel": "PDI Semanal",
+          "o_que": "Os orçamentos em aberto do compromisso 3 passaram a sair com o número do orçamento na frente do cliente, junto do telefone, do valor e dos dias parados — dá para procurar direto no Autcom.",
+          "para": [
+            "coord",
+            "anl",
+            "sup",
+            "ger",
+            "vend"
+          ]
+        },
+        {
+          "painel": "PDI Mensal",
+          "o_que": "Entrou a lista dos orçamentos em aberto, um a um, com número, cliente, telefone, valor e há quantos dias está parado: no PDI do vendedor e no PDI de gerentes e supervisores, na tela, no termo em PDF (com coluna Retorno para anotar à mão) e no texto do WhatsApp.",
+          "para": [
+            "coord",
+            "anl",
+            "sup",
+            "ger",
+            "vend"
+          ]
+        },
+        {
+          "painel": "Painel de Metas",
+          "o_que": "A lista de orçamentos em aberto ganhou a coluna do número do orçamento, que vai também no WhatsApp da lista e no PDF da reunião.",
+          "para": [
+            "coord",
+            "anl",
+            "sup",
+            "ger",
+            "vend"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v133",
       "data": "29/10/2026",
       "hora": "09:05",

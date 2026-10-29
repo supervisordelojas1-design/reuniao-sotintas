@@ -172,7 +172,7 @@ h3{font-size:14px;margin:0 0 6px}
       (L.length>5?'<button class="mais" type="button" data-mais="'+esc(id)+':l">'+(ab?'Mostrar menos':'Ver os '+L.length+' clientes')+'</button>':'')+'</div>';
     var O=c.orcs||[];
     h+='<div class="comp"><span class="n">3</span><b>Retornar '+O.length+' orçamento'+(O.length===1?'':'s')+' em aberto</b>'+
-      (O.length?'<ul class="lista">'+O.map(function(o){return '<li><span>'+esc(o.cli)+(o.tel?' · <a href="tel:'+esc(String(o.tel).replace(/[^\d+]/g,''))+'" style="color:var(--navy)">'+esc(o.tel)+'</a>':'')+'</span><span>'+brl(o.valor)+(o.dias!=null?' · '+o.dias+' dias':'')+'</span></li>';}).join('')+'</ul>':'<div class="sub">Nenhum orçamento em aberto no seu nome.</div>')+'</div>';
+      (O.length?'<ul class="lista">'+O.map(function(o){return '<li><span>'+(o.doc?'<b>Nº '+esc(o.doc)+'</b> · ':'')+esc(o.cli)+(o.tel?' · <a href="tel:'+esc(String(o.tel).replace(/[^\d+]/g,''))+'" style="color:var(--navy)">'+esc(o.tel)+'</a>':'')+'</span><span>'+brl(o.valor)+(o.dias!=null?' · '+o.dias+' dias':'')+'</span></li>';}).join('')+'</ul>':'<div class="sub">Nenhum orçamento em aberto no seu nome.</div>')+'</div>';
     return h;
   }
 

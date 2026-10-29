@@ -520,6 +520,14 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
         </div>`;
     }
 
+    /* Orçamentos em aberto no nome do vendedor: nº do documento, cliente,
+       telefone e valor. Só aparece quando o servidor manda v.orcs — sem a
+       lista, o PDI fica exatamente como era. */
+    function orcsDe(v) {
+      const L = ((v && v.orcs) || []).slice();
+      L.sort((a, b) => (b.dias || 0) - (a.dias || 0) || (b.valor || 0) - (a.valor || 0));
+      return L;
+    }
     function ficha(v) {
       const L = (opts.base.L || {})[v.c] || {}, AA = A(v), M = metasDe(v), r = S.REG[v.id] || {}, top = topDe(AA, v);
       const ind = (lab, val, meta, ok, out) => `<tr><td>${lab}</td><td class="${ok ? 'pdi-ok' : 'pdi-bad'}">${val}</td><td>${out}</td><td>${meta}</td></tr>`;
@@ -572,6 +580,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
           ${cart.length ? `<div class="pdi-tw"><table class="pdi-t"><thead><tr><th>Cliente</th><th>Situação</th><th>Média</th><th>Último mês</th><th>Mês atual</th></tr></thead><tbody>${cart.map(c => `<tr><td>${esc(c.cli)}</td><td class="${c.g === 'sumiu' ? 'pdi-bad' : 'pdi-warn'}">${c.g === 'sumiu' ? 'Sumiu' : 'Caiu'}</td><td>${brl(c.med)}</td><td>${brl(c.set)}</td><td>${brl(c.out)}</td></tr>`).join('')}</tbody></table></div>`
             : `<p class="pdi-meta">Nenhum cliente da carteira de ${esc(primeiro(v))} sumiu ou caiu. Carteira atribuída: ${v.cart_n || 0} cliente(s) CNPJ com compra média acima de R$ 300.</p>`}
           ${(v.cart_n || 0) < 10 && orf.length ? `<p class="pdi-meta"><span class="pdi-lbl">Para redistribuir</span>Clientes da loja sem vendedor ativo que podem passar para ${esc(primeiro(v))}:</p><div class="pdi-tw"><table class="pdi-t"><thead><tr><th>Cliente</th><th>Vendedor antigo</th><th>Média</th><th>Situação</th></tr></thead><tbody>${orf.map(c => `<tr><td>${esc(c.cli)}</td><td>${esc(tc(String(c.vend).replace(/\s+N\s?\d+$/, '')))}</td><td>${brl(c.med)}</td><td>${c.g === 'sumiu' ? 'sumiu' : 'caiu'}</td></tr>`).join('')}</tbody></table></div>` : ''}
+          ${(() => { const O = orcsDe(v).slice(0, 20); return O.length ? `<h4 class="mt-1">${O.length} orçamento${O.length === 1 ? '' : 's'} em aberto no nome de ${esc(primeiro(v))}</h4><div class="pdi-tw"><table class="pdi-t"><thead><tr><th>Nº do orçamento</th><th>Cliente</th><th>Telefone</th><th>Valor</th><th>Parado há</th></tr></thead><tbody>${O.map(o => `<tr><td><b>${esc(o.doc || '—')}</b></td><td>${esc(o.cli || '')}</td><td>${esc(o.tel || '—')}</td><td>${brl(o.valor)}</td><td class="${(o.dias || 0) > 15 ? 'pdi-bad' : ''}">${o.dias != null ? o.dias + ' dias' : '—'}</td></tr>`).join('')}</tbody></table></div>` : ''; })()}
         </div>
         <div><h4>Plano de ação</h4><div class="pdi-acoes">${top.map((a, i) => { const s = ((r.acoes || {})[a.k] || {}); return `<div class="pdi-acao"><div class="pdi-acao-t"><b>${i + 1}. ${a.t}</b>${s.s === 'feito' ? '<span class="pdi-badge b-P4">Concluída</span>' : s.s === 'andamento' ? '<span class="pdi-badge b-P3">Em andamento</span>' : ''}</div>
           <p><span class="pdi-lbl">Ação</span>${a.a}</p><p><span class="pdi-lbl">Comportamento a observar</span>${a.c}</p><p><span class="pdi-lbl">Exemplo do dado</span>${a.e}</p><p><span class="pdi-lbl">Analogia</span>${a.an}</p>
@@ -583,7 +592,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
 
     function texto(v) {
       const AA = A(v).slice(0, 3), M = metasDe(v), r = S.REG[v.id] || {};
-      return `*PDI ${v.nome}* — ${opts.lojaNome(v.loja_id)}\nPrioridade: ${TN[v.tier]} (${Math.round(v.sc.final)}/100)\nDeixou de ganhar em bônus (3 meses): ${brl(v.perda_tot)}\n\n*Metas 90 dias*\n${M.map(m => `• ${m[1]}: ${m[2]} → ${m[3]}${(r.auto || {}).meta === m[0] ? ' (a minha meta)' : ''}`).join('\n')}\n\n*Ações*\n${AA.map((a, i) => `${i + 1}. ${a.t}\n   O que fazer: ${a.a}\n   O que vou observar: ${a.c}`).join('\n')}${(v.cart || []).length ? `\n\n*Clientes para ligar*\n${v.cart.slice(0, 5).map(c => `• ${c.cli} (média ${brl(c.med)}/mês)`).join('\n')}` : ''}\n\n*Trilha MENTOR ST PRO*: ${modulosDe(v, P.REST).join(' · ')}${r.prox ? `\n\nPróxima revisão: ${dt(r.prox)}` : ''}`;
+      return `*PDI ${v.nome}* — ${opts.lojaNome(v.loja_id)}\nPrioridade: ${TN[v.tier]} (${Math.round(v.sc.final)}/100)\nDeixou de ganhar em bônus (3 meses): ${brl(v.perda_tot)}\n\n*Metas 90 dias*\n${M.map(m => `• ${m[1]}: ${m[2]} → ${m[3]}${(r.auto || {}).meta === m[0] ? ' (a minha meta)' : ''}`).join('\n')}\n\n*Ações*\n${AA.map((a, i) => `${i + 1}. ${a.t}\n   O que fazer: ${a.a}\n   O que vou observar: ${a.c}`).join('\n')}${(v.cart || []).length ? `\n\n*Clientes para ligar*\n${v.cart.slice(0, 5).map(c => `• ${c.cli} (média ${brl(c.med)}/mês)`).join('\n')}` : ''}${(() => { const O = orcsDe(v).slice(0, 10); return O.length ? `\n\n*Orçamentos em aberto para retornar*\n${O.map(o => `• Nº ${o.doc || '—'} · ${o.cli || ''}${o.tel ? ' · ' + o.tel : ''} — ${brl(o.valor)}${o.dias != null ? ' · ' + o.dias + ' dias' : ''}`).join('\n')}` : ''; })()}\n\n*Trilha MENTOR ST PRO*: ${modulosDe(v, P.REST).join(' · ')}${r.prox ? `\n\nPróxima revisão: ${dt(r.prox)}` : ''}`;
     }
 
     function painelAcomp() {
@@ -678,7 +687,8 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
       });
       const cart = (v.cart || []).slice(0, 6);
       B.push(`<section class="tm-sec"><h3>5. Desenvolvimento e carteira</h3><h4>Trilha no MENTOR ST PRO</h4><div class="tm-mods">${modulosDe(v, P.REST).map(m => `<span>${esc(m)}</span>`).join('')}</div>
-        ${cart.length ? `<h4>Clientes CNPJ para recuperar</h4><table class="tm-t"><thead><tr><th>Cliente</th><th>Situação</th><th>Compra média/mês</th></tr></thead><tbody>${cart.map(c => `<tr><td>${esc(c.cli)}</td><td>${c.g === 'sumiu' ? 'Parou de comprar' : 'Comprando menos'}</td><td>${brl(c.med)}</td></tr>`).join('')}</tbody></table>` : ''}</section>`);
+        ${cart.length ? `<h4>Clientes CNPJ para recuperar</h4><table class="tm-t"><thead><tr><th>Cliente</th><th>Situação</th><th>Compra média/mês</th></tr></thead><tbody>${cart.map(c => `<tr><td>${esc(c.cli)}</td><td>${c.g === 'sumiu' ? 'Parou de comprar' : 'Comprando menos'}</td><td>${brl(c.med)}</td></tr>`).join('')}</tbody></table>` : ''}
+        ${(() => { const O = orcsDe(v).slice(0, 20); return O.length ? `<h4>Orçamentos em aberto para retornar</h4><table class="tm-t"><thead><tr><th>Nº do orçamento</th><th>Cliente</th><th>Telefone</th><th>Valor</th><th>Parado há</th><th>Retorno</th></tr></thead><tbody>${O.map(o => `<tr><td>${esc(o.doc || '—')}</td><td>${esc(o.cli || '')}</td><td>${esc(o.tel || '—')}</td><td>${brl(o.valor)}</td><td>${o.dias != null ? o.dias + ' dias' : '—'}</td><td></td></tr>`).join('')}</tbody></table>` : ''; })()}</section>`);
       B.push(`<section class="tm-sec"><h3>6. Autoavaliação do colaborador</h3>${r.disc && DISC[r.disc] ? `<p style="margin:0 0 4px"><b>Perfil DISC:</b> ${DISC[r.disc].n}</p>` : ''}
         <div class="tm-q"><em>O que mais atrapalha o seu resultado hoje?</em>${resp(au.q1, 2)}</div>
         <div class="tm-q"><em>Em que você é bom e pode ensinar a um colega?</em>${resp(au.q2, 2)}</div>
@@ -834,7 +844,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
 })(window);
 
 </script>
-<script src="pdi-gestores.js?v=2"></script>
+<script src="pdi-gestores.js?v=3"></script>
 <script>
 (function(){
   /* ====== Dados: Servidor de Dados ST (st-dados.js). O recorte por carteira/loja é feito NO SERVIDOR,

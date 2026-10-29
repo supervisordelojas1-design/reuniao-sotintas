@@ -654,7 +654,7 @@ const ORC={};
    const dt=dOrc(r[2]);
    const dias=dt?Math.max(0,Math.round((base-dt)/86400000)):0;
    return {vend:r[0], comMeta:!!r[1], data:fmtD(dt), dias:dias, faixa:faixa(dias),
-           cli:r[3], tel:r[4], valor:r[5]};
+           cli:r[3], tel:r[4], valor:r[5], doc:r[6]!=null?String(r[6]).trim():''};
   });
   ORC[cod]=grupaOrc(lista); ORC[('000'+cod).slice(-3)]=ORC[cod];
   if(!isNaN(Number(cod))) ORC[String(Number(cod))]=ORC[cod];
@@ -690,6 +690,8 @@ function OSoma(cods){
  return l.length?grupaOrc(l):null;
 }
 function OL(cod){return ORC[cod]||ORC[('000'+cod).slice(-3)]||ORC[String(Number(cod))]||null}
+/* o numero do orcamento so vira coluna quando a base manda — sem ele, tudo fica como antes */
+function temDoc(L){return (L||[]).some(function(x){return x&&x.doc})}
 /* busca tolerante ao formato do codigo */
 function KL(cod){return CART[cod]||CART[('000'+cod).slice(-3)]||CART[String(Number(cod))]||null}
 /* carteira da REGIÃO: soma das lojas do supervisor, cada cliente marcado com a loja (cod e nome) */
@@ -1313,7 +1315,7 @@ function orcBox(O,titulo,escopoFalta,chave){
   <div class="indc"><div class="l">Total em aberto</div><div class="v">${BRL(O.total)}</div><div class="s">${O.ger.length?BRL(O.ger.reduce((a,c)=>a+c.valor,0))+' de gerência':'todos com meta'}</div></div>
  </div>`;
  if(escopoFalta&&escopoFalta>0) h+=`<div class="ppleg" style="padding:0 16px 12px">Faltam <b>${BRL(escopoFalta)}</b> para a meta e há <b>${BRL(O.total)}</b> em proposta — <b>${(O.total/escopoFalta*100).toFixed(0)}%</b> do que falta.</div>`;
- if(pesoMaior>=0.25) h+=`<div class="alert" style="margin:0 14px 14px"><span>⚠️</span><span>Um único orçamento — <b>${esc(O.maior.cli.replace(/^\d+-/,''))}</b>, ${BRL(O.maior.valor)}, parado há ${O.maior.dias} dias — vale <b>${(pesoMaior*100).toFixed(0)}%</b> de todo o valor aqui. Sem ele sobram ${BRL(O.total-O.maior.valor)} pulverizados.</span></div>`;
+ if(pesoMaior>=0.25) h+=`<div class="alert" style="margin:0 14px 14px"><span>⚠️</span><span>Um único orçamento — <b>${esc(O.maior.cli.replace(/^\d+-/,''))}</b>${O.maior.doc?' (nº '+esc(O.maior.doc)+')':''}, ${BRL(O.maior.valor)}, parado há ${O.maior.dias} dias — vale <b>${(pesoMaior*100).toFixed(0)}%</b> de todo o valor aqui. Sem ele sobram ${BRL(O.total-O.maior.valor)} pulverizados.</span></div>`;
  return h+`</div>`;
 }
 function goOrc(v,g){ST.ovend=v||null;ST.view='orc';ST.og=g||'F';render();window.scrollTo({top:0,behavior:'smooth'})}
@@ -1346,9 +1348,10 @@ function vOrc(){
   </div></div>`;
  if(!L.length) h+='<div class="sec"><div class="empty">Nenhum orçamento nesta faixa.</div></div>';
  else{
-  h+='<div class="sec"><div class="sech"><h3>Lista para ligação</h3><span class="cnt">maior valor primeiro</span></div><table class="ptab" style="width:100%"><tr><th>#</th><th>Cliente</th><th>Vendedor</th><th>Dias</th><th>Valor</th><th>Telefone</th></tr>';
+  const tD=temDoc(L);
+  h+='<div class="sec"><div class="sech"><h3>Lista para ligação</h3><span class="cnt">maior valor primeiro</span></div><table class="ptab" style="width:100%"><tr><th>#</th>'+(tD?'<th>Nº do orçamento</th>':'')+'<th>Cliente</th><th>Vendedor</th><th>Dias</th><th>Valor</th><th>Telefone</th></tr>';
   L.forEach(function(c,i){
-   h+=`<tr><td>${i+1}</td><td>${esc(c.cli.replace(/^\d+-/,''))}</td><td>${esc(c.vend)}${c.comMeta?'':' <b style="color:var(--tx3)">(gerência)</b>'}</td><td>${c.dias}d</td><td><b>${BRL(c.valor)}</b></td><td>${esc(c.tel||'—')}</td></tr>`});
+   h+=`<tr><td>${i+1}</td>${tD?`<td><b>${esc(c.doc||'—')}</b></td>`:''}<td>${esc(c.cli.replace(/^\d+-/,''))}</td><td>${esc(c.vend)}${c.comMeta?'':' <b style="color:var(--tx3)">(gerência)</b>'}</td><td>${c.dias}d</td><td><b>${BRL(c.valor)}</b></td><td>${esc(c.tel||'—')}</td></tr>`});
   h+='</table></div>';
  }
  return h;
@@ -1360,7 +1363,7 @@ function waOrc(){
  var lin=['*ORÇAMENTOS '+info[0].toUpperCase()+' — '+(ST.ovend?ST.ovend:onde)+'*',
   D.periodo.mes+'/'+D.periodo.ano+' · '+L.length+' propostas · '+BRL(L.reduce((a,c)=>a+c.valor,0)),''];
  L.slice(0,25).forEach(function(c,i){
-  lin.push((i+1)+'. '+c.cli.replace(/^\d+-/,'')+' — '+BRL(c.valor)+' · '+c.dias+' dias'+(c.tel?' · '+c.tel:''));});
+  lin.push((i+1)+'. '+(c.doc?'Nº '+c.doc+' · ':'')+c.cli.replace(/^\d+-/,'')+' — '+BRL(c.valor)+' · '+c.dias+' dias'+(c.tel?' · '+c.tel:''));});
  if(L.length>25){lin.push('');lin.push('… e mais '+(L.length-25)+' — lista completa no PDF.');}
  window.open('https://wa.me/?text='+encodeURIComponent(lin.join('\n')),'_blank','noopener,noreferrer');
 }
@@ -1401,8 +1404,9 @@ function pdfOrc(){
   const L=O[g]||[], info=ORCG[g];
   corpo+='<h2 style="color:'+info[2]+'">'+info[0]+' — '+L.length+' propostas · '+BRL(L.reduce(function(a,c){return a+c.valor},0))+'</h2>';
   if(!L.length){corpo+='<p style="font-size:11px;color:#67728c">Nenhuma proposta nesta faixa.</p>';return}
-  corpo+='<table class="ptab"><tr><th>#</th><th>Cliente</th><th>Vendedor</th><th>Dias</th><th>Valor</th><th>Telefone</th><th>Retorno</th></tr>';
-  L.forEach(function(c,i){corpo+='<tr><td>'+(i+1)+'</td><td>'+esc(c.cli.replace(/^\d+-/,''))+'</td><td>'+esc(c.vend)+(c.comMeta?'':' (gerência)')+'</td><td>'+c.dias+'</td><td>'+BRL(c.valor)+'</td><td>'+esc(c.tel||'')+'</td><td></td></tr>'});
+  const tD=temDoc(O.itens);
+  corpo+='<table class="ptab"><tr><th>#</th>'+(tD?'<th>Nº</th>':'')+'<th>Cliente</th><th>Vendedor</th><th>Dias</th><th>Valor</th><th>Telefone</th><th>Retorno</th></tr>';
+  L.forEach(function(c,i){corpo+='<tr><td>'+(i+1)+'</td>'+(tD?'<td>'+esc(c.doc||'—')+'</td>':'')+'<td>'+esc(c.cli.replace(/^\d+-/,''))+'</td><td>'+esc(c.vend)+(c.comMeta?'':' (gerência)')+'</td><td>'+c.dias+'</td><td>'+BRL(c.valor)+'</td><td>'+esc(c.tel||'')+'</td><td></td></tr>'});
   corpo+='</table>';
  });
  document.getElementById('parea').innerHTML='<div class="pdoc">'+

@@ -1,0 +1,101 @@
+/* ============================================================================
+   NÚMERO DO ORÇAMENTO NOS PDIs — o que falta mandar do servidor
+   Assistente ST · Só Tintas · outubro/2026 (app sw ast-v134)
+
+   O app já sabe mostrar o número em todos os lugares: PDI Semanal do vendedor,
+   PDI Mensal do vendedor, PDI Mensal de gerentes e supervisores (tela, termo em
+   PDF e WhatsApp) e Painel de Metas (lista, WhatsApp e PDF). O que falta é o
+   servidor mandar o número junto com cada orçamento.
+
+   Regra em todos os pontos: enquanto o campo não vier, as telas ficam
+   EXATAMENTE como estão hoje — sem coluna vazia, sem travessão e sem erro.
+   A coluna do número só nasce quando a base manda.
+
+   ──────────────────────────────────────────────────────────────────────────
+   0) LENDO A COLUNA DO NÚMERO (modelo; ajuste ao nome da sua coluna)
+
+   A base de orçamentos em aberto já tem a coluna do documento. Esta função
+   acha a coluna por qualquer um dos nomes mais comuns do relatório, sem
+   depender de acento nem de maiúscula:
+
+   function orcDoc_(linha, cab) {
+     var alvos = ['DOCUMENTO', 'DOC', 'NUMERO', 'N DOCUMENTO', 'NO DOCUMENTO',
+                  'NUM DOCUMENTO', 'NUMERO DO DOCUMENTO', 'ORCAMENTO',
+                  'NUMERO DO ORCAMENTO', 'N ORCAMENTO', 'NO ORCAMENTO',
+                  'PEDIDO', 'PROPOSTA'];
+     var norm = function (s) {
+       return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
+              .replace(/[ºª°.ºN]/g, ' ').replace(/[^A-Za-z0-9 ]/g, ' ')
+              .replace(/\s+/g, ' ').trim().toUpperCase();
+     };
+     var cabN = (cab || []).map(norm);
+     for (var i = 0; i < alvos.length; i++) {
+       var j = cabN.indexOf(alvos[i]);
+       if (j >= 0) return String(linha[j] == null ? '' : linha[j]).trim();
+     }
+     return '';
+   }
+
+   Confira uma vez com Logger.log(cab) e, se a sua coluna tiver outro nome,
+   basta acrescentar esse nome na lista 'alvos'.
+
+   ──────────────────────────────────────────────────────────────────────────
+   1) SERVIDOR BANCO — pacote do PAINEL DE METAS
+
+   Hoje cada orçamento vai como uma linha de 6 campos:
+
+     [vend, comMeta, data, cliente, telefone, valor]
+
+   Acrescente o número como 7º campo, sem mexer na ordem dos outros:
+
+     [vend, comMeta, data, cliente, telefone, valor, orcDoc_(linha, cab)]
+
+   O Painel lê como r[6]. Com isso o número aparece na lista para ligação, no
+   WhatsApp da lista, no PDF da reunião e no alerta do orçamento maior.
+
+   ──────────────────────────────────────────────────────────────────────────
+   2) SERVIDOR DE DADOS ST — ação 'semana' (ritual de segunda)
+
+   Na ficha de compromissos do vendedor, cada item de c.orcs ganha 'doc':
+
+     c.orcs = [{ doc: <nº do orçamento>, cli: <cliente>, tel: <telefone>,
+                 valor: <valor>, dias: <dias em aberto> }, ...]
+
+   É o compromisso 3 ("Retornar N orçamentos em aberto"): o vendedor passa a
+   ver *Nº 102938 · CONSTRUTORA ALFA · (21) 99999-1234 — R$ 18.500 · 22 dias*,
+   com o número na frente para procurar direto no Autcom.
+
+   ──────────────────────────────────────────────────────────────────────────
+   3) SERVIDOR DE DADOS ST — ação 'pdi' (PDI Mensal do vendedor)
+
+   Em cada vendedor do pacote, acrescentar a lista (até 20, os parados há mais
+   tempo primeiro):
+
+     v.orcs = [{ doc: '', cli: '', tel: '', valor: 0, dias: 0 }, ...]
+
+   Entra como tabela "N orçamentos em aberto no nome de <vendedor>" na ficha,
+   como tabela com coluna Retorno no termo em PDF e no texto do WhatsApp.
+
+   ──────────────────────────────────────────────────────────────────────────
+   4) SERVIDOR BANCO — rsBaseGestores_ (PDI Mensal de gerentes e supervisores)
+
+   Em cada gerente (loja) e supervisor (soma das lojas da carteira), dentro de
+   x.carteira, ao lado dos totais que já existem (orcN, orcV, paradosN,
+   paradosV), acrescentar a lista (até 20, parados primeiro):
+
+     x.carteira.orcs = [{ doc: '', cli: '', tel: '', valor: 0, dias: 0,
+                          vend: '<vendedor>',                    // gerente
+                          loja: '<cód>', lojaNome: '<nome>' }, ...];  // supervisor
+
+   No gerente mostra a coluna Vendedor; no supervisor, a coluna Loja. Entra na
+   ficha, no termo em PDF (seção própria, com coluna Retorno para anotar à mão)
+   e no texto do WhatsApp. A ação do plano "Orçamentos parados há mais de 15
+   dias" passa a citar os três maiores pelo número.
+
+   ──────────────────────────────────────────────────────────────────────────
+   Depois de alterar o BANCO: Implantar → Gerenciar implantações → lápis →
+   Nova versão (senão o Painel e o PDI continuam vendo o código antigo).
+
+   NÃO mexer na nota de prioridade: os 20 pontos de indicador seguem só com os
+   quatro do CPF, como combinado.
+   ========================================================================== */
