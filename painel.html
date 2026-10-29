@@ -620,7 +620,19 @@ const ATZ={num:(_.t||[])[0]||'',cart:(_.t||[])[1]||'',orc:(_.t||[])[2]||'',niv:(
    Níveis, não do faturamento do mês que está correndo: a mesma tela mostra
    outubro ao vivo e um nível apurado até setembro. Este rótulo diz de quando é
    a base, para ninguém confundir os dois períodos. */
-const NIVBASE = ATZ.niv ? 'base: Méd. 90 dias de ' + ATZ.niv : 'base: Méd. 90 dias da última apuração publicada';
+/* a planilha costuma converter "setembro/2026" em data; se vier assim, a
+   gente devolve o mês por extenso em vez de despejar um Date na tela */
+function mesTxt(v){
+ const s=String(v==null?'':v).trim(); if(!s) return '';
+ if(/^[A-Za-zÀ-ÿ]+\s*(\/|de)\s*\d{4}$/.test(s)) return s;
+ const iso=/^(\d{4})-(\d{2})-(\d{2})/.exec(s);           /* aaaa-mm-dd é dia local, não UTC */
+ const d=iso?new Date(+iso[1],+iso[2]-1,+iso[3]):new Date(s);
+ if(isNaN(d.getTime())) return s;
+ const M=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+ return M[d.getMonth()]+'/'+d.getFullYear();
+}
+const NIVMES = mesTxt(ATZ.niv);
+const NIVBASE = NIVMES ? 'base: Méd. 90 dias de ' + NIVMES : 'base: Méd. 90 dias da última apuração publicada';
 function selo(ts,cls){
  const k=cls||'selo', ic='🕓 ';
  if(!ts) return '<span class="'+k+'" style="color:#8FA9C2">'+ic+'sem registro de atualização</span>';

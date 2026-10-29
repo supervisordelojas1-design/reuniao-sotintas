@@ -2,9 +2,9 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
-      "v": "ast-v137",
+      "v": "ast-v138",
       "data": "29/10/2026",
-      "hora": "16:05",
+      "hora": "16:20",
       "itens": [
         {
           "painel": "PDI Mensal",
