@@ -964,7 +964,38 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
   function iniciar(){
     $('pdi-root').innerHTML='<p class="pdi-meta">Carregando o PDI…</p>';
     if(!sess()){ montar(); return Promise.resolve(); }
-    return carregar().catch(function(e){ ERRO=e.message||String(e); }).then(montar);
+    return carregar().catch(function(e){ ERRO=e.message||String(e); }).then(montar).then(orcsDoPainel);
+  }
+
+  /* ───────── orçamentos em aberto no PDI mensal do vendedor ─────────
+     A base do PDI não traz orçamento; quem tem é o Painel. Aqui pedimos o
+     pacote do Painel com o MESMO crachá (mesmo recorte: gerente vê a loja,
+     supervisor a carteira) e casamos vendedor por loja + nome. Se falhar ou
+     demorar, o PDI já está na tela e segue exatamente como antes. */
+  var ORCS_FEITO=false;
+  function chaveOrc(cod,nome){ return code3(cod)+'|'+String(nome||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+N\s?\d+$/,'').replace(/^\d+\s*-\s*/,'').replace(/[^A-Za-z ]/g,'').replace(/\s+/g,' ').trim().toUpperCase(); }
+  function orcsDoPainel(){
+    if(ORCS_FEITO || !BASE || !(BASE.V||[]).length) return;
+    var c=window.STDados&&window.STDados.crachaGuardado&&window.STDados.crachaGuardado(true);
+    if(!c||!c.tk) return;
+    ORCS_FEITO=true;
+    fetch(PAINEL_API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({tipo:'dados',u:'cracha',p:c.tk})})
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        var O=j&&j.O; if(!O) return;
+        var hoje=new Date(), base=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate(),12,0,0), mapa={};
+        Object.keys(O).forEach(function(cod){
+          (O[cod]||[]).forEach(function(r){
+            if(!r[6]) return;                     /* sem número: nada a acrescentar */
+            var d=new Date(String(r[2])+'T12:00'), dias=isNaN(d.getTime())?null:Math.max(0,Math.round((base-d)/86400000));
+            var k=chaveOrc(cod,r[0]);
+            (mapa[k]=mapa[k]||[]).push({ doc:String(r[6]), cli:String(r[3]||'').replace(/^\d+-/,''), tel:String(r[4]||''), valor:Number(r[5])||0, dias:dias });
+          });
+        });
+        var achou=0;
+        (BASE.V||[]).forEach(function(v){ var l=mapa[chaveOrc(v.c,v.n)]; if(l&&l.length){ v.orcs=l; achou++; } });
+        if(achou) montar();
+      }).catch(function(){ /* o PDI continua como está */ });
   }
   /* animações (etapa 2): números contando, barras, revisão vencida pulsando, ficha em sanfona, abas, avisos com ✓ */
   if(window.STAnima){

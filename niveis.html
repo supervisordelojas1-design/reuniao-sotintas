@@ -602,6 +602,16 @@ render();
   if(document.readyState!=='loading') montar(); else document.addEventListener('DOMContentLoaded', montar);
 
   var CALC=null;
+  /* A Méd. 90 dias é sempre apurada até o último mês FECHADO, então a sugestão
+     é o mês anterior ao de hoje — mas quem publica confirma, porque é o texto
+     que o vendedor vai ler no Painel e aqui. */
+  function mesFechadoSugerido(){
+    var M=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+    var d=(window.STHora&&STHora.data?STHora.data():new Date());
+    var m=d.getMonth()-1, a=d.getFullYear();
+    if(m<0){ m=11; a--; }
+    return M[m]+'/'+a;
+  }
   function recalcular(){
     var fm=$('fMeta').files[0], fi=$('fInd').files[0], fa=$('fAdm').files[0];
     var msg=$('uMsg'); msg.textContent='';
@@ -620,6 +630,7 @@ render();
       p.innerHTML='<div class="u-row"><b>'+L.length+'</b> lojas · <b>'+V.length+'</b> vendedores ('+cv.cargos+' cargos de gerência/apoio excluídos)</div>'+
         '<div class="u-row">Admissões casadas: <b>'+admInfo.comData+'</b> · sem data: <b class="u-warn">'+admInfo.semData+'</b></div>'+
         '<div class="u-row">Vendedores que mudam de nível: <b>'+mud+'</b></div>'+
+        '<div class="u-row" style="margin-top:6px">Mês fechado desta base: <input id="uMes" type="text" value="'+mesFechadoSugerido()+'" style="width:150px;padding:4px 7px;border:1px solid var(--line,#ccc);border-radius:6px;font:inherit;font-weight:700"> <span style="font-size:11.5px;color:var(--muted,#777)">é o que as telas mostram em “base: $ Méd. 90 dias de …”</span></div>'+
         '<div class="u-row" style="margin-top:6px">Confira os números acima antes de publicar. Ao publicar, substitui o painel de todos.</div>';
       $('btnPub').classList.add('show');
       msg.innerHTML='<span style="color:var(--sobe)">Pré-visualização pronta. Revise e clique em Publicar.</span>';
@@ -629,8 +640,10 @@ render();
     var msg=$('uMsg');
     if(!CALC){ msg.innerHTML='<span class="u-warn">Recalcule primeiro.</span>'; return; }
     msg.textContent='Publicando…';
+    var im=document.getElementById('uMes');
+    CALC.MES=im?String(im.value||'').trim():'';
     STDados.chamar('publicarNiveis', { data:CALC })
-      .then(function(j){ if(j&&j.ok){ aplicar(CALC); msg.innerHTML='<span style="color:var(--sobe)">Publicado! Todos já veem os dados novos.</span>'; }
+      .then(function(j){ if(j&&j.ok){ aplicar(CALC); setBaseNiv(CALC.MES); msg.innerHTML='<span style="color:var(--sobe)">Publicado! Todos já veem os dados novos.</span>'; }
         else { msg.innerHTML='<span class="u-warn">Falha ao publicar: '+((j&&j.erro)||'desconhecido')+'</span>'; } })
       .catch(function(e){ msg.innerHTML='<span class="u-warn">Falha de rede ao publicar.</span>'; });
   }

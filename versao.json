@@ -2,6 +2,34 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v137",
+      "data": "29/10/2026",
+      "hora": "16:05",
+      "itens": [
+        {
+          "painel": "PDI Mensal",
+          "o_que": "O PDI do vendedor passou a trazer os orçamentos em aberto no nome dele — número, cliente, telefone, valor e dias parados — na ficha, no termo em PDF e no WhatsApp. Vêm do Painel, com o mesmo recorte do seu crachá.",
+          "para": [
+            "coord",
+            "anl",
+            "sup",
+            "ger"
+          ]
+        },
+        {
+          "painel": "Níveis",
+          "o_que": "Ao publicar a base, a coordenação informa de qual mês fechado é a Méd. 90 dias. Esse mês passa a aparecer na tela de Níveis e no Painel de Metas, para ninguém confundir o nível com as vendas do mês corrente.",
+          "para": [
+            "coord",
+            "anl",
+            "sup",
+            "ger",
+            "vend"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v136",
       "data": "29/10/2026",
       "hora": "15:20",
