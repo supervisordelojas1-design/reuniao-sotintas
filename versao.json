@@ -2,6 +2,24 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v136",
+      "data": "29/10/2026",
+      "hora": "15:20",
+      "itens": [
+        {
+          "painel": "Níveis",
+          "o_que": "O subtítulo deixou de ter o mês escrito à mão: passa a mostrar de qual apuração é a Méd. 90 dias, como no Painel de Metas, sem risco de ficar dizendo um mês antigo depois de uma base nova.",
+          "para": [
+            "coord",
+            "anl",
+            "sup",
+            "ger",
+            "vend"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v135",
       "data": "29/10/2026",
       "hora": "15:10",

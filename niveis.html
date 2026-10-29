@@ -150,7 +150,7 @@ tr.atraso-row{background:var(--atraso-bg)}
 <header>
  <div><div class="eyebrow">Só Tintas · Colorindo Vidas e Realizando Sonhos</div>
  <h1>Níveis de Lojas e Vendedores</h1>
- <div class="sub">Régua a partir de Outubro/2026 vs Jul–Set · base: $ Méd. 90 dias (setembro)</div></div>
+ <div class="sub">Régua a partir de Outubro/2026 vs Jul–Set · <span id="baseNiv">base: $ Méd. 90 dias da última apuração publicada</span></div></div>
  <div class="hd-actions">
   <div class="hd-top">
    <button class="themebtn" id="btnTema" type="button" aria-label="Alternar tema claro/escuro"><span class="ic" id="temaIc">🌙</span><span id="temaTx">Escuro</span></button>
@@ -445,6 +445,13 @@ render();
     el.textContent = p(d.getDate())+'/'+p(d.getMonth()+1)+'/'+d.getFullYear()+' às '+p(d.getHours())+':'+p(d.getMinutes());
   }
   setAtz(null);
+  /* De qual mês fechado é a Méd. 90 dias. Vem do servidor (j.mesBase, ex.
+     'setembro/2026'); enquanto não vier, a tela não arrisca um mês errado. */
+  function setBaseNiv(mes){
+    var el=document.getElementById('baseNiv'); if(!el) return;
+    el.textContent = mes ? ('base: $ Méd. 90 dias de ' + String(mes))
+                         : 'base: $ Méd. 90 dias da última apuração publicada';
+  }
   function carregarServidor(){
     if(!window.STDados) return;
     STDados.chamar('niveis').then(function(j){
@@ -460,6 +467,7 @@ render();
       } else if(j && !j.ok){ avisoNiveis(j.erro||'Não consegui carregar os níveis.'); }
       else avisoNiveis('A coordenação ainda não publicou a base de níveis.');
       setAtz(j && j.atualizado);
+      setBaseNiv(j && j.mesBase);
     }).catch(function(e){ avisoNiveis((e&&e.message)||'Sem conexão com o servidor.'); setAtz(null); var el=document.getElementById('atzVal'); if(el) el.textContent='—'; });
   }
   function avisoNiveis(t){

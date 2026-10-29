@@ -32,14 +32,22 @@
    níveis, para os dois nunca saírem de sincronia.
 
    ──────────────────────────────────────────────────────────────────────────
-   ATENÇÃO, À PARTE: na tela de Níveis (niveis.html) o subtítulo
+   O MESMO RÓTULO NA TELA DE NÍVEIS (niveis.html)
 
-     "Régua a partir de Outubro/2026 vs Jul–Set · base: $ Méd. 90 dias (setembro)"
+   O subtítulo da tela de Níveis não é mais texto fixo: ele mostra o mês que a
+   ação 'niveis' do SERVIDOR DE DADOS ST devolver, ao lado de 'atualizado' e
+   'data' que ela já manda:
 
-   é texto FIXO no HTML. Quando a base de outubro for publicada, ele vai
-   continuar dizendo "setembro". Vale trocar pelo mesmo rótulo dinâmico — peça
-   no chat que eu faço.
+     { ok: true, data: ..., atualizado: ..., mesBase: 'setembro/2026' }
 
-   Depois de alterar o BANCO: Implantar → Gerenciar implantações → lápis →
-   Nova versão (senão o Painel continua vendo o código antigo).
+   Enquanto não vier, a tela diz "base: $ Méd. 90 dias da última apuração
+   publicada" — igual ao Painel, e sem arriscar um mês errado.
+
+   Os dois (o 4º carimbo do Painel e o mesBase daqui) devem sair do mesmo
+   lugar, na hora de publicar a base, para nunca discordarem entre si.
+
+   Depois de alterar: Implantar → Gerenciar implantações → lápis → Nova versão,
+   em CADA um dos dois servidores mexidos (BANCO, do carimbo do Painel, e
+   Servidor de Dados ST, do mesBase) — senão as telas continuam vendo o código
+   antigo.
    ========================================================================== */
