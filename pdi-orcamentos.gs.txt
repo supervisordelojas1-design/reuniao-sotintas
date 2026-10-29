@@ -1,4 +1,23 @@
 /* ============================================================================
+   APLICADO NO SERVIDOR EM 29/10/2026 — este arquivo virou registro do que foi
+   feito. BANCO: versão 71 ("Painel v71 - numero do orcamento (DOCUMENTO) e mes
+   da base de niveis"). Nada aqui precisa ser colado de novo.
+
+   O número já existia na aba BASE_ORCAMENTOS (coluna DOCUMENTO, vinda do
+   cabeçalho VENDEDOR/DOCUMENTO do relatório) — só não saía de lá. O que mudou:
+   lerOrcamentos passou a repassá-lo como 7º campo, rsOrcs_ a expor 'doc' em
+   cada orçamento, e rsCarteiraResumo_ (mais o agregado da regional) ganhou a
+   lista 'orcs' para o PDI dos gestores.
+
+   Conferido no ar na loja 002: 24 orçamentos, número no formato
+   002000535352-OR, com cliente, telefone, valor e dias.
+
+   FALTA (não é deste servidor): o PDI Mensal do VENDEDOR lê o blob 'BASE', que
+   é gerado fora daqui — 'v.orcs' tem que entrar em quem publica essa base. O
+   app já está pronto para mostrar a lista assim que o campo vier.
+   ========================================================================== */
+
+/* ============================================================================
    NÚMERO DO ORÇAMENTO NOS PDIs — o que falta mandar do servidor
    Assistente ST · Só Tintas · outubro/2026 (app sw ast-v134)
 

@@ -1,4 +1,18 @@
 /* ============================================================================
+   APLICADO NOS SERVIDORES EM 29/10/2026 — este arquivo virou registro do que
+   foi feito. BANCO versão 71 (4º carimbo, lido da célula NIVEIS_MES da aba
+   CONFIG) e Servidor de Dados ST versão 20 (mesBase na ação 'niveis', lido do
+   blob de níveis). Nada aqui precisa ser colado de novo.
+
+   PENDENTE, e sem isso o mês não aparece em lugar nenhum:
+   1. a célula NIVEIS_MES ainda NÃO existe na aba CONFIG do BANCO;
+   2. o blob de níveis não guarda o mês — quem publica a base (a tela de
+      Níveis) precisa mandar 'MES' dentro de d.data para o mesBase nascer.
+   Até lá as duas telas dizem "da última apuração publicada", sem arriscar um
+   mês errado.
+   ========================================================================== */
+
+/* ============================================================================
    DE QUANDO É A BASE DE NÍVEIS — carimbo no pacote do Painel
    Assistente ST · Só Tintas · outubro/2026 (app sw ast-v135)
 
