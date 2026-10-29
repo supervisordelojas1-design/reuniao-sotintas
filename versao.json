@@ -1,0 +1,17 @@
+{
+  "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
+  "versoes": [
+    {
+      "v": "ast-v132",
+      "data": "29/10/2026",
+      "hora": "08:20",
+      "itens": [
+        {
+          "painel": "Tela inicial",
+          "o_que": "Agora o app avisa quando é atualizado: aparece este quadro no primeiro acesso depois de cada publicação e fica o sino 🔔 Novidades no topo para reler quando quiser.",
+          "para": ["coord", "anl", "sup", "ger", "vend"]
+        }
+      ]
+    }
+  ]
+}

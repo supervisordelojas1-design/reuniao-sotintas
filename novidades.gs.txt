@@ -1,0 +1,109 @@
+/* ============================================================================
+   REGISTRO DE LEITURA DO AVISO DE ATUALIZAÇÃO
+   Assistente ST · Só Tintas · outubro/2026
+
+   Para o SERVIDOR DE DADOS ST (o mesmo que responde 'entrar', 'acesso',
+   'niveis', 'pdi'...). O app já manda a leitura; enquanto este arquivo não
+   estiver no servidor, a resposta é ignorada e nada quebra — a marcação de
+   lido fica só no aparelho da pessoa.
+
+   COMO USAR
+   1. No Apps Script do Servidor de Dados, clique no + ao lado de "Arquivos"
+      → Script. Nomeie "novidades" e cole tudo isto.
+   2. No Código.gs, dentro do doPost, junto dos outros testes de ação
+      (onde está o 'acesso'), acrescente UMA linha:
+
+         if (d.acao === 'novidadeLida') return novidadeLida_(d);
+
+      Se o seu doPost já confere o crachá antes e tem o nome da pessoa numa
+      variável, passe-a junto:  return novidadeLida_(d, nome);
+   3. Implantar → Gerenciar implantações → lápis → Nova versão.
+   4. Confira a aba NOVIDADES_LIDAS: ela é criada sozinha na primeira leitura.
+
+   O QUE ELE GRAVA  (uma linha por pessoa por versão — a segunda leitura da
+   mesma versão não duplica):  QUANDO · NOME · PERFIL · LOJA · VERSAO
+   ========================================================================== */
+
+var NOV_ABA = 'NOVIDADES_LIDAS';
+
+function novidadeLida_(d, nome) {
+  try {
+    nome = nome || novCrachaNome_(d && d.tk);
+    if (!nome) return novResp_({ ok: false, erro: 'Crachá inválido.' });
+
+    var v = String((d && d.versao) || '').slice(0, 40);
+    var ss = SpreadsheetApp.getActive();
+    var ab = ss.getSheetByName(NOV_ABA);
+    if (!ab) {
+      ab = ss.insertSheet(NOV_ABA);
+      ab.appendRow(['QUANDO', 'NOME', 'PERFIL', 'LOJA', 'VERSAO']);
+      ab.setFrozenRows(1);
+    }
+    /* já leu esta versão? não grava de novo */
+    var n = ab.getLastRow();
+    if (n > 1) {
+      var vals = ab.getRange(2, 2, n - 1, 4).getValues();
+      for (var i = 0; i < vals.length; i++) {
+        if (novNorm_(vals[i][0]) === novNorm_(nome) && String(vals[i][3]) === v) {
+          return novResp_({ ok: true, repetido: true });
+        }
+      }
+    }
+    var q = novQuem_(nome);
+    ab.appendRow([new Date(), nome, q.perfil, q.loja, v]);
+    return novResp_({ ok: true });
+  } catch (err) {
+    return novResp_({ ok: false, erro: String(err) });
+  }
+}
+
+/* ── apoio ──────────────────────────────────────────────────────────────── */
+
+function novResp_(o) {
+  return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function novNorm_(s) {
+  return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+/* nome da pessoa a partir do crachá. Usa a função que o servidor já tem, se
+   existir (nomes comuns nas versões do Código.gs); senão devolve vazio e a
+   gravação é recusada — nunca grava sem conferir. */
+function novCrachaNome_(tk) {
+  if (!tk) return '';
+  var tenta = ['crachaNome_', 'nomeDoCracha_', 'conferirCracha_', 'validarCracha_', 'lerCracha_'];
+  for (var i = 0; i < tenta.length; i++) {
+    var f = this[tenta[i]];
+    if (typeof f === 'function') {
+      var r = f(tk);
+      if (!r) return '';
+      if (typeof r === 'string') return r;
+      if (r.nome) return r.nome;
+      if (r.ok && r.n) return r.n;
+    }
+  }
+  return '';
+}
+
+/* perfil e loja da pessoa, lidos da aba USUARIOS pelos cabeçalhos */
+function novQuem_(nome) {
+  var fora = { perfil: '', loja: '' };
+  try {
+    var ab = SpreadsheetApp.getActive().getSheetByName('USUARIOS');
+    if (!ab || ab.getLastRow() < 2) return fora;
+    var dados = ab.getDataRange().getValues(), cab = dados[0].map(function (c) { return novNorm_(c); });
+    function col() {
+      for (var a = 0; a < arguments.length; a++) { var i = cab.indexOf(novNorm_(arguments[a])); if (i >= 0) return i; }
+      return -1;
+    }
+    var cN = col('nome', 'usuario', 'colaborador'), cP = col('perfil', 'cargo', 'papel'), cL = col('loja', 'filial', 'lojas');
+    if (cN < 0) return fora;
+    for (var i = 1; i < dados.length; i++) {
+      if (novNorm_(dados[i][cN]) === novNorm_(nome)) {
+        return { perfil: cP >= 0 ? String(dados[i][cP]) : '', loja: cL >= 0 ? String(dados[i][cL]) : '' };
+      }
+    }
+  } catch (e) {}
+  return fora;
+}
