@@ -615,7 +615,12 @@ const ORF='Sem vendedor ativo';
 /* Carimbo de atualizacao de cada base. O dia vira as 00:00, entao
    ontem e diferenca de DATA no calendario e nao de 24 horas corridas:
    uma carga as 23h50 de ontem aparece como ontem as 00h10 de hoje. */
-const ATZ={num:(_.t||[])[0]||'',cart:(_.t||[])[1]||'',orc:(_.t||[])[2]||''};
+const ATZ={num:(_.t||[])[0]||'',cart:(_.t||[])[1]||'',orc:(_.t||[])[2]||'',niv:(_.t||[])[3]||''};
+/* O nível (V1–V5 e Ouro/Prata/Bronze) sai da Méd. 90 dias publicada na tela de
+   Níveis, não do faturamento do mês que está correndo: a mesma tela mostra
+   outubro ao vivo e um nível apurado até setembro. Este rótulo diz de quando é
+   a base, para ninguém confundir os dois períodos. */
+const NIVBASE = ATZ.niv ? 'base: Méd. 90 dias de ' + ATZ.niv : 'base: Méd. 90 dias da última apuração publicada';
 function selo(ts,cls){
  const k=cls||'selo', ic='🕓 ';
  if(!ts) return '<span class="'+k+'" style="color:#8FA9C2">'+ic+'sem registro de atualização</span>';
@@ -1152,7 +1157,7 @@ function miniBar(o){
 function mapaNiveis(){
  const dl={3:[],2:[],1:[]}; D.lojas.forEach(l=>dl[l.nv].push(l));
  const dv={1:0,2:0,3:0,4:0,5:0}; D.lojas.forEach(l=>l.vendedores.forEach(v=>dv[v.nv]++));
- let h=`<div class="sec"><div class="sech"><h3>Mapa de níveis</h3><span class="cnt">régua ${NOVA?'a partir de Out/26':'Jul–Set/26'} · base Méd. 90 dias</span></div>`;
+ let h=`<div class="sec"><div class="sech"><h3>Mapa de níveis</h3><span class="cnt">régua ${NOVA?'a partir de Out/26':'Jul–Set/26'} · ${esc(NIVBASE)}</span></div>`;
  h+=`<div class="niv">`;
  [3,2,1].forEach(n=>{const c=ROTL[n];
   h+=`<div class="nvc" style="background:${c[2]}"><div class="n" style="color:${c[1]}">${dl[n].length}</div><div class="l">Lojas N${n} · ${c[0]}</div></div>`});
@@ -1277,7 +1282,7 @@ function painelPrincipal(){
  </div></div>`;
  h+=gaugeBox(g,'Atingimento da rede');
  h+=semanaBox(g.metaLoja,g.metaTime,'Rede \u00b7 '+D.periodo.mes+'/'+D.periodo.ano);
- h+=`<div class="grp"><div class="grph"><h3>Resumo de níveis</h3><span class="cnt">régua ${NOVA?'a partir de Out/26':'Jul–Set/26'} · base Méd. 90 dias</span></div><div class="ind">`;
+ h+=`<div class="grp"><div class="grph"><h3>Resumo de níveis</h3><span class="cnt">régua ${NOVA?'a partir de Out/26':'Jul–Set/26'} · ${esc(NIVBASE)}</span></div><div class="ind">`;
  [3,2,1].forEach(n=>{const c=ROTL[n];
   h+=`<div class="indc cl" onclick="goNivel('L',${n})"><div class="l">Lojas N${n} · ${c[0]}</div><div class="v" style="color:${c[1]}">${pl(n)}</div><div class="s">${dl[n]} de ${g.nLojas} lojas</div></div>`});
  h+=`</div><div class="ind">`;
@@ -1760,7 +1765,7 @@ function vVendedor(){
   <div class="kpi"><div class="lb">Falta para a meta</div><div class="vl">${K(v.rest)}</div>
    <div class="ft">${BRL(v.ritmoNec)}/dia · ${D.periodo.utRestantes} dias úteis</div></div>
   <div class="kpi"><div class="lb">Seu nível</div><div class="vl">V${v.nv} · ${esc(v.nvRot)}</div>
-   <div class="ft">${bdgLV(l,'margin:0 0 4px')}<br>${v.prox?'faltam '+K(v.prox.falta)+' de Méd.90d para V'+v.prox.nv:'topo da régua'}</div></div>
+   <div class="ft">${bdgLV(l,'margin:0 0 4px')}<br>${v.prox?'faltam '+K(v.prox.falta)+' de Méd.90d para V'+v.prox.nv:'topo da régua'}<br><span style="color:var(--tx3)">${esc(NIVBASE)}</span></div></div>
  </div>`;
  h+=semanaBox(v.meta,null,'Sua meta · '+esc(v.nome));
  h+=`<div class="sec"><div class="sech"><h3>Seus indicadores</h3><span class="cnt">Méd.90d ${K(v.med90)}</span></div>`
@@ -1807,7 +1812,7 @@ function nivelLoja(l){
  let h=`<div class="acao"><div class="ah"><span>🏅</span><h3>Níveis — régua de Méd. 90 dias</h3></div>`;
  h+=`<div class="ab" style="padding-bottom:4px"><div class="rgrid">
   <div class="rbox"><div class="l">Nível da loja</div><div class="v" style="color:${c[1]}">N${l.nv} · ${c[0]}</div>
-   <div class="subir">Méd. 90 dias: <b>${BRL(l.med90)}</b></div></div>
+   <div class="subir">Méd. 90 dias: <b>${BRL(l.med90)}</b> · ${esc(NIVBASE)}</div></div>
   <div class="rbox"><div class="l">Para subir de nível</div><div class="v">${l.prox?K(l.prox.falta):'—'}</div>
    <div class="subir">${l.prox?`precisa de <b>${K(l.prox.alvo)}</b> de Méd.90d para N${l.prox.nv}`:'já está no <b>topo da régua</b>'}</div></div>
  </div>`;

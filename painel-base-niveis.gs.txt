@@ -1,0 +1,45 @@
+/* ============================================================================
+   DE QUANDO É A BASE DE NÍVEIS — carimbo no pacote do Painel
+   Assistente ST · Só Tintas · outubro/2026 (app sw ast-v135)
+
+   POR QUE: o Painel de Metas mostra, lado a lado, o mês que está correndo
+   (faturado, % da meta, projeção) e o nível V1–V5 / Ouro-Prata-Bronze, que sai
+   da Méd. 90 dias publicada na tela de Níveis — apurada até o último mês
+   fechado. São dois períodos diferentes na mesma tela, e isso confunde: o
+   vendedor olha "V4" e acha que já conta a venda de outubro.
+
+   O QUE FAZER: o pacote do Painel já manda os carimbos das bases em _.t:
+
+     _.t = [ <atualização dos números>, <carteira>, <orçamentos> ]
+
+   Acrescentar um 4º item com o MÊS DE REFERÊNCIA da base de níveis, por
+   extenso e com o ano, do jeito que deve aparecer na tela:
+
+     _.t = [ ..., ..., ..., 'setembro/2026' ]
+
+   Não é a data em que a base foi publicada — é o último mês fechado que entrou
+   na Méd. 90 dias. Se a base publicada em outubro apura jul–ago–set, o valor é
+   'setembro/2026'.
+
+   ONDE APARECE no app (já publicado): card "Seu nível" do vendedor, bloco
+   "Níveis — régua de Méd. 90 dias" da loja, "Resumo de níveis" da rede e "Mapa
+   de níveis" — todos passam a dizer "base: Méd. 90 dias de setembro/2026".
+
+   ENQUANTO NÃO VIER: as telas mostram "base: Méd. 90 dias da última apuração
+   publicada". Já evita o mal-entendido, mas sem dizer de qual mês.
+
+   SUGESTÃO: tirar o rótulo do mesmo lugar que gera a base, na publicação dos
+   níveis, para os dois nunca saírem de sincronia.
+
+   ──────────────────────────────────────────────────────────────────────────
+   ATENÇÃO, À PARTE: na tela de Níveis (niveis.html) o subtítulo
+
+     "Régua a partir de Outubro/2026 vs Jul–Set · base: $ Méd. 90 dias (setembro)"
+
+   é texto FIXO no HTML. Quando a base de outubro for publicada, ele vai
+   continuar dizendo "setembro". Vale trocar pelo mesmo rótulo dinâmico — peça
+   no chat que eu faço.
+
+   Depois de alterar o BANCO: Implantar → Gerenciar implantações → lápis →
+   Nova versão (senão o Painel continua vendo o código antigo).
+   ========================================================================== */

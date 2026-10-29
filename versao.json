@@ -2,6 +2,24 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v135",
+      "data": "29/10/2026",
+      "hora": "15:10",
+      "itens": [
+        {
+          "painel": "Painel de Metas",
+          "o_que": "O card do seu nível, o bloco de níveis da loja e os mapas de níveis passaram a dizer de quando é a base: o nível sai da Méd. 90 dias do último mês fechado, não das vendas do mês que está correndo.",
+          "para": [
+            "coord",
+            "anl",
+            "sup",
+            "ger",
+            "vend"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v134",
       "data": "29/10/2026",
       "hora": "14:44",
