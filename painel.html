@@ -553,6 +553,26 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
 .rx-bat p{margin:0;color:#6b7387;font-size:9.5px}
 .rx-longe{margin-top:5px;font-size:9px;color:#8E1318}
 .rx-longe b{color:#8E1318}
+/* orientação do consultor */
+.rx-diag{background:#F3F7FC;border-left:4px solid #1C3F8F;border-radius:0 7px 7px 0;padding:7px 11px;font-size:10.3px;line-height:1.5}
+.rx-diag p{margin:0 0 4px}.rx-diag p:last-child{margin:0}.rx-diag b{color:#0F2B46}
+.rx-plac td.rx-wrap{white-space:normal;line-height:1.3}
+.rx-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.rx-card{border:1px solid #DCE3EB;border-top:3px solid #E30613;border-radius:7px;padding:6px 9px;font-size:9.2px;line-height:1.38}
+.rx-card h4{margin:0 0 4px;font-size:10.5px;color:#0F2B46}
+.rx-card dl{margin:0}.rx-card dt{font-size:7.6px;text-transform:uppercase;letter-spacing:.4px;color:#1C3F8F;font-weight:800;margin-top:4px}
+.rx-card dd{margin:1px 0 0}
+.rx-grps{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.rx-grp{border:1px solid #DCE3EB;border-radius:7px;padding:6px 9px;font-size:9.2px;line-height:1.35}
+.rx-grp h4{margin:0;font-size:10px}.rx-grp.wn h4{color:#8A5A00}.rx-grp.bd h4{color:#8E1318}.rx-grp.ok h4{color:#08674A}
+.rx-gs{margin:1px 0 4px;color:#6b7387;font-size:8.3px}
+.rx-grp ul{margin:0;padding:0;list-style:none}.rx-grp li{padding:3px 0;border-top:1px dotted #E1E7EF}
+.rx-grp li i{font-style:normal;color:#6b7387;font-size:8.3px;margin-left:3px}.rx-grp li span{color:#3c4a5c}
+.rx-pq{margin:0;padding-left:16px;font-size:10.2px;line-height:1.45}.rx-pq li{margin-bottom:3px}
+.rx-corpo>*{flex-shrink:0}
+.rx-anot{margin-top:10px;border:1px solid #DCE3EB;border-radius:7px;padding:6px 10px 4px}
+.rx-anot b{font-size:8.4px;text-transform:uppercase;letter-spacing:.4px;color:#1C3F8F}
+.rx-anot i{display:block;height:22px;border-bottom:1px solid #C9D3DF}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="st-hora.js?v=1"></script>
@@ -2855,11 +2875,127 @@ function rxConteudo(E,op,bloco,tabela,lista,pagina){
  else if(I.ticket!=null&&I.ticket<200) foco.push('Ticket: oferecer o complemento em toda venda (rolo, fita, lixa, massa)');
  if(E.orc&&E.orc.itens&&E.orc.itens.length) foco.push('Orçamentos: retornar os '+NUM(E.orc.itens.length)+' em aberto ('+BRL(E.orc.total)+')');
  if(foco.length) pts.push('<b>🎯 Foco para o próximo mês:</b> '+foco.slice(0,3).join(' · ')+'.');
+ if(op.cons){
+ /* ===== ORIENTAÇÃO DO CONSULTOR: dos números às ações (rede e região em folha própria) ===== */
+ if(ehG||ehS) pagina();
+ const quem=ehG?'supervisores e gerentes':ehS?'gerentes':ehL?'vendedores':'você';
+ const atend=I.atend||0, fatCPF=atend*(I.ticket||0);
+ const vsE=E.vends.map(x=>x[0]);
+ const semEuc=vsE.filter(v=>v.I&&v.I.metaEuc!=null&&!(eucPct(v.I)>=1));
+ /* --- alavancas: quanto cada indicador vale se chegar na meta (R$ por mês) --- */
+ const AL=[];
+ if(K&&K.POS.length){ const v=K.POS.reduce((a,x)=>a+x.media,0), n=Math.max(1,Math.round(K.POS.length*.3));
+  AL.push({k:'cart',nome:'Carteira parada',hoje:NUM(K.POS.length)+' clientes sem compra',meta:'reativar '+NUM(n)+' (30%)',rs:v*.3,
+   como:'ligar para quem comprava e parou, começando pelos maiores'}); }
+ if(I.ticket!=null&&I.ticket<200&&atend) AL.push({k:'ticket',nome:'Ticket médio CPF',hoje:BRL(I.ticket),meta:'R$ 200',rs:(200-I.ticket)*atend,
+   como:'oferecer o complemento em toda venda (rolo, fita, lixa, massa, selador)'});
+ else if(I.itens!=null&&I.itens<2.5&&atend&&I.itens>0) AL.push({k:'itens',nome:'Itens por atendimento',hoje:DEC(I.itens,2),meta:'2,50',rs:(2.5-I.itens)*atend*(I.ticket||0)/I.itens,
+   como:'montar o "kit da obra" em todo orçamento, não só a tinta'});
+ if(E.orc&&E.orc.itens&&E.orc.itens.length){ const qm=E.orc.Q.concat(E.orc.M).reduce((a,x)=>a+x.valor,0), fr=E.orc.F.reduce((a,x)=>a+x.valor,0);
+  AL.push({k:'orc',nome:'Orçamentos em aberto',hoje:NUM(E.orc.itens.length)+' · '+BRL(E.orc.total),meta:'fechar 1/3 dos quentes e mornos e 1/5 dos frios',rs:qm/3+fr/5,
+   como:'retornar os quentes em 48 h e os frios com uma condição nova'}); }
+ if(K&&K.SUB.length){ const v=K.SUB.reduce((a,x)=>a+x.lacuna,0);
+  AL.push({k:'sub',nome:'Clientes comprando abaixo',hoje:NUM(K.SUB.length)+' clientes',meta:'voltar à média de cada um',rs:v*.5,
+   como:'visitar ou ligar e perguntar o que está comprando fora'}); }
+ if(I.alcCNPJ!=null&&I.alcCNPJ<1) AL.push({k:'cnpj',nome:'Meta CNPJ',hoje:rxP(I.alcCNPJ),meta:'100%',rs:Math.max((I.metaCNPJ||0)-(I.fatCNPJ||0),0),
+   como:'agenda semanal de visitas e ligações a construtoras e pintores'});
+ if(I.descCPF!=null&&I.descCPF>.07&&fatCPF) AL.push({k:'desc',nome:'Desconto CPF',hoje:rxP(I.descCPF),meta:'até 7%',rs:(I.descCPF-.07)*fatCPF,
+   como:'argumentar valor (rendimento, garantia) antes de oferecer desconto'});
+ if(I.metaEuc!=null&&eucPct(I)<1){ const bdDia=I.metaEuc/18/(UT||26);
+  AL.push({k:'euc',nome:'Eucatex',hoje:rxP(eucPct(I))+' da litragem',meta:NUM(Math.ceil(bdDia))+' balde'+(Math.ceil(bdDia)==1?'':'s')+'/dia',rs:semEuc.length*50,rsTxt:BRL(semEuc.length*50)+' de bônus',
+   como:'oferecer Eucatex em toda obra e em todo orçamento acima de 3 galões'}); }
+ if(I.pctIdent!=null&&I.pctIdent<.8&&atend){ const n=Math.round((.8-I.pctIdent)*atend);
+  AL.push({k:'ident',nome:'% Identificados',hoje:rxP(I.pctIdent),meta:'80%',rs:0,rsTxt:'+'+NUM(n)+' clientes/mês na carteira',
+   como:'pedir o CPF na abordagem, antes de cotar'}); }
+ const ALr=AL.filter(a=>a.rs>0&&a.k!='euc').sort((a,b)=>b.rs-a.rs).concat(AL.filter(a=>a.k=='euc'||!(a.rs>0)));
+ /* --- 1. diagnóstico --- */
+ const fil=ehG||ehS?E.lojas.map(l=>({n:'Loja '+l.cod+' '+l.nome,p:l.pctLoja})):ehL?vsE.map(v=>({n:tcPdf(v.nome),p:v.pct})):[];
+ const abaixo=fil.filter(x=>!(x.p>=1)).length;
+ const top=ALr.filter(a=>a.rs>0)[0];
+ const dg=[];
+ dg.push((o.pctLoja>=1?'O resultado <b>bateu a meta</b> ('+rxP(o.pctLoja)+')':'O resultado <b>ficou em '+rxP(o.pctLoja)+'</b> da meta, '+(fech?'faltaram ':'faltam ')+'<b>'+BRL(o.restLoja)+'</b>')+
+  (fil.length?', com <b>'+abaixo+' de '+fil.length+'</b> '+(ehL?'vendedores':'lojas')+' abaixo de 100%':'')+'.');
+ const fracos=nao.map(x=>x.split(' (')[0]);
+ dg.push(fracos.length?'Os pontos que seguraram foram <b>'+fracos.slice(0,3).join(', ')+'</b>'+(o.pctLoja>=1?': a meta veio pelo volume, não pelo método — e volume sem método não se repete todo mês.':': são eles que explicam a distância da meta.'):'Todos os indicadores do placar chegaram na meta: o desafio agora é manter o padrão e subir a régua.');
+ if(top) dg.push('A maior alavanca para o próximo mês é <b>'+top.nome.toLowerCase().replace('cnpj','CNPJ').replace('cpf','CPF')+'</b>: cerca de <b>'+BRL(top.rs)+'/mês</b> se chegar na meta.'+(ALr.filter(a=>a.rs>0).length>1?' Somando as três primeiras, o potencial passa de <b>'+BRL(ALr.filter(a=>a.rs>0).slice(0,3).reduce((s,a)=>s+a.rs,0))+'</b> (as alavancas se sobrepõem: use como ordem de prioridade, não como soma exata).':''));
+ bloco('<section class="rx-sec"><h3>'+sec('Diagnóstico do consultor')+' <small>o que aconteceu, por quê e quanto custou</small></h3><div class="rx-diag">'+dg.map(x=>'<p>'+x+'</p>').join('')+'</div></section>');
+ /* --- 2. onde está o dinheiro --- */
+ if(ALr.length){
+  let t='<section class="rx-sec"><h3>'+sec('Onde está o dinheiro')+' <small>potencial por mês se cada indicador chegar na meta · ordem de prioridade</small></h3><table class="rx-tab rx-score rx-plac"><colgroup><col style="width:4%"><col style="width:20%"><col style="width:19%"><col style="width:17%"><col style="width:14%"><col style="width:26%"></colgroup><thead><tr><th>#</th><th class="t">Alavanca</th><th class="t">Hoje</th><th class="t">Meta</th><th>Potencial</th><th class="t">Como chegar</th></tr></thead><tbody>';
+  ALr.slice(0,6).forEach((a,i)=>{ t+='<tr><td>'+(i+1)+'</td><td class="t rx-wrap"><b>'+a.nome+'</b></td><td class="t rx-wrap">'+a.hoje+'</td><td class="t rx-wrap">'+a.meta+'</td><td class="rx-ok rx-wrap">'+(a.rsTxt||BRL(a.rs))+'</td><td class="t rx-wrap">'+a.como+'</td></tr>'; });
+  bloco(t+'</tbody></table></section>');
+ }
+ /* --- 3. do número ao comportamento (as 3 primeiras alavancas) --- */
+ const CB={
+  cart:a=>['O cliente que comprava sumiu e ninguém percebeu','A loja espera o cliente aparecer; não existe lista de quem ligar nem horário para ligar','Lista dos clientes parados por vendedor, 5 ligações por dia das 9h às 10h, registrando o motivo de cada um','Clientes reativados na semana (meta: '+NUM(Math.max(1,Math.round(K.POS.length*.3/4)))+'/semana)'],
+  ticket:a=>['Venda saindo "seca", só com a tinta','O vendedor fecha a venda sem perguntar o que mais o cliente vai precisar na obra','Roteiro de 3 perguntas no fim de todo atendimento: "vai lixar? vai precisar de rolo novo? já tem fita?"','Ticket médio CPF na segunda-feira (meta R$ 200)'],
+  itens:a=>['Pouco item por atendimento','Orçamento montado só com a tinta, sem o kit da obra','Kit da obra impresso no balcão (tinta + rolo + fita + lixa + massa) e oferta em todo orçamento','Itens por atendimento na segunda-feira (meta 2,50)'],
+  orc:a=>['Proposta parada esfria e o cliente compra no concorrente','O retorno só acontece quando o cliente liga de volta','Toda manhã, retornar os orçamentos quentes de ontem; frios com uma condição nova (prazo, frete, brinde)','Orçamentos fechados na semana × em aberto'],
+  sub:a=>['Cliente comprando menos que a própria média','Ninguém pergunta ao cliente o que ele está comprando fora','Ligação ou visita aos maiores com a pergunta: "o que você comprou fora este mês e por quê?"','Clientes de volta à média no mês'],
+  cnpj:a=>['Venda para empresa abaixo da meta','A carteira CNPJ não tem rotina: visita só quando sobra tempo','Agenda fixa: 2 visitas ou 10 ligações CNPJ por dia, com registro no app','% da meta CNPJ toda segunda-feira'],
+  desc:a=>['Desconto acima da régua','O desconto aparece antes do argumento, para fechar mais rápido','Argumentar rendimento e garantia antes de mexer no preço; desconto acima de 7% só com o gerente','% de desconto CPF na segunda-feira (meta até 7%)'],
+  euc:a=>['Litragem Eucatex abaixo da meta','O Eucatex só é oferecido quando o cliente pede','Oferecer Eucatex em toda obra e em todo orçamento acima de 3 galões; meta em baldes por dia no quadro da loja','Baldes de 18 L vendidos por dia (meta '+a.meta+')'],
+  ident:a=>['Cliente saindo sem CPF','O CPF é pedido só na hora de pagar, e muitas vezes nem isso','Pedir o CPF na abordagem, antes de cotar: "para eu guardar seu orçamento, qual o seu CPF?"','% de identificados na segunda-feira (meta 80%)']};
+ const top3=ALr.slice(0,3).filter(a=>CB[a.k]);
+ if(top3.length){
+  let c='<section class="rx-sec"><h3>'+sec('Do número ao comportamento')+' <small>o que observar na loja e o que fazer · '+quem+'</small></h3><div class="rx-cards">';
+  top3.forEach((a,i)=>{ const x=CB[a.k](a);
+   c+='<div class="rx-card"><h4>'+(i+1)+'. '+a.nome+'</h4><dl><dt>Sinal no número</dt><dd>'+x[0]+' — hoje '+a.hoje+'</dd><dt>Comportamento a observar</dt><dd>'+x[1]+'</dd><dt>Ação</dt><dd>'+x[2]+'</dd><dt>Como medir</dt><dd>'+x[3]+'</dd></dl></div>'; });
+  bloco(c+'</div></section>');
+ }
+ /* --- 4. quem acompanhar de perto --- */
+ const piorInd=X=>{ const J=X||{}, c=[];
+  if(J.pctIdent!=null&&J.pctIdent<.8) c.push([(.8-J.pctIdent)/.8,'identificação '+rxP0(J.pctIdent),'está pedindo o CPF só no caixa?']);
+  if(J.ticket!=null&&J.ticket<200) c.push([(200-J.ticket)/200,'ticket '+BRL(J.ticket),'está fechando a venda sem oferecer complemento?']);
+  if(J.itens!=null&&J.itens<2.5) c.push([(2.5-J.itens)/2.5,'itens '+DEC(J.itens,2),'está montando o orçamento só com a tinta?']);
+  if(J.descCPF!=null&&J.descCPF>.07) c.push([(J.descCPF-.07)/.07,'desconto '+rxP(J.descCPF),'está dando desconto antes de argumentar?']);
+  if(J.metaEuc!=null&&eucPct(J)<1) c.push([1-eucPct(J),'Eucatex '+rxP0(eucPct(J)),'oferece Eucatex só quando o cliente pede?']);
+  if(J.alcCNPJ!=null&&J.alcCNPJ<1) c.push([1-J.alcCNPJ,'CNPJ '+rxP0(J.alcCNPJ),'tem agenda de visitas e ligações CNPJ?']);
+  return c.sort((a,b)=>b[0]-a[0])[0]||null };
+ const melhorInd=X=>{ const J=X||{}, c=[];
+  if(J.pctIdent!=null&&I.pctIdent) c.push([J.pctIdent/I.pctIdent-1,'identifica '+rxP0(J.pctIdent)+' (média '+rxP0(I.pctIdent)+')']);
+  if(J.ticket!=null&&I.ticket) c.push([J.ticket/I.ticket-1,'ticket de '+BRL(J.ticket)+' (média '+BRL(I.ticket)+')']);
+  if(J.itens!=null&&I.itens) c.push([J.itens/I.itens-1,DEC(J.itens,2)+' itens por atendimento (média '+DEC(I.itens,2)+')']);
+  if(J.metaEuc!=null&&eucPct(I)) c.push([eucPct(J)/eucPct(I)-1,'Eucatex em '+rxP0(eucPct(J))+' (média '+rxP0(eucPct(I))+')']);
+  return c.sort((a,b)=>b[0]-a[0])[0]||null };
+ if(!ehV){
+  const pes=ehG||ehS?E.lojas.map(l=>({n:esc(l.cod+' '+l.nome)+(GER_PAINEL[l.cod]?' <i>'+esc(tcPdf(GER_PAINEL[l.cod]).split(' ').slice(0,2).join(' '))+'</i>':''),p:l.pctLoja,f:l.restLoja,I:l.I}))
+   :vsE.map(v=>({n:esc(tcPdf(v.nome)),p:v.pct,f:v.rest,I:v.I}));
+  const quase=pes.filter(x=>x.p>=.85&&x.p<1).sort((a,b)=>a.f-b.f).slice(0,3);
+  const longe=pes.filter(x=>x.p!=null&&x.p<.85).sort((a,b)=>a.p-b.p).slice(0,3);
+  const dest=pes.filter(x=>x.p>=1).sort((a,b)=>b.p-a.p).slice(0,3);
+  const col=(cls,tit,sub,arr,txt)=>'<div class="rx-grp '+cls+'"><h4>'+tit+'</h4><p class="rx-gs">'+sub+'</p>'+(arr.length?'<ul>'+arr.map(x=>'<li><b>'+x.n+'</b> · '+rxP(x.p)+'<br><span>'+txt(x)+'</span></li>').join('')+'</ul>':'<p class="rx-gs">ninguém neste grupo</p>')+'</div>';
+  bloco('<section class="rx-sec"><h3>'+sec('Quem acompanhar de perto')+' <small>'+(ehL?'vendedores':'lojas e gerentes')+' em três grupos</small></h3><div class="rx-grps">'+
+   col('wn','🎯 Quase lá','85% a 99%: o maior retorno com o menor esforço',quase,x=>'faltaram '+BRL(x.f)+(piorInd(x.I)?' · trave: '+piorInd(x.I)[1]:''))+
+   col('bd','🔎 Longe da meta','abaixo de 85%: conversa sobre a rotina, não sobre o número',longe,x=>{ const w=piorInd(x.I); return w?'trave: '+w[1]+' — pergunta: '+w[2]:'faltaram '+BRL(x.f); })+
+   col('ok','🏆 Para replicar','o que fazem de diferente vira treinamento',dest,x=>{ const m=melhorInd(x.I); return m&&m[0]>0?m[1]+' → mostrar ao time como faz':'bateu a meta'; })+
+   '</div></section>');
+ }
+ /* --- 5. plano de 30 dias --- */
+ const metaSem=a=>({cart:(n=>'reativar '+NUM(n)+(n==1?' cliente':' clientes'))(Math.max(1,Math.round(K?K.POS.length*.3/4:0))),ticket:'ticket CPF ≥ R$ 200',itens:'≥ 2,50 itens por atendimento',orc:'retornar 100% dos quentes em 48 h',sub:'contato com os 10 maiores abaixo da média',cnpj:'agenda CNPJ cumprida todos os dias',desc:'desconto CPF ≤ 7%',euc:a.meta+' de Eucatex',ident:'≥ 80% de identificados'})[a.k]||a.meta;
+ const fs=ALr.slice(0,3);
+ const sem=[];
+ fs.forEach((a,i)=>sem.push(['Semana '+(i+1),a.nome,a.como,metaSem(a)]));
+ while(sem.length<3) sem.push(['Semana '+(sem.length+1),'Manter o padrão','repetir a rotina que deu resultado e subir a régua do melhor indicador','registrar o que funcionou']);
+ sem.push(['Semana 4','Revisão e ajuste','comparar os números da semana 1 com os de agora; manter o que funcionou e trocar o que não andou',ALr.find(a=>a.k=='euc')?'Eucatex: '+metaSem(ALr.find(a=>a.k=='euc')):'preparar a próxima reunião']);
+ let pl='<section class="rx-sec"><h3>'+sec('Plano de 30 dias')+' <small>uma alavanca por semana, sem abandonar as anteriores · ritual: 15 minutos toda segunda</small></h3><table class="rx-tab rx-score rx-plac"><colgroup><col style="width:12%"><col style="width:20%"><col style="width:44%"><col style="width:24%"></colgroup><thead><tr><th class="t">Quando</th><th class="t">Foco</th><th class="t">O que fazer</th><th class="t">Meta da semana</th></tr></thead><tbody>';
+ sem.forEach(s=>{ pl+='<tr><td class="t"><b>'+s[0]+'</b></td><td class="t">'+s[1]+'</td><td class="t rx-wrap">'+s[2]+'</td><td class="t rx-wrap">'+s[3]+'</td></tr>'; });
+ bloco(pl+'</tbody></table></section>');
+ /* --- 6. perguntas para conduzir a reunião --- */
+ const PQ={cart:()=>'Dos '+NUM(K.POS.length)+' clientes que pararam de comprar, de quantos você sabe o motivo?',ticket:()=>ehV?'No seu último atendimento, o que você ofereceu além da tinta?':'No último atendimento que você viu, o que o vendedor ofereceu além da tinta?',itens:()=>ehV?'Nos seus orçamentos, entra o kit da obra ou só a tinta?':'Como está montado o orçamento padrão da loja: tem o kit da obra ou só a tinta?',
+  orc:()=>'Qual orçamento em aberto você fecha esta semana, e o que falta para fechar?',sub:()=>'Qual cliente grande está comprando menos, e o que ele está comprando fora?',cnpj:()=>'Quantas visitas ou ligações CNPJ foram feitas na semana passada, e quantas viraram pedido?',
+  desc:()=>'Em que momento do atendimento o desconto aparece: antes ou depois do argumento?',euc:()=>ehV?'Em quantos orçamentos de obra você ofereceu Eucatex ontem?':'Em quantos orçamentos de obra o Eucatex foi oferecido ontem?',ident:()=>ehV?'Em que momento você pede o CPF: na abordagem ou no caixa?':'Em que momento o CPF é pedido: na abordagem ou no caixa?'};
+ const pqs=ALr.filter(a=>PQ[a.k]).slice(0,3).map(a=>PQ[a.k]());
+ pqs.push(ehV?'O que você vai fazer diferente amanhã de manhã, e como eu vou saber que fez?':'O que vai ser feito diferente a partir de amanhã, por quem, e como vamos saber na segunda-feira que foi feito?');
+ bloco('<section class="rx-sec"><h3>'+sec('Perguntas para conduzir a reunião')+' <small>quem descobre a causa sozinho se compromete com a solução</small></h3><ol class="rx-pq">'+pqs.map(x=>'<li>'+x+'</li>').join('')+'</ol></section>');
+ } else {
  if(ehG||ehS) pagina();   /* rede e região: folha 1 = números, folha 2 = a reunião */
  bloco('<section class="rx-sec"><h3>'+sec('Pontos para a reunião')+' <small>o que bateu, o que ficou abaixo e onde agir</small></h3><ul class="rx-lei">'+pts.map(x=>'<li>'+x+'</li>').join('')+'</ul></section>');
+ }
  /* 4. compromissos e assinaturas */
  bloco('<section class="rx-sec"><h3>'+sec('Compromissos para o próximo mês')+' <small>preencher na reunião</small></h3><table class="rx-tab rx-comp"><thead><tr><th class="t" style="width:58%">O que será feito</th><th class="t">Responsável</th><th class="t" style="width:15%">Prazo</th></tr></thead><tbody>'+
-  [1,2,3,4,5,6,7,8,9,10,11,12,13,14].slice(0,ehG||ehS?14:6).map(i=>'<tr><td>'+i+'.</td><td></td><td></td></tr>').join('')+'</tbody></table>'+
+  [1,2,3,4,5,6,7,8,9,10,11,12,13,14].slice(0,op.cons?10:(ehG||ehS?14:6)).map(i=>'<tr><td>'+i+'.</td><td></td><td></td></tr>').join('')+'</tbody></table>'+
+  (op.cons?'<div class="rx-anot"><b>Anotações da reunião</b>'+'<i></i>'.repeat(7)+'</div>':'')+
   '<div class="rx-ass"><div>Líder — nome e assinatura</div><div>'+(ehV?'Vendedor':ehL?'Gerente':ehS?'Supervisor':'Supervisores')+' — nome e assinatura</div></div></section>');
  /* anexo opcional: as listas completas, em folha nova */
  if(op.anexo&&!ehV){ pagina(); n=4; op={sup:true,loja:true,vend:true};
@@ -2914,7 +3050,7 @@ async function rxGerarPdf(E,op){
  try{
   const pags=[]; let corpo=null, tbody=null;
   const nova=()=>{ host.insertAdjacentHTML('beforeend',rxPagina(E)); const pg=host.lastElementChild; corpo=pg.querySelector('.rx-corpo'); pags.push(pg); tbody=null; };
-  const cabe=()=>corpo.scrollHeight<=corpo.clientHeight+1;
+  const cabe=()=>{ const u=corpo.lastElementChild; if(!u) return true; return (u.offsetTop-corpo.offsetTop+u.offsetHeight)<=corpo.clientHeight-14; };   /* folga: o desenho do PDF pode sair um pouco maior que a tela */
   nova();
   const bloco=h=>{ tbody=null; corpo.insertAdjacentHTML('beforeend',h); if(!cabe()&&corpo.children.length>1){ corpo.lastElementChild.remove(); nova(); corpo.insertAdjacentHTML('beforeend',h); } };
   const tabela=(titulo,head,rows)=>{
@@ -2928,6 +3064,8 @@ async function rxGerarPdf(E,op){
    itens.forEach(x=>{ ul.insertAdjacentHTML('beforeend','<li>'+x+'</li>'); if(!cabe()){ ul.lastElementChild.remove(); if(!ul.children.length) corpo.lastElementChild.remove(); nova(); abre(true); ul.insertAdjacentHTML('beforeend','<li>'+x+'</li>'); } });
   };
   rxConteudo(E,op,bloco,tabela,lista,()=>{ if(corpo.children.length) nova(); });
+  /* sobra de espaço na última folha vira linha de anotação (folha cheia, sem branco) */
+  const an=corpo.querySelector('.rx-anot'); if(an){ let k=0; while(cabe()&&k<40){ an.insertAdjacentHTML('beforeend','<i></i>'); k++; } if(!cabe()&&an.lastElementChild) an.lastElementChild.remove(); }
   await Promise.all([...host.querySelectorAll('img')].map(i=>i.complete?0:new Promise(ok=>{i.onload=i.onerror=ok})));
   pags.forEach((p,i)=>{ p.querySelector('[data-pg]').textContent='Página '+(i+1)+' de '+pags.length; });
   const pdf=new window.jspdf.jsPDF({unit:'mm',format:'a4',compress:true}), imgs=[];
@@ -2976,7 +3114,7 @@ function abrirResumoExec(){
  const ov=document.createElement('div'); ov.className='rx-ov'; ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-label','Resumo Executivo · '+E.titulo);
  const podeVend=E.tipo!='vend';
  ov.innerHTML='<div class="rx-box"><div class="rx-top"><div><span class="rx-lbl">📑 Resumo Executivo · '+esc(rxMes())+'</span><h3>'+esc(E.titulo)+'</h3><div class="rx-sub">'+esc(E.sub)+'</div></div><button type="button" class="rx-x" data-rx="fechar" aria-label="Fechar">✕</button></div>'+
-  (podeVend?'<div class="rx-opts"><label><input type="checkbox" data-rxo="anexo"> anexar as listas completas (supervisor, gerente e vendedor)</label></div>':'')+
+  '<div class="rx-opts"><label><input type="checkbox" data-rxo="cons" checked> orientação do consultor (dos números às ações)</label>'+(podeVend?'<label><input type="checkbox" data-rxo="anexo"> anexar as listas completas (supervisor, gerente e vendedor)</label>':'')+'</div>'+
   '<div class="rx-acoes"><button type="button" class="b pri" data-rx="zap">📲 Enviar pelo WhatsApp (PDF)</button><button type="button" class="b sec" data-rx="baixar">📄 Salvar PDF</button><button type="button" class="b gh" data-rx="texto">💬 Resumo em texto</button><button type="button" class="b gh" data-rx="gerar">⟳ Gerar de novo</button><span class="rx-st" data-rx-st role="status" aria-live="polite"></span></div>'+
   '<div class="rx-prev" data-rx-prev></div></div>';
  document.body.appendChild(ov);
@@ -2984,7 +3122,7 @@ function abrirResumoExec(){
  const fechar=()=>{ document.removeEventListener('keydown',tecla); ov.remove(); if(volta&&volta.focus) volta.focus(); };
  const tecla=e=>{ if(e.key==='Escape') fechar(); };
  document.addEventListener('keydown',tecla);
- const opts=()=>{ const o={anexo:false}; ov.querySelectorAll('[data-rxo]').forEach(c=>{ o[c.dataset.rxo]=c.checked; }); return o; };
+ const opts=()=>{ const o={anexo:false,cons:false}; ov.querySelectorAll('[data-rxo]').forEach(c=>{ o[c.dataset.rxo]=c.checked; }); return o; };
  const baixar=d=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(d.blob); a.download=d.nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),8000); };
  async function gerar(){
   if(ocupado){ fila=true; return null; } ocupado=true; st('⏳ Montando o resumo e desenhando as páginas…');

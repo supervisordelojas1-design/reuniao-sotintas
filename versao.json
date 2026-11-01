@@ -8,7 +8,7 @@
       "itens": [
         {
           "painel": "Painel de Metas",
-          "o_que": "Entrou o botão 📑 Resumo Executivo no alto da tela: uma folha A4 no layout Só Tintas para a reunião de alinhamento do fechamento do mês — placar dos indicadores (faturamento, Eucatex, CNPJ e CPF, com bateu / não bateu), quem puxou e quem segurou o resultado (supervisores, lojas e vendedores), os pontos para a reunião e o espaço para os compromissos e as assinaturas. Dá para salvar o PDF, enviar pelo WhatsApp ou mandar o resumo em texto. Cada perfil recebe o seu recorte: a coordenação a rede, o supervisor a região, o gerente a loja e o vendedor os próprios números.",
+          "o_que": "Entrou o botão 📑 Resumo Executivo no alto da tela, para a reunião de alinhamento do fechamento do mês. A folha 1 traz os números: placar dos indicadores com bateu / não bateu, quem puxou e quem segurou, e as lojas e os vendedores que bateram a meta. Em seguida vem a orientação do consultor: diagnóstico, onde está o dinheiro (quanto cada indicador vale em R$), o comportamento a observar em cada alavanca, quem acompanhar de perto, um plano de 30 dias, perguntas para conduzir a conversa e o espaço para compromissos, anotações e assinaturas. Salve em PDF, envie pelo WhatsApp ou mande o resumo em texto. Cada perfil recebe o seu recorte.",
           "para": [
             "coord",
             "anl",
