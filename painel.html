@@ -408,7 +408,7 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
 @media print{
  body.impr>.wrap,body.impr>header{display:none!important}
  body.impr #parea{display:block!important}
- header{position:static}.tog,.btns,select.perfil,.bc,.chev{display:none!important}
+ header{position:static}.tog,.btns,select.perfil,.bc,.chev,.rxbtn,.rx-ov{display:none!important}
  body{background:var(--card)}.sec,.kpi,.acao,.ritmo{box-shadow:none;break-inside:avoid}
  .resumo{display:block!important}
 }
@@ -429,6 +429,82 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
 .termo-marca span{position:absolute;white-space:nowrap;font-size:11px;font-weight:700;color:var(--tx2);transform:translateX(-50%)}
 .termo-marca.hoje span{bottom:100%;margin-bottom:2px}.termo-marca.meta{border-left:3px solid var(--tx)}.termo-marca.meta span{top:100%;margin-top:2px;color:var(--tx)}
 .termo-txt{font-size:13.5px;line-height:1.45}
+/* ===== RESUMO EXECUTIVO: botão, janela e as folhas A4 do PDF ===== */
+.rxbtn{margin-left:auto;align-self:center;border:none;border-radius:10px;padding:10px 15px;font:inherit;font-size:13px;font-weight:800;
+ cursor:pointer;display:inline-flex;align-items:center;gap:7px;background:var(--red);color:#fff;box-shadow:0 3px 10px rgba(211,32,39,.3);transition:.15s;white-space:nowrap}
+.rxbtn:hover{background:var(--red2);transform:translateY(-1px)}
+.rxbtn:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+@media(max-width:640px){.rxbtn{width:100%;justify-content:center;margin:4px 0 0}}
+.rx-ov{position:fixed;inset:0;z-index:420;background:rgba(10,20,40,.62);display:flex;align-items:flex-start;justify-content:center;padding:18px;overflow:auto}
+.rx-box{background:var(--card);color:var(--tx);border-radius:16px;width:100%;max-width:880px;box-shadow:0 18px 60px rgba(0,0,0,.4);margin:auto;overflow:hidden}
+.rx-top{display:flex;align-items:flex-start;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line)}
+.rx-lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--tx3);font-weight:800}
+.rx-top h3{font-size:17px;font-weight:800;margin:3px 0 2px;letter-spacing:-.3px}
+.rx-sub{font-size:12px;color:var(--tx2)}
+.rx-x{margin-left:auto;flex:none;background:var(--panel2);border:1px solid var(--line);border-radius:8px;width:34px;height:34px;font:inherit;font-size:15px;cursor:pointer;color:var(--tx)}
+.rx-opts{display:flex;flex-wrap:wrap;gap:8px 14px;padding:11px 18px;border-bottom:1px solid var(--line);font-size:12.5px;font-weight:700;color:var(--tx2);align-items:center}
+.rx-opts label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;color:var(--tx)}
+.rx-opts input{accent-color:var(--red);width:15px;height:15px}
+.rx-acoes{display:flex;flex-wrap:wrap;gap:8px;padding:13px 18px;align-items:center;border-bottom:1px solid var(--line)}
+.rx-acoes .b:disabled{opacity:.55;cursor:wait}
+.rx-st{font-size:12.5px;color:var(--tx2);flex:1 1 100%;line-height:1.5;min-height:18px}
+.rx-st a{color:var(--red);font-weight:700}
+.rx-prev{padding:12px 18px 18px;background:var(--bg);display:flex;flex-direction:column;gap:12px;max-height:64vh;overflow:auto}
+.rx-prev:empty{display:none}
+.rx-prev img{width:100%;height:auto;display:block;box-shadow:0 2px 12px rgba(0,0,0,.18);background:#fff;border-radius:3px}
+@media(max-width:640px){.rx-ov{padding:8px}.rx-acoes .b{flex:1 1 46%;justify-content:center;padding:11px 9px;font-size:12.5px}}
+/* folha A4 (fica fora da tela; o html2canvas tira a foto) — cores fixas, a folha é branca em qualquer tema */
+.rx-host{position:fixed;left:-12000px;top:0;width:794px}
+.rx-pg{width:794px;height:1123px;background:#fff;color:#12212F;font-family:'Segoe UI',Arial,Helvetica,sans-serif;font-size:10.5px;line-height:1.38;display:flex;flex-direction:column;padding:26px 36px 18px;position:relative}
+.rx-hd{display:flex;align-items:center;gap:16px}
+.rx-hd img{height:58px;width:auto}
+.rx-hd-t{flex:1;min-width:0}
+.rx-hd-t small,.rx-hd-n small{display:block;font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:#6b7387;font-weight:700}
+.rx-hd-t h2{margin:1px 0 2px;font-size:20px;line-height:1.1;color:#1C3F8F;font-weight:800;letter-spacing:-.3px}
+.rx-hd-t span{font-size:11.5px;font-weight:600;color:#12212F;display:block;line-height:1.3}
+.rx-hd-n{text-align:right;border-left:2px solid #e4e8f0;padding-left:14px;font-size:10px;color:#5A6B7D;line-height:1.45;white-space:nowrap}
+.rx-hd-n b{display:block;font-size:14px;color:#12212F;margin-bottom:2px}
+.rx-faixa{display:flex;height:5px;margin:10px 0 11px;border-radius:3px;overflow:hidden}
+.rx-faixa i{flex:5;background:#E30613}.rx-faixa i:nth-child(2){flex:2;background:#FFD200}.rx-faixa i:nth-child(3){flex:3;background:#1C3F8F}
+.rx-corpo{flex:1;overflow:hidden;display:flex;flex-direction:column;gap:9px;min-height:0}
+.rx-ft{display:flex;justify-content:space-between;gap:10px;border-top:1px solid #dfe4ee;padding-top:6px;margin-top:8px;font-size:8.5px;color:#6b7387}
+.rx-ft b{color:#1C3F8F}
+.rx-sec h3{margin:0 0 6px;font-size:12.5px;color:#1C3F8F;font-weight:800;border-bottom:1.5px solid #1C3F8F;padding-bottom:2px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.rx-sec h3 small{font-weight:600;color:#6b7387;font-size:9px;margin-left:auto;text-transform:none;letter-spacing:0}
+.rx-sec h3 em{font-style:normal;font-weight:600;color:#6b7387;font-size:9.5px}
+.rx-tiles{display:grid;gap:6px}
+.rx-tiles.c5{grid-template-columns:repeat(5,1fr)}.rx-tiles.c6{grid-template-columns:repeat(6,1fr)}
+.rx-tiles.c7{grid-template-columns:repeat(7,1fr)}.rx-tiles.c8{grid-template-columns:repeat(8,1fr)}
+.rx-tile{border:1px solid #DCE3EB;border-radius:7px;padding:6px 8px 6px;background:#fff;min-width:0}
+.rx-tile.hero{background:#0F2B46;color:#fff;border-color:#0F2B46}
+.rx-tile .l{font-size:7.6px;text-transform:uppercase;letter-spacing:.5px;color:#6b7387;font-weight:800;line-height:1.25}
+.rx-tile.hero .l{color:#9FB6CC}
+.rx-tile .v{font-size:14px;font-weight:800;letter-spacing:-.5px;margin-top:3px;line-height:1.1;white-space:nowrap}
+.rx-tiles.c7 .rx-tile .v,.rx-tiles.c8 .rx-tile .v{font-size:12.5px}
+.rx-tile .s{font-size:8px;color:#5A6B7D;margin-top:3px;line-height:1.3}
+.rx-tile.hero .s{color:#B9CBDC}
+.rx-barw{margin-top:8px}
+.rx-bar{height:10px;border-radius:5px;background:#EEF1F5;position:relative;overflow:visible}
+.rx-bar i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;display:block}
+.rx-bar u{position:absolute;top:0;bottom:0;display:block;opacity:.5;border-radius:0 5px 5px 0;background:repeating-linear-gradient(90deg,#1C3F8F 0 4px,transparent 4px 7px)}
+.rx-bar em{position:absolute;top:-3px;bottom:-3px;width:2px;background:#12212F;display:block}
+.rx-bar b{position:absolute;top:-3px;bottom:-3px;width:2px;background:#D32027;display:block}
+.rx-barl{display:flex;justify-content:space-between;gap:8px;font-size:8px;color:#5A6B7D;margin-top:5px}
+.rx-barl b{color:#12212F}
+.rx-evo{margin-top:7px;font-size:9.5px;line-height:1.45;color:#12212F;background:#F7F9FB;border:1px solid #DCE3EB;border-radius:6px;padding:6px 8px}
+.rx-lei{margin:0;padding:0 0 0 14px;font-size:10px;line-height:1.45}
+.rx-lei li{margin:0 0 4px}
+.rx-lei b{color:#0F2B46}
+.rx-tab{width:100%;border-collapse:collapse;font-size:8.2px;table-layout:auto}
+.rx-tab th{background:#0F2B46;color:#fff;padding:4px 3px;text-align:right;font-size:7.4px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;font-weight:700}
+.rx-tab th.t,.rx-tab td.t{text-align:left}
+.rx-tab td{padding:2.5px 3px;border-bottom:1px solid #E6EBF2;text-align:right;white-space:nowrap;vertical-align:middle}
+.rx-tab td.t{max-width:118px;overflow:hidden;text-overflow:ellipsis}
+.rx-tab tr.sub td{background:#EEF4FA;font-weight:800;color:#1C3F8F;border-top:1px solid #C7D7EA}
+.rx-tab tr.tot td{background:#F7F9FB;font-weight:800;border-top:1.5px solid #0F2B46;color:#0F2B46}
+.rx-tab td.rx-ok{color:#0B7A55;font-weight:800}.rx-tab td.rx-wn{color:#B7791F;font-weight:800}.rx-tab td.rx-bd{color:#C62828;font-weight:800}
+.rx-pill{display:inline-block;font-size:7.4px;font-weight:800;padding:1px 6px;border-radius:9px;letter-spacing:.2px}
+.rx-fonte{font-size:8.3px;color:#6b7387;line-height:1.45;border-top:1px dashed #DCE3EB;padding-top:6px}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="st-hora.js?v=1"></script>
@@ -478,7 +554,7 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
 
 <div class="wrap">
  <div class="bc" id="bc"></div>
- <div class="ttl"><h2 id="tTit">—</h2><div class="sub" id="tSub"></div></div>
+ <div class="ttl"><h2 id="tTit">—</h2><div class="sub" id="tSub"></div><button type="button" class="rxbtn no-tv" id="btnRx" style="display:none" onclick="abrirResumoExec()" title="PDF com o resultado do mês deste recorte: faturamento, projeção, Eucatex, indicadores, carteira, níveis e as tabelas por supervisor, gerente e vendedor">📑 Resumo Executivo</button></div>
  <div id="app"><div class="sec"><div class="empty" id="preBoot">⏳ Abrindo o painel...<br><br><small>Se esta mensagem não mudar em 5 segundos, o script não carregou — me diga exatamente esta frase.</small></div></div></div>
  <div class="nota" id="nota"></div>
 </div>
@@ -1503,8 +1579,9 @@ function alinhDados(tipo,chave){
   titulo=v.nome; sub='Vendedor · '+lv.cod+' '+lv.nome+' · supervisor '+lv.sup;
   vs=[{loja:lv.nome,nome:v.nome,meta:v.meta,fat:v.fat,pct:v.pct,nv:v.nv,nvRot:v.nvRot,prox:v.prox,I:v.I}];
   cods=[lv.cod];
-  nov=novDe(((KL(ST.loja)||{}).V||{})[chave]);
-  orc=((OL(ST.loja)||{}).V||{})[chave]||null;
+  var Kv=subVend((KL(ST.loja)||{}).V,chave);
+  nov=novDe(Kv);
+  orc=subVend((OL(ST.loja)||{}).V,chave);
  } else if(tipo==='loja'){
   var l=D.lojas.filter(function(x){return x.cod==chave})[0]; if(!l) return null;
   o=l; titulo=l.cod+' '+l.nome;
@@ -1547,7 +1624,7 @@ function alinhDados(tipo,chave){
   rotulo=tipo==='vend'?'Nível do vendedor':'Vendedores da loja';
  }
  linhas.sort(function(a,b){return (b.pct||0)-(a.pct||0)});
- return {tipo:tipo,o:o,titulo:titulo,sub:sub,vs:vs,cods:cods,nov:nov,orc:orc,
+ return {tipo:tipo,o:o,titulo:titulo,sub:sub,vs:vs,cods:cods,nov:nov,orc:orc,K:Kv||null,
          linhas:linhas,colNome:colNome,colRef:colRef,rotulo:rotulo};
 }
 /* As areas de oportunidade em frase. Cada uma carrega o numero que a
@@ -1563,14 +1640,14 @@ function alinhOportunidades(d){
   ' por dia útil contra '+BRL(o.ritmoNec)+' exigidos. O risco agora é relaxar: confirme se o esforço está distribuído ou concentrado em poucos dias fortes.');
  if(d.orc&&d.orc.total){
   var frio=d.orc.F.reduce(function(a,c){return a+c.valor},0), pf=frio/d.orc.total;
-  if(pf>=0.4) f.push('<b>Funil esfriando.</b> '+d.orc.F.length+' propostas somando '+BRL(frio)+
-   ' já passaram de 15 dias — <b>'+PCT0(pf)+' de tudo que está em aberto</b>. Observe se o vendedor retoma orçamento antigo por iniciativa própria ou só quando o cliente liga.');
+  if(pf>=0.4) f.push('<b>Funil esfriando.</b> '+d.orc.F.length+(d.orc.F.length==1?' proposta somando ':' propostas somando ')+BRL(frio)+
+   (d.orc.F.length==1?' já passou':' já passaram')+' de 15 dias — <b>'+PCT0(pf)+' de tudo que está em aberto</b>. Observe se o vendedor retoma orçamento antigo por iniciativa própria ou só quando o cliente liga.');
   if(d.orc.maior&&d.orc.maior.valor/d.orc.total>=0.25) f.push('<b>Mês apoiado em um cliente.</b> A maior proposta sozinha vale '+
    BRL(d.orc.maior.valor)+', <b>'+PCT0(d.orc.maior.valor/d.orc.total)+' do funil</b>. Se ela cair, o mês cai junto: pergunte qual é o plano B.');
-  if(d.orc.Q.length) f.push('<b>'+d.orc.Q.length+' propostas quentes</b> somando '+
+  if(d.orc.Q.length) f.push('<b>'+d.orc.Q.length+(d.orc.Q.length==1?' proposta quente':' propostas quentes')+'</b> somando '+
    BRL(d.orc.Q.reduce(function(a,c){return a+c.valor},0))+' — feitas há menos de 7 dias, o cliente ainda lembra do preço. É o dinheiro mais fácil da mesa hoje.');
  }
- var K=d.cods.length===1?KL(d.cods[0]):null;
+ var K=d.tipo==='vend'?d.K:(d.cods.length===1?KL(d.cods[0]):null);
  if(K&&K.POS&&K.POS.length){
   var par=K.POS.reduce(function(a,c){return a+c.media},0);
   if(par>0) f.push('<b>Carteira parada.</b> '+K.POS.length+' clientes que compravam não compraram este mês, '+
@@ -2560,11 +2637,349 @@ function render(){
  else{const l=D.lojas.find(x=>x.cod==ST.loja);t=l?l.cod+' · '+l.nome:'Loja';s=l?'Supervisor: '+l.sup:'';html=vLoja(ST.loja)}
  document.getElementById('tTit').textContent=t;
  document.getElementById('tSub').textContent=s;
+ const bx=document.getElementById('btnRx'); if(bx) bx.style.display='';
  document.getElementById('app').innerHTML=html;
  document.getElementById('nota').innerHTML=
   `Base: META + INDICADORES · ${D.meta_info.vendExcluidos} vendedores sem meta válida excluídos · ${D.meta_info.lojasForaPainel.length} lojas sem meta fora do painel<br>
    <b style="color:${Object.keys(CART).length?'#0E9F6E':'#D32027'}">CARTEIRA: ${Object.keys(CART).length} lojas</b> · A marca cinza nas barras é o <b>${PC(RE)}</b> esperado para esta altura do mês. ${noGoogle?'Dados ao vivo da planilha Google · registros gravados direto na base.':'Modo offline — registros ficam neste dispositivo.'}`;
 }
+
+/* ===================== RESUMO EXECUTIVO =====================
+   Botão no alto de cada tela do Painel. Gera um PDF A4 no layout Só Tintas com
+   o resultado do mês do recorte que está na tela (rede, região, loja ou
+   vendedor): faturamento e projeção, Eucatex, indicadores CNPJ e CPF, carteira
+   e orçamentos, níveis, leitura executiva e as tabelas por supervisor, por
+   gerente (loja) e por vendedor. Salva o PDF ou envia pelo WhatsApp (folha de
+   compartilhamento do celular; no computador baixa o arquivo e abre o WhatsApp
+   com o resumo em texto). Sempre no recorte do crachá: o gerente só recebe a
+   loja dele, o vendedor só os números dele — o servidor já manda só isso. */
+const RX_LIB_PDF='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+const RX_LIB_H2C='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+const RX_LIBS={};
+function rxCarrega(src){
+ if(src===RX_LIB_H2C&&typeof html2canvas!=='undefined') return Promise.resolve();
+ if(src===RX_LIB_PDF&&window.jspdf&&window.jspdf.jsPDF) return Promise.resolve();
+ return RX_LIBS[src]||(RX_LIBS[src]=new Promise(function(ok,erro){ var s=document.createElement('script'); s.src=src; s.onload=ok;
+  s.onerror=function(){ delete RX_LIBS[src]; erro(new Error('sem internet para carregar o gerador de PDF')); }; document.head.appendChild(s); }));
+}
+/* formatos curtos do PDF (cores fixas: a folha é branca mesmo no tema escuro) */
+const rxP=p=>p==null?'—':(p*100).toFixed(1).replace('.',',')+'%';
+const rxP0=p=>p==null?'—':Math.round(p*100).toLocaleString('pt-BR')+'%';
+const rxN=n=>n==null?'—':Math.round(n||0).toLocaleString('pt-BR');
+const RXC={ok:'#0B7A55',wn:'#B7791F',bd:'#C62828',mut:'#5A6B7D',navy:'#1C3F8F'};
+const rxFar=p=>p==null?'':p>=RE?'rx-ok':p>=RE*0.9?'rx-wn':'rx-bd';            /* meta: contra o esperado até hoje */
+const rxEucC=p=>p==null?'':p>=1?'rx-ok':p>=RE?'rx-wn':'rx-bd';                /* Eucatex: só 100% paga */
+const rxAlcC=p=>p==null?'':p>=RE?'rx-ok':'rx-bd';
+const rxMetaC=(k,v)=>{const ok=bateMeta(IND.find(x=>x.k==k),v);return ok==null?'':ok?'rx-ok':'rx-bd'};
+const rxCor=c=>RXC[String(c||'').replace('rx-','')]||RXC.mut;
+const rxAgora=()=>{const d=(window.STHora?STHora.data():new Date());return d.toLocaleDateString('pt-BR')+' '+('0'+d.getHours()).slice(-2)+'h'+('0'+d.getMinutes()).slice(-2)};
+const rxDB=()=>new Date(P.dataBase+'T12:00').toLocaleDateString('pt-BR');
+const rxMes=()=>tcPdf(P.mes)+'/'+P.ano;
+/* ritmo em palavras, como no painel: no ritmo / atenção / abaixo */
+function rxRitmo(pct){ const f=farol(pct); return {c:f.c=='g'?'rx-ok':f.c=='y'?'rx-wn':'rx-bd',t:f.c=='g'?'No ritmo':f.c=='y'?'Atenção':'Abaixo do ritmo'} }
+/* o vendedor como "objeto de resultado", no mesmo formato de loja/região */
+function rxVendObj(v){ return {metaLoja:v.meta,metaTime:null,fat:v.fat,proj:v.proj,pctLoja:v.pct,pctTime:null,pctProj:v.meta?v.proj/v.meta:null,
+ restLoja:v.rest,ritmoNec:v.ritmoNec,ritmoReal:UD?v.fat/UD:0,I:v.I,nome:v.nome,nv:v.nv,nvRot:v.nvRot,med90:v.med90,prox:v.prox} }
+/* recorte da tela: vendedor (crachá de vendedor), loja, região ou rede */
+function rxEscopo(){
+ const vend=(LOCK&&String(LOCK).indexOf('vend:')==0)?vendDaVez():null;
+ if(vend){ const l=D.lojas.find(x=>x.cod==ST.loja); if(!l) return null;
+  const Kx=KL(l.cod), Ox=OL(l.cod), Kv=Kx&&Kx.V?subVend(Kx.V,vend.nome):null, Ov=Ox&&Ox.V?subVend(Ox.V,vend.nome):null;
+  return {tipo:'vend',chave:vend.nome,o:rxVendObj(vend),v:vend,l:l,titulo:tcPdf(vend.nome),sub:'Vendedor · Loja '+l.cod+' · '+l.nome+' · supervisor '+l.sup,
+   lojas:[l],vends:[[vend,l]],K:Kv,orc:Ov,nov:novDe(Kv)} }
+ if(ST.loja){ const l=D.lojas.find(x=>x.cod==ST.loja); if(!l) return null; const g=GER_PAINEL[l.cod];
+  return {tipo:'loja',chave:l.cod,o:l,l:l,titulo:'Loja '+l.cod+' · '+l.nome,sub:(g?'Gerente '+tcPdf(g)+' · ':'')+'supervisor '+l.sup+' · '+l.vendedores.length+' vendedores · nível '+l.nvRot,
+   lojas:[l],vends:l.vendedores.map(v=>[v,l]),K:KL(l.cod),orc:OL(l.cod),nov:novDe(KL(l.cod))} }
+ if(ST.sup){ const s=D.supervisores.find(x=>x.nome==ST.sup); if(!s) return null; const ls=D.lojas.filter(l=>l.sup==ST.sup), cods=ls.map(l=>l.cod);
+  return {tipo:'sup',chave:s.nome,o:s,s:s,titulo:'Região '+s.nome,sub:'Supervisor '+s.nome+' · '+ls.length+' lojas · '+s.nVend+' vendedores',
+   lojas:ls,vends:[].concat.apply([],ls.map(l=>l.vendedores.map(v=>[v,l]))),K:KSoma(s.nome),orc:OSoma(cods),nov:novSoma(cods)} }
+ const cods=D.lojas.map(l=>l.cod);
+ return {tipo:'geral',chave:'',o:D.geral,titulo:'Rede Só Tintas',sub:D.geral.nLojas+' lojas · '+D.geral.nSups+' supervisores · '+D.geral.nVend+' vendedores com meta',
+  lojas:D.lojas.slice(),vends:[].concat.apply([],D.lojas.map(l=>l.vendedores.map(v=>[v,l]))),K:KRede(),orc:OSoma(cods),nov:novSoma(cods)} }
+/* folha A4 (794 × 1123 px) com cabeçalho e rodapé Só Tintas; o corpo é preenchido por blocos */
+function rxPagina(E){
+ const per=P.fechado?'<b style="color:#1C3F8F">MÊS FECHADO</b>':UD+' de '+UT+' dias úteis · '+rxP(RE)+' do mês';
+ return '<div class="rx-pg"><div class="rx-hd"><img src="pdi-logo.jpg" alt=""><div class="rx-hd-t"><small>Painel de Metas e Indicadores · Só Tintas</small><h2>Resumo Executivo · '+esc(rxMes())+'</h2><span>'+esc(E.titulo)+' · '+esc(E.sub)+'</span></div>'+
+  '<div class="rx-hd-n"><b>'+esc(tcPdf(P.mes))+' '+P.ano+'</b>apurado até '+rxDB()+'<br>'+per+'</div></div><div class="rx-faixa"><i></i><i></i><i></i></div>'+
+  '<div class="rx-corpo"></div><div class="rx-ft"><span><b>Só Tintas</b> · Colorindo Vidas e Realizando Sonhos</span><span>Resumo Executivo · gerado em '+rxAgora()+' · documento interno</span><span data-pg></span></div></div>';
+}
+const rxTile=(l,v,s,cls)=>'<div class="rx-tile'+(cls?' '+cls:'')+'"><div class="l">'+l+'</div><div class="v">'+v+'</div>'+(s?'<div class="s">'+s+'</div>':'')+'</div>';
+const rxCorV=(txt,c)=>'<span style="color:'+rxCor(c)+'">'+txt+'</span>';
+/* barra do mês: realizado, projeção listrada, marca do esperado hoje e a meta (escala até 120%) */
+function rxBarra(pct,pj){
+ const e120=x=>(Math.max(0,Math.min(1.2,x||0))/1.2*100).toFixed(1);
+ const c=pct==null?RXC.mut:pct>=1?RXC.ok:pct>=RE?'#2f9e5b':pct>=RE*.9?RXC.wn:RXC.bd;
+ return '<div class="rx-barw"><div class="rx-bar"><i style="width:'+e120(pct)+'%;background:'+c+'"></i>'+
+  (pj!=null&&pj>(pct||0)?'<u style="left:'+e120(pct)+'%;width:'+(e120(pj)-e120(pct)).toFixed(1)+'%"></u>':'')+
+  '<em style="left:'+e120(RE)+'%"></em><b style="left:'+e120(1)+'%"></b></div>'+
+  '<div class="rx-barl"><span>realizado <b>'+rxP(pct)+'</b></span><span>esperado hoje <b>'+rxP(RE)+'</b></span><span>projeção <b>'+rxP(pj)+'</b></span><span>meta <b>100%</b> · escala até 120%</span></div></div>';
+}
+/* texto da meta do indicador CPF (mesmas metas da lista IND / PDI) */
+function rxMetaTxt(k,v){ const m=IND.find(x=>x.k==k); if(!m||m.meta==null||v==null) return '';
+ const alvo=fmtI(m,m.meta), ok=bateMeta(m,v);
+ if(ok) return rxCorV('✔ meta '+(m.b?'':'até ')+alvo,'ok');
+ const dif=Math.abs(v-m.meta), txt=m.t=='pct'?(dif*100).toFixed(1).replace('.',',')+' p.p.':m.t=='brl'?BRL(dif):DEC(dif,2);
+ return rxCorV(m.b?'faltam '+txt+' p/ '+alvo:txt+' acima de '+alvo,'bd') }
+/* células das tabelas */
+const rxTd=(v,cls,t)=>'<td class="'+(t?'t ':'')+(cls||'')+'">'+v+'</td>';
+function rxTdsInd(I,comPosit){ I=I||{};
+ return rxTd(rxP0(eucPct(I)),rxEucC(eucPct(I)))+rxTd(rxP0(I.alcCNPJ),rxAlcC(I.alcCNPJ))+(comPosit?rxTd(rxP0(I.posCNPJ)):'')+
+  rxTd(rxP0(I.pctIdent),rxMetaC('pctIdent',I.pctIdent))+rxTd(I.itens==null?'—':DEC(I.itens,2),rxMetaC('itens',I.itens))+
+  rxTd(I.ticket==null?'—':rxN(I.ticket),rxMetaC('ticket',I.ticket))+rxTd(rxP0(I.descCPF),rxMetaC('descCPF',I.descCPF)) }
+const rxPill=(c,t)=>{const r={'rx-ok':['#E6F6F0','#08674A'],'rx-wn':['#FDF3E0','#8A5A00'],'rx-bd':['#FCEAEB','#8E1318']}[c]||['#EEF1F5','#5A6B7D'];return '<span class="rx-pill" style="background:'+r[0]+';color:'+r[1]+'">'+t+'</span>'};
+function rxTot(cols1,label,o,comPosit){
+ return '<tr class="tot">'+(cols1>1?'<td class="t" colspan="'+cols1+'">'+label+'</td>':rxTd(label,'',true))+rxTd(rxN(o.metaLoja))+rxTd(rxN(o.fat))+rxTd(rxP(o.pctLoja),rxFar(o.pctLoja))+rxTd(rxP0(o.pctProj),rxFar(o.pctProj))+rxTd(rxN(o.restLoja))+rxTdsInd(o.I,comPosit)+'</tr>' }
+/* soma dos vendedores de uma tabela (a loja fatura além dos vendedores com meta) */
+function rxSomaV(vs){ const m=vs.reduce((a,x)=>a+(x[0].meta||0),0), f=vs.reduce((a,x)=>a+x[0].fat,0), pj=vs.reduce((a,x)=>a+(x[0].proj||0),0);
+ return {metaLoja:m,fat:f,pctLoja:m?f/m:null,pctProj:m?pj/m:null,restLoja:Math.max(m-f,0),I:ind(roll(vs.map(x=>x[0].Craw)),f)} }
+/* ---- conteúdo: blocos (não quebram) e tabelas (linha a linha, cabeçalho repete) ---- */
+function rxConteudo(E,op,bloco,tabela,lista){
+ const o=E.o, I=o.I||{}, r=rxRitmo(o.pctLoja), fp=o.pctProj, dif=(o.ritmoReal||0)-(o.ritmoNec||0), ehV=E.tipo=='vend';
+ let n=0; const sec=t=>(++n)+'. '+t;
+ /* 1. resultado do mês */
+ let h='<section class="rx-sec"><h3>'+sec('Resultado do mês')+' <small>'+esc(E.titulo)+' · '+(P.fechado?'fechamento de '+esc(tcPdf(P.mes)):UD+' de '+UT+' dias úteis')+'</small></h3><div class="rx-tiles c6">';
+ h+=rxTile('Faturado',BRL(o.fat),'média de '+BRL(o.ritmoReal)+' por dia útil','hero');
+ if(ehV){
+  h+=rxTile('Meta individual',BRL(o.metaLoja),'atingido '+rxCorV('<b>'+rxP(o.pctLoja)+'</b>',r.c)+' · esperado hoje '+rxP(RE));
+  h+=rxTile('Nível','V'+o.nv+' · '+esc(o.nvRot),'Méd. 90 dias '+BRL(o.med90)+(o.prox?' · faltam '+BRL(o.prox.falta)+' p/ V'+o.prox.nv:' · topo da régua'));
+ }else{
+  h+=rxTile('Meta Loja',BRL(o.metaLoja),'atingido '+rxCorV('<b>'+rxP(o.pctLoja)+'</b>',r.c)+' · esperado hoje '+rxP(RE));
+  h+=rxTile('Meta Time',BRL(o.metaTime),'atingido <b>'+rxP(o.pctTime)+'</b>');
+ }
+ h+=rxTile('Projeção de fechamento',BRL(o.proj),rxCorV('<b>'+rxP(fp)+'</b>',fp==null?'mut':fp>=1?'ok':fp>=.9?'wn':'bd')+' da meta, no ritmo de hoje');
+ h+=rxTile('Falta para a meta',BRL(o.restLoja),P.fechado?'mês encerrado':(o.restLoja?BRL(o.ritmoNec)+'/dia em '+UR+' dia'+(UR==1?'':'s')+' úte'+(UR==1?'l':'is'):rxCorV('✔ meta batida','ok')));
+ h+=rxTile('Ritmo',rxCorV(r.t,r.c),(dif>=0?'folga de ':'déficit de ')+BRL(Math.abs(dif))+' por dia útil');
+ bloco(h+'</div>'+rxBarra(o.pctLoja,fp)+'</section>');
+ /* 2. Eucatex */
+ if(I.metaEuc!=null){
+  const p=eucPct(I), pj=eucProj(I), falta=Math.max((I.metaEuc||0)-(I.litEuc||0),0), bd=falta/18;
+  const vs=ehV?[]:E.vends.map(x=>x[0]).filter(v=>v.I&&v.I.metaEuc!=null), ok=vs.filter(v=>eucPct(v.I)>=1).length;
+  let e='<section class="rx-sec"><h3>'+sec('Eucatex — meta de litragem')+' <small>bônus tudo ou nada em 100% · '+LT(I.litEuc)+' de '+LT(I.metaEuc)+'</small></h3><div class="rx-tiles c6">';
+  e+=rxTile('Meta do mês',LT(I.metaEuc),'litros');
+  e+=rxTile('Vendido',LT(I.litEuc),'até '+rxDB());
+  e+=rxTile('% da meta',rxCorV(rxP(p),rxEucC(p)),p!=null&&p>=1?rxCorV('✔ meta batida','ok'):'esperado hoje '+rxP(RE));
+  e+=rxTile('Projeção',rxCorV(rxP(pj),rxEucC(pj)),'no ritmo de hoje');
+  e+=rxTile('Falta para 100%',falta?LT(falta):'—',falta?'🪣 '+NUM(Math.ceil(bd))+' balde'+(Math.ceil(bd)==1?'':'s')+' de 18 L'+(UR?' · '+DEC(bd/UR,1)+'/dia':''):'nada a fazer');
+  e+=ehV?rxTile('Bônus Eucatex','R$ 50',p!=null&&p>=1?rxCorV('✔ garantido','ok'):'só com 100% da litragem')
+        :rxTile('Vendedores em 100%',rxCorV(NUM(ok),vs.length&&ok/vs.length>=.5?'ok':'bd'),'de '+NUM(vs.length)+' com meta Eucatex');
+  bloco(e+'</div></section>');
+ }
+ /* 3. CNPJ */
+ let c='<section class="rx-sec"><h3>'+sec('Indicadores CNPJ')+' <small>meta '+BRL(I.metaCNPJ)+' · faturado '+BRL(I.fatCNPJ)+'</small></h3><div class="rx-tiles c7">';
+ c+=rxTile('Meta CNPJ',BRL(I.metaCNPJ),'do mês');
+ c+=rxTile('Faturado CNPJ',BRL(I.fatCNPJ),rxP(I.repCNPJ)+' do faturado total');
+ c+=rxTile('% Alc. Meta CNPJ',rxCorV(rxP(I.alcCNPJ),rxAlcC(I.alcCNPJ)),'esperado hoje '+rxP(RE));
+ c+=rxTile('% Rep. Fat. CNPJ',rxP(I.repCNPJ),'peso do CNPJ na venda');
+ c+=rxTile('Ativos',NUM(I.ativos),rxP(I.ativCNPJ)+' de '+NUM(I.cad)+' cadastrados');
+ c+=rxTile('Positivados',NUM(I.posit),rxP(I.posCNPJ)+' dos ativos');
+ c+=rxTile('Clientes novos',NUM(I.novos),'no mês');
+ bloco(c+'</div></section>');
+ /* 4. CPF */
+ let f='<section class="rx-sec"><h3>'+sec('Indicadores CPF')+' <small>'+NUM(I.atend)+' atendimentos · metas: identificados ≥ 80% · itens ≥ 2,5 · ticket ≥ R$ 200 · desconto ≤ 7%</small></h3><div class="rx-tiles c5">';
+ f+=rxTile('Atendimentos',NUM(I.atend),'no mês');
+ f+=rxTile('% Identificados',rxCorV(rxP(I.pctIdent),rxMetaC('pctIdent',I.pctIdent)),rxMetaTxt('pctIdent',I.pctIdent)+' · '+NUM(Math.round((I.atend||0)*(I.pctIdent||0)))+' de '+NUM(I.atend));
+ f+=rxTile('Itens por atendimento',rxCorV(I.itens==null?'—':DEC(I.itens,2),rxMetaC('itens',I.itens)),rxMetaTxt('itens',I.itens));
+ f+=rxTile('Ticket médio CPF',rxCorV(I.ticket==null?'—':BRL(I.ticket),rxMetaC('ticket',I.ticket)),rxMetaTxt('ticket',I.ticket));
+ f+=rxTile('% Desconto CPF',rxCorV(rxP(I.descCPF),rxMetaC('descCPF',I.descCPF)),rxMetaTxt('descCPF',I.descCPF)+' · quanto menor, melhor');
+ bloco(f+'</div></section>');
+ /* 5. carteira e orçamentos */
+ const K=E.K&&E.K.cli?E.K:null, Oq=E.orc&&E.orc.itens&&E.orc.itens.length?E.orc:null, N=E.nov&&E.nov.n?E.nov:null;
+ if(K||Oq||N){
+  let k='<section class="rx-sec"><h3>'+sec('Carteira CNPJ e orçamentos em aberto')+' <small>'+(K?K.cli.length+' clientes · '+K.meses+' meses de histórico':'')+(Oq?(K?' · ':'')+'orçamentos até '+rxDB():'')+'</small></h3><div class="rx-tiles c6">';
+  if(K){
+   k+=rxTile('A positivar',rxCorV(NUM(K.POS.length),'bd'),BRL(K.POS.reduce((a,x)=>a+x.media,0))+'/mês em jogo · compravam e pararam');
+   k+=rxTile('Comprando abaixo',rxCorV(NUM(K.SUB.length),'wn'),BRL(K.SUB.reduce((a,x)=>a+x.lacuna,0))+' de lacuna');
+   k+=rxTile('Crescendo',rxCorV(NUM(K.CRE.length),'ok'),BRL(K.CRE.reduce((a,x)=>a+x.proj-x.media,0))+' acima da média');
+  }
+  if(N) k+=rxTile('1ª compra no ano',NUM(N.n),BRL(N.val)+' · ticket '+BRL(N.ticket));
+  if(Oq){ k+=rxTile('Orçamentos em aberto',NUM(Oq.itens.length),BRL(Oq.total)+(Oq.maior?' · maior '+BRL(Oq.maior.valor):''));
+   k+=rxTile('Quentes · mornos · frios',rxCorV(Oq.Q.length,'bd')+' · '+rxCorV(Oq.M.length,'wn')+' · '+rxCorV(Oq.F.length,'mut'),'até 7 dias · 8 a 15 · mais de 15'); }
+  k+='</div>';
+  if(NM&&K){ const S=evoSerie(K.cli); if(S){ const e=EVO_ST[S.tend];
+   k+='<div class="rx-evo"><b>Evolução mês a mês</b> ('+mesRot(0,true)+' a '+mesRot(S.n-1,true)+anoSerie()+'): o mês atual projeta <b>'+BRL(S.proj)+'</b>, '+rxP(S.pct)+' da meta de '+BRL(S.meta)+' (média mensal da carteira) · tendência <b style="color:'+e[2]+'">'+e[1]+' '+e[0]+'</b> · positivados '+S.pos[S.n-1]+' (média '+S.mediaPos.toFixed(0)+'/mês) · ▲ '+S.st.sub+' subindo · ● '+S.st.med+' na média · ▼ '+S.st.cai+' caindo · ✖ '+S.st.sum+' sumiram · ★ '+S.st.nov+' novos</div>'; } }
+  bloco(k+'</section>');
+ }
+ /* 6. níveis */
+ if(!ehV){
+  const dl={3:0,2:0,1:0}, dv={1:0,2:0,3:0,4:0,5:0}; E.lojas.forEach(l=>dl[l.nv]++); E.vends.forEach(x=>dv[x[0].nv]++);
+  const nl=E.lojas.length, tv=E.vends.length;
+  let v='<section class="rx-sec"><h3>'+sec('Níveis')+' <small>régua '+(NOVA?'a partir de Out/26':'Jul–Set/26')+' · '+esc(NIVBASE)+'</small></h3><div class="rx-tiles '+(E.tipo=='loja'?'c6':'c8')+'">';
+  if(E.tipo=='loja'){ const cl=ROTL[E.l.nv]; v+=rxTile('Nível da loja','<span style="color:'+cl[1]+'">N'+E.l.nv+' · '+cl[0]+'</span>','Méd. 90d '+BRL(E.l.med90)+(E.l.prox?' · faltam '+BRL(E.l.prox.falta)+' p/ N'+E.l.prox.nv:' · topo da régua')); }
+  else [3,2,1].forEach(x=>{const cl=ROTL[x]; v+=rxTile('Lojas N'+x+' · '+cl[0],'<span style="color:'+cl[1]+'">'+NUM(dl[x])+'</span>',rxP0(nl?dl[x]/nl:0)+' das lojas')});
+  [5,4,3,2,1].forEach(x=>v+=rxTile('V'+x+' · '+ROTV[x],NUM(dv[x]),rxP0(tv?dv[x]/tv:0)+' dos vendedores'));
+  bloco(v+'</div></section>');
+ }
+ /* 7. leitura executiva */
+ if(op.lei){
+  const filhos=E.tipo=='geral'?D.supervisores.map(s=>({nome:'Região '+s.nome,pct:s.pctLoja,falta:s.restLoja}))
+   :E.tipo=='sup'?E.lojas.map(l=>({nome:'Loja '+l.cod+' · '+l.nome,pct:l.pctLoja,falta:l.restLoja}))
+   :E.tipo=='loja'?E.l.vendedores.map(x=>({nome:tcPdf(x.nome),pct:x.pct,falta:x.rest})):[];
+  const ord=filhos.slice().sort((a,b)=>(b.pct||0)-(a.pct||0)), li=[];
+  li.push('Com <b>'+UD+' de '+UT+' dias úteis</b> ('+rxP(RE)+' do mês), o atingimento está em <b>'+rxP(o.pctLoja)+'</b> da meta'+(ehV?' individual':' de loja')+(o.pctTime!=null?' e <b>'+rxP(o.pctTime)+'</b> da meta do time':'')+
+   '; no ritmo de hoje o mês fecha em '+rxCorV('<b>'+rxP(fp)+'</b>',fp==null?'mut':fp>=1?'ok':fp>=.9?'wn':'bd')+'. '+
+   (r.c=='rx-ok'?'Ritmo <b>adequado</b> para esta altura do mês.':r.c=='rx-wn'?'Ritmo <b>levemente atrás</b> do esperado ('+rxP(RE)+'): dá para recuperar, mas não sozinho — precisa de ação diária.':'Ritmo <b>abaixo</b> do esperado ('+rxP(RE)+') — exige intervenção agora, não no fim do mês.'));
+  if(o.restLoja>0&&UR>0) li.push('Faltam <b>'+BRL(o.restLoja)+'</b> em <b>'+UR+' dia'+(UR==1?'':'s')+' úte'+(UR==1?'l':'is')+'</b>: '+BRL(o.ritmoNec)+'/dia contra uma média realizada de '+BRL(o.ritmoReal)+'/dia ('+(dif>=0?'folga':'déficit')+' de '+BRL(Math.abs(dif))+' por dia).');
+  if(ord.length>=2){ const top=ord.slice(0,3), low=ord.slice(-3).reverse().filter(x=>top.indexOf(x)<0);
+   li.push('<b>Puxando o resultado:</b> '+top.map(x=>esc(x.nome)+' ('+rxP(x.pct)+')').join(' · ')+'.');
+   if(low.length) li.push('<b>Segurando o resultado:</b> '+low.map(x=>esc(x.nome)+' ('+rxP(x.pct)+', falta '+BRL(x.falta)+')').join(' · ')+'. Comece por quem tem a maior meta em risco, não pelo pior percentual.'); }
+  if(I.metaEuc!=null){ const p=eucPct(I), falta=Math.max((I.metaEuc||0)-(I.litEuc||0),0);
+   if(ehV) li.push('<b>Eucatex:</b> '+(p>=1?'litragem batida — bônus de R$ 50 garantido.':'faltam '+LT(falta)+' ('+NUM(Math.ceil(falta/18))+' baldes de 18 L) para os R$ 50 do bônus; o bônus é tudo ou nada.'));
+   else { const vs=E.vends.map(x=>x[0]).filter(v=>v.I&&v.I.metaEuc!=null), ok=vs.filter(v=>eucPct(v.I)>=1).length;
+    li.push('<b>Eucatex:</b> '+NUM(ok)+' de '+NUM(vs.length)+' vendedores já bateram a litragem'+(falta?'; faltam '+LT(falta)+' ('+NUM(Math.ceil(falta/18))+' baldes de 18 L) para a meta '+(E.tipo=='loja'?'da loja':E.tipo=='sup'?'da região':'da rede')+'. Quem está perto de 100% fecha o bônus com uma obra; quem está longe precisa de oferta ativa no balcão.':' — meta '+(E.tipo=='loja'?'da loja':E.tipo=='sup'?'da região':'da rede')+' batida.')); } }
+  try{ const d=alinhDados(E.tipo,E.chave); if(d) alinhOportunidades(d).slice(0,4).forEach(x=>li.push(x)); }catch(e){}
+  lista(sec('Leitura executiva')+' <small>o que os números dizem e onde agir</small>',li);
+ }
+ /* 8. por supervisor (só na rede) */
+ if(E.tipo=='geral'&&op.sup){
+  const head='<tr><th class="t">Supervisor</th><th>Lojas</th><th>Vend.</th><th>Meta loja</th><th>Faturado</th><th>% meta</th><th>Proj.</th><th>Falta</th><th>Eucatex</th><th>Alc. CNPJ</th><th>Posit.</th><th>Ident.</th><th>Itens</th><th>Ticket</th><th>Desc.</th><th>Situação</th></tr>';
+  const rows=D.supervisores.slice().sort((a,b)=>(b.pctLoja||0)-(a.pctLoja||0)).map(s=>{ const rr=rxRitmo(s.pctLoja);
+   return '<tr>'+rxTd(esc(s.nome),'',true)+rxTd(s.nLojas)+rxTd(s.nVend)+rxTd(rxN(s.metaLoja))+rxTd(rxN(s.fat))+rxTd(rxP(s.pctLoja),rxFar(s.pctLoja))+rxTd(rxP0(s.pctProj),rxFar(s.pctProj))+rxTd(rxN(s.restLoja))+rxTdsInd(s.I,true)+rxTd(rxPill(rr.c,rr.t))+'</tr>' });
+  const g=D.geral, rg=rxRitmo(g.pctLoja);
+  rows.push('<tr class="tot">'+rxTd('Rede Só Tintas','',true)+rxTd(g.nLojas)+rxTd(g.nVend)+rxTd(rxN(g.metaLoja))+rxTd(rxN(g.fat))+rxTd(rxP(g.pctLoja),rxFar(g.pctLoja))+rxTd(rxP0(g.pctProj),rxFar(g.pctProj))+rxTd(rxN(g.restLoja))+rxTdsInd(g.I,true)+rxTd(rxPill(rg.c,rg.t))+'</tr>');
+  tabela(sec('Por supervisor')+' <small>valores em R$ · ordem: % da meta loja</small>',head,rows);
+ }
+ /* 9. por gerente (loja) */
+ if((E.tipo=='geral'||E.tipo=='sup')&&op.loja){
+  const head='<tr><th>#</th><th class="t">Loja</th><th class="t">Gerente</th><th>Nível</th><th>Meta loja</th><th>Faturado</th><th>% meta</th><th>Proj.</th><th>Falta</th><th>Eucatex</th><th>Alc. CNPJ</th><th>Posit.</th><th>Ident.</th><th>Itens</th><th>Ticket</th><th>Desc.</th></tr>';
+  const linhaLoja=(l,i)=>{ const g=GER_PAINEL[l.cod]; const cl=ROTL[l.nv];
+   return '<tr>'+rxTd(i+1)+rxTd(esc(l.cod+' · '+l.nome),'',true)+rxTd(g?esc(tcPdf(g).split(' ').slice(0,2).join(' ')):'<span style="color:#8494A5">—</span>','',true)+rxTd('<span style="color:'+cl[1]+';font-weight:800">N'+l.nv+'</span>')+
+    rxTd(rxN(l.metaLoja))+rxTd(rxN(l.fat))+rxTd(rxP(l.pctLoja),rxFar(l.pctLoja))+rxTd(rxP0(l.pctProj),rxFar(l.pctProj))+rxTd(rxN(l.restLoja))+rxTdsInd(l.I,true)+'</tr>' };
+  const rows=[]; let i=0;
+  if(E.tipo=='geral'){
+   D.supervisores.slice().sort((a,b)=>(b.pctLoja||0)-(a.pctLoja||0)).forEach(s=>{ const ls=D.lojas.filter(l=>l.sup==s.nome).sort((a,b)=>(b.pctLoja||0)-(a.pctLoja||0));
+    rows.push('<tr class="sub"><td class="t" colspan="4">Região '+esc(s.nome)+' · '+ls.length+' loja'+(ls.length==1?'':'s')+'</td>'+rxTd(rxN(s.metaLoja))+rxTd(rxN(s.fat))+rxTd(rxP(s.pctLoja),rxFar(s.pctLoja))+rxTd(rxP0(s.pctProj),rxFar(s.pctProj))+rxTd(rxN(s.restLoja))+rxTdsInd(s.I,true)+'</tr>');
+    ls.forEach(l=>rows.push(linhaLoja(l,i++))); });
+   rows.push(rxTot(4,'Rede Só Tintas · '+D.geral.nLojas+' lojas',D.geral,true));
+  }else{
+   E.lojas.slice().sort((a,b)=>(b.pctLoja||0)-(a.pctLoja||0)).forEach(l=>rows.push(linhaLoja(l,i++)));
+   rows.push(rxTot(4,'Região '+esc(E.s.nome)+' · '+E.lojas.length+' lojas',E.s,true));
+  }
+  tabela(sec('Por gerente (loja)')+' <small>valores em R$ · ordem: % da meta loja · nível pela Méd. 90 dias</small>',head,rows);
+ }
+ /* 10. por vendedor */
+ if(!ehV&&op.vend&&E.vends.length){
+  const comLoja=E.tipo!='loja';
+  const head='<tr><th>#</th><th class="t">Vendedor</th>'+(comLoja?'<th class="t">Loja</th>':'')+'<th>Nível</th><th>Meta</th><th>Faturado</th><th>% meta</th><th>Proj.</th><th>Falta</th><th>Eucatex</th><th>Alc. CNPJ</th><th>Ident.</th><th>Itens</th><th>Ticket</th><th>Desc.</th></tr>';
+  const vs=E.vends.slice().sort((a,b)=>(b[0].pct||0)-(a[0].pct||0));
+  const rows=vs.map((x,i)=>{ const v=x[0], l=x[1];
+   return '<tr>'+rxTd(i+1)+rxTd(esc(tcPdf(v.nome)),'',true)+(comLoja?rxTd(esc(l.cod+' · '+l.nome),'',true):'')+rxTd('V'+v.nv)+
+    rxTd(rxN(v.meta))+rxTd(rxN(v.fat))+rxTd(rxP(v.pct),rxFar(v.pct))+rxTd(rxP0(v.meta?v.proj/v.meta:null),rxFar(v.meta?v.proj/v.meta:null))+rxTd(rxN(v.rest))+rxTdsInd(v.I,false)+'</tr>' });
+  rows.push(rxTot(comLoja?4:3,'Total dos '+vs.length+' vendedores com meta',rxSomaV(vs),false));
+  tabela(sec('Por vendedor')+' <small>valores em R$ · ordem: % da meta individual · '+(E.tipo=='geral'?'toda a rede':E.tipo=='sup'?'região '+esc(E.s.nome):'loja '+E.l.cod)+'</small>',head,rows);
+ }
+ const atz=t=>{ const m=/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/.exec(String(t||'')); return m?m[3]+'/'+m[2]+' '+m[4]+'h'+m[5]:(t?esc(String(t)):'—') };
+ bloco('<div class="rx-fonte">Fonte: Painel de Metas e Indicadores do Só Tintas App · números atualizados em '+atz(ATZ.num)+' · carteira '+atz(ATZ.cart)+' · orçamentos '+atz(ATZ.orc)+' · níveis: '+esc(NIVBASE)+'. '+
+  (P.fechado?'Fechamento de '+esc(rxMes())+'.':'Projeções no ritmo dos dias úteis decorridos ('+UD+' de '+UT+'); "esperado hoje" é a fração do mês já passada.')+' Cores: verde no ritmo ou meta batida · âmbar atenção · vermelho abaixo.</div>');
+}
+/* monta as folhas, rasteriza cada uma e devolve o PDF (A4 retrato) */
+async function rxGerarPdf(E,op){
+ await Promise.all([rxCarrega(RX_LIB_H2C),rxCarrega(RX_LIB_PDF)]);
+ try{ await document.fonts.ready; }catch(e){}
+ const host=document.createElement('div'); host.className='rx-host'; host.setAttribute('aria-hidden','true'); document.body.appendChild(host);
+ try{
+  const pags=[]; let corpo=null, tbody=null;
+  const nova=()=>{ host.insertAdjacentHTML('beforeend',rxPagina(E)); const pg=host.lastElementChild; corpo=pg.querySelector('.rx-corpo'); pags.push(pg); tbody=null; };
+  const cabe=()=>corpo.scrollHeight<=corpo.clientHeight+1;
+  nova();
+  const bloco=h=>{ tbody=null; corpo.insertAdjacentHTML('beforeend',h); if(!cabe()&&corpo.children.length>1){ corpo.lastElementChild.remove(); nova(); corpo.insertAdjacentHTML('beforeend',h); } };
+  const tabela=(titulo,head,rows)=>{
+   const abre=cont=>{ corpo.insertAdjacentHTML('beforeend','<section class="rx-sec"><h3>'+titulo+(cont?' <em>(continuação)</em>':'')+'</h3><table class="rx-tab"><thead>'+head+'</thead><tbody></tbody></table></section>'); tbody=corpo.lastElementChild.querySelector('tbody'); };
+   abre(false); if(!cabe()&&corpo.children.length>1){ corpo.lastElementChild.remove(); nova(); abre(false); }
+   rows.forEach(r=>{ tbody.insertAdjacentHTML('beforeend',r); if(!cabe()){ tbody.lastElementChild.remove(); if(!tbody.children.length) corpo.lastElementChild.remove(); nova(); abre(true); tbody.insertAdjacentHTML('beforeend',r); } });
+  };
+  const lista=(titulo,itens)=>{
+   let ul=null; const abre=cont=>{ corpo.insertAdjacentHTML('beforeend','<section class="rx-sec"><h3>'+titulo+(cont?' <em>(continuação)</em>':'')+'</h3><ul class="rx-lei"></ul></section>'); ul=corpo.lastElementChild.querySelector('ul'); tbody=null; };
+   abre(false); if(!cabe()&&corpo.children.length>1){ corpo.lastElementChild.remove(); nova(); abre(false); }
+   itens.forEach(x=>{ ul.insertAdjacentHTML('beforeend','<li>'+x+'</li>'); if(!cabe()){ ul.lastElementChild.remove(); if(!ul.children.length) corpo.lastElementChild.remove(); nova(); abre(true); ul.insertAdjacentHTML('beforeend','<li>'+x+'</li>'); } });
+  };
+  rxConteudo(E,op,bloco,tabela,lista);
+  await Promise.all([...host.querySelectorAll('img')].map(i=>i.complete?0:new Promise(ok=>{i.onload=i.onerror=ok})));
+  pags.forEach((p,i)=>{ p.querySelector('[data-pg]').textContent='Página '+(i+1)+' de '+pags.length; });
+  const pdf=new window.jspdf.jsPDF({unit:'mm',format:'a4',compress:true}), imgs=[];
+  for(let i=0;i<pags.length;i++){
+   const cv=await html2canvas(pags[i],{scale:2,backgroundColor:'#ffffff',logging:false,useCORS:true,scrollX:0,scrollY:0,windowWidth:1200});
+   const url=cv.toDataURL('image/jpeg',0.86); imgs.push(url);
+   if(i) pdf.addPage(); pdf.addImage(url,'JPEG',0,0,210,297,undefined,'FAST');
+  }
+  pdf.setProperties({title:'Resumo Executivo · '+E.titulo+' · '+rxMes(),author:'Só Tintas',subject:'Painel de Metas e Indicadores',creator:'Só Tintas App · Painel de Metas'});
+  return {blob:pdf.output('blob'),imgs:imgs,nome:(nomePdf('Resumo Executivo',E.tipo=='vend'?E.v.nome:null)+'.pdf').replace(/\s+/g,' ')};
+ } finally { host.remove(); }
+}
+/* versão em texto para o WhatsApp (vai junto do PDF ou sozinha, no computador) */
+function rxTexto(E){
+ const o=E.o, I=o.I||{}, r=rxRitmo(o.pctLoja);
+ const L=['*RESUMO EXECUTIVO — '+E.titulo.toUpperCase()+'*', rxMes()+' · '+(P.fechado?'mês fechado':UD+' de '+UT+' dias úteis ('+rxP(RE)+' do mês)'), ''];
+ L.push('*Faturado:* '+BRL(o.fat)+' — '+rxP(o.pctLoja)+' da meta'+(E.tipo=='vend'?'':' loja ('+BRL(o.metaLoja)+')')+(o.pctTime!=null?' · '+rxP(o.pctTime)+' da meta time':''));
+ L.push('*Projeção:* '+BRL(o.proj)+' ('+rxP(o.pctProj)+') · '+r.t.toLowerCase()+' · '+BRL(o.ritmoReal)+'/dia');
+ if(o.restLoja>0) L.push('*Falta:* '+BRL(o.restLoja)+' · '+BRL(o.ritmoNec)+'/dia em '+UR+' dia'+(UR==1?'':'s')+' úte'+(UR==1?'l':'is'));
+ if(I.metaEuc!=null){ const p=eucPct(I), falta=Math.max((I.metaEuc||0)-(I.litEuc||0),0);
+  const vs=E.tipo=='vend'?[]:E.vends.map(x=>x[0]).filter(v=>v.I&&v.I.metaEuc!=null), ok=vs.filter(v=>eucPct(v.I)>=1).length;
+  L.push('*Eucatex:* '+LT(I.litEuc)+' de '+LT(I.metaEuc)+' ('+rxP(p)+')'+(falta?' · faltam '+LT(falta)+' ('+NUM(Math.ceil(falta/18))+' baldes)':' · meta batida')+(vs.length?' · '+ok+' de '+vs.length+' vendedores em 100%':'')); }
+ L.push('*CNPJ:* alc. '+rxP0(I.alcCNPJ)+' · rep. '+rxP0(I.repCNPJ)+' · ativos '+rxP0(I.ativCNPJ)+' · positivados '+rxP0(I.posCNPJ)+' · '+NUM(I.novos)+' novos');
+ L.push('*CPF:* identificados '+rxP0(I.pctIdent)+' · itens '+(I.itens==null?'—':DEC(I.itens,2))+' · ticket '+(I.ticket==null?'—':BRL(I.ticket))+' · desconto '+rxP(I.descCPF));
+ const K=E.K&&E.K.cli?E.K:null, Oq=E.orc&&E.orc.itens&&E.orc.itens.length?E.orc:null;
+ if(K||Oq) L.push('*Carteira:* '+(K?K.cli.length+' clientes · '+K.POS.length+' a positivar ('+BRL(K.POS.reduce((a,x)=>a+x.media,0))+'/mês)':'')+(Oq?(K?' · ':'')+Oq.itens.length+' orçamentos em aberto ('+BRL(Oq.total)+')':''));
+ const lista=(tit,arr,nome,pct,proj,max)=>{ if(!arr.length) return; const ord=arr.slice().sort((a,b)=>(pct(b)||0)-(pct(a)||0));
+  L.push('','*'+tit+'*'); const cab=max&&ord.length>max*2?ord.slice(0,max).concat([null],ord.slice(-max)):ord;
+  cab.forEach((x,i)=>{ if(x===null){L.push('…');return} const pos=ord.indexOf(x)+1; L.push(pos+'. '+nome(x)+' — '+rxP(pct(x))+' · proj. '+rxP0(proj(x))+(x.I&&x.I.metaEuc!=null?' · Euc '+rxP0(eucPct(x.I)):'')); }); };
+ if(E.tipo=='geral') lista('Por supervisor',D.supervisores,s=>s.nome,s=>s.pctLoja,s=>s.pctProj,0);
+ if(E.tipo=='geral'||E.tipo=='sup') lista(E.tipo=='geral'?'Lojas (5 melhores e 5 mais distantes)':'Lojas da região',E.lojas,l=>l.cod+' '+l.nome,l=>l.pctLoja,l=>l.pctProj,E.tipo=='geral'?5:0);
+ if(E.tipo!='vend') lista(E.tipo=='loja'?'Vendedores':'Vendedores (5 melhores e 5 mais distantes)',E.vends.map(x=>Object.assign({},x[0],{loja:x[1]})),v=>tcPdf(v.nome)+(E.tipo!='loja'?' ('+v.loja.cod+')':''),v=>v.pct,v=>v.meta?v.proj/v.meta:null,E.tipo=='loja'?0:5);
+ L.push('','_Painel de Metas e Indicadores · Só Tintas App · '+rxAgora()+'_');
+ return L.join('\n');
+}
+/* ---- a janela do Resumo Executivo ---- */
+function abrirResumoExec(){
+ const E=rxEscopo(); if(!E||!E.o){ alert('Não achei os números deste recorte no painel deste mês.'); return; }
+ let doc=null, ocupado=false, fila=false;
+ const volta=document.activeElement;
+ const ov=document.createElement('div'); ov.className='rx-ov'; ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-label','Resumo Executivo · '+E.titulo);
+ const podeSup=E.tipo=='geral', podeLoja=E.tipo=='geral'||E.tipo=='sup', podeVend=E.tipo!='vend';
+ ov.innerHTML='<div class="rx-box"><div class="rx-top"><div><span class="rx-lbl">📑 Resumo Executivo · '+esc(rxMes())+'</span><h3>'+esc(E.titulo)+'</h3><div class="rx-sub">'+esc(E.sub)+'</div></div><button type="button" class="rx-x" data-rx="fechar" aria-label="Fechar">✕</button></div>'+
+  '<div class="rx-opts"><span>Incluir no PDF:</span>'+
+  (podeSup?'<label><input type="checkbox" data-rxo="sup" checked> por supervisor</label>':'')+
+  (podeLoja?'<label><input type="checkbox" data-rxo="loja" checked> por gerente (loja)</label>':'')+
+  (podeVend?'<label><input type="checkbox" data-rxo="vend" checked> por vendedor</label>':'')+
+  '<label><input type="checkbox" data-rxo="lei" checked> leitura executiva</label></div>'+
+  '<div class="rx-acoes"><button type="button" class="b pri" data-rx="zap">📲 Enviar pelo WhatsApp (PDF)</button><button type="button" class="b sec" data-rx="baixar">📄 Salvar PDF</button><button type="button" class="b gh" data-rx="texto">💬 Resumo em texto</button><button type="button" class="b gh" data-rx="gerar">⟳ Gerar de novo</button><span class="rx-st" data-rx-st role="status" aria-live="polite"></span></div>'+
+  '<div class="rx-prev" data-rx-prev></div></div>';
+ document.body.appendChild(ov);
+ const st=h=>{ ov.querySelector('[data-rx-st]').innerHTML=h; };
+ const fechar=()=>{ document.removeEventListener('keydown',tecla); ov.remove(); if(volta&&volta.focus) volta.focus(); };
+ const tecla=e=>{ if(e.key==='Escape') fechar(); };
+ document.addEventListener('keydown',tecla);
+ const opts=()=>{ const o={sup:false,loja:false,vend:false,lei:false}; ov.querySelectorAll('[data-rxo]').forEach(c=>{ o[c.dataset.rxo]=c.checked; }); return o; };
+ const baixar=d=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(d.blob); a.download=d.nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),8000); };
+ async function gerar(){
+  if(ocupado){ fila=true; return null; } ocupado=true; st('⏳ Montando o resumo e desenhando as páginas…');
+  ov.querySelectorAll('[data-rx]').forEach(b=>{ if(b.dataset.rx!=='fechar') b.disabled=true; });
+  try{ doc=await rxGerarPdf(E,opts()); window.RX_ULTIMO=doc;
+   ov.querySelector('[data-rx-prev]').innerHTML=doc.imgs.map((u,i)=>'<img src="'+u+'" alt="Resumo Executivo, página '+(i+1)+' de '+doc.imgs.length+'">').join('');
+   st('Pronto: '+doc.imgs.length+' página'+(doc.imgs.length>1?'s':'')+'. Confira abaixo e envie pelo WhatsApp ou salve o PDF.'); return doc; }
+  catch(e){ doc=null; st('<span style="color:var(--bad)">Não consegui gerar o PDF: '+esc(e&&e.message||e)+'</span>'); return null; }
+  finally{ ocupado=false; ov.querySelectorAll('[data-rx]').forEach(b=>{ b.disabled=false; }); if(fila){ fila=false; gerar(); } }
+ }
+ ov.addEventListener('change',e=>{ if(e.target&&e.target.dataset&&e.target.dataset.rxo){ doc=null; gerar(); } });
+ ov.addEventListener('click',async e=>{
+  if(e.target===ov){ fechar(); return; }
+  const b=e.target.closest('[data-rx]'); if(!b) return; const acao=b.dataset.rx;
+  if(acao==='fechar'){ fechar(); return; }
+  if(acao==='gerar'){ await gerar(); return; }
+  if(acao==='texto'){ window.open('https://wa.me/?text='+encodeURIComponent(rxTexto(E)),'_blank','noopener,noreferrer'); return; }
+  if(!doc){ if(await gerar()) st('Pronto. Toque de novo em <b>'+(acao==='zap'?'Enviar pelo WhatsApp':'Salvar PDF')+'</b>.'); return; }
+  if(acao==='baixar'){ baixar(doc); st('PDF salvo: '+esc(doc.nome)); if(window.STAnima&&STAnima.check) STAnima.check(ov.querySelector('[data-rx-st]')); return; }
+  const msg='Resumo Executivo · '+E.titulo+' · '+rxMes()+' · Só Tintas';
+  const f=new File([doc.blob],doc.nome,{type:'application/pdf'});
+  if(navigator.canShare&&navigator.canShare({files:[f]})){
+   try{ await navigator.share({files:[f],title:msg,text:msg}); st('Enviado. Se ainda não escolheu, toque no WhatsApp na lista de compartilhamento.'); if(window.STAnima&&STAnima.check) STAnima.check(b); return; }
+   catch(err){ if(err&&err.name==='AbortError'){ st('Envio cancelado.'); return; } }
+  }
+  baixar(doc);
+  st('Este aparelho não envia arquivo direto para o WhatsApp, então o PDF foi salvo. <a href="https://wa.me/?text='+encodeURIComponent(rxTexto(E))+'" target="_blank" rel="noopener">Abrir o WhatsApp com o resumo em texto</a> e anexar o PDF na conversa (clipe 📎).');
+ });
+ gerar();
+}
+window.abrirResumoExec=abrirResumoExec;
 
 /* ---------- perfil ---------- */
 if(LOCK&&String(LOCK).indexOf('vend:')==0){   /* VENDEDOR: só os números dele */

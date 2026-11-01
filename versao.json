@@ -2,6 +2,24 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v140",
+      "data": "01/11/2026",
+      "hora": "00:30",
+      "itens": [
+        {
+          "painel": "Painel de Metas",
+          "o_que": "Entrou o botão 📑 Resumo Executivo no alto da tela. Ele monta um PDF no layout Só Tintas com o resultado do mês do recorte que você está vendo — faturamento, projeção, Eucatex, indicadores CNPJ e CPF, carteira, orçamentos, níveis e uma leitura executiva — e as tabelas por supervisor, por gerente (loja) e por vendedor. Dá para salvar o PDF, enviar direto pelo WhatsApp ou mandar só o resumo em texto. Cada perfil recebe o seu recorte: a coordenação a rede, o supervisor a região, o gerente a loja e o vendedor os próprios números.",
+          "para": [
+            "coord",
+            "anl",
+            "sup",
+            "ger",
+            "vend"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v139",
       "data": "29/10/2026",
       "hora": "16:35",
