@@ -541,6 +541,18 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
 .rx-corpo{gap:7px}.rx-sec h3{margin-bottom:4px}
 .rx-sec .rx-lei{font-size:10px}.rx-lei li{margin-bottom:3px}
 .rx-duo{margin-top:6px}.rx-mini{padding:5px 9px}.rx-mini ol{font-size:9.5px}.rx-mini li{margin:1px 0}
+.rx-bat{border:1px solid #DCE3EB;border-radius:7px;padding:6px 9px 7px;margin-bottom:6px}
+.rx-bat h4{display:flex;justify-content:space-between;margin:0 0 5px;font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;color:#0B7A55}
+.rx-bat h4 b{color:#0F2B46;font-size:10px}
+.rx-bg{display:grid;gap:2px 12px;font-size:9.4px}
+.rx-bg div{display:flex;align-items:baseline;gap:4px;border-bottom:1px dotted #E1E7EF;padding:1px 0;min-width:0}
+.rx-bg em{font-style:normal;color:#8494A5;font-size:8px;width:14px;flex:none;text-align:right}
+.rx-bg span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rx-bg span i{font-style:normal;color:#6b7387;font-size:8.3px;margin-left:3px}
+.rx-bg b{color:#0B7A55;flex:none}
+.rx-bat p{margin:0;color:#6b7387;font-size:9.5px}
+.rx-longe{margin-top:5px;font-size:9px;color:#8E1318}
+.rx-longe b{color:#8E1318}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="st-hora.js?v=1"></script>
@@ -2810,11 +2822,20 @@ function rxConteudo(E,op,bloco,tabela,lista,pagina){
   const linF=(nome,x,euc)=>'<td class="t"><b>'+nome+'</b></td><td>'+BRL(x.fat)+'</td><td>'+BRL(x.metaLoja)+'</td><td class="'+rxFar(x.pctLoja)+'">'+rxP(x.pctLoja)+'</td>'+(fech?'':'<td class="'+rxFar(x.pctProj)+'">'+rxP0(x.pctProj)+'</td>')+'<td class="'+rxEucC(eucPct(x.I))+'">'+rxP0(eucPct(x.I))+'</td><td class="'+rxAlcC(x.I&&x.I.alcCNPJ)+'">'+rxP0(x.I&&x.I.alcCNPJ)+'</td>';
   const cabF=p=>'<th class="t">'+p+'</th><th>Faturado</th><th>Meta</th><th>% meta</th>'+(fech?'':'<th>Proj.</th>')+'<th>Eucatex</th><th>Meta CNPJ</th>';
   if(ehG){ q+=tabF(cabF('Supervisor'),D.supervisores.slice().sort((a,b)=>(b.pctLoja||0)-(a.pctLoja||0)).map(s=>'<tr>'+linF(esc(s.nome)+' <i>'+s.nLojas+' lojas</i>',s)+'</tr>'));
-   q+='<div class="rx-duo q4">'+duo('Lojas',E.lojas.map(l=>[esc(l.cod+' '+l.nome),l.pctLoja]))+duo('Vendedores',E.vends.map(x=>[esc(tcPdf(x[0].nome)),x[0].pct]))+'</div>'; }
+   }
   if(ehS) q+=tabF(cabF('Loja · gerente'),E.lojas.slice().sort((a,b)=>(b.pctLoja||0)-(a.pctLoja||0)).map(l=>'<tr>'+linF(esc(l.cod+' '+l.nome)+gerNome(l),l)+'</tr>'));
   if(ehL) q+=tabF(cabF('Vendedor'),E.vends.slice().sort((a,b)=>(b[0].pct||0)-(a[0].pct||0)).map(x=>'<tr>'+linF(esc(tcPdf(x[0].nome))+' <i>V'+x[0].nv+'</i>',rxVendObj(x[0]))+'</tr>'));
-  else if(ehS) q+='<div class="rx-duo">'+duo('Vendedores',E.vends.map(x=>[esc(tcPdf(x[0].nome))+' <i>'+x[1].cod+'</i>',x[0].pct]))+'</div>';
   bloco(q+'</section>');
+  /* quem bateu a meta: lojas (com o gerente) e vendedores (com a loja), e os mais distantes */
+  const grade=(tit,itens,cols,longe)=>{ const ok=itens.filter(x=>x[1]>=1).sort((a,b)=>b[1]-a[1]), fora=itens.filter(x=>!(x[1]>=1)).sort((a,b)=>(a[1]||0)-(b[1]||0));
+   let g='<div class="rx-bat"><h4><span>✅ '+tit+' que bateram a meta</span><b>'+ok.length+' de '+itens.length+'</b></h4>';
+   g+=ok.length?'<div class="rx-bg" style="grid-template-columns:repeat('+cols+',1fr)">'+ok.map((x,i)=>'<div><em>'+(i+1)+'</em><span>'+x[0]+'</span><b>'+rxP0(x[1])+'</b></div>').join('')+'</div>':'<p>Ninguém bateu a meta '+(fech?'no mês':'até agora')+'.</p>';
+   if(longe&&fora.length) g+='<div class="rx-longe">⚠️ <b>Mais distantes da meta:</b> '+fora.slice(0,3).map(x=>x[0].replace(/<i>.*?<\/i>/g,'')+' ('+rxP(x[1])+')').join(' · ')+'</div>';
+   return g+'</div>' };
+  let bt='<section class="rx-sec"><h3>'+sec('Quem bateu a meta')+' <small>'+(fech?'100% ou mais da meta no fechamento':'100% ou mais da meta até '+rxDB()+' · parcial')+'</small></h3>';
+  if(!ehL) bt+=grade('Lojas',E.lojas.map(l=>[esc(l.cod+' '+l.nome)+gerNome(l),l.pctLoja]),ehG?3:2,true);
+  bt+=grade('Vendedores',E.vends.map(x=>[esc(tcPdf(x[0].nome))+(ehL?'':' <i>'+x[1].cod+'</i>'),x[0].pct]),ehG?4:3,!ehL);
+  bloco(bt+'</section>');
  }
  /* 3. pontos para a reunião */
  const bat=[], nao=[];
@@ -2834,10 +2855,11 @@ function rxConteudo(E,op,bloco,tabela,lista,pagina){
  else if(I.ticket!=null&&I.ticket<200) foco.push('Ticket: oferecer o complemento em toda venda (rolo, fita, lixa, massa)');
  if(E.orc&&E.orc.itens&&E.orc.itens.length) foco.push('Orçamentos: retornar os '+NUM(E.orc.itens.length)+' em aberto ('+BRL(E.orc.total)+')');
  if(foco.length) pts.push('<b>🎯 Foco para o próximo mês:</b> '+foco.slice(0,3).join(' · ')+'.');
+ if(ehG||ehS) pagina();   /* rede e região: folha 1 = números, folha 2 = a reunião */
  bloco('<section class="rx-sec"><h3>'+sec('Pontos para a reunião')+' <small>o que bateu, o que ficou abaixo e onde agir</small></h3><ul class="rx-lei">'+pts.map(x=>'<li>'+x+'</li>').join('')+'</ul></section>');
  /* 4. compromissos e assinaturas */
  bloco('<section class="rx-sec"><h3>'+sec('Compromissos para o próximo mês')+' <small>preencher na reunião</small></h3><table class="rx-tab rx-comp"><thead><tr><th class="t" style="width:58%">O que será feito</th><th class="t">Responsável</th><th class="t" style="width:15%">Prazo</th></tr></thead><tbody>'+
-  [1,2,3,4,5,6].slice(0,ehV||ehL?6:3).map(i=>'<tr><td>'+i+'.</td><td></td><td></td></tr>').join('')+'</tbody></table>'+
+  [1,2,3,4,5,6,7,8,9,10,11,12,13,14].slice(0,ehG||ehS?14:6).map(i=>'<tr><td>'+i+'.</td><td></td><td></td></tr>').join('')+'</tbody></table>'+
   '<div class="rx-ass"><div>Líder — nome e assinatura</div><div>'+(ehV?'Vendedor':ehL?'Gerente':ehS?'Supervisor':'Supervisores')+' — nome e assinatura</div></div></section>');
  /* anexo opcional: as listas completas, em folha nova */
  if(op.anexo&&!ehV){ pagina(); n=4; op={sup:true,loja:true,vend:true};
@@ -2937,8 +2959,12 @@ function rxTexto(E){
   L.push('','*'+tit+'*'); const cab=max&&ord.length>max*2?ord.slice(0,max).concat([null],ord.slice(-max)):ord;
   cab.forEach((x,i)=>{ if(x===null){L.push('…');return} const pos=ord.indexOf(x)+1; L.push(pos+'. '+nome(x)+' — '+rxP(pct(x))+(P.fechado?'':' · proj. '+rxP0(proj(x)))+(x.I&&x.I.metaEuc!=null?' · Euc '+rxP0(eucPct(x.I)):'')); }); };
  if(E.tipo=='geral') lista('Por supervisor',D.supervisores,s=>s.nome,s=>s.pctLoja,s=>s.pctProj,0);
- if(E.tipo=='geral'||E.tipo=='sup') lista(E.tipo=='geral'?'Lojas (3 melhores e 3 mais distantes)':'Lojas da região',E.lojas,l=>l.cod+' '+l.nome,l=>l.pctLoja,l=>l.pctProj,E.tipo=='geral'?3:0);
- if(E.tipo!='vend') lista(E.tipo=='loja'?'Vendedores':'Vendedores (3 melhores e 3 mais distantes)',E.vends.map(x=>Object.assign({},x[0],{loja:x[1]})),v=>tcPdf(v.nome)+(E.tipo!='loja'?' ('+v.loja.cod+')':''),v=>v.pct,v=>v.meta?v.proj/v.meta:null,E.tipo=='loja'?0:3);
+ if(E.tipo=='loja') lista('Vendedores',E.vends.map(x=>Object.assign({},x[0],{loja:x[1]})),v=>tcPdf(v.nome),v=>v.pct,v=>v.meta?v.proj/v.meta:null,0);
+ const bat=(tit,arr,nome,pct)=>{ const ok=arr.filter(x=>pct(x)>=1).sort((a,b)=>pct(b)-pct(a)); if(!arr.length) return;
+  L.push('','*✅ '+tit+' que bateram a meta: '+ok.length+' de '+arr.length+'*'); ok.forEach(x=>L.push('• '+nome(x)+' — '+rxP(pct(x))));
+  const fora=arr.filter(x=>!(pct(x)>=1)).sort((a,b)=>(pct(a)||0)-(pct(b)||0)).slice(0,3); if(fora.length&&E.tipo!='loja') L.push('⚠️ Mais distantes: '+fora.map(x=>nome(x)+' ('+rxP(pct(x))+')').join(' · ')); };
+ if(E.tipo=='geral'||E.tipo=='sup') bat('Lojas',E.lojas,l=>l.cod+' '+l.nome+(GER_PAINEL[l.cod]?' ('+tcPdf(GER_PAINEL[l.cod]).split(' ').slice(0,2).join(' ')+')':''),l=>l.pctLoja);
+ if(E.tipo=='geral'||E.tipo=='sup') bat('Vendedores',E.vends.map(x=>Object.assign({},x[0],{loja:x[1]})),v=>tcPdf(v.nome)+(E.tipo!='loja'?' ('+v.loja.cod+')':''),v=>v.pct);
  L.push('','_Painel de Metas e Indicadores · Só Tintas App · '+rxAgora()+'_');
  return L.join('\n');
 }
