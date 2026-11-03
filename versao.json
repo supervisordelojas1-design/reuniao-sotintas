@@ -2,6 +2,21 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v141",
+      "data": "03/11/2026",
+      "hora": "16:40",
+      "itens": [
+        {
+          "painel": "Ranking",
+          "o_que": "A atualização do mês (⚙ Atualizar ranking) passou a casar cada vendedor pelo código do Autcom que vem na frente do nome no INDICADORES (ex.: 829 - MATEUS MARTINS N1), e não mais pelo nome — o sufixo de nível (N1, - 2, DOURADA…) fazia quase todo mundo ficar \"sem correspondência\" e o atingimento dos vendedores não entrava. Vendedor e loja que ainda não existem no ranking agora são adicionados com o mês novo. A pré-visualização mostra quem casou, quem é novo e quem ficou de fora, e o Publicar fica bloqueado quando o arquivo vem sem meta por vendedor (export com filtro POR EMPRESA).",
+          "para": [
+            "coord",
+            "anl"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v140",
       "data": "01/11/2026",
       "hora": "00:30",

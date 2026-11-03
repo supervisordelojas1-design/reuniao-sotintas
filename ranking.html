@@ -390,63 +390,130 @@ render();
   if(ehGestor()){ toggle.classList.add('show'); }
 
   var PREV=null;
+  /* filiais administrativas do export (CD, on-line, marketplace…) não entram no ranking */
+  function filialAdm(f){ return /ATENDIMENTO|ADMINISTRA|TESTE|EXPEDI|MARKETPLACE|\bMP\s*-|\(CD\)|\bCD\b/i.test(String(f||'')); }
+  function nomeFilial(f){ var m=String(f||'').match(/\(([^)]+)\)/); var n=m?m[1]:String(f||'').replace(/^\d+\s*-\s*/,'').replace(/\b(SO|SÓ) TINTAS\b\s*\d*/i,'').replace(/\bDEP[OÓ]SITO DAS TINTAS\b\s*\d*/i,''); return titulo(n.replace(/\s+/g,' ').trim()); }
+  /* "Mateus Martins", "Matheus de Souza" — como os nomes já gravados no ranking */
+  function titulo(s){ var peq={de:1,da:1,do:1,dos:1,das:1,e:1}; return String(s||'').toLowerCase().split(/\s+/).map(function(w,i){ return (i&&peq[w])?w:w.charAt(0).toUpperCase()+w.slice(1); }).join(' ').trim(); }
+  /* célula "829 - MATEUS MARTINS N1" / "A96 - MARCELO SILVA - 2" → código + nome sem o sufixo de nível */
+  var SUF_SEG=/^(n\s?\d|\d{1,3}|n\s?\d\s*-?\s*dourad[ao]|dourad[ao]|pratead[ao]|vermelh[ao]|branc)$/i;
+  function parseVend(cell){
+    var t=String(cell==null?'':cell).replace(/ /g,' ').replace(/\s+/g,' ').trim();
+    if(!t||/^total$/i.test(t)) return null;
+    var m=t.match(/^([A-Za-z]?\d{2,4})\s*-\s*(.+)$/), cod=m?m[1].toUpperCase():null, nome=m?m[2]:t;
+    for(var guard=0; guard<6; guard++){
+      var antes=nome;
+      nome=nome.replace(/\s*-\s*$/,'').trim();
+      var seg=nome.split(/\s+-\s+/); if(seg.length>1 && SUF_SEG.test(seg[seg.length-1].trim())){ nome=seg.slice(0,-1).join(' - ').trim(); }
+      var tk=nome.split(' '); if(tk.length>1 && /^(n\s?\d|dourad[ao]|pratead[ao]|vermelh[ao]|branc)$/i.test(tk[tk.length-1])){ nome=tk.slice(0,-1).join(' ').trim(); }
+      tk=nome.split(' '); if(tk.length>2 && /^n$/i.test(tk[tk.length-2]) && /^\d$/.test(tk[tk.length-1])){ nome=tk.slice(0,-2).join(' ').trim(); }
+      if(nome===antes) break;
+    }
+    return {cod:cod, nome:nome, bruto:t};
+  }
   function montarLoja(meta){
-    var out={}, flagProp=1;
+    var out={}, flagProp=1, adm=0;
     meta.rows.forEach(function(r){
       var fil=gHas(r,'filial'); if(fil==null||String(fil).indexOf('-')<0) return;
+      if(filialAdm(fil)){ adm++; return; }
       var id=code(fil), m=getMeta(r), f=getFat(r);
       if(!m) return;
-      out[id]=[m,f,flagProp];
+      out[id]=[m,f,flagProp]; out[id].nome=nomeFilial(fil);
     });
+    out._adm=adm;
     return out;
   }
   function montarVend(ind){
-    var out={};
+    var out={}, linhas=0, semMeta=0, simb=0, semCod=[];
     ind.rows.forEach(function(r){
-      var vend=gHas(r,'vendedor'); if(vend==null) return;
-      var m=getMeta(r), f=getFat(r);
-      if(!m || m<1000) return;                 // ignora metas simbólicas
-      var id=null;
-      DATA.vend.forEach(function(v){ if(norm(v.n)===norm(String(vend).replace(/^\d+\s*-\s*/,''))) id=v.id; });
-      out[id||('?'+norm(vend))]={meta:m,fat:f,nome:String(vend).replace(/^\d+\s*-\s*/,'').trim(),fil:code(gHas(r,'filial'))};
+      var pv=parseVend(gHas(r,'vendedor')); if(!pv) return;
+      var fil=gHas(r,'filial'); if(fil!=null && String(fil).indexOf('-')>=0 && filialAdm(fil)) return;
+      linhas++;
+      var m=getMeta(r), f=getFat(r), ch=pv.cod;
+      if(!ch){ if(m>=1000) semCod.push(pv.bruto); return; }   // sem código do Autcom: não dá para casar com o ranking
+      if(!m){ semMeta++; }
+      else if(m<1000){ simb++; }               // meta simbólica (gerente/cadastro): só soma se a pessoa tiver meta real em outra loja
+      var e=out[ch]||(out[ch]={cod:pv.cod,nome:pv.nome,bruto:pv.bruto,meta:0,fat:0,fil:code(fil),filNome:nomeFilial(fil),lojas:0,extras:[]});
+      if(m>=1000){ if(e.lojas && e.meta){ e.flag=1; } if(m>e.meta){ e.fil=code(fil); e.filNome=nomeFilial(fil); } e.meta+=m; e.fat+=f; e.lojas++; }
+      else { e.extras.push(f||0); }
     });
-    return out;
+    var res={}; Object.keys(out).forEach(function(k){ var e=out[k]; if(!e.meta) return; if(e.extras.length){ e.extras.forEach(function(x){ if(x){ e.fat+=x; e.flag=1; } }); } res[k]=e; });
+    res._stats={linhas:linhas, semMeta:semMeta, simb:simb, semCod:semCod, comMeta:Object.keys(res).length};
+    return res;
   }
+  /* casa cada vendedor lido com o ranking: 1º pelo código (id), 2º pelo nome limpo; quem não existe é novo */
+  function casarVend(MV){
+    var porId={}, porNome={}; DATA.vend.forEach(function(v){ porId[String(v.id).toUpperCase()]=v; porNome[norm(v.n)]=porNome[norm(v.n)]||v; });
+    var r={cod:[],nome:[],novos:[]};
+    Object.keys(MV).forEach(function(k){ if(k.charAt(0)==='_') return; var e=MV[k];
+      var v=(e.cod&&porId[e.cod])||null; if(v){ e.alvo=v; r.cod.push(e); return; }
+      v=porNome[norm(e.nome)]||null; if(v){ e.alvo=v; r.nome.push(e); return; }
+      r.novos.push(e);
+    });
+    return r;
+  }
+  function casarLoja(ML){
+    var porId={}; DATA.lojas.forEach(function(l){ porId[l.id]=l; });
+    var r={ok:[],novas:[]}; Object.keys(ML).forEach(function(id){ if(id.charAt(0)==='_') return; (porId[id]?r.ok:r.novas).push(id); });
+    return r;
+  }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function lista(arr, f, max){ max=max||12; var a=arr.slice(0,max).map(f); return esc(a.join(', '))+(arr.length>max?' … (+'+(arr.length-max)+')':''); }
   $('btnCalc').onclick=function(){
     var fm=$('fMeta').files[0], fi=$('fInd').files[0], mes=+uMes.value, msg=$('uMsg'); msg.textContent='';
+    $('btnPub').classList.remove('show'); PREV=null;
     if(!fm||!fi){ msg.innerHTML='<span class="u-warn">Envie META e INDICADORES.</span>'; return; }
+    if(!CARREGOU || RECORTE){ msg.innerHTML='<span class="u-warn">Espere o ranking da rede carregar antes de pré-visualizar.</span>'; return; }
     msg.textContent='Lendo arquivos…';
     Promise.all([readFile(fm),readFile(fi)]).then(function(res){
       var meta=toObjs(res[0]), ind=toObjs(res[1]);
-      var ML=montarLoja(meta), MV=montarVend(ind);
-      var nl=Object.keys(ML).length, nv=Object.keys(MV).filter(function(k){return k.indexOf('?')<0;}).length, semId=Object.keys(MV).filter(function(k){return k.indexOf('?')===0;}).length;
-      if(!nl){ msg.innerHTML='<span class="u-warn">Não achei metas de loja. Colunas lidas: '+meta.head.join(', ')+'</span>'; return; }
-      PREV={mes:mes, ML:ML, MV:MV};
+      var ML=montarLoja(meta), MV=montarVend(ind), S=MV._stats;
+      var nl=Object.keys(ML).filter(function(k){return k.charAt(0)!=='_';}).length;
       var p=$('uPrev'); p.classList.add('show');
-      p.innerHTML='<div class="u-row">Mês: <b>'+MES[mes-1]+'</b></div>'+
-        '<div class="u-row">Lojas lidas: <b>'+nl+'</b> · Vendedores casados: <b>'+nv+'</b>'+(semId?' · <b class="u-warn">'+semId+' sem correspondência</b>':'')+'</div>'+
-        '<div class="u-row" style="margin-top:6px">Colunas META: '+meta.head.join(', ')+'</div>'+
-        '<div class="u-row">Colunas INDICADORES: '+ind.head.join(', ')+'</div>'+
+      if(!nl){ p.innerHTML='<div class="u-row u-warn">Não achei metas de loja no arquivo META. Colunas lidas: '+esc(meta.head.join(', '))+'</div>'; msg.textContent=''; return; }
+      var cv=casarVend(MV), cl=casarLoja(ML);
+      var h='<div class="u-row">Mês: <b>'+MES[mes-1]+'</b></div>'+
+        '<div class="u-row">Lojas lidas: <b>'+nl+'</b>'+(cl.novas.length?' · novas no ranking: <b>'+lista(cl.novas,function(id){return id+' '+ML[id].nome;})+'</b>':'')+(ML._adm?' · ignoradas (CD/on-line/adm.): '+ML._adm:'')+'</div>'+
+        '<div class="u-row">Vendedores com meta: <b>'+S.comMeta+'</b> (de '+S.linhas+' linhas) · casados pelo código: <b>'+cv.cod.length+'</b>'+(cv.nome.length?' · pelo nome: <b>'+cv.nome.length+'</b>':'')+(S.simb?' · metas simbólicas ignoradas: '+S.simb:'')+'</div>';
+      if(cv.novos.length) h+='<div class="u-row">Novos no ranking (entram com o mês '+MES[mes-1]+'): <b>'+lista(cv.novos,function(e){return (e.cod?e.cod+' · ':'')+titulo(e.nome)+' ('+e.fil+')';})+'</b></div>';
+      if(cv.nome.length) h+='<div class="u-row">Casados só pelo nome (código diferente do cadastro): '+lista(cv.nome,function(e){return e.bruto+' → '+e.alvo.n;})+'</div>';
+      if(S.semCod.length) h+='<div class="u-row u-warn">Sem código do Autcom na frente do nome (ficam de fora): '+lista(S.semCod,function(x){return x;})+'</div>';
+      var bloqueio='';
+      if(!S.comMeta){
+        bloqueio=S.linhas&&S.semMeta>=S.linhas*0.8
+          ? 'O INDICADORES veio <b>sem meta por vendedor</b> ('+S.semMeta+' de '+S.linhas+' linhas com $ Meta vazia). É o export com filtro <b>nome_tipo_meta = POR EMPRESA</b>: a meta sai só na linha Total da loja. Gere de novo com <b>POR VENDEDOR</b> e suba outra vez.'
+          : 'Nenhum vendedor com meta foi lido. Colunas INDICADORES: '+esc(ind.head.join(', '))+'.';
+      } else if(S.comMeta<10 && S.linhas>=20){
+        bloqueio='Só '+S.comMeta+' vendedor(es) com meta em '+S.linhas+' linhas — confira o export (filtro nome_tipo_meta = POR VENDEDOR e nome_mes_filtro = ATUAL) antes de publicar.';
+      }
+      if(bloqueio){ h+='<div class="u-row u-warn" style="margin-top:6px;font-weight:700">⚠ '+bloqueio+'</div>'; p.innerHTML=h; msg.textContent=''; return; }
+      PREV={mes:mes, ML:ML, MV:MV, cv:cv, cl:cl};
+      h+='<div class="u-row" style="margin-top:6px">Colunas META: '+esc(meta.head.join(', '))+'</div>'+
+        '<div class="u-row">Colunas INDICADORES: '+esc(ind.head.join(', '))+'</div>'+
         '<div class="u-row" style="margin-top:6px">Confira se Meta e Faturamento foram lidos certos (passe o mouse nas fichas após publicar). Ao publicar, o mês '+MES[mes-1]+' é adicionado/atualizado para todos.</div>';
+      p.innerHTML=h;
       $('btnPub').classList.add('show');
       msg.textContent='';
-    }).catch(function(e){ msg.innerHTML='<span class="u-warn">Erro ao ler: '+e.message+'</span>'; });
+    }).catch(function(e){ msg.innerHTML='<span class="u-warn">Erro ao ler: '+esc(e.message)+'</span>'; });
   };
   function aplicarMes(){
-    var mes=PREV.mes, ML=PREV.ML, MV=PREV.MV;
-    DATA.lojas.forEach(function(l){ if(ML[l.id]) l.m[mes]=ML[l.id]; });
-    DATA.vend.forEach(function(v){ if(MV[v.id]){ var e=MV[v.id]; v.m[mes]=[e.meta,e.fat,0]; } });
+    var mes=PREV.mes, ML=PREV.ML, cv=PREV.cv, cl=PREV.cl;
+    DATA.lojas.forEach(function(l){ if(ML[l.id]) l.m[mes]=ML[l.id].slice(0,3); });
+    cl.novas.forEach(function(id){ var l={id:id, n:ML[id].nome, m:{}}; l.m[mes]=ML[id].slice(0,3); DATA.lojas.push(l); });
+    var nomeLoja={}; DATA.lojas.forEach(function(l){ nomeLoja[l.id]=l.n; });
+    cv.cod.concat(cv.nome).forEach(function(e){ var v=e.alvo; v.m[mes]=[e.meta,e.fat,e.flag?1:0]; if(e.fil&&v.l!==e.fil){ v.l=e.fil; v.ln=nomeLoja[e.fil]||e.filNome; } });
+    cv.novos.forEach(function(e,i){ var id=e.cod||('N'+String(Date.now()).slice(-5)+i); var v={id:id, n:titulo(e.nome), l:e.fil, ln:nomeLoja[e.fil]||e.filNome, m:{}}; v.m[mes]=[e.meta,e.fat,e.flag?1:0]; DATA.vend.push(v); });
   }
   $('btnPub').onclick=function(){
     if(!PREV){ return; }
     if(!CARREGOU || RECORTE){ $('uMsg').innerHTML='<span class="u-warn">Espere o ranking da rede carregar antes de publicar (senão os outros meses se perdem).</span>'; return; }
     aplicarMes(); st.sel=new Set(mesesComDados()); montarMeses(); render();
-    var msg=$('uMsg');
+    var msg=$('uMsg'), pv=PREV; PREV=null; $('btnPub').classList.remove('show');
     msg.textContent='Publicando…';
     STDados.chamar('publicarRanking',{data:DATA}).then(function(j){
-        if(j&&j.ok){ setAtz(j.atualizado||Date.now()); msg.innerHTML='<span style="color:#128a52">Publicado! Todos já veem o ranking novo.</span>'; }
-        else msg.innerHTML='<span class="u-warn">Falhou: '+((j&&j.erro)||'erro')+'</span>';
-      }).catch(function(e){ msg.innerHTML='<span class="u-warn">Sem conexão: '+e.message+'</span>'; });
+        if(j&&j.ok){ setAtz(j.atualizado||Date.now()); msg.innerHTML='<span style="color:#128a52">Publicado! Todos já veem o ranking novo: '+MES[pv.mes-1]+' em '+(pv.cl.ok.length+pv.cl.novas.length)+' lojas e '+(pv.cv.cod.length+pv.cv.nome.length+pv.cv.novos.length)+' vendedores.</span>'; }
+        else msg.innerHTML='<span class="u-warn">Falhou: '+esc((j&&j.erro)||'erro')+'</span>';
+      }).catch(function(e){ msg.innerHTML='<span class="u-warn">Sem conexão: '+esc(e.message)+'</span>'; });
   };
 })();
 </script>
