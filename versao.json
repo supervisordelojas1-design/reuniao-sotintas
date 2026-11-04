@@ -2,6 +2,43 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v142",
+      "data": "04/11/2026",
+      "hora": "02:10",
+      "itens": [
+        {
+          "painel": "Painel de Metas",
+          "o_que": "Histórico por mês: no alto da tela, ao lado do período, entrou um seletor para abrir qualquer mês já guardado (ex.: Outubro/2026 · fechado) — cada um vê o seu recorte, com a faixa amarela lembrando que é histórico e o botão para voltar ao mês em andamento. Carteira de clientes e orçamentos continuam só no mês em andamento. A coordenação alimenta o histórico pelo mesmo ⚙ atualizar dados: escolha o \"Mês dos arquivos\" e envie META + INDICADORES daquele mês (e o Eucatex, se tiver); a base em andamento não é alterada. O mês em andamento passa a ser guardado sozinho a cada atualização, e o export de fechamento fica marcado como mês fechado.",
+          "para": [
+            "coord",
+            "anl",
+            "sup",
+            "ger",
+            "vend"
+          ]
+        },
+        {
+          "painel": "Painel de Metas",
+          "o_que": "Nos primeiros dias do mês o painel rotulava a base nova como \"MÊS FECHADO\" do mês anterior (os números de novembro apareciam como OUTUBRO 2026 · 25/25 dias úteis, com projeção zerada e todo mundo em 4%). Corrigido: fechamento só é reconhecido quando o export traz o mês inteiro faturado; com 1 ou 2 dias úteis a tela mostra o mês do próprio export (ex.: NOVEMBRO 2026 · 2/25 dias úteis) e a projeção de fechamento das lojas passa a sair pelo ritmo dos dias úteis, como já acontecia com os vendedores.",
+          "para": [
+            "coord",
+            "anl",
+            "sup",
+            "ger",
+            "vend"
+          ]
+        },
+        {
+          "painel": "Ranking",
+          "o_que": "Correção de dados de Cabo Frio 1 (034) em jan, fev e mar: a meta da loja estava inflada pela meta de uma vendedora que vendeu em outra loja. Com os relatórios do Autcom por empresa, os três meses passaram a 102,30%, 101,63% e 102,33% (2 pontos cada) e a loja subiu de 20º para 6º no ano. Marcos Vinícius (A35) entrou no ranking de vendedores com jan e fev.",
+          "para": [
+            "coord",
+            "anl"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v141",
       "data": "03/11/2026",
       "hora": "16:40",

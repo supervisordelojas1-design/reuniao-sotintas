@@ -57,6 +57,13 @@ header{background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);color
 .brand span{font-size:11.5px;color:#9FB6CC;font-weight:500}
 .per{margin-left:auto;text-align:right;font-size:11.5px;color:#9FB6CC}
 .per b{display:block;font-size:14px;color:#fff;font-weight:700;letter-spacing:.3px}
+/* v41: seletor de mês (histórico) no cabeçalho */
+.per select.mes{display:block;margin:0 0 4px auto;max-width:230px;font:700 12.5px/1.2 inherit;color:#fff;background:#163A66;border:1px solid #2E5A8E;border-radius:8px;padding:5px 8px;cursor:pointer}
+.per select.mes option{color:#111;background:#fff}
+.hist-aviso{background:#FFD100;color:#1d2433;font-size:12.5px;font-weight:700;padding:8px 14px;text-align:center}
+.hist-aviso button{margin-left:10px;border:0;border-radius:999px;padding:4px 12px;background:#1d2433;color:#fff;font:700 12px inherit;cursor:pointer}
+.pupmes{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 12px;font-size:12px;color:var(--tx2)}
+.pupmes select{font:600 12px inherit;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:#111}
 .abas{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
 .abas button{flex:0 0 auto;padding:9px 15px;border-radius:999px;cursor:pointer;font:inherit;font-size:13px;font-weight:600;
  border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:#fff}
@@ -584,6 +591,7 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
  <div class="pupbox">
   <h3>Atualizar dados do painel</h3>
   <p>Solte aqui META, INDICADORES, as carteiras e até o mapa de lojas (.txt) — em qualquer ordem, o servidor separa sozinho.</p>
+  <div class="pupmes"><label for="pupMes"><b>Mês dos arquivos</b></label><select id="pupMes"></select><span id="pupMesDica">mês em andamento: atualiza o painel de todos</span></div>
   <div class="pupdrop" id="pupDrop" onclick="document.getElementById('pupFile').click()">
    📂 Clique e selecione os arquivos .xlsx<br><small>pode selecionar todos de uma vez</small></div>
   <input type="file" id="pupFile" multiple accept=".xlsx,.xls,.txt,.tsv,.csv" style="display:none">
@@ -611,9 +619,9 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
   <div class="hdtop">
    <div class="brand">
     <div class="logo">ST</div>
-    <div><h1 id="hTit">Coordenação de Supervisão</h1><span id="hSub">Só Tintas · Painel de Performance · <b style="color:#FFD100">v39</b></span></div>
+    <div><h1 id="hTit">Coordenação de Supervisão</h1><span id="hSub">Só Tintas · Painel de Performance · <b style="color:#FFD100">v41</b></span></div>
    </div>
-   <div class="per"><b id="hPer">—</b><span id="hDias">—</span><span id="btnUp" style="display:none" onclick="abrirUpload()"> · ⚙️ atualizar dados</span><span id="lnkSair" style="display:none" onclick="sairPainel()"> · sair</span></div>
+   <div class="per"><select class="mes" id="selMes" style="display:none" title="Escolher o mês"></select><b id="hPer">—</b><span id="hDias">—</span><span id="btnUp" style="display:none" onclick="abrirUpload()"> · ⚙️ atualizar dados</span><span id="lnkSair" style="display:none" onclick="sairPainel()"> · sair</span></div>
   </div>
   <div class="abas" id="abas"></div>
   <select class="perfil" id="selPerfil"></select>
@@ -652,8 +660,14 @@ P.fechado=false;
 (function(){
  const somaF=(_.L||[]).reduce(function(a,l){return a+(l[5]||0)},0);
  const somaP=(_.L||[]).reduce(function(a,l){return a+(l[6]||0)},0);
+ const somaM=(_.L||[]).reduce(function(a,l){return a+(l[3]||0)},0);
  if(!(somaF>0)) return;
  if(P.utDecorridos>2 || somaP>somaF*1.02) return;      /* mes ainda correndo */
+ /* v40: nos primeiros dias do mes o export tem so 1-2 dias de venda e o servidor
+    ainda manda a projecao zerada — isso NAO e fechamento. Fechamento de verdade
+    traz o mes inteiro faturado (perto da meta da rede); com menos da metade da
+    meta, e mes correndo e o rotulo fica o do proprio export. */
+ if(somaM>0 && somaF<somaM*0.5) return;
  const MES=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO',
             'AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
  const d=new Date(P.dataBase+'T12:00'); d.setDate(0);   /* ultimo dia do mes anterior */
@@ -661,6 +675,8 @@ P.fechado=false;
  P.dataBase=d.toISOString().slice(0,10);
  P.utDecorridos=P.utTotal; P.utRestantes=0; P.fechado=true;
 })();
+/* v41: mês do histórico (aba PAINEL_MESES do servidor): o pacote vem com f=1 quando é um mês fechado */
+if(_.f){ P.fechado=true; P.hist=true; } else if(mesURL()){ P.hist=true; }
 const UT=P.utTotal,UD=P.utDecorridos,UR=P.utRestantes;
 const FRAC=UT?UD/UT:1;
 const sm=(a,f)=>a.reduce((s,x)=>s+f(x),0);
@@ -694,7 +710,9 @@ function blk(ml,mt,f,pr){return{metaLoja:ml,metaTime:mt,fat:f,proj:pr,
  pctLoja:ml?f/ml:null,pctTime:mt?f/mt:null,pctProj:ml?pr/ml:null,
  restLoja:Math.max(ml-f,0),restTime:Math.max(mt-f,0),
  ritmoNec:UR?Math.max(ml-f,0)/UR:0,ritmoReal:UD?f/UD:0}}
-const lojas=_.L.map(a=>{const o=blk(a[3],a[4],a[5],a[6]);
+/* v40: projecao da loja — se o servidor mandar zerada (primeiros dias do mes), projeta pelo ritmo dos dias uteis, como ja se faz com o vendedor */
+const projLoja=a=>(a[6]>0)?a[6]:((UD&&UT&&!P.fechado)?a[5]/UD*UT:a[5]||0);
+const lojas=_.L.map(a=>{const o=blk(a[3],a[4],a[5],projLoja(a));
  o.cod=('000'+a[0]).slice(-3);o.nome=a[1];o.sup=a[2];o.med90=a[7];o.Craw=a[8];o.I=ind(a[8],a[5]);
  o.nv=nvLoja(a[7]);o.nvRot=ROTL[o.nv][0];o.prox=proxL(a[7]);
  o.cai=!NOVA&&nvLojaNova(a[7])<o.nv?ROTL[nvLojaNova(a[7])][0]:null;
@@ -2677,7 +2695,12 @@ function render(){
  const p=D.periodo;
  document.getElementById('hPer').textContent=p.mes+' '+p.ano;
  document.getElementById('hDias').textContent=`até ${new Date(p.dataBase+'T12:00').toLocaleDateString('pt-BR')} · ${p.utDecorridos}/${p.utTotal} dias úteis`
-  +(p.fechado?' · MÊS FECHADO':'');
+  +(p.fechado?' · MÊS FECHADO':'')+(p.hist?' · HISTÓRICO':'');
+ /* v41: faixa amarela quando a tela mostra um mês do histórico, com o caminho de volta */
+ (function(){ var ha=document.getElementById('histAviso');
+  if(p.hist){ if(!ha){ ha=document.createElement('div'); ha.id='histAviso'; ha.className='hist-aviso'; var hd=document.querySelector('header'); if(hd) hd.insertAdjacentElement('afterend',ha); else document.body.prepend(ha); }
+   ha.innerHTML='📅 Você está vendo o histórico de <b>'+p.mes+' '+p.ano+'</b>'+(p.fechado?' (mês fechado)':' (parcial)')+'. Carteira de clientes e orçamentos só aparecem no mês em andamento. <button type="button" onclick="irMes(\'\')">Voltar para o mês em andamento</button>'; }
+  else if(ha) ha.remove(); })();
 
  const bc=document.getElementById('bc'); let b=[];
  const niv=podeSubir();
@@ -3181,8 +3204,32 @@ render();
 /* expoe as funcoes que o HTML chama por onclick */
 window.goCartV=goCartV;window.goOrc=goOrc;window.waOrc=waOrc;window.pdfOrc=pdfOrc;window.orcBox=orcBox;window.OL=OL;window.OSoma=OSoma;window.OAT=OAT;window.cartBox=cartBox;window.KL=KL;window.KAT=KAT;window.enviarWA=enviarWA;window.goSub=goSub;window.toggleV=toggleV;window.ST=ST;window.render=render;window.gerarResumo=gerarResumo;window.go=go;window.goCart=goCart;window.goInd=goInd;window.goNivel=goNivel;window.pdfCart=pdfCart;window.pdfOrient=pdfOrient;window.pdfPlano=pdfPlano;window.printTela=printTela;window.salvarAcao=salvarAcao;window.salvarJustificativa=salvarJustificativa;window.waCart=waCart;window.waOrient=waOrient;window.goEvo=goEvo;window.goEvoSub=goEvoSub;window.evoFiltro=evoFiltro;window.evoMais=evoMais;window.waEvo=waEvo;window.pdfEvo=pdfEvo;
 if(!EMBUTIDO){var lk=document.getElementById('lnkSair');if(lk)lk.style.display='inline';}
+try{ montarSelMes(_.meses||[]); }catch(eSM){}
 }
 /*FIM_PAINEL*/
+/* ═══ v41: histórico por mês — seletor no cabeçalho + mês dos arquivos no upload ═══ */
+function mesURL(){ try{ return (new URLSearchParams(location.search).get('mes')||'').trim(); }catch(e){ return ''; } }
+function irMes(k){ var u=new URL(location.href); if(k) u.searchParams.set('mes',k); else u.searchParams.delete('mes'); u.searchParams.set('v',String(Date.now())); location.href=u.toString(); }
+function mesNomeBr(k){ var M=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']; var m=Number(String(k).slice(5,7)); return (M[m-1]||k)+'/'+String(k).slice(0,4); }
+function mesChaveHoje(){ var d=(window.STHora?STHora.data():new Date()); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2); }
+function montarSelMes(meses){
+ var s=document.getElementById('selMes'); if(!s) return;
+ var atual=mesURL(), hoje=mesChaveHoje(), esc=function(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]});};
+ var lista=(meses||[]).filter(function(m){ return m&&m.k&&!(m.k===hoje&&!m.f); });   /* o mês em andamento já é a opção padrão */
+ if(!lista.length&&!atual){ s.style.display='none'; return; }
+ var h='<option value="">Mês em andamento</option>';
+ lista.forEach(function(m){ h+='<option value="'+esc(m.k)+'"'+(m.k===atual?' selected':'')+'>'+esc(mesNomeBr(m.k))+(m.f?' · fechado':' · parcial')+'</option>'; });
+ if(atual&&!lista.some(function(m){return m.k===atual;})) h+='<option value="'+esc(atual)+'" selected>'+esc(mesNomeBr(atual))+'</option>';
+ s.innerHTML=h; s.style.display='block'; s.onchange=function(){ irMes(s.value); };
+}
+function montarMesUpload(){
+ var s=document.getElementById('pupMes'), dica=document.getElementById('pupMesDica'); if(!s) return;
+ var d=(window.STHora?STHora.data():new Date()), h='<option value="">Mês em andamento (automático)</option>';
+ for(var i=1;i<=14;i++){ var x=new Date(d.getFullYear(),d.getMonth()-i,1); var k=x.getFullYear()+'-'+('0'+(x.getMonth()+1)).slice(-2); h+='<option value="'+k+'">'+mesNomeBr(k)+' · histórico</option>'; }
+ s.innerHTML=h; s.value='';
+ s.onchange=function(){ if(dica) dica.textContent=s.value?'mês passado: entra só no histórico, a base em andamento não muda (META + INDICADORES do mês inteiro; Eucatex se tiver)':'mês em andamento: atualiza o painel de todos'; };
+ s.onchange();
+}
 const PKEY='pnl_sessao_v1';
 function sessAtual(){if(window.PNL_CRED)return window.PNL_CRED;try{return JSON.parse(localStorage.getItem(PKEY)||'null')}catch(e){return null}}
 function postAPI(payload,cb,err){
@@ -3206,6 +3253,7 @@ function abrirUpload(){
  UPK=[];
  document.getElementById('pupStat').textContent='';
  document.getElementById('pupGo').disabled=true;
+ try{ montarMesUpload(); }catch(e){}
  document.getElementById('pnlUp').classList.add('on');
 }
 function lerArquivos(files){
@@ -3231,18 +3279,20 @@ function enviarUpload(){
  var s=sessAtual();
  var st=document.getElementById('pupStat'), bt=document.getElementById('pupGo');
  if(!s){st.textContent='Sessão expirou — saia e entre de novo.';return}
- bt.disabled=true; st.textContent='Enviando e processando no servidor... (até 1 minuto)';
+ var mesSel=((document.getElementById('pupMes')||{}).value||'').trim();   /* v41: mês passado vai só para o histórico */
+ bt.disabled=true; st.textContent=(mesSel?'Enviando '+mesNomeBr(mesSel)+' para o histórico... ':'Enviando e processando no servidor... ')+'(até 2 minutos)';
  function fim(res){
   if(!res||!res.ok){st.textContent='✕ '+((res&&res.erro)||'falha');bt.disabled=false;return}
-  st.textContent='✓ '+res.log+'\n\nRecarregando o painel...';
-  setTimeout(function(){location.reload()},2500);
+  st.textContent='✓ '+res.log+'\n\n'+(mesSel?'Abrindo '+mesNomeBr(mesSel)+'...':'Recarregando o painel...');
+  setTimeout(function(){ if(mesSel) irMes(mesSel); else location.reload(); },2500);
  }
  if(typeof google!=='undefined'&&google.script&&google.script.run){
   google.script.run.withSuccessHandler(fim)
    .withFailureHandler(function(e){st.textContent='✕ Servidor: '+e.message;bt.disabled=false})
    .upload64(s.u,s.p,UPK);
  }else{
-  postAPI({tipo:'upload64',u:s.u,p:s.p,arquivos:UPK},fim,
+  var corpo={tipo:'upload64',u:s.u,p:s.p,arquivos:UPK}; if(mesSel) corpo.mes=mesSel;
+  postAPI(corpo,fim,
    function(m){st.textContent='✕ '+m;bt.disabled=false});
  }
 }
@@ -3271,8 +3321,10 @@ function pedirDados(u,p,cb,errCb){
  }
  /* cópia no aparelho: sem internet, abre com os últimos números baixados (chave sem PIN) */
  var quem=u==='cracha'?'ck:'+String(p).slice(-24):String(u).toLowerCase().trim();
- var CK='st_painel_cache_v1:'+quem+'|'+((location.search.match(/[?&]visao=([^&]*)/)||[])[1]||'');
- fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({tipo:'dados',u:u,p:p})})
+ var MESQ=mesURL();   /* v41: mês do histórico pedido na URL (?mes=AAAA-MM) */
+ var CK='st_painel_cache_v1:'+quem+'|'+((location.search.match(/[?&]visao=([^&]*)/)||[])[1]||'')+(MESQ?'|m:'+MESQ:'');
+ var pedido={tipo:'dados',u:u,p:p}; if(MESQ) pedido.mes=MESQ;
+ fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(pedido)})
   .then(function(r){return r.json()}).then(function(res){
     if(res&&res.ok){ try{localStorage.setItem(CK,JSON.stringify({em:Date.now(),res:res}))}catch(e){ try{Object.keys(localStorage).forEach(function(k){if(k.indexOf('st_painel_cache_v1:')===0)localStorage.removeItem(k)})}catch(e2){} } }
     cb(res);
