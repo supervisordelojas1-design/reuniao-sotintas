@@ -138,13 +138,17 @@ h2{font-family:var(--f-display);font-size:17px;margin:0}
     var tk=window.STDados&&STDados.crachaGuardado&&STDados.crachaGuardado(true);
     /* Painel de Metas (histórico por mês + carteira) */
     var pPainel = tk&&tk.tk ? fetch(PAINEL_API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({tipo:'dados',u:'cracha',p:tk.tk})})
-      .then(function(r){return r.json();}).then(function(d){
-        if(!d||d.ok===false) throw new Error((d&&d.erro)||'sem resposta');
+      .then(function(r){return r.json();}).then(function(rr){
+        if(!rr||rr.ok===false) throw new Error((rr&&rr.erro)||'sem resposta');
+        var d=rr.dados||rr;
         var meses=d.meses||[], f=meses.filter(function(m){ return String(m.k)===MFK; })[0];
         ST.painel = f ? {sit:f.f?'ok':'warn', txt:(f.r||MFA)+(f.f?' · mês fechado':' · ainda parcial'), quando:f.em}
                       : {sit:'bad', txt:MFA+' ainda não está no histórico do Painel'};
-        var per=d.p||{}, rot=per.rotulo||per.r||per.mes||'';
-        ST.andamento = {sit:'ok', txt:'Período: '+(rot||'mês atual'), quando:d.atualizado||d.em||null};
+        /* p = [MÊS, ano, data da base, dias úteis, decorridos, restantes] */
+        var per=Array.isArray(d.p)?d.p:[], atual=meses.filter(function(m){ return !m.f; })[0]||{};
+        var dbase=per[2]?String(per[2]).split('-').reverse().join('/'):'';
+        ST.andamento = per.length ? {sit:'ok', txt:String(per[0]).charAt(0)+String(per[0]).slice(1).toLowerCase()+'/'+per[1]+(dbase?' · vendas até '+dbase:'')+(per[3]!=null?' · '+per[4]+' de '+per[3]+' dias úteis':''), quando:atual.em||null}
+                                  : {sit:'cinza', txt:'Período não informado'};
         var km=d.KM||[], ult=km.length?km[km.length-1]:'';
         ST.carteira = km.length ? {sit:(temMF(ult)||sem(ult).indexOf(sem(M[hoje.getMonth()]))>=0)?'ok':'bad', txt:'Meses na série: '+km[0]+' a '+ult} : {sit:'bad', txt:'Carteira não encontrada no Painel'};
       }).catch(function(e){ ST.painel=ST.andamento=ST.carteira={sit:'cinza',txt:'Não consegui ler o Painel: '+(e.message||e)}; })
