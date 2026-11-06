@@ -623,12 +623,17 @@ render();
       var cv=calcVends(ind, L); var V=cv.vends;
       var admInfo={semData:V.length, comData:0};
       if(res[2]){ admInfo=mergeAdm(V, toObjs(res[2])); }
-      else { V.forEach(function(v){ v.sit='SEMDATA'; v.adm=null; }); }
+      else {
+        /* nov/2026: sem o arquivo de admissões, mantém as datas já publicadas (nada é apagado) */
+        var ant=(VENDS_FULL||[]).filter(function(x){ return x&&x.adm; }).map(function(x){ return {nome:x.nome, admissao:x.adm}; });
+        if(ant.length){ admInfo=mergeAdm(V, ant); admInfo.mantidas=true; }
+        else V.forEach(function(v){ v.sit='SEMDATA'; v.adm=null; });
+      }
       CALC={LOJAS:L, VENDS:V};
       var p=$('uPrev'); p.classList.add('show');
       var mud=V.filter(function(v){return v.muda!==0;}).length;
       p.innerHTML='<div class="u-row"><b>'+L.length+'</b> lojas · <b>'+V.length+'</b> vendedores ('+cv.cargos+' cargos de gerência/apoio excluídos)</div>'+
-        '<div class="u-row">Admissões casadas: <b>'+admInfo.comData+'</b> · sem data: <b class="u-warn">'+admInfo.semData+'</b></div>'+
+        '<div class="u-row">Admissões casadas: <b>'+admInfo.comData+'</b> · sem data: <b class="u-warn">'+admInfo.semData+'</b>'+(admInfo.mantidas?' <span style="font-size:11.5px">(datas mantidas da base publicada)</span>':'')+'</div>'+
         '<div class="u-row">Vendedores que mudam de nível: <b>'+mud+'</b></div>'+
         '<div class="u-row" style="margin-top:6px">Mês fechado desta base: <input id="uMes" type="text" value="'+mesFechadoSugerido()+'" style="width:150px;padding:4px 7px;border:1px solid var(--line,#ccc);border-radius:6px;font:inherit;font-weight:700"> <span style="font-size:11.5px;color:var(--muted,#777)">é o que as telas mostram em “base: $ Méd. 90 dias de …”</span></div>'+
         '<div class="u-row" style="margin-top:6px">Confira os números acima antes de publicar. Ao publicar, substitui o painel de todos.</div>';
@@ -662,4 +667,5 @@ render();
   STAnima.puxar(document.scrollingElement, function(){ if(window.__niveisRecarregar) window.__niveisRecarregar(); });
 })();
 </script>
+<script src="st-central.js?v=1"></script>
 </body></html>

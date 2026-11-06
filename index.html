@@ -9246,9 +9246,14 @@ syncNav();
         <span class="ini-txt"><span class="ini-nm">Acessos ao App</span><span class="ini-ds">Quem está entrando, quem sumiu e quem nunca entrou</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
+      <button type="button" class="ini-card feat" data-act="central" data-coordonly="1">
+        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-chart"/></svg></span>
+        <span class="ini-txt"><span class="ini-nm">Central de Atualização</span><span class="ini-ds">Todas as bases num lugar só · o que está em dia e o que falta</span></span>
+        <span class="ini-go" aria-hidden="true">&rarr;</span>
+      </button>
       <button type="button" class="ini-card feat" data-act="cadastro" data-lider="1">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-user"/></svg></span>
-        <span class="ini-txt"><span class="ini-nm">Cadastro da Equipe</span><span class="ini-ds">Uma pessoa, um código · liberar acesso dos vendedores</span></span>
+        <span class="ini-txt"><span class="ini-nm">Cadastro da Equipe</span><span class="ini-ds">Uma pessoa, um código · liberar, arquivar e restaurar</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
     </div>
@@ -9429,6 +9434,10 @@ body.foco .wrap{padding-bottom:40px}
     Array.prototype.forEach.call(grid.querySelectorAll('[data-lider]'),function(c){
       c.style.display = ehLider() ? '' : 'none';
     });
+    /* nov/2026: só a coordenação (o analista não publica) */
+    Array.prototype.forEach.call(grid.querySelectorAll('[data-coordonly]'),function(c){
+      var s=sessao(); c.style.display = (s&&!ehVend()&&s.escopo==='todos'&&String(s.papel||'').toLowerCase()!=='analista') ? '' : 'none';
+    });
   }
   function saudar(){
     var s=sessao(), nome=(s&&s.nome)?String(s.nome).trim().split(' ')[0]:'';
@@ -9521,6 +9530,12 @@ body.foco .wrap{padding-bottom:40px}
     if(!ovD||!ifrD) return; titOv('Cadastro da Equipe · Só Tintas');
     var tema=(window.STtema?window.STtema.get():'light');
     ifrD.setAttribute('src','cadastro.html?tema='+tema+'&v='+Date.now());
+    ovD.style.display='flex'; document.body.style.overflow='hidden';
+  }
+  function abrirCentral(){
+    if(!ovD||!ifrD) return; titOv('Central de Atualização · Só Tintas');
+    var tema=(window.STtema?window.STtema.get():'light');
+    ifrD.setAttribute('src','atualizar.html?tema='+tema+'&v='+Date.now());
     ovD.style.display='flex'; document.body.style.overflow='hidden';
   }
   function abrirPontos(){
@@ -9681,6 +9696,7 @@ body.foco .wrap{padding-bottom:40px}
     if(act==='uso'){ abrirUso(); return; }
     if(act==='pontos'){ abrirPontos(); return; }
     if(act==='cadastro'){ abrirCadastro(); return; }
+    if(act==='central'){ abrirCentral(); return; }
     if(act==='mentor'){ abrirMentor(); return; }
     if(act==='acessos'){ abrirAcessos(); return; }
     if(ehVend()) return;      /* vendedor não entra nas operações da supervisão */

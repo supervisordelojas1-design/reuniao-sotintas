@@ -133,10 +133,20 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
     var dias=Math.round((new Date(h.getFullYear(),h.getMonth(),h.getDate())-new Date(d.getFullYear(),d.getMonth(),d.getDate()))/864e5);
     return dias===0?'hoje, '+z(d.getHours())+':'+z(d.getMinutes()):dias===1?'ontem':dias<7?'há '+dias+' dias':z(d.getDate())+'/'+z(d.getMonth()+1); }
   var CARGO={vend:'Vendedor',ger:'Gerente',sup:'Supervisor',coord:'Coordenação',outro:'Outro'};
-  var D=null, BUSCA='', FC='', LOJAS={}, ABERTO=null, ERRO_LIB={};
+  var D=null, BUSCA='', FC='', LOJAS={}, ABERTO=null, ERRO_LIB={}, ARQ=null, ERRO_ARQ={};
   function sessao(){ try{ return JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); }catch(e){ return null; } }
   function toast(m){ var t=document.createElement('div'); t.className='tip'; t.style.cssText='left:0;right:0;margin:auto;bottom:18px;top:auto;width:max-content;max-width:calc(100% - 24px)'; t.setAttribute('role','status'); t.textContent=m; document.body.appendChild(t); setTimeout(function(){t.remove();},3200); }
   var coord=function(){ return D&&D.perfil==='coord'&&!(window.STDados&&STDados.visao&&STDados.visao()); };
+  /* nov/2026: arquivar/restaurar — coordenação: rede · supervisor: vendedores e gerentes da carteira · gerente: vendedores da loja */
+  function podeArquivar(p){
+    if(!D||(window.STDados&&STDados.visao&&STDados.visao())) return false;
+    var s=sessao(), eu=sem(s&&s.nome||'');
+    if(eu&&[p.nome].concat(p.apelidos||[]).some(function(n){return sem(n)===eu;})) return false;
+    if(D.perfil==='coord') return p.cargo!=='coord';
+    if(D.perfil==='sup') return p.cargo==='vend'||p.cargo==='ger';
+    if(D.perfil==='ger') return p.cargo==='vend';
+    return false;
+  }
 
   function carregar(){
     $('raiz').innerHTML='<p class="sub">Carregando o cadastro…</p>';
@@ -165,7 +175,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
       (coord()?'<div class="kpi"><span>Nomes sem dono</span><b>'+D.semDono.length+'</b> <small>logins a conferir</small></div>':'')+'</div>';
     if(coord()&&D.semDono.length) h+=blocoSemDono();
     h+='<div class="linha"><input class="busca" id="busca" type="search" placeholder="Buscar por nome, apelido, código ou loja" value="'+esc(BUSCA)+'" style="flex:1 1 240px;margin:0" aria-label="Buscar">'+
-      '<div class="filtros" role="group" aria-label="Filtrar por cargo">'+[['','Todos'],['vend','Vendedores'],['ger','Gerentes'],['sup','Supervisores'],['semacesso','Sem acesso'],['inativo','Inativos']].map(function(f){return '<button type="button" data-fc="'+f[0]+'" aria-pressed="'+(FC===f[0])+'">'+f[1]+'</button>';}).join('')+'</div></div>';
+      '<div class="filtros" role="group" aria-label="Filtrar por cargo">'+[['','Todos'],['vend','Vendedores'],['ger','Gerentes'],['sup','Supervisores'],['semacesso','Sem acesso'],['inativo','Arquivados']].map(function(f){return '<button type="button" data-fc="'+f[0]+'" aria-pressed="'+(FC===f[0])+'">'+f[1]+'</button>';}).join('')+'</div></div>';
     h+=lista();
     $('raiz').innerHTML=h;
   }
@@ -196,11 +206,28 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
     var h='<li style="display:block"><div class="linha" style="justify-content:space-between"><span><b>'+esc(p.nome)+'</b> <span class="cod">'+esc(p.codigo)+'</span> <span class="sub">'+esc(CARGO[p.cargo]||p.cargo)+(p.cargo!=='vend'&&p.lojas.length?' · lojas '+esc(p.lojas.join(', ')):'')+(p.cargo!=='sup'&&p.supervisor?' · sup. '+esc(p.supervisor):'')+'</span>'+
       (p.travado?' <span class="sub" title="Corrigido pela coordenação">🔒</span>':'')+'</span><span class="linha">'+(function(){ var x=projVend(p); return x==null?'':'<span class="sub">projeção <b style="color:'+corPct(x)+'">'+Math.round(x*100)+'%</b></span>'; })()+ac+'<span class="sub">'+esc(quando(p.ultimo))+'</span>'+
       (coord()?'<button class="btnp" type="button" data-ed="'+esc(p.codigo)+'">editar</button>':'')+
-      (p.cargo==='vend'&&p.liberado===false&&!(STDados.visao&&STDados.visao())?'<button class="btnp verde" type="button" data-lib="'+esc(p.codigo)+'">Liberar acesso</button>':'')+'</span></div>';
+      (p.ativo&&p.cargo==='vend'&&p.liberado===false&&!(STDados.visao&&STDados.visao())?'<button class="btnp verde" type="button" data-lib="'+esc(p.codigo)+'">Liberar acesso</button>':'')+
+      (podeArquivar(p)?(p.ativo?'<button class="btnp" type="button" data-arq="'+esc(p.codigo)+'" title="Tira o acesso e tira dos painéis; o histórico fica">Arquivar</button>':'<button class="btnp verde" type="button" data-arq="'+esc(p.codigo)+'">Restaurar</button>'):'')+'</span></div>';
+    if(!p.ativo&&p.origem&&/arquivado por/.test(p.origem)) h+='<div class="apel">'+esc((p.origem.match(/arquivado por .*$/)||[''])[0])+'</div>';
     if(p.apelidos&&p.apelidos.length) h+='<div class="apel">também aparece como: '+esc(p.apelidos.join(' · '))+'</div>';
     if(ABERTO===p.codigo) h+='<div class="lib"><input id="libPin" inputmode="numeric" maxlength="6" placeholder="PIN inicial" aria-label="PIN inicial do vendedor"><input id="libMeu" type="password" inputmode="numeric" maxlength="6" placeholder="Seu PIN" aria-label="Seu PIN para confirmar"><button class="btnp azul" type="button" data-libok="'+esc(p.codigo)+'">Confirmar</button><button class="btnp" type="button" data-libx="1">Cancelar</button>'+
       '<span class="sub" style="flex-basis:100%">O vendedor entra no Assistente ST com o nome <b>'+esc(p.nome)+'</b> e este PIN; no primeiro acesso o app pede para trocar.</span>'+(ERRO_LIB[p.codigo]?'<span class="ruim" style="flex-basis:100%">'+esc(ERRO_LIB[p.codigo])+'</span>':'')+'</div>';
+    if(ARQ===p.codigo) h+=p.ativo
+      ? '<div class="lib" role="group" aria-label="Arquivar '+esc(p.nome)+'"><span class="sub" style="flex-basis:100%"><b>Arquivar '+esc(p.nome)+'?</b> Ele perde o acesso ao app na hora e sai do cadastro ativo. O histórico (vendas, PDI, ranking) fica guardado e dá para restaurar depois.</span><button class="btnp azul" type="button" data-arqok="'+esc(p.codigo)+'">Sim, arquivar</button><button class="btnp" type="button" data-arqx="1">Cancelar</button>'+(ERRO_ARQ[p.codigo]?'<span class="ruim" style="flex-basis:100%">'+esc(ERRO_ARQ[p.codigo])+'</span>':'')+'</div>'
+      : '<div class="lib" role="group" aria-label="Restaurar '+esc(p.nome)+'"><input id="arqPin" inputmode="numeric" maxlength="6" placeholder="PIN inicial" aria-label="PIN inicial para restaurar"><button class="btnp azul" type="button" data-arqok="'+esc(p.codigo)+'">Restaurar</button><button class="btnp" type="button" data-arqx="1">Cancelar</button><span class="sub" style="flex-basis:100%">Volta ao cadastro ativo e o acesso é religado com este PIN; no primeiro acesso o app pede para trocar.</span>'+(ERRO_ARQ[p.codigo]?'<span class="ruim" style="flex-basis:100%">'+esc(ERRO_ARQ[p.codigo])+'</span>':'')+'</div>';
     return h+'</li>';
+  }
+  function arquivar(codigo){
+    var p=D.pessoas.filter(function(x){return x.codigo===codigo;})[0]; if(!p) return;
+    var restaurar=!p.ativo, pin=restaurar?(($('arqPin')||{}).value||'').trim():'';
+    ERRO_ARQ[codigo]='';
+    if(restaurar&&!/^\d{4,6}$/.test(pin)){ ERRO_ARQ[codigo]='O PIN inicial tem de 4 a 6 dígitos.'; montar(); return; }
+    var bt=document.querySelector('[data-arqok]'); if(bt){ bt.disabled=true; bt.textContent='Gravando…'; }
+    STDados.chamar('pessoaArquivar',{codigo:codigo, arquivar:!restaurar, pin:pin}).then(function(r){
+      if(!r||!r.ok) throw new Error((r&&r.erro)||'Não gravou.');
+      ARQ=null; toast(restaurar?('✓ '+p.nome+' restaurado'+(r.temLogin?'. Passe o PIN '+pin+' para ele.':'. Libere o acesso quando precisar.')):('✓ '+p.nome+' arquivado. O acesso foi tirado.'));
+      carregar();
+    }).catch(function(e){ ERRO_ARQ[codigo]=e.message||'Sem conexão: nada foi gravado.'; montar(); });
   }
   function blocoSemDono(){
     var P=D.pessoas.filter(function(p){return p.ativo;});
@@ -258,6 +285,9 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
     if(b.dataset.lib){ ABERTO=b.dataset.lib; montar(); var i=$('libPin'); if(i) i.focus(); return; }
     if(b.dataset.libx){ ABERTO=null; montar(); return; }
     if(b.dataset.libok){ liberar(b.dataset.libok); return; }
+    if(b.dataset.arq){ ARQ=b.dataset.arq; ERRO_ARQ[ARQ]=''; montar(); var ip=$('arqPin'); if(ip) ip.focus(); return; }
+    if(b.dataset.arqx){ ARQ=null; montar(); return; }
+    if(b.dataset.arqok){ arquivar(b.dataset.arqok); return; }
     if(b.dataset.sinc){ b.disabled=true; b.textContent='Atualizando…'; STDados.chamar('pessoasSincronizar').then(function(r){ toast(r&&r.ok?'Atualizado: '+r.novos+' novos, '+r.atualizados+' ajustados.':(r&&r.erro)||'Não atualizou.'); carregar(); }).catch(function(x){ toast(x.message); carregar(); }); return; }
     if(b.dataset.sd!=null){ var s=D.semDono[+b.dataset.sd], cod=$('sd'+b.dataset.sd).value; if(!cod){ toast('Escolha a pessoa.'); return; }
       STDados.chamar('pessoaApelido',{codigo:cod,apelido:s.nome}).then(function(r){ if(!r||!r.ok) throw new Error((r&&r.erro)||'Não salvou.'); toast('Pronto: "'+s.nome+'" agora conta para '+cod+'.'); carregar(); }).catch(function(x){ toast(x.message); }); return; }

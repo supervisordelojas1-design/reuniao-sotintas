@@ -2,6 +2,36 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v143",
+      "data": "06/11/2026",
+      "hora": "08:00",
+      "itens": [
+        {
+          "painel": "Cadastro da Equipe",
+          "o_que": "Novo botão Arquivar: tira o acesso ao app na hora e tira a pessoa do cadastro ativo, guardando o histórico. Na aba Arquivados, o botão Restaurar religa o acesso com um PIN inicial novo. Cada um na própria base: coordenação na rede, supervisor nos vendedores e gerentes da carteira, gerente nos vendedores da loja.",
+          "para": [
+            "coord",
+            "sup",
+            "ger"
+          ]
+        },
+        {
+          "painel": "Central de Atualização",
+          "o_que": "Nova tela da coordenação com todas as bases do app num lugar só (Painel de Metas, Carteira, Níveis, Ranking, PDI dos vendedores e dos gestores): de quando é cada uma, o que está em dia e o botão que leva direto ao envio.",
+          "para": [
+            "coord"
+          ]
+        },
+        {
+          "painel": "Níveis",
+          "o_que": "Ao atualizar sem o arquivo de admissões, as datas de contratação já gravadas são mantidas (antes todos ficavam sem data).",
+          "para": [
+            "coord"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v142",
       "data": "04/11/2026",
       "hora": "02:10",

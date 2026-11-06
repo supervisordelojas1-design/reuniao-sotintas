@@ -1,0 +1,190 @@
+<!doctype html><html lang="pt-BR" data-theme="dark" style="color-scheme:dark"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Central de Atualização · Só Tintas</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#0f1522; --surface:#1a2336; --surface2:#222d44; --ink:#eef2fb; --muted:#9aa5bb; --line:#2c3850;
+  --accent:#ff3b47; --navy:#6f95f5; --ok:#3fbf7f; --bad:#ff6b6b; --warn:#ffab5e;
+  --okbg:#12301f; --badbg:#3a1a20; --warnbg:#3a2717; --navybg:#1e2b4d;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Public Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+html[data-theme="light"]{
+  --bg:#f5f7fb; --surface:#ffffff; --surface2:#eef2f8; --ink:#16233d; --muted:#5a677f; --line:#e4e9f3;
+  --navy:#1C3F8F; --ok:#178048; --bad:#c42a22; --warn:#b35600;
+  --okbg:#e1f3e8; --badbg:#fdeceb; --warnbg:#ffefdd; --navybg:#e7edf9;
+  color-scheme:light;
+}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+.wrap{max-width:980px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-right,0px)) 60px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px}
+.topbar{height:8px;background:var(--accent);border-radius:0 0 6px 6px;margin:-20px 0 4px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(24px,4vw,34px);line-height:1.05;margin:4px 0 0;color:var(--accent)}
+h2{font-family:var(--f-display);font-size:17px;margin:0}
+.sub{color:var(--muted);font-size:13px}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:9px 14px;font:700 13px var(--f-body);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn.azul{background:var(--navy);border-color:var(--navy);color:#fff}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:0 6px 20px rgba(0,0,0,.12);min-width:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
+.base{display:flex;flex-direction:column;gap:8px}
+.topo{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:800;white-space:nowrap}
+.ok{background:var(--okbg);color:var(--ok)}.warn{background:var(--warnbg);color:var(--warn)}.bad{background:var(--badbg);color:var(--bad)}.cinza{background:var(--surface2);color:var(--muted)}
+.linha{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.dado{font-size:13px}.dado b{font-variant-numeric:tabular-nums}
+.arq{font-size:12.5px;color:var(--muted);border-top:1px dashed var(--line);padding-top:8px}
+.passos{margin:0;padding-left:20px}.passos li{margin:4px 0}
+.aviso{background:var(--warnbg);color:var(--ink);border-radius:10px;padding:10px 12px;font-size:13px}
+</style></head><body>
+<div class="wrap">
+  <div class="topbar"></div>
+  <header>
+    <div><div class="eyebrow">Só Tintas · coordenação</div><h1>Central de Atualização</h1><div class="sub" id="sub">Todas as bases do app num lugar só</div></div>
+    <button type="button" class="btn" id="btnTema"><span id="temaIc">🌙</span> <span id="temaTx">Escuro</span></button>
+  </header>
+  <main id="raiz" style="display:flex;flex-direction:column;gap:14px"><p class="sub">Conferindo as bases…</p></main>
+</div>
+<script>
+(function(){
+  function qp(n){try{return new URLSearchParams(location.search).get(n);}catch(e){return null;}}
+  function ls(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+  var p=(qp('tema')||'').toLowerCase(), t=(p==='claro'||p==='light')?'light':(p==='escuro'||p==='dark')?'dark':null;
+  if(!t){ var s=(ls('st_tema')||'').toLowerCase(); t=(s==='light'||s==='claro')?'light':'dark'; }
+  window.__setTema=function(tema){ document.documentElement.setAttribute('data-theme',tema); document.documentElement.style.colorScheme=tema;
+    var ic=document.getElementById('temaIc'), tx=document.getElementById('temaTx'); if(ic) ic.textContent=tema==='light'?'☀️':'🌙'; if(tx) tx.textContent=tema==='light'?'Claro':'Escuro';
+    try{localStorage.setItem('st_tema',tema);}catch(e){} try{ if(window.parent&&window.parent!==window) window.parent.postMessage({st_tema:tema},'*'); }catch(e){} };
+  window.__setTema(t);
+  window.addEventListener('message',function(ev){ var d=ev&&ev.data; if(d&&(d.st_tema==='light'||d.st_tema==='dark')) window.__setTema(d.st_tema); });
+  document.getElementById('btnTema').onclick=function(){ window.__setTema(document.documentElement.getAttribute('data-theme')==='light'?'dark':'light'); };
+})();
+</script>
+<script src="st-hora.js?v=1"></script>
+<script src="st-dados.js?v=90"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   CENTRAL DE ATUALIZAÇÃO (nov/2026) — só a coordenação.
+   Um card por base: de quando é, se está em dia e o botão que leva
+   direto à tela de envio (que abre sozinha a área de atualizar).
+   Pasta do Drive para a automação futura: "Central de Atualização - Só Tintas App".
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+  var PAINEL_API_URL='https://script.google.com/macros/s/AKfycbzVe8joykFt0rWX9CjFgpeOaABckMFttVwV8u4e-yJh8qXPr6JTmlAzfgNjiAPAHGEwLg/exec';
+  var PASTA='https://drive.google.com/drive/folders/1OOugPoKIwsqYU9dv1NPZMPkCU4DhAIZt';
+  var $=function(id){return document.getElementById(id);};
+  var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
+  var M=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  var H=function(x){ return window.STHora?STHora.data(x):(x!=null?new Date(x):new Date()); };
+  var hoje=H(), mf=new Date(hoje.getFullYear(),hoje.getMonth()-1,1);       /* mês fechado esperado */
+  var MF=M[mf.getMonth()], MFA=MF+'/'+mf.getFullYear(), MFK=mf.getFullYear()+'-'+('0'+(mf.getMonth()+1)).slice(-2);
+  var iniMes=new Date(hoje.getFullYear(),hoje.getMonth(),1).getTime();
+  var tema=function(){ return document.documentElement.getAttribute('data-theme')||'dark'; };
+  var sem=function(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(); };
+  function data(v){ if(!v) return '—'; var d=H(typeof v==='number'?v:new Date(String(v)).getTime()); if(isNaN(d.getTime())) return String(v);
+    var z=function(n){return (n<10?'0':'')+n;}; return z(d.getDate())+'/'+z(d.getMonth()+1)+' às '+z(d.getHours())+':'+z(d.getMinutes()); }
+  function ms(v){ if(!v) return 0; var n=typeof v==='number'?v:new Date(String(v)).getTime(); return isNaN(n)?0:n; }
+  var temMF=function(txt){ return sem(txt).indexOf(sem(MF))>=0; };
+
+  /* cada base: o que é, de onde vem, como saber se está em dia */
+  var BASES=[
+    { id:'painel', nome:'Painel de Metas · mês fechado', arq:'META + INDICADORES (POR VENDEDOR) + Eucatex de '+MF, pasta:'1 - Mês fechado',
+      tela:'painel.html', feito:'Guarda o fechamento no histórico do Painel e alimenta Resumo Executivo e PDI dos gestores.' },
+    { id:'andamento', nome:'Painel de Metas · mês em andamento', arq:'META + INDICADORES + Eucatex do mês atual', pasta:'2 - Mês em andamento',
+      tela:'painel.html', feito:'Painel de Metas, PDI Semanal, Simulador e resumos de segunda.' },
+    { id:'carteira', nome:'Carteira CNPJ', arq:'Evolução Mensal por Cliente', pasta:'3 - Carteira CNPJ',
+      tela:'painel.html', feito:'Evolução da carteira, top 20 clientes, clientes que caíram ou sumiram.' },
+    { id:'niveis', nome:'Níveis (Méd. 90 dias)', arq:'META + INDICADORES de '+MF+' (admissões: opcional, as datas já gravadas ficam)', pasta:'1 - Mês fechado',
+      tela:'niveis.html', feito:'V1–V5, Ouro/Prata/Bronze, tempo de casa e curva; Mentor e Simulador leem daqui.' },
+    { id:'ranking', nome:'Ranking · Premiação 2026', arq:'META + INDICADORES (POR VENDEDOR) de '+MF, pasta:'1 - Mês fechado',
+      tela:'ranking.html', feito:'Pontos de lojas e vendedores por meta batida.' },
+    { id:'pdiv', nome:'PDI Mensal · vendedores', arq:'Base do mês (PDI_dados_<mês>.json) gerada a partir do fechamento', pasta:'—',
+      tela:'pdi.html', feito:'Prioridade P1–P4, Integração e plano de ação de cada vendedor.' },
+    { id:'pdig', nome:'PDI Mensal · gerentes e supervisores', arq:'Gerada sozinha no dia 1º às 6h com os números do Painel', pasta:'—',
+      tela:'pdi.html', feito:'PDI dos gestores. Se o fechamento entrou depois das 6h, gere de novo pelo PDI → Gerentes.' }
+  ];
+  var ST={};   /* id → {sit:'ok'|'warn'|'bad'|'cinza', txt, quando} */
+
+  function selo(s){ var t={ok:'🟢 Em dia',warn:'🟡 Parcial',bad:'🔴 Atualizar',cinza:'⚪ Sem informação'}[s.sit]||'…'; return '<span class="chip '+(s.sit||'cinza')+'">'+t+'</span>'; }
+  function card(b){
+    var s=ST[b.id]||{sit:'cinza',txt:'Conferindo…'};
+    var link=b.tela+'?central=1&upd=1&tema='+encodeURIComponent(tema())+'&v='+Date.now();
+    return '<section class="card base"><div class="topo"><h2>'+esc(b.nome)+'</h2>'+selo(s)+'</div>'+
+      '<div class="dado">'+esc(s.txt||'')+(s.quando?' · <span class="sub">atualizado '+esc(data(s.quando))+'</span>':'')+'</div>'+
+      '<div class="sub">'+esc(b.feito)+'</div>'+
+      '<div class="arq">📄 '+esc(b.arq)+(b.pasta!=='—'?' · 📁 '+esc(b.pasta):'')+'</div>'+
+      '<div class="linha"><a class="btn azul" href="'+esc(link)+'">Atualizar →</a></div></section>';
+  }
+  function montar(){
+    var pend=BASES.filter(function(b){ var s=ST[b.id]; return s&&s.sit!=='ok'; }).length;
+    $('sub').textContent='Mês fechado esperado: '+MFA+' · '+(pend?pend+' base(s) para conferir':'tudo em dia');
+    $('raiz').innerHTML=
+      '<section class="card"><h2>Ordem do fechamento (dia 1º ou 2)</h2><ol class="passos">'+
+        '<li><b>Painel de Metas</b> → ⚙ atualizar dados → em "Mês dos arquivos" escolha <b>'+esc(MFA)+'</b> → META, INDICADORES (POR VENDEDOR) e Eucatex.</li>'+
+        '<li><b>Carteira CNPJ</b> → no mesmo upload do Painel, a Evolução Mensal por Cliente.</li>'+
+        '<li><b>Níveis</b> → META e INDICADORES de '+esc(MF)+'. Sem o arquivo de admissões, as datas já gravadas ficam.</li>'+
+        '<li><b>Ranking</b> → mês '+esc(MF)+' → META e INDICADORES → Pré-visualizar → Publicar.</li>'+
+        '<li><b>PDI dos gestores</b> → se o fechamento entrou depois das 6h do dia 1º, gere de novo.</li>'+
+        '<li><b>PDI dos vendedores</b> → publique a base do mês.</li></ol>'+
+        '<div class="linha" style="margin-top:6px"><a class="btn" href="'+PASTA+'" target="_blank" rel="noopener">📁 Pasta do Drive (automação futura)</a><span class="sub">Os exports já podem ficar guardados lá, um mês por vez.</span></div></section>'+
+      '<div class="grid">'+BASES.map(card).join('')+'</div>';
+  }
+
+  function conferir(){
+    var tk=window.STDados&&STDados.crachaGuardado&&STDados.crachaGuardado(true);
+    /* Painel de Metas (histórico por mês + carteira) */
+    var pPainel = tk&&tk.tk ? fetch(PAINEL_API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({tipo:'dados',u:'cracha',p:tk.tk})})
+      .then(function(r){return r.json();}).then(function(d){
+        if(!d||d.ok===false) throw new Error((d&&d.erro)||'sem resposta');
+        var meses=d.meses||[], f=meses.filter(function(m){ return String(m.k)===MFK; })[0];
+        ST.painel = f ? {sit:f.f?'ok':'warn', txt:(f.r||MFA)+(f.f?' · mês fechado':' · ainda parcial'), quando:f.em}
+                      : {sit:'bad', txt:MFA+' ainda não está no histórico do Painel'};
+        var per=d.p||{}, rot=per.rotulo||per.r||per.mes||'';
+        ST.andamento = {sit:'ok', txt:'Período: '+(rot||'mês atual'), quando:d.atualizado||d.em||null};
+        var km=d.KM||[], ult=km.length?km[km.length-1]:'';
+        ST.carteira = km.length ? {sit:(temMF(ult)||sem(ult).indexOf(sem(M[hoje.getMonth()]))>=0)?'ok':'bad', txt:'Meses na série: '+km[0]+' a '+ult} : {sit:'bad', txt:'Carteira não encontrada no Painel'};
+      }).catch(function(e){ ST.painel=ST.andamento=ST.carteira={sit:'cinza',txt:'Não consegui ler o Painel: '+(e.message||e)}; })
+      : Promise.resolve();
+    var chama=function(acao){ return STDados.chamar(acao).catch(function(e){ return {ok:false, erro:e.message||String(e)}; }); };
+    var pN=chama('niveis').then(function(j){
+      if(!j||!j.ok){ ST.niveis={sit:'cinza',txt:(j&&j.erro)||'sem resposta'}; return; }
+      ST.niveis = j.mesBase ? {sit:temMF(j.mesBase)?'ok':'bad', txt:'Base: Méd. 90 dias de '+j.mesBase, quando:j.atualizado} : {sit:'warn', txt:'Publicada sem o mês da base', quando:j.atualizado};
+    });
+    var pR=chama('ranking').then(function(j){
+      if(!j||!j.ok){ ST.ranking={sit:'cinza',txt:(j&&j.erro)||'sem resposta'}; return; }
+      var em=ms(j.atualizado);
+      ST.ranking = {sit:em>=iniMes?'ok':'bad', txt:em>=iniMes?'Publicado neste mês':'Última publicação antes de '+M[hoje.getMonth()], quando:j.atualizado};
+    });
+    var pV=chama('pdi').then(function(j){
+      if(!j||!j.ok){ ST.pdiv={sit:'cinza',txt:(j&&j.erro)||'sem resposta'}; return; }
+      var rot=(j.base&&j.base.rotulo)||'';
+      /* o rótulo é "base <mês fechado> · parcial de <mês atual>": vale o mês que vem depois de "base" */
+      var bm=(sem(rot).match(/base\s+([a-zç]+)/)||[])[1]||'';
+      ST.pdiv = j.base ? {sit:bm&&bm===sem(MF)?'ok':'bad', txt:rot||'Base publicada', quando:j.atualizado} : {sit:'bad', txt:'Base do mês ainda não publicada'};
+    });
+    var pG=chama('pdiGestores').then(function(k){
+      if(!k||!k.ok){ ST.pdig={sit:'cinza',txt:(k&&k.erro)||'sem resposta'}; return; }
+      var rot=(k.base&&k.base.rotulo)||'';
+      ST.pdig = k.base ? {sit:/fechamento/i.test(rot)&&temMF(rot)?'ok':/parcial/i.test(rot)?'warn':'bad', txt:rot||'Base publicada', quando:k.base.gerado_em||k.atualizado||null} : {sit:'bad', txt:'Base dos gestores ainda não gerada'};
+    });
+    montar();
+    [pPainel,pN,pR,pV,pG].forEach(function(p){ p.then(montar,montar); });
+  }
+
+  function iniciar(){
+    if(!window.STDados){ $('raiz').innerHTML='<p class="sub">Abra pelo Só Tintas App.</p>'; return; }
+    var pf=STDados.perfil&&STDados.perfil();
+    if(pf!=='coord'||(STDados.visao&&STDados.visao())){
+      $('raiz').innerHTML='<div class="aviso">A Central de Atualização é da coordenação. Se você é da coordenação, confirme seu PIN no app e abra de novo.</div>'; return;
+    }
+    conferir();
+  }
+  iniciar();
+})();
+</script>
+<script src="st-anima.js?v=3"></script>
+</body></html>
