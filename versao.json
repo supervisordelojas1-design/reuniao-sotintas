@@ -2,6 +2,17 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v144",
+      "data": "06/11/2026",
+      "hora": "00:45",
+      "itens": [
+        {
+          "painel": "Tela inicial",
+          "o_que": "A faixa \"Colorindo Vidas e Realizando Sonhos\" virou um carrossel com as campanhas do mês: Acelera Coral, Venda Direta Coral, Pintor Cadastrado, Pix Semanal, Elite das Vendas e Trinca de Ouro. Troca sozinha a cada 3 segundos; dá para arrastar para o lado ou tocar nos pontinhos."
+        }
+      ]
+    },
+    {
       "v": "ast-v143",
       "data": "06/11/2026",
       "hora": "08:00",
