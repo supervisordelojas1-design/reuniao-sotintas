@@ -37,8 +37,11 @@
   var papel = norm(s.papel), escopo = String(s.escopo || '').trim();
   var perfil = 'colaborador', loja_id = null, regiao_id = null;
 
+  var crPf = (global.STDados && global.STDados.perfil && global.STDados.perfil()) || '';
   if (escopo === 'todos' || papel.indexOf('coorden') >= 0) {
     perfil = 'coordenador';
+  } else if (crPf === 'mkt') {
+    perfil = 'marketing';                           /* nov/2026: administrador de conteúdo — edita a trilha, sem equipe */
   } else if (papel.indexOf('supervis') >= 0) {
     perfil = 'supervisor';
     var carteira = (s.carteira || []).map(codigo).filter(function (x) { return x != null; });
@@ -59,7 +62,7 @@
     perfil = 'colaborador';
     loja_id = codigo(s.lotacao);
   }
-  if (loja_id == null && perfil !== 'coordenador') loja_id = codigo(s.lotacao);
+  if (loja_id == null && perfil !== 'coordenador' && perfil !== 'marketing') loja_id = codigo(s.lotacao);
 
   var d = ler(CHAVE_DEMO) || {};
   ['usuarios', 'progresso', 'xp', 'conquistas', 'tentativas', 'atividade', 'disc'].forEach(function (k) { if (!d[k] || typeof d[k] !== 'object') d[k] = {}; });

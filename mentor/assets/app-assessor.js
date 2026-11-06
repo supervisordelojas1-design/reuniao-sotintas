@@ -28,7 +28,7 @@
   const tipoPorClasse = (classe) => Object.keys(CLASSES_POR_TIPO).find(t => CLASSES_POR_TIPO[t].includes(classe)) || 'Outro';
   const marcaCor = (m) => /^coral/i.test(m || '') ? 'marca-coral' : /^eucatex/i.test(m || '') ? 'marca-eucatex' : 'cinza';
   const nomeMaterial = (m) => m.produto_nome || m.tipo;
-  const thumb = (p, cls) => p && p.imagem ? `<img class="thumb-prod ${cls || ''}" src="${esc(p.imagem)}" alt="" loading="lazy">` : `<span class="thumb-prod vazio ${cls || ''}">🪣</span>`;
+  const thumb = (p, cls) => p && p.imagem_arq ? `<img class="thumb-prod ${cls || ''}" data-arq="${esc(JSON.stringify(p.imagem_arq))}" alt="" loading="lazy">` : p && p.imagem ? `<img class="thumb-prod ${cls || ''}" src="${esc(p.imagem)}" alt="" loading="lazy">` : `<span class="thumb-prod vazio ${cls || ''}">🪣</span>`;
 
   /* ───────────────────────── tela principal do Assessor ───────────────────────── */
   App.views.assessor = ([aba, ...resto]) => {
@@ -379,11 +379,25 @@
     const lista = Assessor.listaProdutos(App.cont);
     if (P.aberto) { const p = lista.find(x => x.id === P.aberto); if (p) return prodFicha(p); P.aberto = null; }
     const classes = [...new Set(lista.map(p => p.classe))].sort((a, b) => Assessor.classeNome(a, App.cont).localeCompare(Assessor.classeNome(b, App.cont)));
-    return `<div class="card"><h2>🛒 Produtos Coral e Eucatex</h2><p class="pequeno texto-2">${lista.length} produtos dos catálogos Coral 2025/2 e Eucatex 2026, com rendimento por embalagem. Busque pela necessidade ("mofo", "reboco novo", "ferrugem", "piso", "laje") ou pelo nome.</p>
+    /* nov/2026: fornecedores e portfólio vêm do Painel de Conteúdo (tabela "fornecedores"); sem ela, Coral e Eucatex */
+    const forn = (App.cont.fornecedores || []).filter(f => f && f.ativo !== false).sort((a, b) => (Number(a.ordem) || 0) - (Number(b.ordem) || 0));
+    const marcas = forn.length ? forn.map(f => f.nome) : ['Coral', 'Eucatex'];
+    const fsel = P.marca ? forn.find(f => f.nome === P.marca) : null;
+    return `<div class="card"><h2>🛒 Produtos dos fornecedores</h2><p class="pequeno texto-2">${lista.length} produtos de ${esc(marcas.join(', '))}, com rendimento por embalagem. Busque pela necessidade ("mofo", "reboco novo", "ferrugem", "piso", "laje") ou pelo nome.</p>
       <div class="campo" style="margin:0"><input placeholder="🔍 Produto, superfície ou problema" value="${esc(P.busca)}" oninput="App.prod.P.busca=this.value;App.prod.filtrar()"></div>
-      <div class="chips mt-1">${['', 'Coral', 'Eucatex'].map(mk => `<button class="chip ${P.marca === mk ? 'ativo' : ''}" onclick="App.prod.P.marca='${mk}';App.render()">${mk || 'Ambas as marcas'}</button>`).join('')}</div>
+      <div class="chips mt-1">${[''].concat(marcas).map(mk => `<button class="chip ${P.marca === mk ? 'ativo' : ''}" onclick="App.prod.P.marca=${esc(JSON.stringify(mk))};App.render()">${esc(mk || 'Todas as marcas')}</button>`).join('')}</div>
+      ${fsel ? portfolioHtml(fsel) : ''}
       <div class="campo mt-1" style="margin:0"><select onchange="App.prod.P.classe=this.value;App.render()"><option value="">Todos os tipos de produto</option>${classes.map(c => `<option value="${c}" ${P.classe === c ? 'selected' : ''}>${esc(Assessor.classeNome(c, App.cont))}</option>`).join('')}</select></div></div>
       <div id="prod-lista">${prodListaHtml()}</div>`;
+  }
+  /* cartão do fornecedor: logo, apresentação, catálogo, site e vídeos (arquivos chegam pelo STDados.arquivoUrl) */
+  function portfolioHtml(f) {
+    const aq = (r) => esc(JSON.stringify(r));
+    const vids = (f.videos || []).filter(v => v && v.url);
+    return `<div id="forn-port" class="card mt-1" style="margin-bottom:0">
+      <div class="linha" style="gap:12px;align-items:center">${f.logo ? `<img data-arq="${aq(f.logo)}" alt="${esc(f.nome)}" style="width:72px;height:72px;object-fit:contain;border-radius:12px;background:#fff;padding:6px">` : ''}<div class="cresce"><div class="negrito">${esc(f.nome)}</div>${f.descricao ? `<div class="pequeno texto-2" style="white-space:pre-line">${esc(f.descricao)}</div>` : ''}</div></div>
+      <div class="botoes mt-1">${(f.catalogos || []).map(c => `<a class="btn pequeno azul" target="_blank" rel="noopener" data-arq="${aq(c.arq)}" href="#">📄 ${esc(c.titulo || 'Catálogo')}</a>`).join('')}${f.site ? `<a class="btn pequeno contorno azul" target="_blank" rel="noopener" href="${esc(f.site)}">🌐 Site</a>` : ''}</div>
+      ${vids.length ? `<div class="mt-1">${vids.map(v => `<a class="item-lista" target="_blank" rel="noopener" href="${esc(v.url)}" style="padding:6px 0"><span class="icone-grande vermelho" style="font-size:20px">▶</span><div class="cresce" style="margin-left:8px"><div class="titulo">${esc(v.titulo || 'Vídeo')}</div></div><span class="seta">›</span></a>`).join('')}</div>` : ''}</div>`;
   }
   function prodListaHtml() {
     const q = normP(P.busca).trim();
@@ -391,7 +405,7 @@
     if (!lista.length) return '<p class="pequeno texto-3">Nenhum produto encontrado. Tente outra palavra ou troque o filtro.</p>';
     return lista.map(p => `<div class="item-lista" onclick="App.prod.abrir('${p.id}')">${thumb(p)}<div class="cresce" style="margin-left:8px"><div class="titulo">${esc(p.nome)}</div><div class="desc"><span class="etiqueta ${marcaCor(p.marca)} mini">${esc(p.marca)}</span> ${esc(Assessor.classeNome(p.classe, App.cont))}${Assessor.resumoRendimento(p) ? ' · ' + esc(Assessor.resumoRendimento(p)) : ''}</div></div><span class="seta">›</span></div>`).join('');
   }
-  App.prod.filtrar = () => { const el = $('#prod-lista'); if (el) el.innerHTML = prodListaHtml(); };
+  App.prod.filtrar = () => { const el = $('#prod-lista'); if (el) { el.innerHTML = prodListaHtml(); if (window.STDados && STDados.preencherArquivos) STDados.preencherArquivos(el); } };
   App.prod.abrir = (id) => { P.aberto = id; App.cache.abaAssessor = 'produtos'; if (App.rota.view === 'assessor' && App.rota.params[0] === 'produtos') App.render(); else location.hash = '#/assessor/produtos'; };
   App.prod.fechar = () => { P.aberto = null; App.render(); };
   function usosDaClasse(classe) {

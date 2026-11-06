@@ -28,9 +28,11 @@
   /* ── Perfis e escopo de acesso (vale para o modo demo e para o Supabase, onde a RLS garante no servidor) ──
      colaborador: vê só o próprio painel · gerente: a própria loja · supervisor: as lojas da sua região · coordenador: tudo */
   const PERFIS = { colaborador: 'Colaborador', gerente: 'Gerente', supervisor: 'Supervisor(a)', coordenador: 'Coordenador(a)' };
-  const perfilDe = (u) => !u ? 'colaborador' : (u.perfil === 'gestor' ? 'coordenador' : (PERFIS[u.perfil] ? u.perfil : 'colaborador'));
+  const perfilDe = (u) => !u ? 'colaborador' : (u.perfil === 'gestor' ? 'coordenador' : u.perfil === 'marketing' ? 'marketing' : (PERFIS[u.perfil] ? u.perfil : 'colaborador'));
   const ehCoordenador = (u) => perfilDe(u) === 'coordenador';
-  const ehLider = (u) => ['gerente', 'supervisor', 'coordenador'].includes(perfilDe(u));
+  /* nov/2026: marketing = administrador de conteúdo (edita a trilha no painel; não vê equipe) */
+  const ehMarketing = (u) => perfilDe(u) === 'marketing';
+  const ehLider = (u) => ['gerente', 'supervisor', 'coordenador', 'marketing'].includes(perfilDe(u));
   const lojaRotulo = (l) => l ? `${String(l.id).padStart(3, '0')} · ${l.nome}` : '—';
   // o colaborador "alvo" ({id, loja_id}) está no escopo do usuário "u"? (mesma regra da função escopo_ok do banco)
   function noEscopo(u, alvo, lojas) {
@@ -45,6 +47,7 @@
   function escopoDe(u, cont) {
     const p = perfilDe(u); cont = cont || {};
     if (p === 'coordenador') return { nivel: 'rede', rotulo: 'Rede Só Tintas', perfil: p };
+    if (p === 'marketing') return { nivel: 'proprio', rotulo: 'Marketing · conteúdo da trilha', perfil: p };
     if (p === 'supervisor') { const r = (cont.regioes || []).find(x => x.id === u.regiao_id); return { nivel: 'regiao', rotulo: r ? r.nome : 'Região não definida', regiao_id: u.regiao_id, perfil: p }; }
     if (p === 'gerente') { const l = (cont.lojas || []).find(x => x.id === u.loja_id); return { nivel: 'loja', rotulo: lojaRotulo(l), loja_id: u.loja_id, perfil: p }; }
     return { nivel: 'proprio', rotulo: 'Meu painel', perfil: p };
@@ -599,7 +602,7 @@
     demo: Demo, supabase: Sup,
   };
   DB.zerarDemo = () => Demo.zerar();
-  DB.util = { normalizarLogin, emailDe, uuid, hoje, PERFIS, perfilDe, ehCoordenador, ehLider, noEscopo, escopoDe, lojaRotulo };
+  DB.util = { normalizarLogin, emailDe, uuid, hoje, PERFIS, perfilDe, ehCoordenador, ehMarketing, ehLider, noEscopo, escopoDe, lojaRotulo };
 
   global.DB = DB;
 })(window);

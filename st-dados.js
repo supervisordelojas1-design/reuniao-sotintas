@@ -163,6 +163,69 @@
 
   function perfil() { var c = crachaGuardado(); return c ? c.perfil : null; }
 
+  /* nov/2026: o perfil pode mudar sem novo login (ex.: a coordenação põe alguém como administrador de
+     conteúdo). Para quem entra como "outro" ou "mkt", confere no servidor a cada 10 min e avisa a tela. */
+  function atualizarPerfil() {
+    var c = crachaGuardado(true); if (!c || (c.perfil !== 'outro' && c.perfil !== 'mkt')) return Promise.resolve(c ? c.perfil : null);
+    var k = 'st_pf_conf:' + norm(c.nome);
+    try { if (Date.now() - Number(sessionStorage.getItem(k) || 0) < 10 * 60000) return Promise.resolve(c.perfil); } catch (e) {}
+    return post({ acao: 'quemSou', tk: c.tk }).then(function (r) {
+      if (!r || !r.ok) return c.perfil;
+      try { sessionStorage.setItem(k, String(Date.now())); } catch (e) {}
+      if (r.perfil && r.perfil !== c.perfil) {
+        var x = ler(LS_CRACHA); if (x) { x.perfil = r.perfil; try { localStorage.setItem(LS_CRACHA, JSON.stringify(x)); } catch (e) {} }
+        try { g.dispatchEvent(new CustomEvent('st-perfil', { detail: r.perfil })); } catch (e) {}
+      }
+      return r.perfil;
+    }).catch(function () { return c.perfil; });
+  }
+  function ehMkt() { return perfil() === 'mkt' && !visao(); }
+
+  /* ── arquivos do Painel de Conteúdo (banners, logos, catálogos): {id, mime, pub, url} ──
+     público no Drive → endereço direto; senão vem pelo servidor (com o crachá) e fica guardado no aparelho */
+  var arqMem = {};
+  function arquivoUrl(ref) {
+    if (!ref) return Promise.reject(new Error('sem arquivo'));
+    if (typeof ref === 'string') return Promise.resolve(ref);
+    if (ref.src) return Promise.resolve(ref.src);
+    if (ref.pub && ref.url && /^image\//.test(ref.mime || '')) return Promise.resolve(ref.url);
+    if (!ref.id) return Promise.reject(new Error('sem arquivo'));
+    if (arqMem[ref.id]) return arqMem[ref.id];
+    var chave = location.origin + '/__st_arquivo/' + ref.id;
+    var abre = ('caches' in g) ? caches.open('st-arquivos-v1').catch(function () { return null; }) : Promise.resolve(null);
+    var p = abre.then(function (cs) {
+      return (cs ? cs.match(chave) : Promise.resolve(null)).then(function (hit) {
+        if (hit) return hit.blob();
+        return chamar('arquivoLer', { id: ref.id }).then(function (r) {
+          if (!r || !r.ok) throw new Error((r && r.erro) || 'Não consegui abrir o arquivo.');
+          var bin = atob(r.b64), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+          var b = new Blob([u], { type: r.mime || ref.mime || 'application/octet-stream' });
+          if (cs) cs.put(chave, new Response(b, { headers: { 'Content-Type': b.type } })).catch(function () {});
+          return b;
+        });
+      });
+    }).then(function (b) { return URL.createObjectURL(b); });
+    p.catch(function () { delete arqMem[ref.id]; });
+    return (arqMem[ref.id] = p);
+  }
+  /* preenche <img data-arq='{"id":..}'> e <a data-arq=...> que estiverem dentro de "raiz" */
+  function preencherArquivos(raiz) {
+    Array.prototype.forEach.call((raiz || document).querySelectorAll('[data-arq]'), function (el) {
+      var ref; try { ref = JSON.parse(el.getAttribute('data-arq')); } catch (e) { return; }
+      el.removeAttribute('data-arq');
+      if (el.tagName === 'IMG') { arquivoUrl(ref).then(function (u) { el.src = u; }).catch(function () { el.alt = 'imagem indisponível'; }); return; }
+      /* link (catálogo em PDF): só baixa quando a pessoa toca */
+      if (ref.pub && ref.url) { el.href = ref.url; return; }
+      el.addEventListener('click', function (e) {
+        e.preventDefault();
+        var w = null; try { w = g.open('', '_blank'); } catch (x) {}
+        if (w) { try { w.document.write('<p style="font:16px system-ui;padding:20px">Abrindo o arquivo…</p>'); } catch (x) {} }
+        arquivoUrl(ref).then(function (u) { if (w) w.location.href = u; else g.location.href = u; })
+          .catch(function (err) { if (w) w.close(); alert((err && err.message) || 'Não consegui abrir o arquivo.'); });
+      });
+    });
+  }
+
   /* faixa fixa avisando que a tela é a visão de outra pessoa (aparece em todas as páginas) */
   function faixaVisao() {
     var v = visao(), f = document.getElementById('stVisaoFaixa');
@@ -185,7 +248,7 @@
   /* ── registro de uso: no máximo 1 linha por pessoa/tela a cada 30 min; só com o crachá da própria pessoa
      (nunca no "Ver como"). Não pede PIN e não mostra nada: se não houver crachá, simplesmente não registra. ── */
   var TELAS_ARQ = { 'index.html': 'inicio', '': 'inicio', 'painel.html': 'painel', 'ranking.html': 'ranking', 'niveis.html': 'niveis', 'pdi.html': 'pdi',
-    'semana.html': 'semana', 'tv.html': 'tv', 'agenda.html': 'agenda', 'proposta.html': 'proposta', 'uso.html': 'uso', 'cadastro.html': 'cadastro', 'pontos.html': 'pontos' };
+    'semana.html': 'semana', 'tv.html': 'tv', 'agenda.html': 'agenda', 'proposta.html': 'proposta', 'uso.html': 'uso', 'cadastro.html': 'cadastro', 'pontos.html': 'pontos', 'conteudo.html': 'conteudo' };
   function registrar(tela) {
     try {
       if (visao()) return;
@@ -202,5 +265,6 @@
   setTimeout(function () { var t = telaAtual(); if (t) registrar(t); }, 2500);
 
   g.STDados = { URL: URL_DADOS, chamar: chamar, entrar: entrar, cracha: cracha, esquecer: esquecer, perfil: perfil, crachaGuardado: crachaGuardado,
-    visao: visao, sessaoVisao: sessaoVisao, semCache: semCache, limparCache: limparCache, entrarVisao: entrarVisao, sairVisao: sairVisao, ehCoordReal: ehCoordReal, faixaVisao: faixaVisao, registrar: registrar };
+    visao: visao, sessaoVisao: sessaoVisao, semCache: semCache, limparCache: limparCache, entrarVisao: entrarVisao, sairVisao: sairVisao, ehCoordReal: ehCoordReal, faixaVisao: faixaVisao, registrar: registrar,
+    atualizarPerfil: atualizarPerfil, ehMkt: ehMkt, arquivoUrl: arquivoUrl, preencherArquivos: preencherArquivos };
 })(window);

@@ -1999,7 +1999,7 @@ html[data-tema="escuro"] .dpq, html[data-theme="dark"] .dpq{border-color:#5a4a1c
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 <script src="st-hora.js?v=1"></script>
 <script>try{ STHora.relogio(document.getElementById('horaBR')); }catch(e){}</script>
-<script src="st-dados.js?v=90"></script>
+<script src="st-dados.js?v=91"></script>
 <script src="st-novidades.js?v=1"></script>
 <script src="st-anima.js?v=3"></script>
 <script src="st-mascote.js?v=2"></script>
@@ -9251,6 +9251,11 @@ syncNav();
         <span class="ini-txt"><span class="ini-nm">Central de Atualização</span><span class="ini-ds">Todas as bases num lugar só · o que está em dia e o que falta</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
+      <button type="button" class="ini-card feat" data-act="conteudo" data-conteudo="1">
+        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg></span>
+        <span class="ini-txt"><span class="ini-nm">Painel de Conteúdo</span><span class="ini-ds">Banners, fornecedores, provas, vídeos e trilha do Mentor</span></span>
+        <span class="ini-go" aria-hidden="true">&rarr;</span>
+      </button>
       <button type="button" class="ini-card feat" data-act="cadastro" data-lider="1">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-user"/></svg></span>
         <span class="ini-txt"><span class="ini-nm">Cadastro da Equipe</span><span class="ini-ds">Uma pessoa, um código · liberar, arquivar e restaurar</span></span>
@@ -9397,6 +9402,8 @@ html[data-theme="dark"] #ovInicio .ip-k{background:rgba(255,255,255,.06)}
 html[data-theme="dark"] #ovInicio .ip-k small,html[data-theme="dark"] #ovInicio .ip-l.ip-eu .ip-n{color:#9db8ff}
 /* v61 — modo vendedor: só os cards dele, sem o resumo do dia */
 body.modo-vendedor #ovInicio .ini-card:not([data-vend]){display:none!important}
+/* administrador de conteúdo: sem Pontos ST e sem Ranking (são da área comercial) */
+body.modo-mkt #iniPontos,body.modo-mkt #iniTopPts,body.modo-mkt #ovInicio .ini-card[data-act="ranking"]{display:none!important}
 body.modo-vendedor #ovInicio .ini-sec,body.modo-vendedor #ovInicio #iniHoje{display:none!important}
 body.modo-vendedor #ovInicio .ini-grid{margin-top:10px}
 #ovInicio .ini-conta{border:0;background:transparent;color:var(--navy,#1C3F8F);font:800 12.5px inherit;cursor:pointer;padding:6px 10px;margin-bottom:6px;text-decoration:underline}
@@ -9425,14 +9432,20 @@ body.foco .wrap{padding-bottom:40px}
   function ehGer(){ var s=sessao(); if(!s||ehVend()) return false; return s.escopo==='lojas' || /gerente/i.test(String(s.papel||'')); }
   function ehLider(){ var s=sessao(); if(!s||ehVend()) return false; var p=String(s.papel||'').toLowerCase();
     return s.escopo==='todos' || s.escopo==='lojas' || p.indexOf('coorden')>=0 || p.indexOf('supervis')>=0 || p.indexOf('gerente')>=0 || p==='analista'; }
+  /* nov/2026: administrador de conteúdo (Marketing) — só Mentor, Cadastro da Equipe e Painel de Conteúdo na Gestão */
+  function ehMkt(){ return !!(window.STDados&&STDados.ehMkt&&STDados.ehMkt()); }
   function aplicarGate(){
-    var ver=podeVer(), vend=ehVend();
+    var ver=podeVer(), vend=ehVend(), mkt=ehMkt();
     document.body.classList.toggle('modo-vendedor', vend);
+    document.body.classList.toggle('modo-mkt', mkt);
     Array.prototype.forEach.call(grid.querySelectorAll('[data-gate]'),function(c){
       c.style.display = (ver || (vend && c.hasAttribute('data-vend')) || (ehGer() && c.hasAttribute('data-ger'))) ? '' : 'none';
     });
     Array.prototype.forEach.call(grid.querySelectorAll('[data-lider]'),function(c){
-      c.style.display = ehLider() ? '' : 'none';
+      c.style.display = (ehLider() || (mkt && c.getAttribute('data-act')==='cadastro')) ? '' : 'none';
+    });
+    Array.prototype.forEach.call(grid.querySelectorAll('[data-conteudo]'),function(c){
+      var s=sessao(); c.style.display = (mkt || (s&&!ehVend()&&s.escopo==='todos'&&String(s.papel||'').toLowerCase()!=='analista')) ? '' : 'none';
     });
     /* nov/2026: só a coordenação (o analista não publica) */
     Array.prototype.forEach.call(grid.querySelectorAll('[data-coordonly]'),function(c){
@@ -9470,6 +9483,8 @@ body.foco .wrap{padding-bottom:40px}
     ov.classList.remove('aberto'); ov.setAttribute('aria-hidden','true');
     document.body.style.overflow=''; }
   window.abrirInicio=abrirInicio; window.fecharInicio=fecharInicio;
+  /* o perfil de administrador de conteúdo pode chegar depois do login: confere e refaz a tela inicial */
+  try{ window.addEventListener('st-perfil',function(){ aplicarGate(); }); setTimeout(function(){ if(window.STDados&&STDados.atualizarPerfil) STDados.atualizarPerfil(); },1500); }catch(e){}
 
   // overlay de Niveis (espelha o do Painel)
   var ovN=document.getElementById('ovNiveis'), ifrN=document.getElementById('ifrNiveis'),
@@ -9530,6 +9545,12 @@ body.foco .wrap{padding-bottom:40px}
     if(!ovD||!ifrD) return; titOv('Cadastro da Equipe · Só Tintas');
     var tema=(window.STtema?window.STtema.get():'light');
     ifrD.setAttribute('src','cadastro.html?tema='+tema+'&v='+Date.now());
+    ovD.style.display='flex'; document.body.style.overflow='hidden';
+  }
+  function abrirConteudo(){
+    if(!ovD||!ifrD) return; titOv('Painel de Conteúdo · Só Tintas');
+    var tema=(window.STtema?window.STtema.get():'light');
+    ifrD.setAttribute('src','conteudo.html?tema='+tema+'&v='+Date.now());
     ovD.style.display='flex'; document.body.style.overflow='hidden';
   }
   function abrirCentral(){
@@ -9697,6 +9718,7 @@ body.foco .wrap{padding-bottom:40px}
     if(act==='pontos'){ abrirPontos(); return; }
     if(act==='cadastro'){ abrirCadastro(); return; }
     if(act==='central'){ abrirCentral(); return; }
+    if(act==='conteudo'){ abrirConteudo(); return; }
     if(act==='mentor'){ abrirMentor(); return; }
     if(act==='acessos'){ abrirAcessos(); return; }
     if(ehVend()) return;      /* vendedor não entra nas operações da supervisão */
@@ -10139,23 +10161,48 @@ body.modo-vendedor #iniFaixa{margin-top:2px}
   var LATA='';
   var f=document.createElement('div'); f.id='iniFaixa';
   f.innerHTML='<div class="fx-varre"></div><span class="fx-tag">Só Tintas</span><h2>Colorindo Vidas e Realizando Sonhos</h2><p>Cada atendimento pinta um sonho. Bom trabalho hoje!</p>'+LATA;
-  /* carrossel: a faixa principal é o 1º slide; depois as campanhas (troca a cada 3 s) */
+  /* carrossel: a faixa principal é o 1º slide; depois as campanhas (troca a cada 3 s).
+     nov/2026: a lista vem do Painel de Conteúdo (tabela "banners"); esta é a reserva até o servidor responder */
   var BANNERS=[['acelera-coral','Acelera Coral · Copa Só Tintas de Kart · 01/10 a 22/11/26'],/* ['venda-direta-coral','Venda Direta Coral · novos CNPJs · R$ 500 por venda acima de R$ 10 mil'] — fora do ar por enquanto (06/11/2026) */
     ['pintor-cadastrado','Pintor cadastrado, prêmio garantido · R$ 5 por cadastro Citel, R$ 10 a partir do 11º'],['pix-semanal','Pix Semanal · bônus extra por antecipação'],
     ['elite-das-vendas','Elite das Vendas · premiação mensal e trimestral'],['trinca-de-ouro','Trinca de Ouro · maior venda CNPJ da semana'],
     ['boca-de-caixa-suvinil','Boca de Caixa Suvinil · balde R$ 10, galão R$ 5, bônus liberado ao acumular R$ 20']];
+  window.ST_BANNERS_PADRAO=BANNERS.map(function(b,i){ return { id:'b-'+b[0], titulo:b[1], src:'banners/'+b[0]+'.webp?v=1', ordem:i+1, ativo:true }; });
   var car=document.createElement('div'); car.id='iniBanners'; car.setAttribute('role','region'); car.setAttribute('aria-roledescription','carrossel'); car.setAttribute('aria-label','Campanhas Só Tintas');
   var s0=document.createElement('div'); s0.className='bn-slide on'; s0.appendChild(f); car.appendChild(s0);
-  BANNERS.forEach(function(b){ var d=document.createElement('div'); d.className='bn-slide'; d.setAttribute('aria-hidden','true');
-    d.innerHTML='<img src="banners/'+b[0]+'.webp?v=1" alt="'+b[1]+'" loading="lazy" decoding="async">'; car.appendChild(d); });
-  var dots=document.createElement('div'); dots.className='bn-dots'; car.appendChild(dots);
+  var dots=document.createElement('div'); dots.className='bn-dots';
   body.insertBefore(car, body.firstChild);
   f.addEventListener('click',function(){ f.querySelector('.fx-varre').style.animation='none'; void f.offsetWidth; f.querySelector('.fx-varre').style.animation=''; });
+  function hojeSP(){ try{ return new Date().toLocaleDateString('sv-SE',{timeZone:'America/Sao_Paulo'}); }catch(e){ return new Date().toISOString().slice(0,10); } }
+  function vale(b){ var h=hojeSP(); return b && b.ativo!==false && (!b.inicio||b.inicio<=h) && (!b.fim||b.fim>=h) && (b.src||b.arq); }
+  var i=0, tm=0, pausa=false, assin='';
+  function slides(){ return car.querySelectorAll('.bn-slide'); }
+  function montarBanners(lista){
+    lista=(lista||[]).filter(vale).sort(function(a,b){ return (Number(a.ordem)||0)-(Number(b.ordem)||0); });
+    var a=JSON.stringify(lista); if(a===assin) return; assin=a;
+    Array.prototype.forEach.call(car.querySelectorAll('.bn-slide:not(:first-child)'),function(x){ x.remove(); });
+    lista.forEach(function(b){ var d=document.createElement('div'); d.className='bn-slide'; d.setAttribute('aria-hidden','true');
+      var img=document.createElement('img'); img.alt=b.titulo||'Campanha Só Tintas'; img.loading='lazy'; img.decoding='async';
+      if(b.src) img.src=b.src; else if(window.STDados&&STDados.arquivoUrl) STDados.arquivoUrl(b.arq).then(function(u){ img.src=u; }).catch(function(){ d.remove(); refazerDots(); });
+      if(b.link){ d.style.cursor='pointer'; d.setAttribute('role','link'); d.tabIndex=0; var abre=function(){ try{ window.open(b.link,'_blank','noopener'); }catch(e){} };
+        d.addEventListener('click',abre); d.addEventListener('keydown',function(e){ if(e.key==='Enter') abre(); }); }
+      d.appendChild(img); car.insertBefore(d,dots.parentNode===car?dots:null); });
+    if(dots.parentNode!==car) car.appendChild(dots);
+    refazerDots(); mostra(0);
+  }
+  function refazerDots(){ dots.innerHTML=''; var n=slides().length; for(var k=0;k<n;k++){ var bt=document.createElement('button'); bt.type='button'; bt.setAttribute('aria-label','Banner '+(k+1)+' de '+n); bt.dataset.i=k; dots.appendChild(bt); } dots.style.display=n<2?'none':''; }
+  function mostra(j){ var sl=slides(), n=sl.length, ds=dots.querySelectorAll('button'); if(!n) return; i=(j+n)%n; for(var k=0;k<n;k++){ sl[k].classList.toggle('on',k===i); sl[k].setAttribute('aria-hidden',k===i?'false':'true'); if(ds[k]) ds[k].setAttribute('aria-current',k===i?'true':'false'); } }
+  var LS_BN='st_banners_v1', guardados=null; try{ guardados=JSON.parse(localStorage.getItem(LS_BN)||'null'); }catch(e){}
+  montarBanners(Array.isArray(guardados)?guardados:window.ST_BANNERS_PADRAO);
+  /* pede a lista do Painel de Conteúdo (sem pedir PIN: só quem já tem crachá) */
+  function puxarBanners(){
+    if(!window.STDados||!STDados.crachaGuardado||!STDados.crachaGuardado()) return;
+    STDados.chamar('conteudoLer').then(function(r){ if(!r||!r.ok) return; var L=r.cont&&r.cont.banners; if(!Array.isArray(L)) L=window.ST_BANNERS_PADRAO;
+      try{ localStorage.setItem(LS_BN,JSON.stringify(L)); }catch(e){} montarBanners(L); }).catch(function(){});
+  }
+  setTimeout(puxarBanners,1200); setInterval(function(){ if(ov.classList.contains('aberto')&&!document.hidden) puxarBanners(); },15*60000);
+  window.addEventListener('message',function(e){ if(e&&e.data&&e.data.st_banners) puxarBanners(); });
   (function(){
-    var sl=car.querySelectorAll('.bn-slide'), n=sl.length, i=0, tm=0, pausa=false;
-    for(var k=0;k<n;k++){ var bt=document.createElement('button'); bt.type='button'; bt.setAttribute('aria-label','Banner '+(k+1)+' de '+n); bt.dataset.i=k; dots.appendChild(bt); }
-    var ds=dots.querySelectorAll('button');
-    function mostra(j){ i=(j+n)%n; for(var k=0;k<n;k++){ sl[k].classList.toggle('on',k===i); sl[k].setAttribute('aria-hidden',k===i?'false':'true'); ds[k].setAttribute('aria-current',k===i?'true':'false'); } }
     function aberto(){ return ov.classList.contains('aberto') && !document.hidden; }
     function ciclo(){ clearTimeout(tm); tm=setTimeout(function(){ if(!pausa && aberto()) mostra(i+1); ciclo(); },3000); }
     dots.addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return; mostra(+b.dataset.i); ciclo(); });

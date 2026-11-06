@@ -2,6 +2,33 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v147",
+      "data": "06/11/2026",
+      "hora": "03:30",
+      "itens": [
+        {
+          "painel": "Painel de Conteúdo (novo)",
+          "o_que": "Área para atualizar o app sem programar: banners da tela inicial (imagem, link, datas de entrada e saída, ordem), fornecedores com logo, apresentação, catálogos em PDF, vídeos e produtos, provas geradas pela IA a partir de um arquivo (PDF, Word, PowerPoint, Excel ou foto) com revisão antes de publicar, e a videoteca do Mentor.",
+          "para": [
+            "coord",
+            "mkt"
+          ]
+        },
+        {
+          "painel": "Perfil Marketing",
+          "o_que": "Novo perfil de administrador de conteúdo: usa o Painel de Conteúdo, edita a trilha do Mentor e inclui, libera e arquiva pessoas no Cadastro da Equipe (menos a coordenação). Não vê vendas, PDI, ranking, níveis nem bônus. A coordenação escolhe quem é em Painel de Conteúdo → Quem administra.",
+          "para": [
+            "coord",
+            "mkt"
+          ]
+        },
+        {
+          "painel": "Mentor ST PRO",
+          "o_que": "No Assessor → Produtos, cada fornecedor mostra o portfólio: logo, apresentação, catálogos e vídeos."
+        }
+      ]
+    },
+    {
       "v": "ast-v146",
       "data": "06/11/2026",
       "hora": "01:10",

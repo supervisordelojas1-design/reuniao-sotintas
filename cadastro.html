@@ -116,7 +116,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 </script>
 
 <script src="st-hora.js?v=1"></script>
-<script src="st-dados.js?v=90"></script>
+<script src="st-dados.js?v=91"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════
    CADASTRO DA EQUIPE — uma pessoa, um código. A coordenação corrige nomes,
@@ -137,12 +137,16 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
   function sessao(){ try{ return JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); }catch(e){ return null; } }
   function toast(m){ var t=document.createElement('div'); t.className='tip'; t.style.cssText='left:0;right:0;margin:auto;bottom:18px;top:auto;width:max-content;max-width:calc(100% - 24px)'; t.setAttribute('role','status'); t.textContent=m; document.body.appendChild(t); setTimeout(function(){t.remove();},3200); }
   var coord=function(){ return D&&D.perfil==='coord'&&!(window.STDados&&STDados.visao&&STDados.visao()); };
+  /* nov/2026: administrador de conteúdo (Marketing) — inclui, edita, libera e arquiva na rede toda, menos a coordenação */
+  var mkt=function(){ return D&&D.perfil==='mkt'&&!(window.STDados&&STDados.visao&&STDados.visao()); };
+  var adm=function(){ return coord()||mkt(); };
+  var podeEditar=function(p){ return coord()||(mkt()&&p.cargo!=='coord'); };
   /* nov/2026: arquivar/restaurar — coordenação: rede · supervisor: vendedores e gerentes da carteira · gerente: vendedores da loja */
   function podeArquivar(p){
     if(!D||(window.STDados&&STDados.visao&&STDados.visao())) return false;
     var s=sessao(), eu=sem(s&&s.nome||'');
     if(eu&&[p.nome].concat(p.apelidos||[]).some(function(n){return sem(n)===eu;})) return false;
-    if(D.perfil==='coord') return p.cargo!=='coord';
+    if(D.perfil==='coord'||D.perfil==='mkt') return p.cargo!=='coord';
     if(D.perfil==='sup') return p.cargo==='vend'||p.cargo==='ger';
     if(D.perfil==='ger') return p.cargo==='vend';
     return false;
@@ -163,10 +167,11 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
   }
 
   function montar(){
-    var P=D.pessoas, rot=(D.perfil==='coord'||D.perfil==='anl')?'Rede Só Tintas':D.perfil==='sup'?'Sua carteira':'Sua loja';
+    var P=D.pessoas, rot=(D.perfil==='coord'||D.perfil==='anl'||D.perfil==='mkt')?'Rede Só Tintas':D.perfil==='sup'?'Sua carteira':'Sua loja';
     var nAt=P.filter(function(p){return p.ativo;}).length;
     $('sub').textContent=rot+' · '+nAt+' pessoas ativas';
     var h='';
+    if(mkt()) h+='<div class="linha"><button class="btnp azul" type="button" data-novo="1">＋ Nova pessoa</button><span class="sub">Inclua quem entrou, libere o acesso com um PIN inicial e arquive quem saiu. A coordenação fica de fora.</span></div>';
     if(coord()) h+='<div class="linha"><button class="btnp azul" type="button" data-novo="1">＋ Nova pessoa</button><button class="btnp" type="button" data-sinc="1">↻ Atualizar das bases</button><span class="sub">As bases (vendas, equipe e logins) entram sozinhas de hora em hora. O que você corrige aqui fica travado.</span></div>';
     /* placar */
     var vend=P.filter(function(p){return p.ativo&&p.cargo==='vend';}), sAc=vend.filter(function(p){return p.liberado===false;}).length;
@@ -205,12 +210,15 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
     var ac=p.cargo==='vend'&&D.liberadosConhecidos?(p.liberado?'<span class="chip s-ativo">✓ com acesso</span>':'<span class="chip s-semacesso">🔒 sem acesso</span>'):'';
     var h='<li style="display:block"><div class="linha" style="justify-content:space-between"><span><b>'+esc(p.nome)+'</b> <span class="cod">'+esc(p.codigo)+'</span> <span class="sub">'+esc(CARGO[p.cargo]||p.cargo)+(p.cargo!=='vend'&&p.lojas.length?' · lojas '+esc(p.lojas.join(', ')):'')+(p.cargo!=='sup'&&p.supervisor?' · sup. '+esc(p.supervisor):'')+'</span>'+
       (p.travado?' <span class="sub" title="Corrigido pela coordenação">🔒</span>':'')+'</span><span class="linha">'+(function(){ var x=projVend(p); return x==null?'':'<span class="sub">projeção <b style="color:'+corPct(x)+'">'+Math.round(x*100)+'%</b></span>'; })()+ac+'<span class="sub">'+esc(quando(p.ultimo))+'</span>'+
-      (coord()?'<button class="btnp" type="button" data-ed="'+esc(p.codigo)+'">editar</button>':'')+
-      (p.ativo&&p.cargo==='vend'&&p.liberado===false&&!(STDados.visao&&STDados.visao())?'<button class="btnp verde" type="button" data-lib="'+esc(p.codigo)+'">Liberar acesso</button>':'')+
+      (podeEditar(p)?'<button class="btnp" type="button" data-ed="'+esc(p.codigo)+'">editar</button>':'')+
+      (mkt()&&p.ativo&&p.cargo!=='coord'?'<button class="btnp verde" type="button" data-lib="'+esc(p.codigo)+'" title="Cria o login ou dá um PIN novo">'+(p.cargo==='vend'&&p.liberado===false?'Liberar acesso':'Acesso / novo PIN')+'</button>':'')+
+      (!mkt()&&p.ativo&&p.cargo==='vend'&&p.liberado===false&&!(STDados.visao&&STDados.visao())?'<button class="btnp verde" type="button" data-lib="'+esc(p.codigo)+'">Liberar acesso</button>':'')+
       (podeArquivar(p)?(p.ativo?'<button class="btnp" type="button" data-arq="'+esc(p.codigo)+'" title="Tira o acesso e tira dos painéis; o histórico fica">Arquivar</button>':'<button class="btnp verde" type="button" data-arq="'+esc(p.codigo)+'">Restaurar</button>'):'')+'</span></div>';
     if(!p.ativo&&p.origem&&/arquivado por/.test(p.origem)) h+='<div class="apel">'+esc((p.origem.match(/arquivado por .*$/)||[''])[0])+'</div>';
     if(p.apelidos&&p.apelidos.length) h+='<div class="apel">também aparece como: '+esc(p.apelidos.join(' · '))+'</div>';
-    if(ABERTO===p.codigo) h+='<div class="lib"><input id="libPin" inputmode="numeric" maxlength="6" placeholder="PIN inicial" aria-label="PIN inicial do vendedor"><input id="libMeu" type="password" inputmode="numeric" maxlength="6" placeholder="Seu PIN" aria-label="Seu PIN para confirmar"><button class="btnp azul" type="button" data-libok="'+esc(p.codigo)+'">Confirmar</button><button class="btnp" type="button" data-libx="1">Cancelar</button>'+
+    if(ABERTO===p.codigo&&mkt()) h+='<div class="lib"><input id="libPin" inputmode="numeric" maxlength="6" placeholder="PIN inicial" aria-label="PIN inicial"><button class="btnp azul" type="button" data-libok="'+esc(p.codigo)+'">Confirmar</button><button class="btnp" type="button" data-libx="1">Cancelar</button>'+
+      '<span class="sub" style="flex-basis:100%">'+esc(p.nome)+' entra no Só Tintas App com este nome e este PIN; no primeiro acesso o app pede para trocar. Quem já tem login recebe o PIN novo.</span>'+(ERRO_LIB[p.codigo]?'<span class="ruim" style="flex-basis:100%">'+esc(ERRO_LIB[p.codigo])+'</span>':'')+'</div>';
+    else if(ABERTO===p.codigo) h+='<div class="lib"><input id="libPin" inputmode="numeric" maxlength="6" placeholder="PIN inicial" aria-label="PIN inicial do vendedor"><input id="libMeu" type="password" inputmode="numeric" maxlength="6" placeholder="Seu PIN" aria-label="Seu PIN para confirmar"><button class="btnp azul" type="button" data-libok="'+esc(p.codigo)+'">Confirmar</button><button class="btnp" type="button" data-libx="1">Cancelar</button>'+
       '<span class="sub" style="flex-basis:100%">O vendedor entra no Assistente ST com o nome <b>'+esc(p.nome)+'</b> e este PIN; no primeiro acesso o app pede para trocar.</span>'+(ERRO_LIB[p.codigo]?'<span class="ruim" style="flex-basis:100%">'+esc(ERRO_LIB[p.codigo])+'</span>':'')+'</div>';
     if(ARQ===p.codigo) h+=p.ativo
       ? '<div class="lib" role="group" aria-label="Arquivar '+esc(p.nome)+'"><span class="sub" style="flex-basis:100%"><b>Arquivar '+esc(p.nome)+'?</b> Ele perde o acesso ao app na hora e sai do cadastro ativo. O histórico (vendas, PDI, ranking) fica guardado e dá para restaurar depois.</span><button class="btnp azul" type="button" data-arqok="'+esc(p.codigo)+'">Sim, arquivar</button><button class="btnp" type="button" data-arqx="1">Cancelar</button>'+(ERRO_ARQ[p.codigo]?'<span class="ruim" style="flex-basis:100%">'+esc(ERRO_ARQ[p.codigo])+'</span>':'')+'</div>'
@@ -244,12 +252,12 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
     var outros=D.pessoas.filter(function(x){return x.codigo!==p.codigo&&x.ativo&&(x.cargo===p.cargo);});
     $('modal').innerHTML='<div class="caixa" role="dialog" aria-modal="true" aria-labelledby="mdTit"><h2 id="mdTit">'+(codigo?'Editar '+esc(p.codigo):'Nova pessoa')+'</h2>'+
       '<label class="campo">Nome oficial<input id="fNome" value="'+esc(p.nome)+'"></label>'+
-      '<label class="campo">Cargo<select id="fCargo">'+Object.keys(CARGO).map(function(k){return '<option value="'+k+'"'+(p.cargo===k?' selected':'')+'>'+CARGO[k]+'</option>';}).join('')+'</select></label>'+
+      '<label class="campo">Cargo<select id="fCargo">'+Object.keys(CARGO).filter(function(k){ return !mkt()||k!=='coord'; }).map(function(k){return '<option value="'+k+'"'+(p.cargo===k?' selected':'')+'>'+CARGO[k]+'</option>';}).join('')+'</select></label>'+
       '<label class="campo">Lojas (códigos, separados por vírgula)<input id="fLojas" value="'+esc(p.lojas.join(', '))+'" placeholder="ex.: 034"></label>'+
       '<label class="campo">Supervisor<input id="fSup" value="'+esc(p.supervisor)+'"></label>'+
       '<label class="campo">Também aparece como (um por linha)<textarea id="fApel">'+esc((p.apelidos||[]).join('\n'))+'</textarea></label>'+
       '<label class="linha" style="font-size:13px;margin:6px 0"><input type="checkbox" id="fAtivo"'+(p.ativo?' checked':'')+'> Ativo</label>'+
-      (codigo&&outros.length?'<label class="campo">Juntar com outro cadastro da mesma pessoa<select id="fJuntar"><option value="">—</option>'+outros.map(function(x){return '<option value="'+esc(x.codigo)+'">'+esc(x.nome)+' ('+esc(x.codigo)+')</option>';}).join('')+'</select></label>':'')+
+      (codigo&&outros.length&&coord()?'<label class="campo">Juntar com outro cadastro da mesma pessoa<select id="fJuntar"><option value="">—</option>'+outros.map(function(x){return '<option value="'+esc(x.codigo)+'">'+esc(x.nome)+' ('+esc(x.codigo)+')</option>';}).join('')+'</select></label>':'')+
       '<p class="ruim" id="fErro" role="alert"></p><div class="linha" style="justify-content:flex-end"><button class="btnp" type="button" data-fx="1">Cancelar</button><button class="btnp azul" type="button" data-fok="'+esc(p.codigo)+'">Salvar</button></div></div>';
     $('modal').hidden=false; setTimeout(function(){ $('fNome').focus(); },30);
   }
@@ -263,6 +271,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
   }
   /* ── liberar acesso de vendedor (mesmo serviço do card "Acesso dos vendedores") ── */
   function liberar(codigo){
+    if(mkt()) return liberarMkt(codigo);
     var p=D.pessoas.filter(function(x){return x.codigo===codigo;})[0], s=sessao(), pin=$('libPin').value.trim(), meu=$('libMeu').value.trim();
     ERRO_LIB[codigo]='';
     if(!/^\d{4,6}$/.test(pin)){ ERRO_LIB[codigo]='O PIN inicial tem de 4 a 6 dígitos.'; montar(); return; }
@@ -273,6 +282,18 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
         if(!r||!r.ok) throw new Error((r&&r.erro)||'Não consegui gravar.');
         ABERTO=null; toast('✓ '+(r.nome||p.nome)+' liberado. Passe o nome e o PIN '+pin+' para ele.'); carregar();
       }).catch(function(e){ ERRO_LIB[codigo]=e.message||'Sem conexão: nada foi gravado.'; montar(); });
+  }
+
+  /* administrador de conteúdo: o crachá confirma quem pede (sem PIN de novo); vale para qualquer cargo, menos coordenação */
+  function liberarMkt(codigo){
+    var p=D.pessoas.filter(function(x){return x.codigo===codigo;})[0], pin=$('libPin').value.trim();
+    ERRO_LIB[codigo]='';
+    if(!/^\d{4,6}$/.test(pin)){ ERRO_LIB[codigo]='O PIN inicial tem de 4 a 6 dígitos.'; montar(); return; }
+    var bt=document.querySelector('[data-libok]'); if(bt){ bt.disabled=true; bt.textContent='Gravando…'; }
+    STDados.chamar('pessoaLiberar',{codigo:codigo,pin:pin,loja:LOJAS[p.lojas[0]]||p.lojas[0]||''}).then(function(r){
+      if(!r||!r.ok) throw new Error((r&&r.erro)||'Não consegui gravar.');
+      ABERTO=null; toast('✓ '+(r.nome||p.nome)+(r.novo?' liberado':' com PIN novo')+'. Passe o nome e o PIN '+pin+' para ele.'); carregar();
+    }).catch(function(e){ ERRO_LIB[codigo]=e.message||'Sem conexão: nada foi gravado.'; montar(); });
   }
 
   document.addEventListener('click',function(e){
