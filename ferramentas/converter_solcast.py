@@ -72,12 +72,12 @@ def indicadores(txt, saida):
 
     def total(G, f0, f1):
         t = [f0, f1] + [None] * (len(cab) - 2)
-        for j in range(2, len(cab)):
-            if j not in pct and cab[j] not in ('$ Ticket CPF', 'Itens CPF'):
+        ADIT = ('$ Meta', '$ Faturado', '$ Meta restante', '$ Med. 90 dias', '$ Meta CNPJ', '$ Fat. CNPJ', 'Qtd. Atendimentos')
+        for j in range(2, len(cab)):   # só o que soma de verdade; contagens de clientes e médias ficam em branco
+            if cab[j] in ADIT:
                 t[j] = soma([g[j] for g in G])
         g = lambda n: t[ix[n]] if n in ix else None
-        regras = {'% Alc. Meta': ('$ Faturado', '$ Meta'), '% Alc. Meta CNPJ': ('$ Fat. CNPJ', '$ Meta CNPJ'), '% Rep. Fat. CNPJ': ('$ Fat. CNPJ', '$ Faturado'),
-                  '% Clientes ativos CNPJ': ('Clientes ativos CNPJ', 'Clientes cadastrados CNPJ'), '% Positivados CNPJ': ('Clientes positivados CNPJ', 'Clientes ativos CNPJ')}
+        regras = {'% Alc. Meta': ('$ Faturado', '$ Meta'), '% Alc. Meta CNPJ': ('$ Fat. CNPJ', '$ Meta CNPJ'), '% Rep. Fat. CNPJ': ('$ Fat. CNPJ', '$ Faturado')}
         for k, (a, b) in regras.items():
             if k in ix:
                 t[ix[k]] = div(g(a), g(b))

@@ -45,8 +45,9 @@
       var tipo = await achar(pf, 'PARAM_tipo_meta', 'nome_tipo_meta');
       await tipo.setSlicerState({ filters: [bf('PARAM_tipo_meta', 'nome_tipo_meta', ['POR EMPRESA'])] }); await espera(8000);
       J.out.META = await csv(await tabela(pf, 'META'));
-      J.out.INDICADORES_API = '';   /* só para conferência, se precisar */
-      await tipo.setSlicerState({ filters: [bf('PARAM_tipo_meta', 'nome_tipo_meta', ['POR VENDEDOR'])] }); await espera(6000);
+      await tipo.setSlicerState({ filters: [bf('PARAM_tipo_meta', 'nome_tipo_meta', ['POR VENDEDOR'])] }); await espera(8000);
+      /* reserva: INDICADORES por vendedor (sem os totais por loja que não somam) — só usado se o export da tela falhar */
+      J.out.INDICADORES = await csv(await tabela(pf, 'INDICADORES'));
       try { J.out.ULT = await csv(await tabela(pf, 'Ultima atualização')); } catch (e) {}
       /* B) Painel indicadores: carteira CNPJ de cada filial */
       J.fase = 'painel indicadores';
@@ -68,7 +69,7 @@
       await (await achar(pi, 'd_tempo', 'nome_mes_filtro')).setSlicerState({ filters: [bf('d_tempo', 'nome_mes_filtro', ['ATUAL'])] });
       /* pacote para a pasta Downloads */
       var hoje = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' }).replace(/-/g, '');
-      var P = { gerado: new Date().toISOString(), mes_atual: new Date().getMonth() + 1, mes_filtro: MES, ULT: J.out.ULT, META: J.out.META, CART: J.out.CART };
+      var P = { gerado: new Date().toISOString(), mes_atual: new Date().getMonth() + 1, mes_filtro: MES, ULT: J.out.ULT, META: J.out.META, INDICADORES: J.out.INDICADORES, CART: J.out.CART };
       var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(P)], { type: 'application/json' }));
       a.download = 'solcast_pacote_' + hoje + '.json'; document.body.appendChild(a); a.click();
       J.arquivo = a.download; J.fase = 'pronto';
