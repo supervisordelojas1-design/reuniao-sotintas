@@ -94,7 +94,8 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 a.btnp{text-decoration:none;display:inline-flex;align-items:center}
 .btnp:disabled{opacity:.45;cursor:default}
 .lista li.item{align-items:center;flex-wrap:wrap}
-.lista li.item>span:last-child{color:inherit;white-space:normal}
+.lista li.item span{text-align:left;white-space:normal;color:inherit}
+.lista li.item span.sub{color:var(--muted)}
 .lista li span.sub{display:block;font-size:12px}
 .acoes{gap:6px!important;justify-content:flex-end}
 .corta{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:min(52vw,460px)}
