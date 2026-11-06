@@ -2,6 +2,20 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v145",
+      "data": "06/11/2026",
+      "hora": "00:40",
+      "itens": [
+        {
+          "painel": "Tela inicial",
+          "o_que": "O banner Venda Direta Coral saiu do carrossel por enquanto. Ficam a faixa principal e 5 campanhas.",
+          "para": [
+            "coord"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v144",
       "data": "06/11/2026",
       "hora": "00:45",
