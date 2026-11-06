@@ -2,6 +2,17 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v146",
+      "data": "06/11/2026",
+      "hora": "01:10",
+      "itens": [
+        {
+          "painel": "Tela inicial",
+          "o_que": "Novo banner no carrossel: Boca de Caixa Suvinil — balde R$ 10,00, galão R$ 5,00, bonificação liberada ao acumular R$ 20,00, pagamento toda 3ª sexta-feira do mês."
+        }
+      ]
+    },
+    {
       "v": "ast-v145",
       "data": "06/11/2026",
       "hora": "00:40",

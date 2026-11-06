@@ -10142,7 +10142,8 @@ body.modo-vendedor #iniFaixa{margin-top:2px}
   /* carrossel: a faixa principal é o 1º slide; depois as campanhas (troca a cada 3 s) */
   var BANNERS=[['acelera-coral','Acelera Coral · Copa Só Tintas de Kart · 01/10 a 22/11/26'],/* ['venda-direta-coral','Venda Direta Coral · novos CNPJs · R$ 500 por venda acima de R$ 10 mil'] — fora do ar por enquanto (06/11/2026) */
     ['pintor-cadastrado','Pintor cadastrado, prêmio garantido · R$ 5 por cadastro Citel, R$ 10 a partir do 11º'],['pix-semanal','Pix Semanal · bônus extra por antecipação'],
-    ['elite-das-vendas','Elite das Vendas · premiação mensal e trimestral'],['trinca-de-ouro','Trinca de Ouro · maior venda CNPJ da semana']];
+    ['elite-das-vendas','Elite das Vendas · premiação mensal e trimestral'],['trinca-de-ouro','Trinca de Ouro · maior venda CNPJ da semana'],
+    ['boca-de-caixa-suvinil','Boca de Caixa Suvinil · balde R$ 10, galão R$ 5, bônus liberado ao acumular R$ 20']];
   var car=document.createElement('div'); car.id='iniBanners'; car.setAttribute('role','region'); car.setAttribute('aria-roledescription','carrossel'); car.setAttribute('aria-label','Campanhas Só Tintas');
   var s0=document.createElement('div'); s0.className='bn-slide on'; s0.appendChild(f); car.appendChild(s0);
   BANNERS.forEach(function(b){ var d=document.createElement('div'); d.className='bn-slide'; d.setAttribute('aria-hidden','true');
