@@ -619,7 +619,7 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
   <div class="hdtop">
    <div class="brand">
     <div class="logo">ST</div>
-    <div><h1 id="hTit">Coordenação de Supervisão</h1><span id="hSub">Só Tintas · Painel de Performance · <b style="color:#FFD100">v41</b></span></div>
+    <div><h1 id="hTit">Coordenação de Supervisão</h1><span id="hSub">Só Tintas · Painel de Performance · <b style="color:#FFD100">v42</b></span></div>
    </div>
    <div class="per"><select class="mes" id="selMes" style="display:none" title="Escolher o mês"></select><b id="hPer">—</b><span id="hDias">—</span><span id="btnUp" style="display:none" onclick="abrirUpload()"> · ⚙️ atualizar dados</span><span id="lnkSair" style="display:none" onclick="sairPainel()"> · sair</span></div>
   </div>
@@ -777,7 +777,12 @@ const ORF='Sem vendedor ativo';
 /* Carimbo de atualizacao de cada base. O dia vira as 00:00, entao
    ontem e diferenca de DATA no calendario e nao de 24 horas corridas:
    uma carga as 23h50 de ontem aparece como ontem as 00h10 de hoje. */
-const ATZ={num:(_.t||[])[0]||'',cart:(_.t||[])[1]||'',orc:(_.t||[])[2]||'',niv:(_.t||[])[3]||''};
+const ATZ={num:(_.t||[])[0]||'',cart:(_.t||[])[1]||'',orc:(_.t||[])[2]||'',niv:(_.t||[])[3]||'',sol:(_.t||[])[4]||''};
+/* v42: data e hora da última atualização do Solcast (o mês fechado e o histórico seguem com a data-base) */
+function solTxt(){
+ const m=/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/.exec(String(ATZ.sol||''));
+ return (!m||P.fechado||P.hist)?'':m[3]+'/'+m[2]+'/'+m[1]+' às '+m[4]+'h'+m[5];
+}
 /* O nível (V1–V5 e Ouro/Prata/Bronze) sai da Méd. 90 dias publicada na tela de
    Níveis, não do faturamento do mês que está correndo: a mesma tela mostra
    outubro ao vivo e um nível apurado até setembro. Este rótulo diz de quando é
@@ -1438,7 +1443,7 @@ function painelPrincipal(){
  const pl=n=>(dl[n]/g.nLojas*100).toFixed(1).replace('.',',')+'%';
  let h=`<div class="pp"><div class="pph">
   <div><h2>Painel de Coordenação Comercial</h2>
-   <span>${D.periodo.mes} ${D.periodo.ano} · apurado até ${new Date(D.periodo.dataBase+'T12:00').toLocaleDateString('pt-BR')} · ${UD} de ${UT} dias úteis (${PPCT(RE)} do mês)</span>${selo(ATZ.num,'ppselo')}</div>
+   <span>${D.periodo.mes} ${D.periodo.ano} · apurado até ${solTxt()||new Date(D.periodo.dataBase+'T12:00').toLocaleDateString('pt-BR')} · ${UD} de ${UT} dias úteis (${PPCT(RE)} do mês)</span>${selo(ATZ.num,'ppselo')}</div>
   <div class="ppb">${g.nLojas} lojas · ${g.nSups} supervisores · ${tv} vendedores</div></div>
   <div class="ppg">
    <div class="ppc"><div class="l">Faturado</div><div class="v">${BRL(g.fat)}</div><div class="f">média de ${BRL(g.ritmoReal)} por dia útil</div></div>
@@ -2694,7 +2699,7 @@ function render(){
  pintarAbas();
  const p=D.periodo;
  document.getElementById('hPer').textContent=p.mes+' '+p.ano;
- document.getElementById('hDias').textContent=`até ${new Date(p.dataBase+'T12:00').toLocaleDateString('pt-BR')} · ${p.utDecorridos}/${p.utTotal} dias úteis`
+ document.getElementById('hDias').textContent=`até ${solTxt()||new Date(p.dataBase+'T12:00').toLocaleDateString('pt-BR')} · ${p.utDecorridos}/${p.utTotal} dias úteis`
   +(p.fechado?' · MÊS FECHADO':'')+(p.hist?' · HISTÓRICO':'');
  /* v41: faixa amarela quando a tela mostra um mês do histórico, com o caminho de volta */
  (function(){ var ha=document.getElementById('histAviso');
@@ -2764,7 +2769,7 @@ const rxAlcC=p=>p==null?'':p>=RE?'rx-ok':'rx-bd';
 const rxMetaC=(k,v)=>{const ok=bateMeta(IND.find(x=>x.k==k),v);return ok==null?'':ok?'rx-ok':'rx-bd'};
 const rxCor=c=>RXC[String(c||'').replace('rx-','')]||RXC.mut;
 const rxAgora=()=>{const d=(window.STHora?STHora.data():new Date());return d.toLocaleDateString('pt-BR')+' '+('0'+d.getHours()).slice(-2)+'h'+('0'+d.getMinutes()).slice(-2)};
-const rxDB=()=>new Date(P.dataBase+'T12:00').toLocaleDateString('pt-BR');
+const rxDB=()=>solTxt()||new Date(P.dataBase+'T12:00').toLocaleDateString('pt-BR');
 const rxMes=()=>tcPdf(P.mes)+'/'+P.ano;
 /* ritmo em palavras, como no painel: no ritmo / atenção / abaixo */
 function rxRitmo(pct){ const f=farol(pct); return {c:f.c=='g'?'rx-ok':f.c=='y'?'rx-wn':'rx-bd',t:f.c=='g'?'No ritmo':f.c=='y'?'Atenção':'Abaixo do ritmo'} }
@@ -3292,6 +3297,7 @@ function enviarUpload(){
    .upload64(s.u,s.p,UPK);
  }else{
   var corpo={tipo:'upload64',u:s.u,p:s.p,arquivos:UPK}; if(mesSel) corpo.mes=mesSel;
+  if(!mesSel&&window.__ST_ULT) corpo.ult=String(window.__ST_ULT).trim();   /* v42: data e hora do Solcast, enviada pela rotina */
   postAPI(corpo,fim,
    function(m){st.textContent='✕ '+m;bt.disabled=false});
  }
