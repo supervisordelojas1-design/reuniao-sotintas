@@ -2,6 +2,24 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v149",
+      "data": "08/11/2026",
+      "hora": "11:00",
+      "itens": [
+        {
+          "painel": "Entrada no app",
+          "o_que": "Vendedor agora pode entrar com o código AUTCOM e o PIN; o nome continua funcionando."
+        },
+        {
+          "painel": "Cadastro da Equipe",
+          "o_que": "Comparar com o relatório do RH: mostra quem entrou, saiu ou mudou de loja, e cada mudança é confirmada na hora.",
+          "para": [
+            "coord"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v148",
       "data": "08/11/2026",
       "hora": "09:45",
