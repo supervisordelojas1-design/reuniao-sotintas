@@ -190,6 +190,7 @@ tbody tr[data-ficha]:hover{background:var(--surface2)}
 .tema-n{font-weight:600;font-size:13px}.tema .barra{height:10px}.tema-v{text-align:right;font-variant-numeric:tabular-nums}.tema-v b{display:block}.tema-v small{color:var(--muted);font-size:12px}
 .spark{display:inline-flex;align-items:flex-end;gap:2px;height:26px}.spark i{display:block;width:8px;border-radius:2px 2px 0 0;background:var(--surface2)}
 .spark i.a{background:var(--ok)}.spark i.b{background:var(--warn)}.spark i.c{background:var(--bad)}.spark i.nf{background:var(--neutro)}
+.r-prev{display:flex;flex-direction:column;gap:8px}.r-prev img{width:100%;border:1px solid var(--line);border-radius:6px;background:#fff}
 .avs{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
 .avc{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:4px}
 .avc:hover{background:var(--surface2)}.avc[aria-pressed=true]{background:var(--navybg);border-color:var(--navy);box-shadow:0 0 0 1px var(--navy)}
@@ -224,7 +225,7 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
   <div class="topbar"></div>
   <header>
     <div><div class="eyebrow">Avaliações do time</div><h1>Central de Provas</h1><div class="sub" id="sub">&nbsp;</div></div>
-    <div class="acoes"><div class="seg" id="semanas" role="group" aria-label="Semana"></div><button class="btema" id="btnTema" type="button"><span id="temaIc">🌙</span> <span id="temaTx">Escuro</span></button></div>
+    <div class="acoes"><button class="btema" id="btnRel" type="button" data-relatorio="1" hidden>📑 Relatório</button><div class="seg" id="semanas" role="group" aria-label="Semana"></div><button class="btema" id="btnTema" type="button"><span id="temaIc">🌙</span> <span id="temaTx">Escuro</span></button></div>
   </header>
   <main id="raiz" style="display:flex;flex-direction:column;gap:14px"><p class="sub">Carregando as provas…</p></main>
 </div>
@@ -689,8 +690,7 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
     if(H_CARR) return; H_CARR=true;
     $('raiz').innerHTML=abas()+'<p class="sub">Carregando o histórico…</p>';
     STDados.chamar('provasHistorico').then(function(j){ H_CARR=false; if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não respondeu.');
-      var ORG={}; (ACP||[]).forEach(function(p){ var k=cod3(p.loja); if(p.loja&&!ORG[k]) ORG[k]={sup:p.sup||'',nome:p.lojaNome||''}; });
-      (j.linhas||[]).forEach(function(x){ x.lj=x.l?cod3(x.l):''; x.sp=x.t==='sup'?nm(x.n):((ORG[x.lj]||{}).sup||''); x.ln=(ORG[x.lj]||{}).nome||''; x.nome=nm(x.n); }); H=j;
+      H=prepH(j);
       if(TIPO==='hist'){ ENTRA=true; montarHist(); } })
       .catch(function(e){ H_CARR=false; $('raiz').innerHTML=abas()+'<div class="card"><h2>Não consegui abrir o histórico</h2><p class="sub">'+esc(e.message||e)+'</p></div>'; });
   }
@@ -726,6 +726,145 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
   function fichaHist(p){
     abrirDlg(p.nome,(p.loja?'Loja '+p.loja+(p.ln?' · '+p.ln+' · ':' · '):'')+p.f+' de '+p.n+' provas feitas'+(p.m!=null?' · média '+virg(p.m):''),'<ol class="tempo">'+H.semanas.filter(function(s){return p.sem[s];}).slice().reverse().map(function(s){ var x=p.sem[s]; return '<li class="'+(x.f?(x.a>=6?'ok':'mal'):'')+'"><b>Semana de '+dBr(s)+'</b><small>'+(x.f?'Nota '+virg(x.a):'Não respondida')+'</small></li>'; }).join('')+'</ol>');
   }
+
+  /* ═══ RELATÓRIO — PDF da Central de Provas: geral, por supervisor ou por loja, no recorte do crachá ═══ */
+  var R_LIB_PDF='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', R_LIB_H2C='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', R_LIBS={}, RDOC=null;
+  function rCarrega(src){ if(src===R_LIB_H2C&&typeof html2canvas!=='undefined') return Promise.resolve(); if(src===R_LIB_PDF&&window.jspdf&&window.jspdf.jsPDF) return Promise.resolve();
+    return R_LIBS[src]||(R_LIBS[src]=new Promise(function(ok,erro){ var s=document.createElement('script'); s.src=src; s.onload=ok; s.onerror=function(){ delete R_LIBS[src]; erro(new Error('sem internet para carregar o gerador de PDF')); }; document.head.appendChild(s); })); }
+  function prepH(j){ var ORG={}; (ACP||[]).forEach(function(p){ var k=cod3(p.loja); if(p.loja&&!ORG[k]) ORG[k]={sup:p.sup||'',nome:p.lojaNome||''}; });
+    (j.linhas||[]).forEach(function(x){ x.lj=x.l?cod3(x.l):''; x.sp=x.t==='sup'?nm(x.n):((ORG[x.lj]||{}).sup||''); x.ln=(ORG[x.lj]||{}).nome||''; x.nome=nm(x.n); }); return j; }
+  function rGarantir(op){ var P=[];
+    if(op.trilha&&!MT) P.push(Promise.all([STDados.chamar('mentorLer'),STDados.chamar('conteudoLer').catch(function(){return null;}),carregaBase()]).then(function(rs){ if(rs[0]&&rs[0].ok&&!MT) MT=montarDadosTrilha(rs[0],rs[1]); }).catch(function(){}));
+    if(op.avulsas&&!AV) P.push(STDados.chamar('avulsaResultados').then(function(j){ if(j&&j.ok&&!AV){ AV=j; if(!AV_SEL&&AV.provas.length) AV_SEL=AV.provas[AV.provas.length-1].id; } }).catch(function(){}));
+    if(op.hist&&!H) P.push(STDados.chamar('provasHistorico').then(function(j){ if(j&&j.ok&&!H) H=prepH(j); }).catch(function(){}));
+    return Promise.all(P); }
+  function mesmoSup(a,b){ return !!a&&!!b&&norm(a).split(' ')[0]===norm(b).split(' ')[0]; }
+  function rOk(E){ return function(r){ if(E.tipo==='loja') return cod3(r.loja||r.lj)===E.v; if(E.tipo==='sup') return mesmoSup(r.sup||r.sp,E.v); return true; }; }
+  function rEscopos(){
+    var L={}, S2={}; Object.keys((AC&&AC.lojaSup)||{}).forEach(function(k){ L[cod3(k)]=AC.lojaNome[k]||''; S2[AC.lojaSup[k]]=1; });
+    cru('vend','atual').concat(cru('ger','atual')).forEach(function(r){ if(r.loja&&!(cod3(r.loja) in L)) L[cod3(r.loja)]=r.lojaNome||''; if(r.sup) S2[r.sup]=1; });
+    var o=[]; if(S.perfil==='ger'){ Object.keys(L).sort().forEach(function(k){ o.push({tipo:'loja',v:k,t:'Loja '+k+(L[k]?' · '+L[k]:'')}); }); return o; }
+    o.push({tipo:'geral',v:'',t:S.perfil==='sup'?'Minha carteira (geral)':'Rede Só Tintas (geral)'});
+    if(S.perfil!=='sup') Object.keys(S2).sort().forEach(function(s){ o.push({tipo:'sup',v:s,t:'Supervisor: '+s}); });
+    Object.keys(L).sort().forEach(function(k){ o.push({tipo:'loja',v:k,t:'Loja '+k+(L[k]?' · '+L[k]:'')}); });
+    return o; }
+  function pctTxt(a,n){ return n?Math.round(a/n*100)+'%':'—'; }
+  function rDados(E){
+    var ok=rOk(E), V=cru('vend','atual').filter(ok).map(function(r){ var p=acharPessoa(r.loja,r.nome); r.app=statusApp(p&&p.p); return r; }), G=cru('ger','atual').filter(ok), SP=E.tipo==='loja'?[]:cru('sup','atual').filter(function(r){ return E.tipo==='geral'||mesmoSup(r.sup,E.v); });
+    var T=MT?MT.L.filter(ok):[], HH=H?H.linhas.filter(function(x){return x.t==='vend';}).filter(ok):[];
+    var AVL=AV?AV.provas.map(function(P){ var L=linhasAvulsa(P).filter(ok); return {P:P,L:L,c:ctAv(L)}; }).filter(function(x){return x.L.length;}):[];
+    return {V:V,G:G,SP:SP,T:T,HH:HH,AVL:AVL,cV:conta(V),cG:conta(G),cS:conta(SP),mV:media(V),mG:media(G)}; }
+  function rLeitura(E,D){ var L=[], c=D.cV, n=D.V.length;
+    if(c.aguardando){ var lj={}; D.V.forEach(function(r){ if(r.sit==='aguardando') lj[r.loja]=(lj[r.loja]||0)+1; }); var top=Object.keys(lj).sort(function(a,b){return lj[b]-lj[a];}).slice(0,3);
+      L.push(['Destravar o ritual',c.aguardando+' de '+n+' vendedores esperam o gerente fazer o PDI para a prova abrir'+(E.tipo!=='loja'&&top.length?' (mais em '+top.map(function(k){return k+': '+lj[k];}).join(', ')+')':'')+'.','Supervisor liga para esses gerentes ainda na segunda de manhã e confere o "Fiz o PDI" antes das 12h.']); }
+    if(c.liberado) L.push(['Cobrar quem já pode responder',c.liberado+' vendedores estão com a prova aberta e ainda não responderam.','Usar a lista de pendências deste relatório no grupo da loja, com o prazo.']);
+    if(c.perdeu) L.push(['Prazo perdido',c.perdeu+' provas venceram sem resposta.','Entender o motivo com o gerente (faltou o PDI ou faltou o vendedor) antes de reabrir o prazo.']);
+    if(D.G.length&&!D.cG.respondido) L.push(['Prova dos gerentes parada','Nenhum dos '+D.G.length+' gerentes respondeu a própria prova nesta semana.','Conferir se o supervisor marcou "Fiz o PDI com o gerente": sem isso a prova do gerente nem abre.']);
+    if(D.HH.length){ var TM={}; D.HH.forEach(function(x){ (x.q||[]).forEach(function(q){ var o=TM[q[0]]=TM[q[0]]||{a:0,t:0}; o.t++; o.a+=q[1]; }); }); var pior=Object.keys(TM).filter(function(k){return TM[k].t>=5;}).map(function(k){return {n:H.temas[k],p:TM[k].a/TM[k].t};}).sort(function(a,b){return a.p-b.p;})[0];
+      if(pior&&pior.p<.85) L.push(['Tema para reforçar',pior.n+' tem o menor acerto nas provas ('+Math.round(pior.p*100)+'%).','No próximo PDI, o gerente pede que o vendedor explique esse ponto com as próprias palavras antes de encerrar.']); }
+    if(D.T.length){ var ct=ctMT(D.T); if(ct.nao_iniciou/D.T.length>=.3) L.push(['Trilha Mentor parada',ct.nao_iniciou+' de '+D.T.length+' pessoas não iniciaram a trilha.','Meta curta: todo mundo com o Módulo 1 até sexta, com um padrinho entre os aprovados da loja.']); }
+    if(!L.length) L.push(n?['Ritual em dia','Nada crítico nesta semana.','Manter o ritmo e reconhecer quem fechou 100%.']:['Sem provas de vendedor nesta semana','Nenhum PDI semanal de vendedor foi gerado neste recorte.','Conferir se os vendedores estão com meta lançada no Autcom: sem meta, o PDI não é gerado.']);
+    return L; }
+  function rConteudo(E,op,D){
+    var B=[], t=function(tit,cols,rows,nota){ if(rows.length) B.push({t:'tab',tit:tit,cols:cols,rows:rows,nota:nota||''}); }, b=function(h){ B.push({t:'b',h:h}); };
+    var tile=function(v,l,s,cor){ return '<div class="r-tile"><b style="color:'+(cor||'#16233d')+'">'+v+'</b><span>'+l+'</span><small>'+(s||'')+'</small></div>'; };
+    var cV=D.cV, nV=D.V.length, ct=D.T.length?ctMT(D.T):null;
+    b('<div class="r-tiles">'+tile(pctTxt(cV.respondido,nV),'Vendedores fizeram',cV.respondido+' de '+nV+(D.mV!=null?' · média '+virg(D.mV):''),cV.respondido/Math.max(nV,1)>=.7?'#0B7A55':'#C62828')+
+      (D.G.length?tile(pctTxt(D.cG.respondido,D.G.length),'Gerentes fizeram',D.cG.respondido+' de '+D.G.length,D.cG.respondido/D.G.length>=.7?'#0B7A55':'#C62828'):'')+
+      (D.SP.length?tile(pctTxt(D.cS.respondido,D.SP.length),'Supervisores fizeram',D.cS.respondido+' de '+D.SP.length,D.cS.respondido/D.SP.length>=.7?'#0B7A55':'#C62828'):'')+
+      (ct?tile(pctTxt(ct.aprovado,D.T.length),'Trilha Mentor aprovados',ct.aprovado+' de '+D.T.length,'#1C3F8F'):'')+'</div>');
+    if(op.cons) b('<h3>Leitura do consultor: dos números às ações</h3><ol class="r-cons">'+rLeitura(E,D).map(function(x){ return '<li><b>'+esc(x[0])+'.</b> '+esc(x[1])+'<br><span>Ação:</span> '+esc(x[2])+'</li>'; }).join('')+'</ol>');
+    if(op.sem){
+      if(E.tipo==='geral'){ var SS={}; D.V.concat(D.G).forEach(function(r){ if(r.sup) SS[r.sup]=1; }); var ks=Object.keys(SS);
+        if(ks.length>1) t('Provas semanais por supervisor',['Supervisor','Vendedores fizeram','Média','Esperando o gerente','Gerentes fizeram'].concat(ct?['Trilha aprovados']:[]),
+          ks.map(function(s){ var v=D.V.filter(function(r){return r.sup===s;}), g=D.G.filter(function(r){return r.sup===s;}), c=conta(v), m=media(v), tt=D.T.filter(function(r){return mesmoSup(r.sup,s);});
+            return [{v:s,b:1},c.respondido+' de '+v.length+' ('+pctTxt(c.respondido,v.length)+')',m!=null?virg(m):'—',c.aguardando||'—',conta(g).respondido+' de '+g.length].concat(ct?[ctMT(tt).aprovado+' de '+tt.length]:[]); }).sort(function(a,b){ return parseInt(b[1],10)/Math.max(1,parseInt(b[1].split(' de ')[1],10))-parseInt(a[1],10)/Math.max(1,parseInt(a[1].split(' de ')[1],10)); })); }
+      if(E.tipo!=='loja'){ var LJ={}; D.V.concat(D.G).forEach(function(r){ var k=cod3(r.loja); (LJ[k]=LJ[k]||{v:[],g:[],nome:r.lojaNome,sup:r.sup})[r.tipo==='ger'?'g':'v'].push(r); if(!LJ[k].nome) LJ[k].nome=r.lojaNome; });
+        t('Provas semanais por loja (mais atrasadas primeiro)',['Loja'].concat(E.tipo==='geral'?['Supervisor']:[]).concat(['Vendedores fizeram','Média','Esperando o gerente','Prova do gerente']).concat(ct?['Trilha aprovados']:[]),
+          Object.keys(LJ).map(function(k){ var x=LJ[k], c=conta(x.v), m=media(x.v), g=x.g[0], tt=D.T.filter(function(r){return r.loja===k;});
+            return {p:x.v.length?c.respondido/x.v.length:1,r:[{v:k+(x.nome?' · '+x.nome:''),b:1}].concat(E.tipo==='geral'?[x.sup||'—']:[]).concat([c.respondido+' de '+x.v.length,m!=null?virg(m):'—',c.aguardando||'—',g?(g.aval?g.aval.nota+'/'+g.aval.total:rotSit(g.sit,'ger')):'—']).concat(ct?[ctMT(tt).aprovado+' de '+tt.length]:[])}; })
+          .sort(function(a,b){return a.p-b.p;}).map(function(x){return x.r;})); }
+      var pend=D.V.filter(function(r){return r.sit==='aguardando'||r.sit==='liberado'||r.sit==='nao_feito'||r.sit==='nao_respondeu';}).sort(function(a,b){return (a.loja<b.loja?-1:a.loja>b.loja?1:0)||(ORDEM[a.sit]-ORDEM[b.sit]);});
+      t('Pendências desta semana: vendedores ('+pend.length+')',['Vendedor','Loja','Situação','Próximo passo'],pend.map(function(r){ return [{v:r.nome,b:1},r.loja,{v:rotSit(r.sit,'vend'),c:r.sit==='liberado'?'wn':'bd'},passoSit(r.sit,'vend')]; }));
+      var gp=D.G.concat(D.SP).filter(function(r){return r.sit!=='respondido';});
+      t('Pendências desta semana: gestores ('+gp.length+')',['Gestor','Cargo','Situação','Próximo passo'],gp.map(function(r){ return [{v:r.nome+(r.loja?' ('+r.loja+')':''),b:1},TIPOS[r.tipo].Aval,{v:rotSit(r.sit,r.tipo),c:r.sit==='liberado'?'wn':'bd'},passoSit(r.sit,r.tipo)]; }));
+      var nt=D.V.filter(function(r){return notaDe(r)!=null;}), alta=nt.filter(function(r){return notaDe(r)>=9;}), baixa=nt.filter(function(r){return notaDe(r)<6;});
+      if(alta.length||baixa.length) b('<h3>Destaques da semana</h3><div class="r-duo"><div><b class="ok">Quadro de honra (nota 9 ou mais)</b><p>'+(alta.map(function(r){return esc(r.nome)+' ('+r.loja+') '+r.aval.nota+'/'+r.aval.total;}).join(' · ')||'ninguém ainda')+'</p></div><div><b class="bd">Para reforçar (abaixo de 6)</b><p>'+(baixa.map(function(r){return esc(r.nome)+' ('+r.loja+') '+r.aval.nota+'/'+r.aval.total;}).join(' · ')||'ninguém')+'</p></div></div>');
+      if(op.nominal) t('Todos os vendedores',['Vendedor','Loja','Situação','Nota','App'],D.V.slice().sort(function(a,b){return (a.loja<b.loja?-1:a.loja>b.loja?1:0)||(norm(a.nome)<norm(b.nome)?-1:1);}).map(function(r){ var n2=notaDe(r); return [{v:r.nome,b:1},r.loja,rotSit(r.sit,'vend'),n2!=null?{v:r.aval.nota+'/'+r.aval.total,c:n2>=8?'ok':n2>=6?'wn':'bd'}:'—',r.app?r.app.t:'—']; }));
+    }
+    if(op.trilha&&D.T.length){ var c2=ctMT(D.T), ini=D.T.filter(function(r){return r.sit!=='nao_iniciou';});
+      b('<h3>Trilha Mentor</h3><p class="r-p">'+c2.aprovado+(c2.aprovado===1?' aprovado':' aprovados')+' na avaliação final · '+c2.andamento+' em andamento · '+c2.refazer+' precisam refazer · '+c2.nao_iniciou+' não iniciaram (de '+D.T.length+').</p>');
+      if(ini.length) t('Trilha Mentor módulo a módulo (entre os '+ini.length+' que iniciaram)',['Módulo','Aprovados','Média','Travados'],MT.mods.map(function(m,ix){ var ok2=0,tr=0,s=0,q=0; ini.forEach(function(r){ var x=r.mods[ix]; if(x.ok) ok2++; if(x.falhou&&!x.ok) tr++; if(x.nota!=null){s+=x.nota;q++;} }); return [{v:(ix+1)+'. '+m.titulo,b:1},ok2+' de '+ini.length,q?virg(s/q):'—',tr||'—']; }));
+      var ni=D.T.filter(function(r){return r.sit==='nao_iniciou'||r.sit==='refazer';}).sort(function(a,b){return (a.loja<b.loja?-1:1);});
+      if(op.nominal||E.tipo==='loja') t('Trilha Mentor: quem precisa começar ou refazer ('+ni.length+')',['Pessoa','Loja','Situação','Último estudo'],ni.map(function(r){ return [{v:r.nome,b:1},r.loja||'—',{v:MT_ROT[r.sit],c:'bd'},diasTxt(r)]; })); }
+    if(op.avulsas&&D.AVL.length) t('Provas avulsas',['Prova','Prazo','Fizeram','Aprovados','Abaixo da mínima','Falta fazer'],D.AVL.map(function(x){ var c3=x.c, n3=x.L.length; return [{v:x.P.titulo,b:1},x.P.ativa?pzAv(x.P.prazo):'encerrada',(c3.aprovado+c3.reprovado)+' de '+n3,c3.aprovado,c3.reprovado||'—',(c3.pendente+c3.perdeu)||'—']; }));
+    if(op.hist&&D.HH.length){ t('Histórico: vendedores semana a semana',['Semana','Fizeram a prova','Nota média'],H.semanas.filter(function(s){ return D.HH.some(function(x){return x.s===s;}); }).map(function(s){ var L=D.HH.filter(function(x){return x.s===s;}), f=L.filter(function(x){return x.f;}); return [{v:'Semana de '+dBr(s),b:1},f.length+' de '+L.length+' ('+pctTxt(f.length,L.length)+')',f.length?virg(f.reduce(function(a,x){return a+x.a;},0)/f.length):'—']; }));
+      var TM={}; D.HH.forEach(function(x){ (x.q||[]).forEach(function(q){ var o=TM[q[0]]=TM[q[0]]||{a:0,t:0}; o.t++; o.a+=q[1]; }); });
+      t('Acerto por tema (todas as semanas)',['Tema','Acerto','Respostas'],Object.keys(TM).map(function(k){return {n:H.temas[k],p:TM[k].a/TM[k].t,t:TM[k].t};}).sort(function(a,b){return a.p-b.p;}).map(function(x){ return [{v:x.n,b:1},{v:Math.round(x.p*100)+'%',c:x.p>=.8?'ok':x.p>=.6?'wn':'bd'},x.t]; })); }
+    return B; }
+  var R_CSS='.r-pg{width:794px;height:1123px;background:#fff;color:#16233d;font:13px "Public Sans",Arial,sans-serif;position:relative;overflow:hidden;box-sizing:border-box}'+
+    '.r-band{height:10px;background:#E31E24}.r-band i{display:block;height:4px;background:#FFD200;width:30%}'+
+    '.r-hd{display:flex;justify-content:space-between;align-items:flex-end;padding:16px 40px 10px;border-bottom:2px solid #e4e9f3}.r-hd h1{font:800 24px "Bricolage Grotesque",Arial,sans-serif;color:#E31E24;margin:0}.r-hd p{margin:2px 0 0;color:#5a677f;font-size:12px}.r-hd .r-esc{text-align:right;font-weight:700;color:#1C3F8F;font-size:14px}'+
+    '.r-co{position:absolute;left:40px;right:40px;top:96px;bottom:46px;overflow:hidden}.r-ft{position:absolute;left:40px;right:40px;bottom:16px;display:flex;justify-content:space-between;font-size:10px;color:#5a677f;border-top:1px solid #e4e9f3;padding-top:6px}'+
+    '.r-co h3{font:700 15px "Bricolage Grotesque",Arial,sans-serif;margin:14px 0 6px;color:#1C3F8F}.r-co h3 em{font-style:normal;color:#5a677f;font-size:12px;font-weight:600}'+
+    '.r-tiles{display:flex;gap:10px;margin-top:4px}.r-tile{flex:1;border:1px solid #e4e9f3;border-left:5px solid #1C3F8F;border-radius:8px;padding:10px}.r-tile b{display:block;font:800 26px "Bricolage Grotesque",Arial,sans-serif}.r-tile span{display:block;font-weight:700;font-size:12px}.r-tile small{color:#5a677f;font-size:11px}'+
+    '.r-cons{margin:0;padding-left:20px}.r-cons li{margin:0 0 8px;line-height:1.4}.r-cons span{color:#E31E24;font-weight:700}.r-p{margin:0 0 4px}'+
+    '.r-tb{width:100%;border-collapse:collapse;font-size:11.5px}.r-tb th{background:#1C3F8F;color:#fff;text-align:left;padding:6px 7px;font-weight:700}.r-tb td{padding:5px 7px;border-bottom:1px solid #e4e9f3}.r-tb tr:nth-child(even) td{background:#f5f7fb}'+
+    '.ok{color:#0B7A55;font-weight:700}.wn{color:#B7791F;font-weight:700}.bd{color:#C62828;font-weight:700}.r-duo{display:flex;gap:14px}.r-duo>div{flex:1;border:1px solid #e4e9f3;border-radius:8px;padding:10px}.r-duo p{margin:6px 0 0;line-height:1.5}';
+  function rCelula(c){ if(c&&typeof c==='object') return '<td'+(c.c?' class="'+c.c+'"':'')+'>'+(c.b?'<b>':'')+esc(c.v)+(c.b?'</b>':'')+'</td>'; return '<td>'+esc(c)+'</td>'; }
+  function rGerar(E,op){
+    return rCarrega(R_LIB_H2C).then(function(){ return rCarrega(R_LIB_PDF); }).then(function(){ return rGarantir(op); }).then(function(){
+      var D=rDados(E), blocos=rConteudo(E,op,D), host=document.createElement('div'), pags=[], co=null;
+      host.style.cssText='position:fixed;left:-10000px;top:0;z-index:-1'; host.innerHTML='<style>'+R_CSS+'</style>'; document.body.appendChild(host);
+      var agora=String(S.agora||''), quando=dBr(agora)+'/'+agora.slice(0,4)+' às '+agora.slice(11,16);
+      var nova=function(){ var p=document.createElement('div'); p.className='r-pg'; p.innerHTML='<div class="r-band"><i></i></div><div class="r-hd"><div><h1>Relatório de Provas</h1><p>Central de Provas · semana de '+dBr(S.atual)+' · gerado em '+esc(quando)+'</p></div><div class="r-esc">'+esc(E.t)+'</div></div><div class="r-co"></div><div class="r-ft"><span>Só Tintas App · Colorindo Vidas e Realizando Sonhos</span><span data-pg></span></div>'; host.appendChild(p); pags.push(p); co=p.querySelector('.r-co'); };
+      var cabe=function(){ return co.scrollHeight<=co.clientHeight+1; };
+      nova();
+      blocos.forEach(function(x){
+        if(x.t==='b'){ co.insertAdjacentHTML('beforeend','<div>'+x.h+'</div>'); if(!cabe()&&co.children.length>1){ co.lastElementChild.remove(); nova(); co.insertAdjacentHTML('beforeend','<div>'+x.h+'</div>'); } return; }
+        var tb=null, abre=function(cont){ co.insertAdjacentHTML('beforeend','<div><h3>'+esc(x.tit)+(cont?' <em>(continuação)</em>':'')+'</h3><table class="r-tb"><thead><tr>'+x.cols.map(function(c){return '<th>'+esc(c)+'</th>';}).join('')+'</tr></thead><tbody></tbody></table></div>'); tb=co.lastElementChild.querySelector('tbody'); };
+        abre(false); var feitas=0;
+        x.rows.forEach(function(r){ var h='<tr>'+r.map(rCelula).join('')+'</tr>'; tb.insertAdjacentHTML('beforeend',h);
+          if(!cabe()){ tb.lastElementChild.remove(); if(!tb.children.length) co.lastElementChild.remove(); nova(); abre(feitas>0); tb.insertAdjacentHTML('beforeend',h); } feitas++; });
+      });
+      pags.forEach(function(p,i){ p.querySelector('[data-pg]').textContent='Página '+(i+1)+' de '+pags.length; });
+      var pdf=new window.jspdf.jsPDF({unit:'mm',format:'a4',compress:true}), imgs=[], i=0;
+      var passo=function(){ if(i>=pags.length) return null;
+        return html2canvas(pags[i],{scale:2,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:0,windowWidth:1000}).then(function(cv){ var u=cv.toDataURL('image/jpeg',0.86); imgs.push(u); if(i) pdf.addPage(); pdf.addImage(u,'JPEG',0,0,210,297,undefined,'FAST'); i++; return passo(); }); };
+      return Promise.resolve(passo()).then(function(){ host.remove(); pdf.setProperties({title:'Relatório de Provas · '+E.t,author:'Só Tintas',creator:'Só Tintas App · Central de Provas'});
+        var nome=('Relatorio de Provas - '+E.t.replace(/[^\wÀ-ú ]+/g,' ').replace(/\s+/g,' ').trim()+' - '+dBr(agora).replace('/','-')+'.pdf');
+        return {blob:pdf.output('blob'),imgs:imgs,nome:nome,D:D}; }, function(e){ host.remove(); throw e; });
+    }); }
+  function rTexto(E,D){ var c=D.cV, n=D.V.length, L=['*RELATÓRIO DE PROVAS — '+E.t.toUpperCase()+'*','Semana de '+dBr(S.atual)+' · posição das '+String(S.agora||'').slice(11,16),''];
+    L.push('*Vendedores:* '+c.respondido+' de '+n+' fizeram ('+pctTxt(c.respondido,n)+')'+(D.mV!=null?' · média '+virg(D.mV):''));
+    if(c.aguardando) L.push('⏳ '+c.aguardando+' esperam o gerente fazer o PDI'); if(c.liberado) L.push('📝 '+c.liberado+' com a prova aberta'); if(c.perdeu) L.push('❌ '+c.perdeu+' perderam o prazo');
+    if(D.G.length) L.push('*Gerentes:* '+D.cG.respondido+' de '+D.G.length+' fizeram'); if(D.SP.length) L.push('*Supervisores:* '+D.cS.respondido+' de '+D.SP.length+' fizeram');
+    if(D.T.length){ var ct=ctMT(D.T); L.push('*Trilha Mentor:* '+ct.aprovado+' aprovados de '+D.T.length+' · '+ct.nao_iniciou+' não iniciaram'); }
+    L.push('','*Ações:*'); rLeitura(E,D).forEach(function(x,i){ L.push((i+1)+'. '+x[0]+': '+x[2]); });
+    L.push('','_Central de Provas · Só Tintas App_'); return L.join('\n'); }
+  function abrirRelatorio(){
+    var EE=rEscopos(), sel=0; if(F.loja){ EE.forEach(function(e,i){ if(e.tipo==='loja'&&e.v===cod3(F.loja)) sel=i; }); } else if(F.sup){ EE.forEach(function(e,i){ if(e.tipo==='sup'&&e.v===F.sup) sel=i; }); }
+    var ck=function(k,t,on){ return '<label class="opc"><input type="checkbox" data-ro="'+k+'"'+(on?' checked':'')+'> '+t+'</label>'; };
+    abrirDlg('Relatório de Provas','PDF para salvar ou enviar pelo WhatsApp',
+      '<div class="campo"><label for="rEsc">Abrangência</label><select id="rEsc">'+EE.map(function(e,i){return '<option value="'+i+'"'+(i===sel?' selected':'')+'>'+esc(e.t)+'</option>';}).join('')+'</select></div>'+
+      '<fieldset class="campo"><legend>O que entra</legend>'+ck('cons','Leitura do consultor (dos números às ações)',1)+ck('sem','Provas da semana: situação, pendências e destaques',1)+ck('trilha','Trilha Mentor',1)+ck('avulsas','Provas avulsas',1)+ck('hist','Histórico e acerto por tema',1)+ck('nominal','Lista nominal completa (todas as pessoas)',0)+'</fieldset>'+
+      '<p class="sub" id="rSt" role="status" style="margin:0"></p><div class="m-pe"><button type="button" class="btn2" data-rtexto="1">Texto para WhatsApp</button><button type="button" class="btn2" data-rbaixar="1">Salvar PDF</button><button type="button" class="btn" data-rzap="1">Enviar PDF</button></div><div id="rPrev" class="r-prev"></div>');
+    RDOC=null; window.__REL=EE; }
+  function rOpcoes(){ var o={}; Array.prototype.forEach.call(document.querySelectorAll('[data-ro]'),function(c){ o[c.dataset.ro]=c.checked; }); return o; }
+  function rAcao(acao,b){
+    var E=window.__REL[Number($('rEsc').value)], st=function(h){ var e=$('rSt'); if(e) e.innerHTML=h; };
+    if(acao==='texto'){ rGarantir(rOpcoes()).then(function(){ window.open('https://wa.me/?text='+encodeURIComponent(rTexto(E,rDados(E))),'_blank','noopener,noreferrer'); }); return; }
+    var bts=document.querySelectorAll('[data-rzap],[data-rbaixar],[data-rtexto]'); Array.prototype.forEach.call(bts,function(x){x.disabled=true;});
+    st('⏳ Montando o relatório e desenhando as páginas…');
+    var fim=function(){ Array.prototype.forEach.call(bts,function(x){x.disabled=false;}); };
+    var baixar=function(d){ var a=document.createElement('a'); a.href=URL.createObjectURL(d.blob); a.download=d.nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){URL.revokeObjectURL(a.href);},8000); };
+    rGerar(E,rOpcoes()).then(function(d){ RDOC=d; fim();
+      $('rPrev').innerHTML=d.imgs.map(function(u,i){return '<img src="'+u+'" alt="Página '+(i+1)+' de '+d.imgs.length+'">';}).join('');
+      if(acao==='baixar'){ baixar(d); st('PDF salvo: '+esc(d.nome)+' · '+d.imgs.length+(d.imgs.length>1?' páginas':' página')+'.'); return; }
+      var f=new File([d.blob],d.nome,{type:'application/pdf'});
+      if(navigator.canShare&&navigator.canShare({files:[f]})) return navigator.share({files:[f],title:'Relatório de Provas · '+E.t,text:'Relatório de Provas · '+E.t}).then(function(){ st('Enviado.'); },function(e){ st(e&&e.name==='AbortError'?'Envio cancelado.':'Não consegui compartilhar: o PDF foi salvo.'); if(!(e&&e.name==='AbortError')) baixar(d); });
+      baixar(d); st('Este aparelho não envia arquivo direto: o PDF foi salvo. <a href="https://wa.me/?text='+encodeURIComponent(rTexto(E,d.D))+'" target="_blank" rel="noopener">Abrir o WhatsApp com o resumo em texto</a> e anexar o PDF.');
+    }).catch(function(e){ fim(); st('<span class="erro-m">Não consegui gerar o PDF: '+esc(e&&e.message||e)+'</span>'); }); }
 
   function emVisao(){ return !!(window.STDados&&STDados.visao&&STDados.visao()); }
   function podeVer(){ return !!S&&(S.perfil==='coord'||S.perfil==='sup')&&!emVisao(); }
@@ -808,7 +947,7 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
     }).then(function(rs){
       var a=rs[1]; GERD=(rs[2]&&rs[2].ok)?rs[2]:null; SUPD=(rs[3]&&rs[3].ok)?rs[3]:null;
       if(S.perfil==='vend'){ $('raiz').innerHTML='<div class="card"><h2>Tela da gestão</h2><p class="sub">Sua prova fica em PDI Semanal.</p></div>'; return; }
-      GESTAO=true; AC=null; ACMAP=null; ACGER=null; ACSUP=null; ACP=(a&&a.ok&&a.pessoas)||[]; MT=null;
+      GESTAO=true; $('btnRel').hidden=false; AC=null; ACMAP=null; ACGER=null; ACSUP=null; ACP=(a&&a.ok&&a.pessoas)||[]; MT=null;
       if(a&&a.ok){ AC={lojaSup:{},lojaNome:{}}; ACMAP={}; ACGER={}; ACSUP={};
         (a.pessoas||[]).forEach(function(p){ var k=String(p.loja||''); if(k){ if(p.sup) AC.lojaSup[k]=p.sup; if(p.lojaNome) AC.lojaNome[k]=p.lojaNome; }
           if(p.tipo==='vend'&&k) (ACMAP[k]=ACMAP[k]||[]).push({n:norm(nm(p.nome)),p:p}); if(p.tipo==='ger'&&k) ACGER[k]=p; if(p.tipo==='sup') ACSUP[norm(nm(p.nome))]=p; }); }
@@ -820,6 +959,10 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
   document.addEventListener('click',function(e){
     var b=e.target.closest('button'); if(!b&&S){ var tr=e.target.closest('tr[data-ficha]'); if(tr) abrirFicha(Number(tr.dataset.ficha)); return; } if(!b||!S) return;
     if(b.dataset.fechar){ fecharDlg(); return; }
+    if(b.dataset.relatorio){ abrirRelatorio(); return; }
+    if(b.dataset.rzap){ rAcao('zap',b); return; }
+    if(b.dataset.rbaixar){ rAcao('baixar',b); return; }
+    if(b.dataset.rtexto){ rAcao('texto',b); return; }
     if(b.dataset.ficha){ abrirFicha(Number(b.dataset.ficha)); return; }
     if(b.dataset.revisao){ verRevisao(Number(b.dataset.revisao)); return; }
     if(b.dataset.cobrar){ cobranca(); return; }
