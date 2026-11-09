@@ -2,6 +2,18 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v150",
+      "data": "09/11/2026",
+      "hora": "12:00",
+      "itens": [
+        {
+          "painel": "Provas da Semana",
+          "o_que": "Tela nova: quem fez e quem não fez a prova do PDI semanal, as notas, por supervisor e por loja, com filtros e busca.",
+          "para": ["coord", "anl", "sup", "ger"]
+        }
+      ]
+    },
+    {
       "v": "ast-v149",
       "data": "08/11/2026",
       "hora": "11:00",
