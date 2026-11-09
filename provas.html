@@ -555,7 +555,7 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
   function ctMT(L){ var o={aprovado:0,andamento:0,refazer:0,nao_iniciou:0}; L.forEach(function(r){o[r.sit]++;}); return o; }
   function barraMT(c,n){ return barra({respondido:c.aprovado,liberado:c.andamento,aguardando:c.refazer,perdeu:c.nao_iniciou},n); }
   function diasTxt(r){ return r.parado==null?'Nunca estudou':r.parado<=0?'Estudou hoje':r.parado===1?'Ontem':'Há '+r.parado+' dias'; }
-  function fraseMT(c,n){ if(!n) return 'Ainda não há ninguém na trilha.'; if(c.aprovado===n) return '<em class="ok">Todo mundo concluiu a trilha.</em>'; var p=[]; if(c.andamento) p.push(c.andamento+' em andamento'); if(c.refazer) p.push(c.refazer+(c.refazer>1?' precisam':' precisa')+' refazer'); if(c.nao_iniciou) p.push(c.nao_iniciou+' não '+(c.nao_iniciou>1?'iniciaram':'iniciou')); return '<em>'+c.aprovado+(c.aprovado===1?' aprovado':' aprovados')+' na avaliação final.</em> '+p.join(', ')+'.'; }
+  function fraseMT(c,n){ if(!n) return 'Ainda não há ninguém na trilha.'; if(c.aprovado===n) return '<em class="ok">Todo mundo concluiu a trilha.</em>'; var p=[]; if(c.andamento) p.push(c.andamento+' em andamento'); if(c.refazer) p.push(c.refazer+(c.refazer>1?' precisam':' precisa')+' refazer'); if(c.nao_iniciou) p.push(c.nao_iniciou+' não '+(c.nao_iniciou>1?'iniciaram':'iniciou')); return '<em class="ok">'+c.aprovado+(c.aprovado===1?' aprovado':' aprovados')+' na avaliação final.</em> '+p.join(', ')+'.'; }
   function baseMT(){ return MT.L.filter(function(r){return (!F.sup||r.sup===F.sup)&&(!F.loja||r.loja===F.loja);}); }
   function montarTrilha(){
     var base=baseMT(), c=ctMT(base), n=base.length, pct=n?Math.round(c.aprovado/n*100):0;
