@@ -9241,6 +9241,11 @@ syncNav();
         <span class="ini-txt"><span class="ini-nm">Acesso de usuários</span><span class="ini-ds">Liberar, novo PIN de gerente e vendedor, desativar</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
+      <button type="button" class="ini-card feat" data-act="avulsas" data-avulsas="1" style="display:none">
+        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg></span>
+        <span class="ini-txt"><span class="ini-nm">Minhas Provas</span><span class="ini-ds">Provas lançadas para você responder</span></span>
+        <span class="ini-go" aria-hidden="true">&rarr;</span>
+      </button>
       <button type="button" class="ini-card feat" data-act="provas" data-lider="1">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-chart"/></svg></span>
         <span class="ini-txt"><span class="ini-nm">Central de Provas</span><span class="ini-ds">Provas semanais e Trilha Mentor: quem fez, quem falta e as notas</span></span>
@@ -9452,6 +9457,7 @@ body.foco .wrap{padding-bottom:40px}
     Array.prototype.forEach.call(grid.querySelectorAll('[data-conteudo]'),function(c){
       var s=sessao(); c.style.display = (mkt || (s&&!ehVend()&&s.escopo==='todos'&&String(s.papel||'').toLowerCase()!=='analista')) ? '' : 'none';
     });
+    Array.prototype.forEach.call(grid.querySelectorAll('[data-avulsas]'),function(c){ var pf=(window.STDados&&STDados.perfil)?STDados.perfil():''; c.style.display=(pf==='vend'||pf==='ger'||pf==='sup')?'':'none'; });
     /* nov/2026: só a coordenação (o analista não publica) */
     Array.prototype.forEach.call(grid.querySelectorAll('[data-coordonly]'),function(c){
       var s=sessao(); c.style.display = (s&&!ehVend()&&s.escopo==='todos'&&String(s.papel||'').toLowerCase()!=='analista') ? '' : 'none';
@@ -9544,6 +9550,12 @@ body.foco .wrap{padding-bottom:40px}
     if(!ovD||!ifrD) return; titOv('Central de Provas · Só Tintas');
     var tema=(window.STtema?window.STtema.get():'light');
     ifrD.setAttribute('src','provas.html?tema='+tema+'&v='+Date.now());
+    ovD.style.display='flex'; document.body.style.overflow='hidden';
+  }
+  function abrirAvulsas(){
+    if(!ovD||!ifrD) return; titOv('Minhas Provas · Só Tintas');
+    var tema=(window.STtema?window.STtema.get():'light');
+    ifrD.setAttribute('src','avulsas.html?tema='+tema+'&v='+Date.now());
     ovD.style.display='flex'; document.body.style.overflow='hidden';
   }
   function abrirUso(){
@@ -9726,6 +9738,7 @@ body.foco .wrap{padding-bottom:40px}
     if(act==='pdi'){ abrirPdi(); return; }
     if(act==='semana'){ abrirSemana(); return; }
     if(act==='provas'){ abrirProvas(); return; }
+    if(act==='avulsas'){ abrirAvulsas(); return; }
     if(act==='uso'){ abrirUso(); return; }
     if(act==='pontos'){ abrirPontos(); return; }
     if(act==='cadastro'){ abrirCadastro(); return; }

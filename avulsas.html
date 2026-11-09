@@ -1,0 +1,78 @@
+<!doctype html><html lang="pt-BR" data-theme="dark" style="color-scheme:dark"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Minhas Provas · Só Tintas</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{--bg:#0f1522;--surface:#1a2336;--surface2:#222d44;--ink:#eef2fb;--muted:#9aa5bb;--line:#2c3850;--accent:#ff3b47;--navy:#6f95f5;--ok:#3fbf7f;--bad:#ff6b6b;--warn:#ffab5e;--okbg:#12301f;--badbg:#3a1a20;--warnbg:#3a2717;--navybg:#1e2b4d;--f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;--f-body:"Public Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color-scheme:dark}
+html[data-theme="light"]{--bg:#f5f7fb;--surface:#fff;--surface2:#eef2f8;--ink:#16233d;--muted:#5a677f;--line:#e4e9f3;--navy:#1C3F8F;--ok:#178048;--bad:#c42a22;--warn:#b35600;--okbg:#e1f3e8;--badbg:#fdeceb;--warnbg:#ffefdd;--navybg:#e7edf9;color-scheme:light}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+button{font:inherit;color:inherit}
+.wrap{max-width:720px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-right,0px)) 60px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px}
+.topbar{height:8px;background:var(--accent);border-radius:0 0 6px 6px;margin:-20px 0 4px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(24px,5vw,32px);line-height:1.05;margin:4px 0 0;color:var(--accent)}
+h2{font-family:var(--f-display);font-size:19px;margin:0}
+.sub{color:var(--muted);font-size:13px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.chip{display:inline-block;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700;white-space:nowrap}
+.c-ab{background:var(--warnbg);color:var(--warn)}.c-ok{background:var(--okbg);color:var(--ok)}.c-no{background:var(--badbg);color:var(--bad)}
+.btn{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer;min-height:46px;margin-top:12px}
+.btn[disabled]{opacity:.55}.btn2{background:transparent;border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer;min-height:44px}
+.prog{position:sticky;top:0;background:var(--bg);padding:8px 0;z-index:2}
+.barra{height:8px;border-radius:999px;background:var(--surface2);overflow:hidden}.barra i{display:block;height:100%;background:var(--ok);transition:width .25s}
+.q{margin-bottom:0}.q p{font-weight:700;margin:0 0 10px}.q.erro{border-color:var(--bad)}
+.q label{display:flex;gap:10px;align-items:flex-start;padding:11px 12px;border:1px solid var(--line);border-radius:10px;margin-top:6px;cursor:pointer;min-height:46px}
+.q label:has(input:checked){border-color:var(--navy);background:var(--navybg)}
+.q input{margin-top:3px;flex:none}
+.res{text-align:center}.res b{display:block;font-family:var(--f-display);font-size:56px;line-height:1}
+.erro-m{color:var(--bad);font-weight:600;font-size:14px}
+</style></head><body>
+<div class="wrap"><div class="topbar"></div>
+<header><div class="eyebrow">Avaliações</div><h1>Minhas Provas</h1></header>
+<main id="raiz" style="display:flex;flex-direction:column;gap:12px"><p class="sub">Carregando…</p></main></div>
+<script>
+(function(){ function g(k){try{return localStorage.getItem(k);}catch(e){return null;}} var p='';try{p=(new URLSearchParams(location.search).get('tema')||'').toLowerCase();}catch(e){} var t=(p==='claro'||p==='light')?'light':(p==='escuro'||p==='dark')?'dark':(g('st_tema')==='light'?'light':'dark'); document.documentElement.setAttribute('data-theme',t); document.documentElement.style.colorScheme=t;
+window.addEventListener('message',function(ev){var d=ev&&ev.data;if(d&&(d.st_tema==='light'||d.st_tema==='dark')){document.documentElement.setAttribute('data-theme',d.st_tema);document.documentElement.style.colorScheme=d.st_tema;}});})();
+</script>
+<script src="st-hora.js?v=1"></script>
+<script src="st-dados.js?v=91"></script>
+<script src="st-anima.js?v=3"></script>
+<script>
+(function(){'use strict';
+var $=function(i){return document.getElementById(i);}, esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
+var virg=function(n){return Number(n).toFixed(1).replace('.',',');}, pz=function(p){return p?p.slice(8,10)+'/'+p.slice(5,7)+' às '+p.slice(11,16):'';};
+var L=[], A=null, visao=function(){return !!(STDados.visao&&STDados.visao());};
+function lista(){
+  if(!L.length){ $('raiz').innerHTML='<div class="card"><h2>Nenhuma prova para você agora</h2><p class="sub">Quando a coordenação lançar uma prova, ela aparece aqui.</p></div>'; return; }
+  var ord=function(x){return x.aberta&&!x.minha?0:1;};
+  $('raiz').innerHTML=L.slice().sort(function(a,b){return ord(a)-ord(b);}).map(function(p){
+    var m=p.minha, st=m?(m.aprovado?'<span class="chip c-ok">Aprovado</span>':'<span class="chip c-no">Não atingiu a mínima</span>'):p.aberta?'<span class="chip c-ab">Aberta</span>':'<span class="chip c-no">Prazo encerrado</span>';
+    return '<section class="card"><div class="top"><h2>'+esc(p.titulo)+'</h2>'+st+'</div>'+(p.descricao?'<p class="sub" style="margin:6px 0 0">'+esc(p.descricao)+'</p>':'')+
+      '<p class="sub" style="margin:8px 0 0">'+p.n+' questões · nota mínima '+virg(p.minima)+(p.prazo?' · até '+pz(p.prazo):'')+'</p>'+
+      (m?'<p style="margin:10px 0 0">Sua nota: <b>'+virg(m.nota)+'</b> ('+m.acertos+' de '+m.total+')</p>':p.aberta&&!visao()?'<button class="btn" type="button" data-abrir="'+esc(p.id)+'">Fazer a prova</button>':'')+'</section>';
+  }).join('');
+}
+function abrir(id){ A=L.filter(function(x){return x.id===id;})[0]; if(!A) return;
+  $('raiz').innerHTML='<div class="prog"><div class="sub" id="cont" style="margin-bottom:5px"></div><div class="barra"><i id="pr" style="width:0"></i></div></div><p style="margin:0"><b>'+esc(A.titulo)+'</b><br><span class="sub">Só dá para enviar uma vez.</span></p>'+
+    A.questoes.map(function(q,i){return '<section class="card q" id="q'+i+'"><p>'+(i+1)+'. '+esc(q.t)+'</p>'+q.ops.map(function(o,k){return '<label><input type="radio" name="r'+i+'" value="'+k+'"><span>'+esc(o)+'</span></label>';}).join('')+'</section>';}).join('')+
+    '<p class="erro-m" id="er" role="alert" hidden></p><div><button class="btn" id="env" type="button" data-enviar="1">Enviar respostas</button> <button class="btn2" type="button" data-voltar="1">Voltar</button></div>';
+  prog(); scrollTo(0,0);
+}
+function prog(){ if(!A) return; var n=document.querySelectorAll('.q input:checked').length, t=A.questoes.length; $('cont').textContent=n+' de '+t+' respondidas'; $('pr').style.width=(n/t*100)+'%'; }
+function enviar(){ var R=[],fal=-1; A.questoes.forEach(function(q,i){ var x=document.querySelector('input[name=r'+i+']:checked'); $('q'+i).classList.toggle('erro',!x); if(!x&&fal<0) fal=i; R.push(x?Number(x.value):-1); });
+  var er=$('er'); if(fal>=0){ er.textContent='Falta responder a questão '+(fal+1)+'.'; er.hidden=false; $('q'+fal).scrollIntoView({behavior:'smooth',block:'center'}); return; }
+  var b=$('env'); b.disabled=true; b.textContent='Enviando…'; er.hidden=true;
+  STDados.chamar('avulsaResponder',{id:A.id,respostas:R}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não confirmou.');
+    $('raiz').innerHTML='<section class="card res"><b style="color:var('+(j.aprovado?'--ok':'--bad')+')">'+virg(j.nota)+'</b><p>'+j.acertos+' de '+j.total+' certas · nota mínima '+virg(j.minima)+'</p><h2>'+(j.aprovado?'Aprovado!':'Ainda não foi dessa vez')+'</h2><button class="btn2" style="margin-top:14px" type="button" data-voltar="1">Ver minhas provas</button></section>';
+    A=null; scrollTo(0,0); if(j.aprovado&&window.STAnima&&STAnima.confete) STAnima.confete(); carregar(true);
+  }).catch(function(e){ b.disabled=false; b.textContent='Enviar respostas'; er.textContent=e.message||String(e); er.hidden=false; });
+}
+function carregar(quieto){ return STDados.chamar('avulsaListar').then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não respondeu.'); L=j.provas||[]; if(!quieto) lista(); }).catch(function(e){ if(!quieto) $('raiz').innerHTML='<div class="card"><h2>Não consegui abrir</h2><p class="sub">'+esc(e.message||e)+'</p></div>'; }); }
+document.addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return; if(b.dataset.abrir) abrir(b.dataset.abrir); else if(b.dataset.enviar) enviar(); else if(b.dataset.voltar){ A=null; lista(); scrollTo(0,0); } });
+document.addEventListener('change',function(e){ if(e.target.type==='radio'){ prog(); e.target.closest('.q').classList.remove('erro'); } });
+if(window.STDados) carregar(); else $('raiz').innerHTML='<p class="sub">Abra pelo Só Tintas App.</p>';
+})();
+</script></body></html>

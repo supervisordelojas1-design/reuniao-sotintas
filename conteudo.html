@@ -362,10 +362,11 @@ label.linha{flex-wrap:nowrap;align-items:flex-start}label.linha input[type=check
         q.opcoes.map(function(o,k){ return '<div class="op"><input type="radio" name="c'+i+'" data-q="'+i+'" data-k="correta" value="'+k+'"'+(q.correta===k?' checked':'')+' aria-label="'+L[k]+' é a certa"><b>'+L[k]+'</b><input data-q="'+i+'" data-k="op" data-o="'+k+'" value="'+esc(o)+'" aria-label="Alternativa '+L[k]+'"></div>'; }).join('')+
         '<label class="campo">Explicação (aparece depois da resposta)<input data-q="'+i+'" data-k="explicacao" value="'+esc(q.explicacao||'')+'"></label><button class="btnp" type="button" data-pv-del="'+i+'">tirar esta questão</button></li>'; }).join('')+'</ol>'+
       '<button class="btnp" type="button" data-pv-mais="1">＋ Questão em branco</button>'+
-      '<h3 style="margin:14px 0 4px">Onde publicar</h3><div class="linha"><label class="campo" style="flex:1 1 240px">Destino<select id="pvDest"><option value="__novo"'+(P.destino==='__novo'||!P.destino?' selected':'')+'>Novo módulo na trilha (prova avulsa)</option>'+M.map(function(m){ return '<option value="'+esc(m.id)+'"'+(P.destino===m.id?' selected':'')+'>Somar ao quiz de: '+esc(m.titulo)+'</option>'; }).join('')+'</select></label>'+
+      '<h3 style="margin:14px 0 4px">Onde publicar</h3><div class="linha"><label class="campo" style="flex:1 1 240px">Destino<select id="pvDest">'+(pvCoord()?'<option value="__avulsa"'+(P.destino==='__avulsa'?' selected':'')+'>Prova avulsa, com público e prazo</option>':'')+'<option value="__novo"'+(P.destino==='__novo'||!P.destino?' selected':'')+'>Novo módulo na trilha (prova avulsa)</option>'+M.map(function(m){ return '<option value="'+esc(m.id)+'"'+(P.destino===m.id?' selected':'')+'>Somar ao quiz de: '+esc(m.titulo)+'</option>'; }).join('')+'</select></label>'+
       '<label class="campo" style="flex:1 1 200px" id="pvNovoTitL">Nome do novo módulo<input id="pvNovoTit" value="'+esc(P.titulo||'')+'"></label><label class="campo" style="flex:0 1 90px">Ícone<input id="pvIcone" value="'+esc(P.icone||'📝')+'" maxlength="4"></label></div>'+
-      '<label class="linha" style="font-size:13px;margin:6px 0"><input type="checkbox" id="pvFinal"'+(P.final!==false?' checked':'')+'> Estas questões também entram na avaliação final da trilha</label>'+
-      '<p class="ruim" id="pvErro" role="alert"></p><div class="linha" style="justify-content:flex-end"><button class="btnp" type="button" data-pv-descartar="1">Descartar</button><button class="btnp azul" type="button" data-pv-pub="1">Publicar no Mentor</button></div></section>';
+      '<div id="pvAvBloco"'+(P.destino==='__avulsa'?'':' hidden')+'><div class="linha"><label class="campo" style="flex:1 1 200px">Prazo<input type="datetime-local" id="pvAvPrazo" value="'+esc(P.avPrazo||'')+'"></label><label class="campo" style="flex:0 1 120px">Nota mínima<input type="number" id="pvAvMin" min="0" max="10" step="0.5" value="'+esc(P.avMin==null?7:P.avMin)+'"></label></div><div class="linha" style="font-size:13px;margin:6px 0"><b>Quem faz:</b>'+[['vend','Vendedores'],['ger','Gerentes'],['sup','Supervisores']].map(function(o){ return '<label class="linha"><input type="checkbox" data-avpub="'+o[0]+'"'+((P.avPub||['vend']).indexOf(o[0])>=0?' checked':'')+'> '+o[1]+'</label>'; }).join('')+'</div></div>'+
+      '<label class="linha" id="pvFinalL" style="font-size:13px;margin:6px 0"'+(P.destino==='__avulsa'?' hidden':'')+'><input type="checkbox" id="pvFinal"'+(P.final!==false?' checked':'')+'> Estas questões também entram na avaliação final da trilha</label>'+
+      '<p class="ruim" id="pvErro" role="alert"></p><div class="linha" style="justify-content:flex-end"><button class="btnp" type="button" data-pv-descartar="1">Descartar</button><button class="btnp azul" type="button" data-pv-pub="1">Publicar</button></div></section>';
     return h;
   }
   /* texto de arquivos do Office (docx, pptx, xlsx são zip de XML): lido aqui no aparelho */
@@ -404,7 +405,8 @@ label.linha{flex-wrap:nowrap;align-items:flex-start}label.linha input[type=check
   }
   function lerRevisao(){ if(!PROVA||!PROVA.questoes) return; Array.prototype.forEach.call(document.querySelectorAll('#pvRev [data-q]'),function(el){ var q=PROVA.questoes[+el.dataset.q]; if(!q) return; var k=el.dataset.k;
       if(k==='correta'){ if(el.checked) q.correta=+el.value; } else if(k==='op') q.opcoes[+el.dataset.o]=el.value; else q[k]=el.value; });
-    var d=$('pvDest'); if(d){ PROVA.destino=d.value; PROVA.titulo=$('pvNovoTit').value; PROVA.icone=$('pvIcone').value; PROVA.final=$('pvFinal').checked; } }
+    var d=$('pvDest'); if(d){ PROVA.destino=d.value; PROVA.titulo=$('pvNovoTit').value; PROVA.icone=$('pvIcone').value; PROVA.final=$('pvFinal').checked; if($('pvAvPrazo')){ PROVA.avPrazo=$('pvAvPrazo').value; PROVA.avMin=$('pvAvMin').value; PROVA.avPub=Array.prototype.filter.call(document.querySelectorAll('[data-avpub]'),function(c){return c.checked;}).map(function(c){return c.dataset.avpub;}); } } }
+  function pvCoord(){ return !!(window.STDados&&STDados.perfil()==='coord'&&!(STDados.visao&&STDados.visao())); }
   function gerar(){
     var f=$('pvArq').files[0], st=$('pvStatus'); if(!f){ st.textContent='Escolha o arquivo.'; return; }
     var modo=(document.querySelector('[data-pv-modo][aria-pressed="true"]')||{}).dataset; modo=(modo&&modo.pvModo)||'material';
@@ -425,6 +427,10 @@ label.linha{flex-wrap:nowrap;align-items:flex-start}label.linha input[type=check
     var ruim=Q.findIndex(function(q){ return q.opcoes.filter(Boolean).length<2||!q.opcoes[q.correta]; });
     if(ruim>=0){ erro.textContent='A questão '+(ruim+1)+' precisa de pelo menos 2 alternativas e de uma alternativa certa preenchida.'; return; }
     Q.forEach(function(q){ var c=q.opcoes[q.correta]; q.opcoes=q.opcoes.filter(Boolean); q.correta=q.opcoes.indexOf(c); });
+    if(P.destino==='__avulsa'){ var tt=String(P.titulo||'').trim(); if(!tt){ erro.textContent='Dê um nome à prova.'; return; } if(!P.avPrazo){ erro.textContent='Informe o prazo.'; return; } if(!(P.avPub||[]).length){ erro.textContent='Escolha quem faz a prova.'; return; }
+      var ba=document.querySelector('[data-pv-pub]'); ba.disabled=true; ba.textContent='Publicando…';
+      STDados.chamar('avulsaSalvar',{prova:{titulo:tt,publico:P.avPub,prazo:P.avPrazo,minima:Number(P.avMin),questoes:Q.map(function(q){return {t:q.enunciado,ops:q.opcoes,c:q.correta,exp:q.explicacao};})}}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não confirmou.'); PROVA=null; montar(); }).catch(function(e){ ba.disabled=false; ba.textContent='Publicar'; erro.textContent=e.message||String(e); });
+      return; }
     var M=tab('modulos'), QS=tab('questoes'), T={}, mod=P.destino;
     if(mod==='__novo'){ var t=String(P.titulo||'').trim(); if(!t){ erro.textContent='Dê um nome ao novo módulo.'; return; }
       mod=novoId('p',M); M.push({id:mod,ordem:M.reduce(function(m,x){return Math.max(m,Number(x.ordem)||0);},0)+1,titulo:t,subtitulo:'Prova de treinamento',icone:P.icone||'📝',cor:'azul',paginas:0,pdf:'',fonte:'Treinamento Só Tintas',descricao:'Responda o quiz para concluir este módulo.',xp_bonus:50});
@@ -522,7 +528,7 @@ label.linha{flex-wrap:nowrap;align-items:flex-start}label.linha input[type=check
     if(d.admAdd){ var nm=$('admNome').value.trim(); if(!nm){ toast('Digite o nome.'); return; } admSalvar(ADM.lista.concat([nm])); return; }
     if(d.admDel!=null){ var c=ADM.lista.slice(); c.splice(+d.admDel,1); admSalvar(c); return; }
   });
-  document.addEventListener('change',function(e){ if(e.target.id==='pvDest'){ var l=$('pvNovoTitL'); if(l) l.style.display=e.target.value==='__novo'?'':'none'; } });
+  document.addEventListener('change',function(e){ if(e.target.id==='pvDest'){ var l=$('pvNovoTitL'); if(l){ l.style.display=(e.target.value==='__novo'||e.target.value==='__avulsa')?'':'none'; var tx=l.firstChild; if(tx&&tx.nodeType===3) tx.nodeValue=e.target.value==='__avulsa'?'Nome da prova':'Nome do novo módulo'; } var av=e.target.value==='__avulsa', a=$('pvAvBloco'), fi=$('pvFinalL'); if(a) a.hidden=!av; if(fi) fi.hidden=av; } });
   document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&!$('modal').hidden) fecharModal(); });
 
   function iniciar(){

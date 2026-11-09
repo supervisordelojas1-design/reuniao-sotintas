@@ -2,6 +2,23 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v156",
+      "data": "09/11/2026",
+      "hora": "18:44",
+      "itens": [
+        {
+          "painel": "Minhas Provas",
+          "o_que": "Card novo na tela inicial: as provas lançadas para você responder, com prazo e nota na hora.",
+          "para": ["vend", "ger", "sup"]
+        },
+        {
+          "painel": "Central de Provas",
+          "o_que": "Nova aba Avulsas: quem fez, quem falta e as notas de cada prova lançada.",
+          "para": ["coord", "anl", "sup", "ger"]
+        }
+      ]
+    },
+    {
       "v": "ast-v155",
       "data": "09/11/2026",
       "hora": "18:30",
