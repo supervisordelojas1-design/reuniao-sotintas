@@ -104,7 +104,36 @@ tr:last-child td{border-bottom:0}
 .vazio{padding:22px;text-align:center;color:var(--muted)}
 .btn{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;margin-top:8px}
 
+
+.acao{border:1px solid var(--line);background:transparent;border-radius:8px;padding:6px 10px;min-height:36px;cursor:pointer;font-size:12px;font-weight:700;margin:2px 4px 2px 0;white-space:nowrap}
+.acao:hover{background:var(--surface2)}
+.ajustar{border:1px solid var(--line);background:var(--surface2);border-radius:999px;padding:4px 12px;min-height:36px;font-size:12px;font-weight:700;cursor:pointer;margin-left:6px}
+.prazo-l{display:block;color:var(--muted);font-size:12px}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);padding:0;width:min(640px,calc(100vw - 24px));max-height:calc(100vh - 32px)}
+dialog::backdrop{background:rgba(5,9,18,.65)}
+.m-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:14px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface);z-index:1}
+.m-corpo{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.fechar{border:0;background:var(--surface2);border-radius:8px;width:40px;height:40px;cursor:pointer;font-size:18px;flex:none}
+.alerta{background:var(--warnbg);color:var(--warn);border-radius:10px;padding:9px 12px;font-size:13px;font-weight:600}
+.perg b{display:block;margin-bottom:6px}
+.perg ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.perg li{border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13px;display:flex;justify-content:space-between;gap:10px}
+.perg li.certa{border-color:var(--ok);background:var(--okbg)}
+.perg li.errada{border-color:var(--bad);background:var(--badbg)}
+.perg li small{font-weight:700;white-space:nowrap}
+.campo{display:flex;flex-direction:column;gap:5px}
+.campo label,.campo legend{font-weight:700;font-size:13px}
+.campo input[type=datetime-local],.campo select{background:var(--surface2);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:10px;font:inherit;font-size:16px;min-height:44px;width:100%}
+fieldset{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
+.opc{display:flex;align-items:center;gap:8px;min-height:36px;font-size:14px;cursor:pointer}
+.m-pe{display:flex;justify-content:flex-end;gap:8px;align-items:center;flex-wrap:wrap}
+.btn2{border:1px solid var(--line);background:transparent;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;min-height:44px}
+.m-pe .btn{margin-top:0;min-height:44px}
+.btn[disabled]{opacity:.55;cursor:default}
+.erro-m{color:var(--bad);font-size:13px;font-weight:600}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:700;z-index:9;max-width:90vw}
 @media(max-width:640px){
+  td.cacoes{grid-column:1/-1}
   .hero{grid-template-columns:1fr;justify-items:center;text-align:center}
   .sup{grid-template-columns:82px 1fr 48px}.sup .med{display:none}
   table,tbody,tr,td{display:block;width:100%}thead{display:none}
@@ -123,6 +152,7 @@ tr:last-child td{border-bottom:0}
   </header>
   <main id="raiz" style="display:flex;flex-direction:column;gap:14px"><p class="sub">Carregando as provas…</p></main>
 </div>
+<dialog id="dlg" aria-labelledby="dlgTit"></dialog>
 <script>
 (function(){
   function qp(n){try{return new URLSearchParams(location.search).get(n);}catch(e){return null;}}
@@ -185,11 +215,11 @@ tr:last-child td{border-bottom:0}
     if(ACMAP){ Object.keys(ACMAP).forEach(function(k){ ACMAP[k].forEach(function(x){ x.usado=false; }); }); }
     var R=(S.linhas||[]).filter(function(l){return l.semana===SEM;}).map(function(l){
       var nome=nm(l.comp&&l.comp.nome?l.comp.nome:l.vendedor), p=acharPessoa(l.loja,nome); if(p) p.usado=true;
-      return {nome:nome,loja:String(l.loja),lojaNome:p?p.p.lojaNome:'',sup:supDe(l.loja),sit:l.situacao,aval:l.aval||null,prazo:l.prazo,app:statusApp(p&&p.p)};
+      return {chave:l.chave,nome:nome,loja:String(l.loja),lojaNome:p?p.p.lojaNome:'',sup:supDe(l.loja),sit:l.situacao,aval:l.aval||null,prazo:l.prazo,app:statusApp(p&&p.p)};
     });
     /* quem está no cadastro e não recebeu PDI (só faz sentido na semana atual) */
     if(ACMAP&&SEM===S.atual) Object.keys(ACMAP).forEach(function(k){ ACMAP[k].forEach(function(x){
-      if(!x.usado) R.push({nome:nm(x.p.nome),loja:String(x.p.loja),lojaNome:x.p.lojaNome,sup:x.p.sup||'',sit:'sem_pdi',aval:null,prazo:'',app:statusApp(x.p)});
+      if(!x.usado) R.push({chave:'',nome:nm(x.p.nome),loja:String(x.p.loja),lojaNome:x.p.lojaNome,sup:x.p.sup||'',sit:'sem_pdi',aval:null,prazo:'',app:statusApp(x.p)});
     }); });
     R.forEach(function(r){ if(!r.lojaNome&&AC&&AC.lojaNome) r.lojaNome=AC.lojaNome[r.loja]||''; });
     return R;
@@ -229,7 +259,7 @@ tr:last-child td{border-bottom:0}
     $('sub').textContent=titulo+' · semana de '+dBr(SEM)+(S.agora?' · posição das '+String(S.agora).slice(11,16):'');
     var pz=prazoTxt(base);
     h+='<section class="card hero"><div class="anel">'+anel(cBase,n||1)+'<div class="cen"><b>'+pct+'%</b><small>'+cBase.respondido+' de '+n+'</small></div></div>'+
-       '<div><p class="frase">'+frase(cBase,n)+'</p>'+(pz?'<span class="prazo">'+esc(pz)+'</span>':'')+'</div></section>';
+       '<div><p class="frase">'+frase(cBase,n)+'</p>'+(pz?'<span class="prazo">'+esc(pz)+'</span>':'')+(podePrazo()&&n?'<button type="button" class="ajustar" data-abrirprazo="1">Ajustar prazo</button>':'')+'</div></section>';
     h+='<section class="placas" aria-label="Filtrar por situação">'+
       placa('respondido',cBase.respondido,'Fizeram a prova',med!=null?'média '+virg(med):'sem notas ainda')+
       (SEM===S.atual?placa('liberado',cBase.liberado,'Prova aberta','falta o vendedor responder')+placa('aguardando',cBase.aguardando,'Gerente não fez o PDI','a prova nem abriu'):'')+
@@ -273,18 +303,81 @@ tr:last-child td{border-bottom:0}
     }[SORT.c];
     L.sort(cmp);
     var c=$('contLista'); if(c) c.textContent=L.length+(L.length===1?' vendedor':' vendedores');
-    var temSup=GESTAO&&S.perfil!=='sup'&&S.perfil!=='ger', temApp=!!AC;
+    var temSup=GESTAO&&S.perfil!=='sup'&&S.perfil!=='ger', temApp=!!AC, temAc=podeVer()||podePrazo();
     var th=function(k,t){return '<th'+(SORT.c===k?' aria-sort="'+(d>0?'ascending':'descending')+'"':'')+'><button type="button" data-sort="'+k+'">'+t+(SORT.c===k?(d>0?' ▲':' ▼'):'')+'</button></th>';};
     if(!L.length){ $('lista').innerHTML='<div class="vazio">Ninguém nesse filtro.</div>'; return; }
-    $('lista').innerHTML='<table><thead><tr>'+th('nome','Vendedor')+(temSup?th('sup','Supervisor'):'')+th('sit','Situação')+'<th style="padding:8px">Próximo passo</th>'+th('nota','Nota')+(temApp?th('app','App'):'')+'</tr></thead><tbody>'+
+    $('lista').innerHTML='<table><thead><tr>'+th('nome','Vendedor')+(temSup?th('sup','Supervisor'):'')+th('sit','Situação')+'<th style="padding:8px">Próximo passo</th>'+th('nota','Nota')+(temApp?th('app','App'):'')+(temAc?'<th style="padding:8px"><span class="sub">Ações</span></th>':'')+'</tr></thead><tbody>'+
       L.map(function(r){ var nt=notaDe(r);
         return '<tr><td class="nome"><b>'+esc(r.nome)+'</b><small>Loja '+esc(r.loja)+(r.lojaNome?' · '+esc(r.lojaNome):'')+'</small></td>'+
           (temSup?'<td class="csup">'+esc(r.sup)+'</td>':'')+
           '<td class="csit"><span class="chip c-'+r.sit+'">'+ROT[r.sit]+'</span></td>'+
-          '<td class="cpasso">'+PASSO[r.sit]+'</td>'+
+          '<td class="cpasso">'+PASSO[r.sit]+(r.prazo&&r.sit!=='respondido'?'<span class="prazo-l">prazo '+esc(prazoCurto(r.prazo))+'</span>':'')+'</td>'+
           '<td class="cnota">'+(nt!=null?'<span class="nota '+(nt>=8?'n-a':nt>=6?'n-b':'n-c')+'">'+r.aval.nota+'/'+r.aval.total+'</span>':'<span class="traco">—</span>')+'</td>'+
-          (temApp?'<td class="capp" data-r="App">'+(r.app?'<span class="'+r.app.c+'">'+r.app.t+'</span>':'<span class="traco">—</span>')+'</td>':'')+'</tr>';
+          (temApp?'<td class="capp" data-r="App">'+(r.app?'<span class="'+r.app.c+'">'+r.app.t+'</span>':'<span class="traco">—</span>')+'</td>':'')+(temAc?'<td class="cacoes">'+(r.chave&&podeVer()?'<button type="button" class="acao" data-prova="'+esc(r.chave)+'" aria-label="Ver prova de '+esc(r.nome)+'">Ver prova</button>':'')+(r.chave&&podePrazo()&&r.sit!=='respondido'?'<button type="button" class="acao" data-prazochave="'+esc(r.chave)+'" aria-label="Ajustar prazo de '+esc(r.nome)+'">Prazo</button>':'')+'</td>':'')+'</tr>';
       }).join('')+'</tbody></table>';
+  }
+
+  function emVisao(){ return !!(window.STDados&&STDados.visao&&STDados.visao()); }
+  function podeVer(){ return !!S&&(S.perfil==='coord'||S.perfil==='sup')&&!emVisao(); }
+  function podePrazo(){ return !!S&&S.perfil==='coord'&&!emVisao(); }
+  function prazoCurto(p){ return dBr(p)+' '+String(p).slice(11,16); }
+  function toast(m){ var t=document.createElement('div'); t.className='toast'; t.setAttribute('role','status'); t.textContent=m; document.body.appendChild(t); setTimeout(function(){t.remove();},3200); }
+  function abrirDlg(tit,sub,corpo){ var d=$('dlg');
+    d.innerHTML='<div class="m-top"><div><h2 id="dlgTit">'+esc(tit)+'</h2><div class="sub">'+esc(sub)+'</div></div><button type="button" class="fechar" data-fechar="1" aria-label="Fechar">×</button></div><div class="m-corpo" id="dlgCorpo">'+corpo+'</div>';
+    if(!d.open) d.showModal(); }
+  function fecharDlg(){ var d=$('dlg'); if(d.open) d.close(); }
+
+  /* ── prova completa: perguntas, resposta do vendedor e gabarito (coordenação e supervisor) ── */
+  function verProva(chave){
+    var r=TUDO_ATUAL.filter(function(x){return x.chave===chave;})[0]; if(!r) return;
+    abrirDlg(r.nome,'Loja '+r.loja+(r.lojaNome?' · '+r.lojaNome:'')+' · '+ROT[r.sit],'<p class="sub">Carregando a prova…</p>');
+    STDados.chamar('semanaProva',{chave:chave}).then(function(j){
+      if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não respondeu.');
+      if(!$('dlg').open) return;
+      var Q=j.questoes||[], h='';
+      if(j.aval) h+='<div><span class="nota '+(j.aval.nota/j.aval.total*10>=8?'n-a':j.aval.nota/j.aval.total*10>=6?'n-b':'n-c')+'">'+j.aval.nota+'/'+j.aval.total+'</span> <span class="sub">respondida em '+esc(j.aval.em?prazoCurto(j.aval.em):'')+(j.aval.mentor?' · Mentor '+j.aval.mentor.acertos+'/'+j.aval.mentor.total:'')+'</span></div>';
+      else h+='<div class="alerta">Prova ainda sem resposta. O gabarito está visível aqui: não repasse ao vendedor.</div>';
+      if(!Q.length) h+='<p class="sub">Esta prova não tem questões registradas.</p>';
+      h+=Q.map(function(q,i){ return '<div class="perg"><b>'+(i+1)+'. '+esc(q.t)+'</b><ul>'+(q.ops||[]).map(function(o,k){
+        var certa=k===Number(q.certa), marcou=q.resposta!=null&&k===Number(q.resposta), cl=certa?'certa':marcou?'errada':'';
+        var tag=certa&&marcou?'✓ Acertou':certa?'✓ Gabarito':marcou?'✕ Resposta do vendedor':'';
+        return '<li'+(cl?' class="'+cl+'"':'')+'><span>'+esc(o)+'</span>'+(tag?'<small>'+tag+'</small>':'')+'</li>'; }).join('')+'</ul></div>'; }).join('');
+      $('dlgCorpo').innerHTML=h;
+    }).catch(function(e){ var c=$('dlgCorpo'); if(c) c.innerHTML='<p class="erro-m">'+esc(e.message||e)+'</p>'; });
+  }
+
+  /* ── ajustar prazo: um vendedor, uma loja ou a semana toda (só coordenação) ── */
+  function valorPadrao(){ var a=String(S.agora||''), d=new Date(a.slice(0,10)+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+1); return d.toISOString().slice(0,10)+'T18:00'; }
+  function alvos(){ return TUDO_ATUAL.filter(function(r){return r.chave&&r.sit!=='respondido';}); }
+  function abrirPrazo(chave){
+    var A=alvos(), lj={}, r=chave?A.filter(function(x){return x.chave===chave;})[0]:null;
+    A.forEach(function(x){ lj[x.loja]=x.lojaNome||''; });
+    var esc0=chave?'vendedor':F.loja?'loja':'rede', ks=Object.keys(lj).sort(), vs=A.slice().sort(function(a,b){return (a.loja<b.loja?-1:a.loja>b.loja?1:0)||(norm(a.nome)<norm(b.nome)?-1:1);});
+    var op=function(v,t){return '<label class="opc"><input type="radio" name="esc" value="'+v+'"'+(esc0===v?' checked':'')+'> '+t+'</label>';};
+    abrirDlg('Ajustar prazo da avaliação','Semana de '+dBr(SEM),
+      '<div class="campo"><label for="pzData">Novo prazo</label><input id="pzData" type="datetime-local" value="'+valorPadrao()+'"></div>'+
+      '<fieldset class="campo"><legend>Para quem</legend>'+op('vendedor','Um vendedor')+op('loja','Uma loja')+op('rede','Semana toda')+'</fieldset>'+
+      '<div class="campo" id="cVend"><label for="pzVend">Vendedor</label><select id="pzVend">'+vs.map(function(x){return '<option value="'+esc(x.chave)+'"'+(x.chave===chave?' selected':'')+'>'+esc(x.loja+' · '+x.nome)+'</option>';}).join('')+'</select></div>'+
+      '<div class="campo" id="cLoja"><label for="pzLoja">Loja</label><select id="pzLoja">'+ks.map(function(k){return '<option value="'+esc(k)+'"'+((r?r.loja:F.loja)===k?' selected':'')+'>'+esc(k+(lj[k]?' · '+lj[k]:''))+'</option>';}).join('')+'</select></div>'+
+      '<p class="sub" id="pzRes" style="margin:0"></p><p class="sub" style="margin:0">Quem já fez a prova não muda. Quem perdeu o prazo volta a ficar aberto, e quem responder dentro do novo prazo ganha os pontos normais.</p><p class="erro-m" id="pzErr" hidden></p>'+
+      '<div class="m-pe"><button type="button" class="btn2" data-fechar="1">Cancelar</button><button type="button" class="btn" id="pzOk" data-salvarprazo="1">Salvar prazo</button></div>');
+    pzAtualiza();
+  }
+  function pzEscopo(){ var e=document.querySelector('input[name=esc]:checked'); return e?e.value:'rede'; }
+  function pzAlvos(){ var e=pzEscopo(), A=alvos(); if(e==='vendedor') return A.filter(function(x){return x.chave===$('pzVend').value;}); if(e==='loja') return A.filter(function(x){return x.loja===$('pzLoja').value;}); return A; }
+  function pzAtualiza(){ if(!$('pzRes')) return; var e=pzEscopo(); $('cVend').hidden=e!=='vendedor'; $('cLoja').hidden=e!=='loja'; var n=pzAlvos().length; $('pzRes').textContent=n===1?'Vai alterar 1 vendedor.':'Vai alterar '+n+' vendedores.'; $('pzOk').disabled=!n; }
+  function salvarPrazo(){
+    var v=$('pzData').value, er=$('pzErr'), bt=$('pzOk'); er.hidden=true;
+    var mostra=function(m){ er.textContent=m; er.hidden=false; bt.disabled=false; bt.textContent='Salvar prazo'; };
+    if(!v) return mostra('Informe a data e a hora.');
+    var prazo=v.replace('T',' ').slice(0,16), e=pzEscopo(), x={semana:SEM,prazo:prazo,escopo:e};
+    if(prazo<=String(S.agora||'')) return mostra('O novo prazo precisa ser depois de agora.');
+    if(e==='vendedor') x.chave=$('pzVend').value; if(e==='loja') x.loja=$('pzLoja').value;
+    bt.disabled=true; bt.textContent='Salvando…';
+    STDados.chamar('semanaPrazoAjustar',x).then(function(j){
+      if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não confirmou.');
+      fecharDlg(); toast(j.alterados===1?'Prazo alterado para 1 vendedor.':'Prazo alterado para '+j.alterados+' vendedores.'); return carregar();
+    }).catch(function(err){ mostra(err.message||String(err)); });
   }
 
   function semanas(){
@@ -310,6 +403,11 @@ tr:last-child td{border-bottom:0}
 
   document.addEventListener('click',function(e){
     var b=e.target.closest('button'); if(!b||!S) return;
+    if(b.dataset.fechar){ fecharDlg(); return; }
+    if(b.dataset.prova){ verProva(b.dataset.prova); return; }
+    if(b.dataset.prazochave){ abrirPrazo(b.dataset.prazochave); return; }
+    if(b.dataset.abrirprazo){ abrirPrazo(''); return; }
+    if(b.dataset.salvarprazo){ salvarPrazo(); return; }
     if(b.dataset.sem){ SEM=b.dataset.sem; F.g=''; semanas(); montar(); return; }
     if(b.dataset.g){ F.g=F.g===b.dataset.g?'':b.dataset.g; montar(); rolar(); return; }
     if(b.dataset.sup){ F.sup=F.sup===b.dataset.sup?'':b.dataset.sup; F.loja=''; montar(); return; }
@@ -318,6 +416,7 @@ tr:last-child td{border-bottom:0}
     if(b.dataset.sort){ if(SORT.c===b.dataset.sort) SORT.d=-SORT.d; else { SORT.c=b.dataset.sort; SORT.d=b.dataset.sort==='nota'?-1:1; } lista(); }
   });
   function rolar(){ if(!F.g) return; var l=$('lista'); if(l&&l.scrollIntoView&&window.innerWidth<=640) l.scrollIntoView({behavior:'smooth',block:'start'}); }
+  document.addEventListener('change',function(e){ if(e.target.name==='esc'||e.target.id==='pzVend'||e.target.id==='pzLoja') pzAtualiza(); });
   var tB=null;
   document.addEventListener('input',function(e){ if(e.target.id!=='busca') return; clearTimeout(tB); var v=e.target.value; tB=setTimeout(function(){ F.q=v; lista(); },200); });
 
