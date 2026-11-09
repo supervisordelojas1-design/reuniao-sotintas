@@ -535,7 +535,7 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
     var ORG={}, pessoas=[]; (ACP||[]).forEach(function(p){ var k3=cod3(p.loja); if(p.loja&&!ORG[k3]) ORG[k3]={sup:p.sup||'',nome:p.lojaNome||''}; if((p.tipo==='vend'||p.tipo==='ger')&&p.loja) pessoas.push({n:norm(nm(p.nome)),k:k3,p:p,usado:false}); });
     var R=(m.equipe||[]).filter(function(r){ var pf=String((r.usuario||{}).perfil||''); return pf==='colaborador'||pf==='gerente'; }).map(function(r){
       var x=pessoaTrilha(r,mods,corte,hoje), lj=x.lojaN!=null?cod3(x.lojaN):''; x.loja=lj; var o=ORG[lj]||{}; x.sup=o.sup||''; x.lojaNome=o.nome||'';
-      var alvo=null, md=3, nn=norm(x.nome); pessoas.forEach(function(q){ if(q.k!==lj) return; var d=q.n===nn?0:lev(q.n,nn); if(d<md){ md=d; alvo=q; } }); if(alvo) alvo.usado=true; return x; });
+      var alvo=null, md=3, nn=norm(x.nome); pessoas.forEach(function(q){ if(q.k!==lj) return; var d=q.n===nn?0:(q.n.indexOf(' ')<0&&nn.split(' ')[0]===q.n)?1:lev(q.n,nn); if(d<md){ md=d; alvo=q; } }); if(alvo) alvo.usado=true; return x; });
     /* quem está no cadastro e nunca abriu o Mentor */
     pessoas.forEach(function(q){ if(q.usado) return; var o=ORG[q.k]||{}; R.push({tipo:'mentor',nome:nm(q.p.nome),loja:q.k,lojaNome:o.nome||'',sup:q.p.sup||o.sup||'',mods:mods.map(function(x){return {id:x.id,titulo:x.titulo,ok:false,nota:null,tent:0,falhou:false};}),feitos:0,total:mods.length,final:null,finalT:0,corte:corte,ult:'',parado:null,cargo:q.p.tipo==='ger'?'Gerente':'Vendedor',sit:'nao_iniciou',semRegistro:true}); });
     R.forEach(function(r,i){ r.i=i; });
