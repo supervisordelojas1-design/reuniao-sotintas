@@ -176,6 +176,13 @@ tbody tr[data-ficha]:hover{background:var(--surface2)}
 .tempo li.mal:before{background:var(--bad);border-color:var(--bad)}
 .tempo li.agora:before{border-color:var(--warn);background:var(--warnbg)}
 .tempo b{display:block}.tempo small{color:var(--muted);font-size:12px}
+.mods{display:flex;flex-direction:column;gap:2px}
+.mod{display:grid;grid-template-columns:28px 1fr 150px;gap:12px;align-items:center;background:transparent;border:0;border-radius:8px;padding:8px;cursor:pointer;text-align:left;min-height:52px}
+.mod:hover{background:var(--surface2)}.mod[aria-pressed=true]{background:var(--navybg)}
+.mod-n{width:26px;height:26px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px}
+.mod-t{display:flex;flex-direction:column;gap:6px;min-width:0}.mod-t b{font-size:13px}.mod-t .barra{height:8px}
+.mod-v{text-align:right;font-variant-numeric:tabular-nums}.mod-v b{display:block}.mod-v small{color:var(--muted);font-size:12px}
+.prog{display:flex;align-items:center;gap:8px}.prog .barra{flex:1;min-width:50px;height:8px}.prog b{font-variant-numeric:tabular-nums;font-size:13px}
 circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
 @keyframes sobe{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @keyframes cresce{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
@@ -186,7 +193,8 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
 .entra .hc i{transform-origin:bottom;animation:ergue .55s .15s both}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media(max-width:640px){
-  .abas{gap:6px}.aba{padding:10px 8px}.aba-n{font-size:19px}
+  .abas{gap:6px;grid-auto-flow:row;grid-template-columns:1fr 1fr}.aba{padding:10px;min-height:74px}.aba-n{font-size:19px}
+  .mod{grid-template-columns:26px 1fr 92px;gap:8px}
   .histo{gap:1px}
   td.cacoes{grid-column:1/-1}
   .hero{grid-template-columns:1fr;justify-items:center;text-align:center}
@@ -243,7 +251,7 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
   var GRUPO={respondido:'respondido',liberado:'liberado',aguardando:'aguardando',nao_feito:'perdeu',nao_respondeu:'perdeu',sem_pdi:'sempdi'};
   var ORDEM={liberado:1,aguardando:2,nao_respondeu:3,nao_feito:4,sem_pdi:5,respondido:6};
 
-  var S=null, AC=null, SEM='', F={g:'',sup:'',loja:'',q:'',nota:null}, SORT={c:'sit',d:1}, GESTAO=false, ACMAP=null, ACGER=null, ACSUP=null, GERD=null, SUPD=null, TIPO='vend';
+  var S=null, AC=null, SEM='', F={g:'',sup:'',loja:'',q:'',nota:null}, SORT={c:'sit',d:1}, GESTAO=false, ACMAP=null, ACGER=null, ACSUP=null, ACP=null, GERD=null, SUPD=null, TIPO='vend';
 
   function lev(a,b){ var m=a.length,n=b.length,d=[],i,j; for(j=0;j<=n;j++) d[j]=j;
     for(i=1;i<=m;i++){ var ant=d[0]; d[0]=i; for(j=1;j<=n;j++){ var t=d[j]; d[j]=Math.min(d[j]+1,d[j-1]+1,ant+(a[i-1]===b[j-1]?0:1)); ant=t; } } return d[n]; }
@@ -344,11 +352,11 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
   function placa(g,num,tit,obs){ return '<button type="button" class="placa p-'+g+'" data-g="'+g+'" aria-pressed="'+(F.g===g)+'"><b data-n="'+num+'">'+num+'</b><span>'+tit+'</span><small>'+obs+'</small></button>'; }
   function abas(){
     var ts=['vend','ger','sup'].filter(function(t){return cru(t,'atual').length||cru(t,'anterior').length;});
-    if(ts.length<2) return '';
+    var trilha='<button type="button" class="aba" data-tipo="mentor" aria-pressed="'+(TIPO==='mentor')+'"><span class="aba-t">Trilha Mentor</span>'+(MT?'<span class="aba-n">'+ctMT(MT.L).aprovado+' <small>de '+MT.L.length+'</small></span>'+barraMT(ctMT(MT.L),MT.L.length):'<span class="aba-n"><small>Toque para abrir</small></span>')+'</button>';
     return '<nav class="abas" aria-label="Tipo de prova">'+ts.map(function(t){
-      var L=validos(cru(t,quando())), c=conta(L), n=L.length, nomeAba=(t==='ger'&&S.perfil==='ger')||(t==='sup'&&S.perfil==='sup')?'Minha prova':TIPOS[t].aba;
+      var L=validos(cru(t,TIPO==='mentor'?'atual':quando())), c=conta(L), n=L.length, nomeAba=(t==='ger'&&S.perfil==='ger')||(t==='sup'&&S.perfil==='sup')?'Minha prova':TIPOS[t].aba;
       return '<button type="button" class="aba" data-tipo="'+t+'" aria-pressed="'+(TIPO===t)+'"><span class="aba-t">'+nomeAba+'</span><span class="aba-n">'+c.respondido+' <small>de '+n+'</small></span>'+barra(c,n)+'</button>';
-    }).join('')+'</nav>';
+    }).join('')+trilha+'</nav>';
   }
   function histograma(base){
     var nt=base.filter(function(r){return notaDe(r)!=null;}); if(nt.length<3) return '';
@@ -369,6 +377,7 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
   }
 
   function montar(){
+    if(TIPO==='mentor'){ montarTrilha(); return; }
     var TUDO=linhasDaSemana(), comPdi=validos(TUDO), T=TIPOS[TIPO];
     var base=comPdi.filter(function(r){return (!F.sup||r.sup===F.sup)&&(!F.loja||r.loja===F.loja);});
     var cBase=conta(base), n=base.length, pct=n?Math.round(cBase.respondido/n*100):0, med=media(base);
@@ -428,6 +437,7 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
   }
 
   function lista(){
+    if(TIPO==='mentor'){ listaTrilha(); return; }
     var bl=$('limpar'); if(bl) bl.hidden=!(F.g||F.sup||F.loja||F.q||F.nota!=null);
     var T=TIPOS[TIPO], q=norm(F.q), L=TUDO_ATUAL.filter(function(r){
       return (F.g?GRUPO[r.sit]===F.g:(q||r.sit!=='sem_pdi'))&&(!F.sup||r.sup===F.sup)&&(!F.loja||r.loja===F.loja)&&(F.nota==null||(notaDe(r)!=null&&Math.round(notaDe(r))===F.nota))&&(!q||norm(r.nome+' '+r.loja+' '+r.lojaNome).indexOf(q)>=0);
@@ -460,6 +470,7 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
   function temProva(r){ return r.tipo==='vend'?!!r.chave&&podeVer():!!(podeVer()&&r.aval&&r.aval.revisao); }
   function abrirFicha(i){
     var r=TUDO_ATUAL[i]; if(!r) return;
+    if(r.tipo==='mentor'){ fichaTrilha(r); return; }
     var T=TIPOS[r.tipo], nt=notaDe(r), feito=!!r.feito||r.sit==='liberado'||r.sit==='respondido'||r.sit==='nao_respondeu', resp=r.sit==='respondido', perdeu=r.sit==='nao_feito'||r.sit==='nao_respondeu';
     var et=function(cl,t,s){return '<li class="'+cl+'"><b>'+esc(t)+'</b>'+(s?'<small>'+esc(s)+'</small>':'')+'</li>';};
     var h='';
@@ -485,12 +496,111 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
   }
   /* texto pronto para colar no grupo: só nomes e situação, nunca nota ou gabarito */
   function cobranca(){
+    if(TIPO==='mentor'){ cobrancaTrilha(); return; }
     var L=TUDO_ATUAL.filter(function(r){return (r.sit==='liberado'||r.sit==='aguardando')&&(!F.sup||r.sup===F.sup)&&(!F.loja||r.loja===F.loja);});
     if(!L.length){ toast('Ninguém pendente nesse filtro.'); return; }
     L.sort(function(a,b){return (a.loja<b.loja?-1:a.loja>b.loja?1:0)||(norm(a.nome)<norm(b.nome)?-1:1);});
     var pz=textoPrazo(prazoMax(L)).t, tx='*Provas pendentes · '+TIPOS[TIPO].aba+' · semana de '+dBr(semanaDe(TIPO,'atual'))+'*\n'+(pz?pz+'\n':'')+'\n'+
       L.map(function(r){return '• '+(r.loja?r.loja+' · ':'')+r.nome+' — '+rotSit(r.sit,TIPO);}).join('\n');
     var ok=function(){ toast(L.length+(L.length===1?' pendência copiada.':' pendências copiadas.')+' Cole no WhatsApp.'); };
+    var alt=function(){ var a=document.createElement('textarea'); a.value=tx; document.body.appendChild(a); a.select(); var f=false; try{f=document.execCommand('copy');}catch(e){} a.remove(); if(f) ok(); else toast('Não consegui copiar neste aparelho.'); };
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(tx).then(ok,alt); else alt();
+  }
+
+  /* ═══ TRILHA MENTOR — só leitura. 'mentorLer' já devolve a equipe no recorte de cada perfil.
+     Usa só progresso, tentativas (nota) e atividade: gabarito, conversa e DISC ficam de fora. ═══ */
+  var MT=null, MT_CARREGANDO=false;
+  var MT_ROT={aprovado:'Aprovado na final',andamento:'Em andamento',refazer:'Precisa refazer',nao_iniciou:'Não iniciou'};
+  var MT_CHIP={aprovado:'respondido',andamento:'liberado',refazer:'nao_respondeu',nao_iniciou:'sem_pdi'};
+  var MT_ORD={refazer:1,nao_iniciou:2,andamento:3,aprovado:4};
+  var cod3=function(x){ var n=parseInt(x,10); return isNaN(n)?String(x||''):String(n).padStart(3,'0'); };
+  function carregaBase(){ return new Promise(function(ok){ if(window.CONTEUDO&&CONTEUDO.modulos) return ok(); var s=document.createElement('script'); s.src='mentor/assets/conteudo-base.js?v=1'; s.onload=ok; s.onerror=ok; document.head.appendChild(s); }); }
+  function pessoaTrilha(rec,mods,corte,hoje){
+    var P=rec.progresso||[], T=rec.tentativas||[], m={}, u=rec.usuario||{};
+    mods.forEach(function(x){ m[x.id]={id:x.id,titulo:x.titulo,ok:false,nota:null,tent:0,falhou:false}; });
+    P.forEach(function(p){ if(p.item_tipo==='quiz'&&m[p.item_id]){ m[p.item_id].ok=true; var n=Number(p.nota); if(!isNaN(n)&&(m[p.item_id].nota==null||n>m[p.item_id].nota)) m[p.item_id].nota=n; } });
+    var finalT=0, finalNota=null;
+    T.forEach(function(t){ if(t.modulo_id==='FINAL'){ finalT++; return; } var x=m[t.modulo_id]; if(!x) return; x.tent++; if(t.aprovado){ x.ok=true; var n=Number(t.nota); if(!isNaN(n)&&(x.nota==null||n>x.nota)) x.nota=n; } else x.falhou=true; });
+    P.forEach(function(p){ if(p.item_tipo==='final'){ var n=Number(p.nota); finalNota=isNaN(n)?10:n; } });
+    var L=mods.map(function(x){return m[x.id];}), feitos=L.filter(function(x){return x.ok;}).length;
+    var trava=L.some(function(x){return x.falhou&&!x.ok;})||(finalT>0&&finalNota==null);
+    var estudou=P.some(function(p){return p.item_tipo==='aula'||p.item_tipo==='quiz'||p.item_tipo==='final';})||T.length>0;
+    var dias=Object.keys(rec.atividade||{}).sort(), ult=dias.length?dias[dias.length-1]:'';
+    var parado=ult&&hoje?Math.round((new Date(hoje+'T12:00:00Z')-new Date(ult+'T12:00:00Z'))/86400000):null;
+    return {tipo:'mentor',nome:nm(u.nome||u.login),lojaN:u.loja_id,mods:L,feitos:feitos,total:mods.length,final:finalNota,finalT:finalT,corte:corte,ult:ult,parado:parado,cargo:u.cargo||'',sit:finalNota!=null?'aprovado':trava?'refazer':estudou?'andamento':'nao_iniciou'};
+  }
+  function montarDadosTrilha(m,k){
+    var c=(k&&k.ok&&k.cont)||{}, B=window.CONTEUDO||{}, mods=(c.modulos||B.modulos||[]).filter(function(x){return x.ativo!==false;}).slice().sort(function(a,b){return (a.ordem||0)-(b.ordem||0);});
+    var corte=(c.config&&c.config.nota_aprovacao)||(B.config&&B.config.nota_aprovacao)||7, hoje=String(S.agora||'').slice(0,10);
+    var ORG={}, pessoas=[]; (ACP||[]).forEach(function(p){ var k3=cod3(p.loja); if(p.loja&&!ORG[k3]) ORG[k3]={sup:p.sup||'',nome:p.lojaNome||''}; if((p.tipo==='vend'||p.tipo==='ger')&&p.loja) pessoas.push({n:norm(nm(p.nome)),k:k3,p:p,usado:false}); });
+    var R=(m.equipe||[]).filter(function(r){ var pf=String((r.usuario||{}).perfil||''); return pf==='colaborador'||pf==='gerente'; }).map(function(r){
+      var x=pessoaTrilha(r,mods,corte,hoje), lj=x.lojaN!=null?cod3(x.lojaN):''; x.loja=lj; var o=ORG[lj]||{}; x.sup=o.sup||''; x.lojaNome=o.nome||'';
+      var alvo=null, md=3, nn=norm(x.nome); pessoas.forEach(function(q){ if(q.k!==lj) return; var d=q.n===nn?0:lev(q.n,nn); if(d<md){ md=d; alvo=q; } }); if(alvo) alvo.usado=true; return x; });
+    /* quem está no cadastro e nunca abriu o Mentor */
+    pessoas.forEach(function(q){ if(q.usado) return; var o=ORG[q.k]||{}; R.push({tipo:'mentor',nome:nm(q.p.nome),loja:q.k,lojaNome:o.nome||'',sup:q.p.sup||o.sup||'',mods:mods.map(function(x){return {id:x.id,titulo:x.titulo,ok:false,nota:null,tent:0,falhou:false};}),feitos:0,total:mods.length,final:null,finalT:0,corte:corte,ult:'',parado:null,cargo:q.p.tipo==='ger'?'Gerente':'Vendedor',sit:'nao_iniciou',semRegistro:true}); });
+    R.forEach(function(r,i){ r.i=i; });
+    return {L:R,mods:mods,corte:corte};
+  }
+  function abrirTrilha(){
+    $('semanas').hidden=true;
+    if(MT){ ENTRA=true; montarTrilha(); return; }
+    if(MT_CARREGANDO) return; MT_CARREGANDO=true;
+    $('raiz').innerHTML=abas()+'<p class="sub">Carregando a Trilha Mentor…</p>';
+    Promise.all([STDados.chamar('mentorLer'),STDados.chamar('conteudoLer').catch(function(){return null;}),carregaBase()]).then(function(rs){
+      if(!rs[0]||!rs[0].ok) throw new Error((rs[0]&&rs[0].erro)||'O servidor não respondeu.');
+      MT=montarDadosTrilha(rs[0],rs[1]); MT_CARREGANDO=false;
+      if(TIPO==='mentor'){ ENTRA=true; montarTrilha(); }
+    }).catch(function(e){ MT_CARREGANDO=false; $('raiz').innerHTML=abas()+'<div class="card"><h2>Não consegui abrir a trilha</h2><p class="sub">'+esc(e.message||e)+'</p></div>'; });
+  }
+  function ctMT(L){ var o={aprovado:0,andamento:0,refazer:0,nao_iniciou:0}; L.forEach(function(r){o[r.sit]++;}); return o; }
+  function barraMT(c,n){ return barra({respondido:c.aprovado,liberado:c.andamento,aguardando:c.refazer,perdeu:c.nao_iniciou},n); }
+  function diasTxt(r){ return r.parado==null?'Nunca estudou':r.parado<=0?'Estudou hoje':r.parado===1?'Ontem':'Há '+r.parado+' dias'; }
+  function fraseMT(c,n){ if(!n) return 'Ainda não há ninguém na trilha.'; if(c.aprovado===n) return '<em class="ok">Todo mundo concluiu a trilha.</em>'; var p=[]; if(c.andamento) p.push(c.andamento+' em andamento'); if(c.refazer) p.push(c.refazer+(c.refazer>1?' precisam':' precisa')+' refazer'); if(c.nao_iniciou) p.push(c.nao_iniciou+' não '+(c.nao_iniciou>1?'iniciaram':'iniciou')); return '<em>'+c.aprovado+(c.aprovado===1?' aprovado':' aprovados')+' na avaliação final.</em> '+p.join(', ')+'.'; }
+  function baseMT(){ return MT.L.filter(function(r){return (!F.sup||r.sup===F.sup)&&(!F.loja||r.loja===F.loja);}); }
+  function montarTrilha(){
+    var base=baseMT(), c=ctMT(base), n=base.length, pct=n?Math.round(c.aprovado/n*100):0;
+    $('sub').textContent=(F.loja?'Loja '+F.loja:F.sup?'Carteira de '+F.sup:S.perfil==='sup'?'Sua carteira':S.perfil==='ger'?'Sua loja':'Rede Só Tintas')+' · Trilha Mentor · '+MT.mods.length+' módulos';
+    var ring={respondido:c.aprovado,liberado:c.andamento};
+    var h=abas()+'<section class="card hero"><div class="anel">'+anel(ring,n||1)+'<div class="cen"><b><span data-n="'+pct+'">'+pct+'</span>%</b><small>'+c.aprovado+' de '+n+'</small></div></div><div><p class="frase">'+fraseMT(c,n)+'</p><div class="hero-l"><span class="prazo">Nota mínima '+String(MT.corte).replace('.',',')+'</span></div></div></section>';
+    var pl=function(g,cl,num,t,o){ return '<button type="button" class="placa p-'+cl+'" data-g="'+g+'" aria-pressed="'+(F.g===g)+'"><b data-n="'+num+'">'+num+'</b><span>'+t+'</span><small>'+o+'</small></button>'; };
+    h+='<section class="placas" aria-label="Filtrar por situação">'+pl('aprovado','respondido',c.aprovado,'Aprovados','passaram na avaliação final')+pl('andamento','liberado',c.andamento,'Em andamento','estudando a trilha')+pl('refazer','perdeu',c.refazer,'Precisam refazer','reprovaram e não passaram ainda')+pl('nao_iniciou','sempdi',c.nao_iniciou,'Não iniciaram','nenhuma aula concluída')+'</section>';
+    var iniciados=base.filter(function(r){return r.sit!=='nao_iniciou';});
+    if(iniciados.length){ var RM=MT.mods.map(function(m,ix){ var ok=0,trava=0,tent=0,soma=0,qt=0; iniciados.forEach(function(r){ var x=r.mods[ix]; if(x.ok) ok++; if(x.falhou&&!x.ok) trava++; tent+=x.tent; if(x.nota!=null){ soma+=x.nota; qt++; } }); return {id:m.id,t:m.titulo,ok:ok,trava:trava,tent:tent,med:qt?soma/qt:null,n:iniciados.length}; });
+      h+='<section class="card"><div class="card-top"><h2>Módulo a módulo</h2><span class="sub">Quem iniciou a trilha. Toque para ver quem falta passar.</span></div><div class="mods">'+RM.map(function(x,i){ return '<button type="button" class="mod" data-mod="'+esc(x.id)+'" aria-pressed="'+(F.mod===x.id)+'"><span class="mod-n">'+(i+1)+'</span><span class="mod-t"><b>'+esc(x.t)+'</b>'+barra({respondido:x.ok,liberado:0,aguardando:x.trava,perdeu:0},x.n)+'</span><span class="mod-v"><b>'+x.ok+'/'+x.n+'</b><small>'+(x.med!=null?'média '+virg(x.med):'sem nota')+(x.trava?' · '+x.trava+' '+(x.trava>1?'travados':'travado'):'')+'</small></span></button>'; }).join('')+'</div></section>'; }
+    var sups={}; MT.L.forEach(function(r){ if(r.sup)(sups[r.sup]=sups[r.sup]||[]).push(r); }); var ks=Object.keys(sups);
+    if(ks.length>1&&!F.loja){ var RS=ks.map(function(k){var q=ctMT(sups[k]);return {k:k,c:q,n:sups[k].length,p:q.aprovado/sups[k].length};}).sort(function(a,b){return b.p-a.p||b.n-a.n;});
+      h+='<section class="card"><div class="card-top"><h2>Por supervisor</h2><div class="legenda"><span><i class="b-ok"></i>aprovado</span><span><i class="b-warn"></i>em andamento</span><span><i class="b-bad"></i>refazer ou não iniciou</span></div></div><div class="sups">'+RS.map(function(x){return '<button type="button" class="sup" data-sup="'+esc(x.k)+'" aria-pressed="'+(F.sup===x.k)+'"><b>'+esc(x.k)+'</b>'+barraMT(x.c,x.n)+'<span class="num">'+x.c.aprovado+' de '+x.n+'</span><span class="med"></span></button>';}).join('')+'</div></section>'; }
+    var lojas={}; MT.L.filter(function(r){return r.loja&&(!F.sup||r.sup===F.sup);}).forEach(function(r){ (lojas[r.loja]=lojas[r.loja]||[]).push(r); }); var kl=Object.keys(lojas);
+    if(kl.length>1){ var RL=kl.map(function(k){var q=ctMT(lojas[k]);return {k:k,nome:lojas[k][0].lojaNome,c:q,n:lojas[k].length,p:q.aprovado/lojas[k].length};}).sort(function(a,b){return a.p-b.p||b.n-a.n||(a.k<b.k?-1:1);});
+      h+='<section class="card"><div class="card-top"><h2>Lojas</h2><span class="sub">Menos aprovados primeiro. Toque para ver só a loja.</span></div><div class="lojas">'+RL.map(function(x){return '<button type="button" class="loja" data-loja="'+esc(x.k)+'" aria-pressed="'+(F.loja===x.k)+'"><span class="t"><span>'+esc(x.k)+'</span><span>'+x.c.aprovado+'/'+x.n+'</span></span>'+barraMT(x.c,x.n)+'<small>'+esc(x.nome||' ')+'</small></button>';}).join('')+'</div></section>'; }
+    h+='<section class="card"><div class="card-top"><h2>Toda a equipe</h2><span class="sub" id="contLista"></span></div><div class="ferr"><input id="busca" type="search" placeholder="Buscar pessoa ou loja" aria-label="Buscar" value="'+esc(F.q)+'"><button type="button" class="limpar" data-cobrar="1">Copiar cobrança</button><button type="button" class="limpar" id="limpar" data-limpar="1" hidden>Limpar filtros</button></div><div id="lista"></div></section>';
+    var ra=$('raiz'); ra.classList.toggle('entra',ENTRA&&!REDUZ); ra.innerHTML=h; TUDO_ATUAL=MT.L; listaTrilha();
+    if(ENTRA&&!REDUZ) animar(); ENTRA=false;
+  }
+  function listaTrilha(){
+    var bl=$('limpar'); if(bl) bl.hidden=!(F.g||F.sup||F.loja||F.q||F.mod);
+    var q=norm(F.q), L=MT.L.filter(function(r){ return (!F.g||r.sit===F.g)&&(!F.sup||r.sup===F.sup)&&(!F.loja||r.loja===F.loja)&&(!F.mod||r.mods.some(function(x){return x.id===F.mod&&!x.ok;})&&r.sit!=='nao_iniciou')&&(!q||norm(r.nome+' '+r.loja+' '+r.lojaNome).indexOf(q)>=0); });
+    var d=SORT.d, cmp={ sit:function(a,b){return (MT_ORD[a.sit]-MT_ORD[b.sit])*d||b.feitos-a.feitos||(a.loja<b.loja?-1:1);}, nome:function(a,b){return norm(a.nome)<norm(b.nome)?-d:d;}, sup:function(a,b){return (a.sup<b.sup?-d:a.sup>b.sup?d:0)||(a.loja<b.loja?-1:1);}, trilha:function(a,b){return (a.feitos-b.feitos)*d;}, final:function(a,b){ if(a.final==null&&b.final==null) return 0; if(a.final==null) return 1; if(b.final==null) return -1; return (a.final-b.final)*d; }, ult:function(a,b){ var x=a.parado==null?9e9:a.parado,y=b.parado==null?9e9:b.parado; return (x-y)*d; } }[SORT.c]||function(){return 0;};
+    L.sort(cmp);
+    var c=$('contLista'); if(c) c.textContent=L.length+(L.length===1?' pessoa':' pessoas');
+    if(!L.length){ $('lista').innerHTML='<div class="vazio">Ninguém nesse filtro.</div>'; return; }
+    var temSup=S.perfil!=='sup'&&S.perfil!=='ger', th=function(k,t){return '<th'+(SORT.c===k?' aria-sort="'+(d>0?'ascending':'descending')+'"':'')+'><button type="button" data-sort="'+k+'">'+t+(SORT.c===k?(d>0?' ▲':' ▼'):'')+'</button></th>';};
+    $('lista').innerHTML='<table><thead><tr>'+th('nome','Colaborador')+(temSup?th('sup','Supervisor'):'')+th('sit','Situação')+th('trilha','Módulos')+th('final','Final')+th('ult','Último estudo')+'</tr></thead><tbody>'+L.map(function(r){ var p=r.total?r.feitos/r.total*100:0;
+      return '<tr data-ficha="'+r.i+'"><td class="nome"><button type="button" class="nomeb" data-ficha="'+r.i+'"><b>'+esc(r.nome)+'</b></button><small>'+(r.loja?'Loja '+esc(r.loja)+(r.lojaNome?' · '+esc(r.lojaNome):''):'')+'</small></td>'+(temSup?'<td class="csup">'+esc(r.sup)+'</td>':'')+'<td class="csit"><span class="chip c-'+MT_CHIP[r.sit]+'">'+MT_ROT[r.sit]+'</span></td><td class="cpasso"><span class="prog"><span class="barra"><i class="b-ok" style="width:'+p+'%"></i></span><b>'+r.feitos+'/'+r.total+'</b></span></td><td class="cnota">'+(r.final!=null?'<span class="nota '+(r.final>=8?'n-a':r.final>=6?'n-b':'n-c')+'">'+virg(r.final)+'</span>':'<span class="traco">—</span>')+'</td><td class="capp" data-r="Último estudo">'+diasTxt(r)+'</td></tr>'; }).join('')+'</tbody></table>';
+  }
+  function fichaTrilha(r){
+    var h=r.final!=null?'<div class="f-nota"><span class="nota grande '+(r.final>=8?'n-a':r.final>=6?'n-b':'n-c')+'">'+virg(r.final)+'</span><span class="sub">avaliação final</span></div>':(r.finalT?'<div class="alerta">Fez a avaliação final '+r.finalT+(r.finalT>1?' vezes':' vez')+' e ainda não passou.</div>':'');
+    if(r.semRegistro) h+='<div class="alerta">Ainda não abriu o Mentor neste cadastro.</div>';
+    h+='<ol class="tempo">'+r.mods.map(function(x){ var s=x.ok?'Aprovado'+(x.nota!=null?' · nota '+virg(x.nota):''):x.falhou?'Reprovado, precisa refazer':'Pendente'; if(x.tent) s+=' · '+x.tent+(x.tent>1?' tentativas':' tentativa'); return '<li class="'+(x.ok?'ok':x.falhou?'mal':'')+'"><b>'+esc(x.titulo)+'</b><small>'+esc(s)+'</small></li>'; }).join('')+'</ol><p class="sub" style="margin:0">Último estudo: '+esc(diasTxt(r))+'</p>';
+    abrirDlg(r.nome,(r.loja?'Loja '+r.loja+(r.lojaNome?' · '+r.lojaNome:'')+' · ':'')+MT_ROT[r.sit]+' · '+r.feitos+'/'+r.total+' módulos',h);
+  }
+  function cobrancaTrilha(){
+    var L=baseMT().filter(function(r){return r.sit==='refazer'||r.sit==='nao_iniciou';}); if(!L.length){ toast('Ninguém pendente nesse filtro.'); return; }
+    L.sort(function(a,b){return (a.loja<b.loja?-1:a.loja>b.loja?1:0)||(norm(a.nome)<norm(b.nome)?-1:1);});
+    return copiar('*Trilha Mentor · pendências*\n\n'+L.map(function(r){return '• '+(r.loja?r.loja+' · ':'')+r.nome+' — '+MT_ROT[r.sit];}).join('\n'),L.length);
+  }
+  function copiar(tx,n){
+    var ok=function(){ toast(n+(n===1?' pendência copiada.':' pendências copiadas.')+' Cole no WhatsApp.'); };
     var alt=function(){ var a=document.createElement('textarea'); a.value=tx; document.body.appendChild(a); a.select(); var f=false; try{f=document.execCommand('copy');}catch(e){} a.remove(); if(f) ok(); else toast('Não consegui copiar neste aparelho.'); };
     if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(tx).then(ok,alt); else alt();
   }
@@ -576,7 +686,7 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
     }).then(function(rs){
       var a=rs[1]; GERD=(rs[2]&&rs[2].ok)?rs[2]:null; SUPD=(rs[3]&&rs[3].ok)?rs[3]:null;
       if(S.perfil==='vend'){ $('raiz').innerHTML='<div class="card"><h2>Tela da gestão</h2><p class="sub">Sua prova fica em PDI Semanal.</p></div>'; return; }
-      GESTAO=true; AC=null; ACMAP=null; ACGER=null; ACSUP=null;
+      GESTAO=true; AC=null; ACMAP=null; ACGER=null; ACSUP=null; ACP=(a&&a.ok&&a.pessoas)||[]; MT=null;
       if(a&&a.ok){ AC={lojaSup:{},lojaNome:{}}; ACMAP={}; ACGER={}; ACSUP={};
         (a.pessoas||[]).forEach(function(p){ var k=String(p.loja||''); if(k){ if(p.sup) AC.lojaSup[k]=p.sup; if(p.lojaNome) AC.lojaNome[k]=p.lojaNome; }
           if(p.tipo==='vend'&&k) (ACMAP[k]=ACMAP[k]||[]).push({n:norm(nm(p.nome)),p:p}); if(p.tipo==='ger'&&k) ACGER[k]=p; if(p.tipo==='sup') ACSUP[norm(nm(p.nome))]=p; }); }
@@ -591,7 +701,8 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
     if(b.dataset.ficha){ abrirFicha(Number(b.dataset.ficha)); return; }
     if(b.dataset.revisao){ verRevisao(Number(b.dataset.revisao)); return; }
     if(b.dataset.cobrar){ cobranca(); return; }
-    if(b.dataset.tipo){ if(TIPO!==b.dataset.tipo){ TIPO=b.dataset.tipo; F={g:'',sup:'',loja:'',q:'',nota:null}; ENTRA=true; montar(); } return; }
+    if(b.dataset.tipo){ if(TIPO!==b.dataset.tipo){ TIPO=b.dataset.tipo; F={g:'',sup:'',loja:'',q:'',nota:null}; SORT={c:'sit',d:1}; ENTRA=true; if(TIPO==='mentor') abrirTrilha(); else { $('semanas').hidden=false; montar(); } } return; }
+    if(b.dataset.mod){ F.mod=F.mod===b.dataset.mod?'':b.dataset.mod; montar(); if(window.innerWidth<=640&&F.mod){ var ll=$('lista'); if(ll) ll.scrollIntoView({behavior:'smooth',block:'start'}); } return; }
     if(b.dataset.nota!=null){ var nv=Number(b.dataset.nota); F.nota=F.nota===nv?null:nv; montar(); rolarLista(); return; }
     if(b.dataset.prova){ verProva(b.dataset.prova); return; }
     if(b.dataset.prazochave){ abrirPrazo(b.dataset.prazochave); return; }
@@ -602,7 +713,7 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
     if(b.dataset.sup){ F.sup=F.sup===b.dataset.sup?'':b.dataset.sup; F.loja=''; montar(); return; }
     if(b.dataset.loja){ F.loja=F.loja===b.dataset.loja?'':b.dataset.loja; montar(); return; }
     if(b.dataset.limpar){ F={g:'',sup:'',loja:'',q:'',nota:null}; montar(); return; }
-    if(b.dataset.sort){ if(SORT.c===b.dataset.sort) SORT.d=-SORT.d; else { SORT.c=b.dataset.sort; SORT.d=b.dataset.sort==='nota'?-1:1; } lista(); }
+    if(b.dataset.sort){ if(SORT.c===b.dataset.sort) SORT.d=-SORT.d; else { SORT.c=b.dataset.sort; SORT.d=/nota|trilha|final/.test(b.dataset.sort)?-1:1; } lista(); }
   });
   function rolarLista(){ if(F.nota==null) return; var l=$('lista'); if(l&&l.scrollIntoView&&window.innerWidth<=640) l.scrollIntoView({behavior:'smooth',block:'start'}); }
   function rolar(){ if(!F.g) return; var l=$('lista'); if(l&&l.scrollIntoView&&window.innerWidth<=640) l.scrollIntoView({behavior:'smooth',block:'start'}); }
