@@ -734,35 +734,37 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
   function prepH(j){ var ORG={}; (ACP||[]).forEach(function(p){ var k=cod3(p.loja); if(p.loja&&!ORG[k]) ORG[k]={sup:p.sup||'',nome:p.lojaNome||''}; });
     (j.linhas||[]).forEach(function(x){ x.lj=x.l?cod3(x.l):''; x.sp=x.t==='sup'?nm(x.n):((ORG[x.lj]||{}).sup||''); x.ln=(ORG[x.lj]||{}).nome||''; x.nome=nm(x.n); }); return j; }
   function rGarantir(op){ var P=[];
-    if(op.trilha&&!MT) P.push(Promise.all([STDados.chamar('mentorLer'),STDados.chamar('conteudoLer').catch(function(){return null;}),carregaBase()]).then(function(rs){ if(rs[0]&&rs[0].ok&&!MT) MT=montarDadosTrilha(rs[0],rs[1]); }).catch(function(){}));
+    if((op.trilha||op.gerFicha)&&!MT) P.push(Promise.all([STDados.chamar('mentorLer'),STDados.chamar('conteudoLer').catch(function(){return null;}),carregaBase()]).then(function(rs){ if(rs[0]&&rs[0].ok&&!MT) MT=montarDadosTrilha(rs[0],rs[1]); }).catch(function(){}));
     if(op.avulsas&&!AV) P.push(STDados.chamar('avulsaResultados').then(function(j){ if(j&&j.ok&&!AV){ AV=j; if(!AV_SEL&&AV.provas.length) AV_SEL=AV.provas[AV.provas.length-1].id; } }).catch(function(){}));
-    if(op.hist&&!H) P.push(STDados.chamar('provasHistorico').then(function(j){ if(j&&j.ok&&!H) H=prepH(j); }).catch(function(){}));
+    if((op.hist||op.tema||op.gerFicha)&&!H) P.push(STDados.chamar('provasHistorico').then(function(j){ if(j&&j.ok&&!H) H=prepH(j); }).catch(function(){}));
     return Promise.all(P); }
   function mesmoSup(a,b){ return !!a&&!!b&&norm(a).split(' ')[0]===norm(b).split(' ')[0]; }
-  function rOk(E){ return function(r){ if(E.tipo==='loja') return cod3(r.loja||r.lj)===E.v; if(E.tipo==='sup') return mesmoSup(r.sup||r.sp,E.v); return true; }; }
+  function rOk(E){ return function(r){ if(E.tipo==='loja'||E.tipo==='ger') return cod3(r.loja||r.lj)===E.v; if(E.tipo==='sup') return mesmoSup(r.sup||r.sp,E.v); return true; }; }
   function rEscopos(){
     var L={}, S2={}; Object.keys((AC&&AC.lojaSup)||{}).forEach(function(k){ L[cod3(k)]=AC.lojaNome[k]||''; S2[AC.lojaSup[k]]=1; });
     cru('vend','atual').concat(cru('ger','atual')).forEach(function(r){ if(r.loja&&!(cod3(r.loja) in L)) L[cod3(r.loja)]=r.lojaNome||''; if(r.sup) S2[r.sup]=1; });
-    var o=[]; if(S.perfil==='ger'){ Object.keys(L).sort().forEach(function(k){ o.push({tipo:'loja',v:k,t:'Loja '+k+(L[k]?' · '+L[k]:'')}); }); return o; }
+    var GG={}; cru('ger','atual').concat(cru('ger','anterior')).forEach(function(r){ if(r.loja&&r.nome&&!GG[cod3(r.loja)]) GG[cod3(r.loja)]=r.nome; });
+    var gers=function(){ Object.keys(GG).sort().forEach(function(k){ o.push({tipo:'ger',v:k,g:GG[k],t:'Gerente: '+GG[k]+' · Loja '+k+(L[k]?' '+L[k]:'')}); }); };
+    var o=[]; if(S.perfil==='ger'){ Object.keys(L).sort().forEach(function(k){ o.push({tipo:'loja',v:k,t:'Loja '+k+(L[k]?' · '+L[k]:'')}); }); gers(); return o; }
     o.push({tipo:'geral',v:'',t:S.perfil==='sup'?'Minha carteira (geral)':'Rede Só Tintas (geral)'});
     if(S.perfil!=='sup') Object.keys(S2).sort().forEach(function(s){ o.push({tipo:'sup',v:s,t:'Supervisor: '+s}); });
     Object.keys(L).sort().forEach(function(k){ o.push({tipo:'loja',v:k,t:'Loja '+k+(L[k]?' · '+L[k]:'')}); });
-    return o; }
+    gers(); return o; }
   function pctTxt(a,n){ return n?Math.round(a/n*100)+'%':'—'; }
   function rDados(E){
     var ok=rOk(E), V=cru('vend','atual').filter(ok).map(function(r){ var p=acharPessoa(r.loja,r.nome); r.app=statusApp(p&&p.p); return r; }), G=cru('ger','atual').filter(ok), SP=E.tipo==='loja'?[]:cru('sup','atual').filter(function(r){ return E.tipo==='geral'||mesmoSup(r.sup,E.v); });
-    var T=MT?MT.L.filter(ok):[], HH=H?H.linhas.filter(function(x){return x.t==='vend';}).filter(ok):[];
+    var T=MT?MT.L.filter(ok):[], HH=H?H.linhas.filter(function(x){return x.t==='vend';}).filter(ok):[], HG=H?H.linhas.filter(function(x){return x.t==='ger';}).filter(ok):[];
     var AVL=AV?AV.provas.map(function(P){ var L=linhasAvulsa(P).filter(ok); return {P:P,L:L,c:ctAv(L)}; }).filter(function(x){return x.L.length;}):[];
-    return {V:V,G:G,SP:SP,T:T,HH:HH,AVL:AVL,cV:conta(V),cG:conta(G),cS:conta(SP),mV:media(V),mG:media(G)}; }
+    return {V:V,G:G,SP:SP,T:T,HH:HH,HG:HG,AVL:AVL,cV:conta(V),cG:conta(G),cS:conta(SP),mV:media(V),mG:media(G)}; }
   function rLeitura(E,D){ var L=[], c=D.cV, n=D.V.length;
     if(c.aguardando){ var lj={}; D.V.forEach(function(r){ if(r.sit==='aguardando') lj[r.loja]=(lj[r.loja]||0)+1; }); var top=Object.keys(lj).sort(function(a,b){return lj[b]-lj[a];}).slice(0,3);
-      L.push(['Destravar o ritual',c.aguardando+' de '+n+' vendedores esperam o gerente fazer o PDI para a prova abrir'+(E.tipo!=='loja'&&top.length?' (mais em '+top.map(function(k){return k+': '+lj[k];}).join(', ')+')':'')+'.','Supervisor liga para esses gerentes ainda na segunda de manhã e confere o "Fiz o PDI" antes das 12h.']); }
-    if(c.liberado) L.push(['Cobrar quem já pode responder',c.liberado+' vendedores estão com a prova aberta e ainda não responderam.','Usar a lista de pendências deste relatório no grupo da loja, com o prazo.']);
-    if(c.perdeu) L.push(['Prazo perdido',c.perdeu+' provas venceram sem resposta.','Entender o motivo com o gerente (faltou o PDI ou faltou o vendedor) antes de reabrir o prazo.']);
+      L.push(['Destravar o ritual',c.aguardando+' de '+n+(c.aguardando===1?' vendedor espera':' vendedores esperam')+' o gerente fazer o PDI para a prova abrir'+(E.tipo!=='loja'&&top.length?' (mais em '+top.map(function(k){return k+': '+lj[k];}).join(', ')+')':'')+'.','Supervisor liga para esses gerentes ainda na segunda de manhã e confere o "Fiz o PDI" antes das 12h.']); }
+    if(c.liberado) L.push(['Cobrar quem já pode responder',(c.liberado===1?'1 vendedor está com a prova aberta e ainda não respondeu.':c.liberado+' vendedores estão com a prova aberta e ainda não responderam.'),'Usar a lista de pendências deste relatório no grupo da loja, com o prazo.']);
+    if(c.perdeu) L.push(['Prazo perdido',(c.perdeu===1?'1 prova venceu sem resposta.':c.perdeu+' provas venceram sem resposta.'),'Entender o motivo com o gerente (faltou o PDI ou faltou o vendedor) antes de reabrir o prazo.']);
     if(D.G.length&&!D.cG.respondido) L.push(['Prova dos gerentes parada','Nenhum dos '+D.G.length+' gerentes respondeu a própria prova nesta semana.','Conferir se o supervisor marcou "Fiz o PDI com o gerente": sem isso a prova do gerente nem abre.']);
     if(D.HH.length){ var TM={}; D.HH.forEach(function(x){ (x.q||[]).forEach(function(q){ var o=TM[q[0]]=TM[q[0]]||{a:0,t:0}; o.t++; o.a+=q[1]; }); }); var pior=Object.keys(TM).filter(function(k){return TM[k].t>=5;}).map(function(k){return {n:H.temas[k],p:TM[k].a/TM[k].t};}).sort(function(a,b){return a.p-b.p;})[0];
       if(pior&&pior.p<.85) L.push(['Tema para reforçar',pior.n+' tem o menor acerto nas provas ('+Math.round(pior.p*100)+'%).','No próximo PDI, o gerente pede que o vendedor explique esse ponto com as próprias palavras antes de encerrar.']); }
-    if(D.T.length){ var ct=ctMT(D.T); if(ct.nao_iniciou/D.T.length>=.3) L.push(['Trilha Mentor parada',ct.nao_iniciou+' de '+D.T.length+' pessoas não iniciaram a trilha.','Meta curta: todo mundo com o Módulo 1 até sexta, com um padrinho entre os aprovados da loja.']); }
+    if(D.T.length){ var ct=ctMT(D.T); if(ct.nao_iniciou/D.T.length>=.3) L.push(['Trilha Mentor parada',ct.nao_iniciou+' de '+D.T.length+(ct.nao_iniciou===1?' pessoa não iniciou':' pessoas não iniciaram')+' a trilha.','Meta curta: todo mundo com o Módulo 1 até sexta, com um padrinho entre os aprovados da loja.']); }
     if(!L.length) L.push(n?['Ritual em dia','Nada crítico nesta semana.','Manter o ritmo e reconhecer quem fechou 100%.']:['Sem provas de vendedor nesta semana','Nenhum PDI semanal de vendedor foi gerado neste recorte.','Conferir se os vendedores estão com meta lançada no Autcom: sem meta, o PDI não é gerado.']);
     return L; }
   function rConteudo(E,op,D){
@@ -774,6 +776,19 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
       (D.SP.length?tile(pctTxt(D.cS.respondido,D.SP.length),'Supervisores fizeram',D.cS.respondido+' de '+D.SP.length,D.cS.respondido/D.SP.length>=.7?'#0B7A55':'#C62828'):'')+
       (ct?tile(pctTxt(ct.aprovado,D.T.length),'Trilha Mentor aprovados',ct.aprovado+' de '+D.T.length,'#1C3F8F'):'')+'</div>');
     if(op.cons) b('<h3>Leitura do consultor: dos números às ações</h3><ol class="r-cons">'+rLeitura(E,D).map(function(x){ return '<li><b>'+esc(x[0])+'.</b> '+esc(x[1])+'<br><span>Ação:</span> '+esc(x[2])+'</li>'; }).join('')+'</ol>');
+    if(E.tipo==='ger'){
+      var g=D.G[0]||null, feitosG=D.V.filter(function(r){return r.sit!=='aguardando'&&r.sit!=='nao_feito';}).length, hgF=D.HG.filter(function(x){return x.f;}), mt=MT?MT.L.filter(function(r){return r.loja===E.v&&(/gerente/i.test(r.cargo)||mesmoSup(r.nome,E.g));})[0]:null, tq=D.T.length?ctMT(D.T):null;
+      var sitC=function(ok2){ return ok2==null?'':ok2?'ok':'bd'; };
+      t('Ficha do gerente: '+E.g,['Ponto','Resultado','Leitura'],[
+        [{v:'Conduziu o PDI semanal dos vendedores',b:1},{v:feitosG+' de '+D.V.length,c:sitC(D.V.length?feitosG/D.V.length>=.8:null)},D.V.length?(feitosG===D.V.length?'Ritual completo nesta semana.':(D.V.length-feitosG)+' vendedor(es) ainda esperam o PDI.'):'Sem PDI de vendedor gerado.'],
+        [{v:'Vendedores que fizeram a prova',b:1},{v:D.cV.respondido+' de '+D.V.length+(D.mV!=null?' · média '+virg(D.mV):''),c:sitC(D.V.length?D.cV.respondido/D.V.length>=.7:null)},D.mV!=null&&D.mV<7?'Notas baixas: o PDI foi feito, mas não ficou claro para a equipe.':''],
+        [{v:'Prova do próprio gerente (semana)',b:1},{v:g?(g.aval?g.aval.nota+'/'+g.aval.total:rotSit(g.sit,'ger')):'—',c:g?(g.aval?(notaDe(g)>=7?'ok':'wn'):'bd'):''},g&&!g.aval?passoSit(g.sit,'ger')+'.':''],
+        [{v:'Provas do gerente no histórico',b:1},{v:H?hgF.length+' de '+D.HG.length+(hgF.length?' · média '+virg(hgF.reduce(function(a,x){return a+x.a;},0)/hgF.length):''):'—',c:H&&D.HG.length?sitC(hgF.length/D.HG.length>=.7):''},H&&D.HG.length&&!hgF.length?'Nenhuma prova respondida: conferir se o supervisor marca o "Fiz o PDI com o gerente".':''],
+        [{v:'Trilha Mentor do gerente',b:1},{v:mt?MT_ROT[mt.sit]+' · '+mt.feitos+'/'+mt.total+' módulos':'—',c:mt?(mt.sit==='aprovado'?'ok':mt.sit==='andamento'?'wn':'bd'):''},mt&&mt.sit==='nao_iniciou'?'O exemplo vem de cima: o gerente que não estuda não cobra a equipe.':''],
+        [{v:'Trilha Mentor da equipe',b:1},{v:tq?tq.aprovado+' aprovados de '+D.T.length:'—',c:tq?sitC(tq.aprovado/D.T.length>=.5):''},tq&&tq.nao_iniciou?tq.nao_iniciou+(tq.nao_iniciou===1?' não iniciou.':' não iniciaram.'):'']]);
+      if(H&&(D.HH.length||D.HG.length)) t('Gerente '+E.g+': semana a semana',['Semana','Vendedores que fizeram','Média da equipe','Prova do gerente'],H.semanas.filter(function(s){ return D.HH.some(function(x){return x.s===s;})||D.HG.some(function(x){return x.s===s;}); }).map(function(s){ var L=D.HH.filter(function(x){return x.s===s;}), f=L.filter(function(x){return x.f;}), gg=D.HG.filter(function(x){return x.s===s;})[0];
+        return [{v:'Semana de '+dBr(s),b:1},f.length+' de '+L.length,f.length?virg(f.reduce(function(a,x){return a+x.a;},0)/f.length):'—',gg?(gg.f?{v:virg(gg.a),c:gg.a>=7?'ok':'wn'}:{v:'não respondeu',c:'bd'}):'—']; }));
+    }
     if(op.sem){
       if(E.tipo==='geral'){ var SS={}; D.V.concat(D.G).forEach(function(r){ if(r.sup) SS[r.sup]=1; }); var ks=Object.keys(SS);
         if(ks.length>1) t('Provas semanais por supervisor',['Supervisor','Vendedores fizeram','Média','Esperando o gerente','Gerentes fizeram'].concat(ct?['Trilha aprovados']:[]),
@@ -793,7 +808,7 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
       if(op.nominal) t('Todos os vendedores',['Vendedor','Loja','Situação','Nota','App'],D.V.slice().sort(function(a,b){return (a.loja<b.loja?-1:a.loja>b.loja?1:0)||(norm(a.nome)<norm(b.nome)?-1:1);}).map(function(r){ var n2=notaDe(r); return [{v:r.nome,b:1},r.loja,rotSit(r.sit,'vend'),n2!=null?{v:r.aval.nota+'/'+r.aval.total,c:n2>=8?'ok':n2>=6?'wn':'bd'}:'—',r.app?r.app.t:'—']; }));
     }
     if(op.trilha&&D.T.length){ var c2=ctMT(D.T), ini=D.T.filter(function(r){return r.sit!=='nao_iniciou';});
-      b('<h3>Trilha Mentor</h3><p class="r-p">'+c2.aprovado+(c2.aprovado===1?' aprovado':' aprovados')+' na avaliação final · '+c2.andamento+' em andamento · '+c2.refazer+' precisam refazer · '+c2.nao_iniciou+' não iniciaram (de '+D.T.length+').</p>');
+      b('<h3>Trilha Mentor</h3><p class="r-p">'+c2.aprovado+(c2.aprovado===1?' aprovado':' aprovados')+' na avaliação final · '+c2.andamento+' em andamento · '+c2.refazer+' precisam refazer · '+c2.nao_iniciou+(c2.nao_iniciou===1?' não iniciou':' não iniciaram')+' (de '+D.T.length+').</p>');
       if(ini.length) t('Trilha Mentor módulo a módulo (entre os '+ini.length+' que iniciaram)',['Módulo','Aprovados','Média','Travados'],MT.mods.map(function(m,ix){ var ok2=0,tr=0,s=0,q=0; ini.forEach(function(r){ var x=r.mods[ix]; if(x.ok) ok2++; if(x.falhou&&!x.ok) tr++; if(x.nota!=null){s+=x.nota;q++;} }); return [{v:(ix+1)+'. '+m.titulo,b:1},ok2+' de '+ini.length,q?virg(s/q):'—',tr||'—']; }));
       var ni=D.T.filter(function(r){return r.sit==='nao_iniciou'||r.sit==='refazer';}).sort(function(a,b){return (a.loja<b.loja?-1:1);});
       if(op.nominal||E.tipo==='loja') t('Trilha Mentor: quem precisa começar ou refazer ('+ni.length+')',['Pessoa','Loja','Situação','Último estudo'],ni.map(function(r){ return [{v:r.nome,b:1},r.loja||'—',{v:MT_ROT[r.sit],c:'bd'},diasTxt(r)]; })); }
@@ -801,6 +816,19 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
     if(op.hist&&D.HH.length){ t('Histórico: vendedores semana a semana',['Semana','Fizeram a prova','Nota média'],H.semanas.filter(function(s){ return D.HH.some(function(x){return x.s===s;}); }).map(function(s){ var L=D.HH.filter(function(x){return x.s===s;}), f=L.filter(function(x){return x.f;}); return [{v:'Semana de '+dBr(s),b:1},f.length+' de '+L.length+' ('+pctTxt(f.length,L.length)+')',f.length?virg(f.reduce(function(a,x){return a+x.a;},0)/f.length):'—']; }));
       var TM={}; D.HH.forEach(function(x){ (x.q||[]).forEach(function(q){ var o=TM[q[0]]=TM[q[0]]||{a:0,t:0}; o.t++; o.a+=q[1]; }); });
       t('Acerto por tema (todas as semanas)',['Tema','Acerto','Respostas'],Object.keys(TM).map(function(k){return {n:H.temas[k],p:TM[k].a/TM[k].t,t:TM[k].t};}).sort(function(a,b){return a.p-b.p;}).map(function(x){ return [{v:x.n,b:1},{v:Math.round(x.p*100)+'%',c:x.p>=.8?'ok':x.p>=.6?'wn':'bd'},x.t]; })); }
+    if(op.tema&&D.HH.length){
+      var tm=function(L){ var o={}; L.forEach(function(x){ (x.q||[]).forEach(function(q){ var k=q[0], a=o[k]=o[k]||{a:0,t:0}; a.t++; a.a+=q[1]; }); }); return o; };
+      var TT=tm(D.HH), ks=Object.keys(TT).filter(function(k){return TT[k].t>=3;}).sort(function(a,b){return TT[a].a/TT[a].t-TT[b].a/TT[b].t;});
+      var cel=function(o){ if(!o||!o.t) return '—'; var p=o.a/o.t; return {v:Math.round(p*100)+'%',c:p>=.8?'ok':p>=.6?'wn':'bd'}; };
+      var grp=E.tipo==='geral'?function(x){return x.sp||'—';}:E.tipo==='sup'?function(x){return x.lj+(x.ln?' '+x.ln:'');}:function(x){return x.nome;};
+      var G2={}; D.HH.forEach(function(x){ (G2[grp(x)]=G2[grp(x)]||[]).push(x); });
+      if(ks.length) t('Acerto por tema × '+(E.tipo==='geral'?'supervisor':E.tipo==='sup'?'loja':'vendedor'),[E.tipo==='geral'?'Supervisor':E.tipo==='sup'?'Loja':'Vendedor'].concat(ks.map(function(k){return H.temas[k];})),
+        Object.keys(G2).sort().map(function(gk){ var o=tm(G2[gk]); return [{v:gk,b:1}].concat(ks.map(function(k){return cel(o[k]);})); }).concat([[{v:'Total',b:1}].concat(ks.map(function(k){return cel(TT[k]);}))]));
+      var P2={}; D.HH.forEach(function(x){ var k=x.lj+'|'+norm(x.nome); (P2[k]=P2[k]||{n:x.nome,l:x.lj,L:[]}).L.push(x); });
+      var piores=[]; ks.forEach(function(k){ if(TT[k].a/TT[k].t>=.85) return; Object.keys(P2).forEach(function(pk){ var o=tm(P2[pk].L)[k]; if(o&&o.t>=2&&o.a/o.t<=.5) piores.push([{v:H.temas[k],b:1},P2[pk].n,P2[pk].l||'—',{v:o.a+' de '+o.t,c:'bd'}]); }); });
+      if(piores.length) t('Quem mais erra em cada tema (acerto até 50%)',['Tema','Pessoa','Loja','Acertos'],piores);
+      else if(ks.length) b('<p class="r-p">Ninguém concentra o erro (acerto até 50% com pelo menos 2 respostas no tema): o erro está espalhado, então vale reforço geral do tema mais fraco.</p>');
+    }
     return B; }
   var R_CSS='.r-pg{width:794px;height:1123px;background:#fff;color:#16233d;font:13px "Public Sans",Arial,sans-serif;position:relative;overflow:hidden;box-sizing:border-box}'+
     '.r-band{height:10px;background:#E31E24}.r-band i{display:block;height:4px;background:#FFD200;width:30%}'+
@@ -808,7 +836,7 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
     '.r-co{position:absolute;left:40px;right:40px;top:96px;bottom:46px;overflow:hidden}.r-ft{position:absolute;left:40px;right:40px;bottom:16px;display:flex;justify-content:space-between;font-size:10px;color:#5a677f;border-top:1px solid #e4e9f3;padding-top:6px}'+
     '.r-co h3{font:700 15px "Bricolage Grotesque",Arial,sans-serif;margin:14px 0 6px;color:#1C3F8F}.r-co h3 em{font-style:normal;color:#5a677f;font-size:12px;font-weight:600}'+
     '.r-tiles{display:flex;gap:10px;margin-top:4px}.r-tile{flex:1;border:1px solid #e4e9f3;border-left:5px solid #1C3F8F;border-radius:8px;padding:10px}.r-tile b{display:block;font:800 26px "Bricolage Grotesque",Arial,sans-serif}.r-tile span{display:block;font-weight:700;font-size:12px}.r-tile small{color:#5a677f;font-size:11px}'+
-    '.r-cons{margin:0;padding-left:20px}.r-cons li{margin:0 0 8px;line-height:1.4}.r-cons span{color:#E31E24;font-weight:700}.r-p{margin:0 0 4px}'+
+    '.r-cons{margin:0;padding-left:20px}.r-cons li{margin:0 0 8px;line-height:1.4}.r-cons span{color:#E31E24;font-weight:700}.r-p{margin:8px 0 4px}'+
     '.r-tb{width:100%;border-collapse:collapse;font-size:11.5px}.r-tb th{background:#1C3F8F;color:#fff;text-align:left;padding:6px 7px;font-weight:700}.r-tb td{padding:5px 7px;border-bottom:1px solid #e4e9f3}.r-tb tr:nth-child(even) td{background:#f5f7fb}'+
     '.ok{color:#0B7A55;font-weight:700}.wn{color:#B7791F;font-weight:700}.bd{color:#C62828;font-weight:700}.r-duo{display:flex;gap:14px}.r-duo>div{flex:1;border:1px solid #e4e9f3;border-radius:8px;padding:10px}.r-duo p{margin:6px 0 0;line-height:1.5}';
   function rCelula(c){ if(c&&typeof c==='object') return '<td'+(c.c?' class="'+c.c+'"':'')+'>'+(c.b?'<b>':'')+esc(c.v)+(c.b?'</b>':'')+'</td>'; return '<td>'+esc(c)+'</td>'; }
@@ -847,10 +875,10 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
     var ck=function(k,t,on){ return '<label class="opc"><input type="checkbox" data-ro="'+k+'"'+(on?' checked':'')+'> '+t+'</label>'; };
     abrirDlg('Relatório de Provas','PDF para salvar ou enviar pelo WhatsApp',
       '<div class="campo"><label for="rEsc">Abrangência</label><select id="rEsc">'+EE.map(function(e,i){return '<option value="'+i+'"'+(i===sel?' selected':'')+'>'+esc(e.t)+'</option>';}).join('')+'</select></div>'+
-      '<fieldset class="campo"><legend>O que entra</legend>'+ck('cons','Leitura do consultor (dos números às ações)',1)+ck('sem','Provas da semana: situação, pendências e destaques',1)+ck('trilha','Trilha Mentor',1)+ck('avulsas','Provas avulsas',1)+ck('hist','Histórico e acerto por tema',1)+ck('nominal','Lista nominal completa (todas as pessoas)',0)+'</fieldset>'+
+      '<fieldset class="campo"><legend>O que entra</legend>'+ck('cons','Leitura do consultor (dos números às ações)',1)+ck('sem','Provas da semana: situação, pendências e destaques',1)+ck('trilha','Trilha Mentor',1)+ck('avulsas','Provas avulsas',1)+ck('hist','Histórico e acerto por tema',1)+ck('tema','Acerto por tema detalhado (por grupo e quem mais erra)',1)+ck('nominal','Lista nominal completa (todas as pessoas)',0)+'</fieldset>'+
       '<p class="sub" id="rSt" role="status" style="margin:0"></p><div class="m-pe"><button type="button" class="btn2" data-rtexto="1">Texto para WhatsApp</button><button type="button" class="btn2" data-rbaixar="1">Salvar PDF</button><button type="button" class="btn" data-rzap="1">Enviar PDF</button></div><div id="rPrev" class="r-prev"></div>');
     RDOC=null; window.__REL=EE; }
-  function rOpcoes(){ var o={}; Array.prototype.forEach.call(document.querySelectorAll('[data-ro]'),function(c){ o[c.dataset.ro]=c.checked; }); return o; }
+  function rOpcoes(){ var o={gerFicha:true}; Array.prototype.forEach.call(document.querySelectorAll('[data-ro]'),function(c){ o[c.dataset.ro]=c.checked; }); return o; }
   function rAcao(acao,b){
     var E=window.__REL[Number($('rEsc').value)], st=function(h){ var e=$('rSt'); if(e) e.innerHTML=h; };
     if(acao==='texto'){ rGarantir(rOpcoes()).then(function(){ window.open('https://wa.me/?text='+encodeURIComponent(rTexto(E,rDados(E))),'_blank','noopener,noreferrer'); }); return; }
