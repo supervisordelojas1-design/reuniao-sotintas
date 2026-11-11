@@ -13,13 +13,12 @@
    1. No Apps Script do Servidor de Dados, clique no + ao lado de "Arquivos"
       → Script. Nomeie "crm" e cole tudo isto.
    2. No Código.gs, dentro do doPost, junto dos outros testes de ação,
-      acrescente UMA linha (use o nome da variável do seu doPost; aqui "d"):
+      logo antes do "switch (d.acao) {", acrescente UMA linha ("c" é o crachá
+      já conferido, com c.n, c.pf, c.lj e c.vc):
 
-         if (/^crm/.test(d.acao)) return crmAcao_(d);
+         if (/^crm/.test(d.acao || '')) return crmAcao_(d, c);
 
-      Se o seu doPost já confere o crachá antes e tem a pessoa numa variável
-      (o nome, ou um objeto com nome/perfil/lojas), passe-a junto:
-         if (/^crm/.test(d.acao)) return crmAcao_(d, quem);
+      (INSTALADO EM 11/11/2026 no projeto "Servidor PDI".)
    3. Implantar → Gerenciar implantações → lápis → Nova versão.
    4. Abra o CRM no app e registre um contato. As abas são criadas sozinhas
       no primeiro uso.
@@ -34,8 +33,8 @@
 
    QUEM VÊ O QUÊ
    Vendedor: o que ele mesmo registrou e os pintores que ele cadastrou.
-   Gerente: tudo das lojas dele. Supervisão, análise e coordenação: todas as
-   lojas pedidas. Quem o servidor não reconhecer só vê os próprios registros.
+   Gerente: tudo das lojas dele. Supervisor: as lojas da carteira. Análise (só
+   leitura) e coordenação: todas as lojas pedidas. Quem o servidor não reconhecer só vê os próprios registros.
    Compras do pós-venda: só das lojas da pessoa (liderança: as lojas pedidas).
    ========================================================================== */
 
@@ -56,6 +55,7 @@ function crmAcao_(d, quem) {
   try {
     var p = crmQuem_(d, quem);
     if (!p.nome) return crmResp_({ ok: false, erro: 'Crachá inválido.', cracha: true });
+    if (p.leitura && d.acao !== 'crmListar') return crmResp_({ ok: false, erro: 'Este acesso é só de leitura.' });
     if (d.acao === 'crmSalvar') return crmResp_(crmSalvar_(d, p));
     if (d.acao === 'crmPintorSalvar') return crmResp_(crmPintorSalvar_(d, p));
     if (d.acao === 'crmPosSubir') return crmResp_(crmPosSubir_(d, p));
@@ -120,7 +120,7 @@ function crmPintorSalvar_(d, p) {
 }
 
 function crmPosSubir_(d, p) {
-  if (!p.tudo) return { ok: false, erro: 'Só a liderança envia a base do pós-venda.' };
+  if (!p.coord) return { ok: false, erro: 'Só a coordenação envia a base do pós-venda.' };
   var linhas = (d.linhas || []).slice(0, 500);
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
@@ -223,7 +223,8 @@ function crmData_(v) {
    função que o servidor já tem. Sem conferir, não grava nem lista. */
 function crmQuem_(d, quem) {
   var nome = '', perfil = '', lojas = [];
-  if (quem && typeof quem === 'object') { nome = quem.nome || quem.n || ''; perfil = quem.perfil || ''; lojas = quem.lojas || []; }
+  var leitura = false;
+  if (quem && typeof quem === 'object') { nome = quem.nome || quem.n || ''; perfil = quem.perfil || quem.pf || ''; lojas = quem.lojas || quem.lj || []; leitura = !!quem.vc; }
   else if (typeof quem === 'string') nome = quem;
   if (!nome && d && d.tk) {
     var tenta = ['crachaNome_', 'nomeDoCracha_', 'conferirCracha_', 'validarCracha_', 'lerCracha_'];
@@ -239,9 +240,12 @@ function crmQuem_(d, quem) {
   if (nome && !perfil) { var u = crmUsuario_(nome); perfil = u.perfil; if (!lojas.length) lojas = u.lojas; }
   var pf = crmNorm_(perfil);
   lojas = [].concat(lojas || []).join(' ').match(/\d{3}/g) || [];
+  /* coordenação e análise: todas as lojas pedidas; supervisor: as lojas da carteira; gerente: a(s) loja(s) dele */
   return { nome: nome, lojas: lojas,
-           tudo: /coord|anl|analista|sup/.test(pf),
-           ger: /^ger|gerente/.test(pf) };
+           tudo: /coord|anl|analista/.test(pf),
+           ger: /^ger|gerente|^sup/.test(pf),
+           coord: /coord/.test(pf),
+           leitura: leitura || /^anl|analista/.test(pf) };
 }
 
 /* perfil e loja lidos da aba USUARIOS pelos cabeçalhos */
