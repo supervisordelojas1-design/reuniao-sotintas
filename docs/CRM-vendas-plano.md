@@ -10,6 +10,14 @@ Layout aprovado pelo Bruno em 11/11/2026: canvas "CRM Só Tintas — layout" (ht
 - De onde vêm as listas: orçamentos e carteira CNPJ do pacote do Painel de Metas (`O` e `K`, com o mesmo crachá; para o vendedor, casa pelo nome oficial da ficha do PDI Semanal). Carteira = cliente zerado no mês com média positiva, ou projetando menos de 70% da própria média (mesma regra do Painel). Pós-venda = `pos_venda_cpf.json`, gerado pelo `converter_cpf.py` e enviado pela coordenação na aba Pós-venda (a rotina diária faz isso).
 - Ainda não feito: validação automática do "Fechado" pelo faturamento, alertas por e-mail/Meta do dia, placar no Painel de Metas e a ligação com o Autcom WebService (dependem da credencial da Citel ou do código do servidor).
 
+## Decisões e ajustes de 11/11/2026 (tarde)
+- **Acesso aos dados (LGPD):** por decisão do Bruno, só ele acessa a planilha PDI_SOTINTAS (conferido: "Apenas eu posso acessar"). Prazo de guarda dos registros ainda não definido.
+- **Cópia do servidor:** o `Código.gs` do Servidor de Dados foi baixado para a pasta "Backup servidor ST (nao compartilhar)" nos Downloads do computador do Bruno (tem chaves: não vai para o repositório público). O `crm.gs` tem cópia em `crm.gs.txt`.
+- **Meta de hoje, uma conta só:** Painel (v44), e-mail Meta do dia e BI usam "o que falta ÷ dias úteis depois de hoje". Antes das 8h o "$ Fat. Hoje" do Solcast ainda traz as vendas do dia anterior e inflava a Meta diária do BI (loja 002 em 11/11: R$ 25.637 às 06h54 contra R$ 23.951 às 10h54); o e-mail deixou de usar esse valor nesse horário.
+- **Cobrança na Meta do dia:** a folha de cada vendedor traz "Orçamentos para retornar hoje" (retornos marcados para hoje ou vencidos e os maiores sem nenhum contato) e a folha da loja traz o total e a coluna por vendedor. Dados: `painel_extra.js` lê os orçamentos do Painel e os registros do CRM.
+- **Aba Loja:** cartão "Previsão dos orçamentos × meta que falta".
+- **Pendente:** o Google Drive do computador não envia arquivos novos para a nuvem desde 06/11 (a base de CPF e os arquivos do dia existem só no computador).
+
 ## Onde
 Dentro do Só Tintas App (login nome + PIN). Dados no Servidor de Dados ST (Apps Script, `STDados.chamar`). O código do servidor não está no repositório: a tela vai no app e o trecho `.gs` é colado no Apps Script pelo Bruno.
 
