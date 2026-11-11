@@ -126,7 +126,7 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
    ═══════════════════════════════════════════════════════════════ */
 (function(){
   'use strict';
-  var PAINEL_API_URL='https://script.google.com/macros/s/AKfycbzVe8joykTW_ee-gYcNSAEIXTkWy_ed1_C0JgSiZqO5_5S0SyWKeNOPc6S0RsC8RT6ZJQ/exec';
+  var PAINEL_API_URL='https://script.google.com/macros/s/AKfycbzVe8joykFt0rWX9CjFgpeOaABckMFttVwV8u4e-yJh8qXPr6JTmlAzfgNjiAPAHGEwLg/exec';
   var MAXL=60;
   var $=function(id){return document.getElementById(id);};
   var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
@@ -170,7 +170,7 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
 
   var C=null, S=null, PERFIL='', LIDER=false, LOJAS=[], LOJA='', OFICIAL='';
   var D={orc:[],cart:[],pos:[],pin:[]}, REG=[], PIN=[], POS=[], HIST={};
-  var TAB='orc', FIL={orc:'todos',cart:'todos',pos:'e0',pin:'todos'}, VEND='', SERVIDOR=null, LER=false, ABERTO={}, CARTN=0;
+  var PAINEL_FALHOU=false, TAB='orc', FIL={orc:'todos',cart:'todos',pos:'e0',pin:'todos'}, VEND='', SERVIDOR=null, LER=false, ABERTO={}, CARTN=0;
   var chave=function(k){ return 'st_crm_'+k+'_v1:'+norm(S&&S.nome); };
   function lerLocal(k){ try{ return JSON.parse(localStorage.getItem(chave(k))||'[]')||[]; }catch(e){ return []; } }
   function gravarLocal(k,l){ try{ localStorage.setItem(chave(k),JSON.stringify(l.slice(-500))); }catch(e){} }
@@ -180,7 +180,7 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
     m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(t); if(m) return new Date(+m[3],+m[2]-1,+m[1],12,0,0); var d=new Date(t); return isNaN(d.getTime())?null:d; }
   function doPainel(){
     return fetch(PAINEL_API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({tipo:'dados',u:'cracha',p:C.tk})})
-      .then(function(r){return r.json();}).then(function(j){ var d=(j&&j.dados)||j||{}; return {O:d.O||{},K:d.K||{}}; }).catch(function(){ return {O:{},K:{}}; });
+      .then(function(r){return r.json();}).then(function(j){ var d=(j&&j.dados)||j||{}; return {O:d.O||{},K:d.K||{}}; }).catch(function(){ PAINEL_FALHOU=true; return {O:{},K:{}}; });
   }
   function orcsDe(O){
     var base=meioDia(), l=[];
@@ -425,6 +425,7 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
     var abas=ABAS.filter(function(a){ return a[0]!=='ger'||PERFIL!=='vend'; }), v=TAB==='ger'?vGer():vLista(), h='';
     h+='<nav class="abas" role="tablist" aria-label="Áreas do CRM">'+abas.map(function(a){ return '<button type="button" role="tab" data-aba="'+a[0]+'" aria-selected="'+(TAB===a[0])+'">'+a[1]+'</button>'; }).join('')+'</nav>';
     if(LER) h+='<div class="aviso">Modo “Ver como”: só leitura.</div>';
+    if(PAINEL_FALHOU) h+='<div class="aviso" role="status">O Painel de Metas não respondeu agora: orçamentos e carteira podem estar incompletos. Feche e abra o CRM de novo em instantes.</div>';
     if(SERVIDOR===false) h+='<div class="aviso" role="status">Os registros estão ficando guardados <b>só neste aparelho</b> por enquanto. Eles sobem sozinhos quando o servidor do CRM estiver ligado.</div>';
     if(LOJAS.length>1||(PERFIL!=='vend'&&TAB!=='ger')){
       var vs={}; (D[TAB]||[]).forEach(function(o){ if((!LOJA||o.loja===LOJA)&&o.vend) vs[norm(o.vend)]=o.vend; });
@@ -586,7 +587,7 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
       return Promise.all([doPainel(),PERFIL==='vend'?daSemana():null]).then(function(r){
         /* liderança sem lojas no crachá (coordenação, análise): todas as lojas que o Painel devolve */
         if(LIDER&&!LOJAS.length){ var u={}; Object.keys(r[0].O).concat(Object.keys(r[0].K)).forEach(function(c){ c=code3(c); if(c) u[c]=1; }); LOJAS=Object.keys(u).sort(); }
-        if(!LOJAS.length){ falha('Não encontrei a sua loja','O seu acesso não tem loja vinculada. Fale com o seu supervisor.'); return; }
+        if(!LOJAS.length){ if(PAINEL_FALHOU) falha('Não consegui abrir','O Painel de Metas não respondeu agora. Feche e abra o CRM de novo em instantes.'); else falha('Não encontrei a sua loja','O seu acesso não tem loja vinculada. Fale com o seu supervisor.'); return; }
         try{ var g=localStorage.getItem('st_crm_loja'); if(g&&LOJAS.indexOf(g)>=0) LOJA=g; }catch(e){}
         if(LOJAS.indexOf(LOJA)<0) LOJA=LOJAS[0];
         return sincronizar().then(function(){
