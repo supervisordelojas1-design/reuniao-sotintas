@@ -5,7 +5,8 @@ Uso:  python3 -I meta_do_dia.py <pasta_solcast> <extra.json> <AAAA-MM-DD> <saida
   extra.json:    {"euc": {cod: {loja:[meta,litros], vend:{nome:[meta,litros]}}}, "ger": {cod: {gerente,email}}}
                  (lido do Painel de Metas pela rotina: Eucatex por loja/vendedor e gerente/e-mail da EQUIPE)
 Saída: <saida>/<cod>.html (e-mail completo), <saida>/<cod>.png (o mesmo em imagem) e <saida>/manifesto.json
-Calendário: seg–sex = 1 dia útil, sábado = 0,5, domingo e feriado = 0. Dias restantes contam a partir do dia informado.
+Calendário (o do Solcast): seg–sex = 1, sábado = 0,5, domingo e feriado = 0.
+Meta de hoje = (meta restante + faturado hoje) ÷ dias úteis depois de hoje — a mesma 'Meta diária' do Solcast.
 """
 import sys, re, json, html, datetime, unicodedata, os, openpyxl
 
@@ -32,6 +33,7 @@ ini = HOJE.replace(day=1)
 fim = (ini.replace(month=ini.month % 12 + 1, year=ini.year + (ini.month == 12)) - datetime.timedelta(days=1))
 DIAS_MES = [ini + datetime.timedelta(days=i) for i in range((fim - ini).days + 1)]
 DIAS = sum(peso(d) for d in DIAS_MES if d >= HOJE) or 1
+DIV = max(DIAS - peso(HOJE), 0.5)  # divisor da meta diária do Solcast: dias depois de hoje
 FEITO = sum(peso(d) for d in DIAS_MES if d < HOJE)
 ESP = FEITO / (FEITO + DIAS)
 
@@ -77,7 +79,7 @@ def carteira(cod):
 
 
 def gerar(cod):
-    m = META[cod]; L = dict(nome=m[0], meta=m[1] or 0, fat=m[2] or 0, alc=m[3] or 0, proj=m[4] or 0, alcproj=m[5] or 0, rest=max(m[6] or 0, 0))
+    m = META[cod]; L = dict(nome=m[0], meta=m[1] or 0, fat=m[2] or 0, alc=m[3] or 0, proj=m[4] or 0, alcproj=m[5] or 0, rest=max(m[6] or 0, 0), hoje=m[8] or 0, diaria=m[7])
     C = carteira(cod); EU = EX['euc'].get(cod, {}); G = EX['ger'].get(cod, {})
     EUV = {norm(k): v for k, v in (EU.get('vend') or {}).items()}
     VS = []
@@ -86,14 +88,14 @@ def gerar(cod):
         sem = sorted([c for c in cs if c['atual'] <= 0 and c['compras3'] >= 2], key=lambda c: -c['u3'])
         baixo = sorted([c for c in cs if c['atual'] > 0 and c['u3'] > 0 and c['atual'] < 0.5 * c['u3']], key=lambda c: -(c['u3'] - c['atual']))
         rest = max(v['$ Meta restante'] or 0, 0)
-        VS.append(dict(nome=nm(v['Vendedor']), meta=v['$ Meta'], fat=v['$ Faturado'] or 0, alc=v['% Alc. Meta'] or 0, md=rest / DIAS, ritmo=v['$ Diária'] or 0,
+        VS.append(dict(nome=nm(v['Vendedor']), meta=v['$ Meta'], fat=v['$ Faturado'] or 0, alc=v['% Alc. Meta'] or 0, md=rest / DIV, ritmo=v['$ Diária'] or 0,
                        euc=EUV.get(norm(nm(v['Vendedor']))), sem=sem, baixo=baixo[:2], pos=v['% Positivados CNPJ'], posit=v['Clientes positivados CNPJ'],
                        ativos=v['Clientes ativos CNPJ'], desc=v['% Desconto CNPJ'], itens=v['Itens CPF']))
     VS.sort(key=lambda x: -x['md'])
     sd = sorted([c for c in C if 'NOVO' in c['vend'] and c['atual'] <= 0 and c['compras3'] >= 1], key=lambda c: -c['u3'])[:5]
     gerente = (G.get('gerente') or 'gerente').split()[0]
     loja_nome = (G.get('loja') or '').split(' - ', 1)[-1].strip() or (L['nome'].split('(')[-1].rstrip(')').title() if '(' in L['nome'] else L['nome'][6:].title())
-    mh = L['rest'] / DIAS
+    mh = L['diaria'] if L['diaria'] else (L['rest'] + L['hoje']) / DIV
     h = [f"""<div style="background:#f3f4f6;padding:16px 8px;font-family:Arial,Helvetica,sans-serif;color:#111827">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border-collapse:separate">
 <tr><td style="background:#b91c1c;padding:20px 22px;color:#fff"><div style="font-size:12px;letter-spacing:1px;opacity:.85">SÓ TINTAS · META DO DIA</div>
@@ -101,7 +103,7 @@ def gerar(cod):
 <div style="font-size:13px;opacity:.9;margin-top:2px">{SEM[HOJE.weekday()]}, {HOJE:%d/%m} · bom dia, {e(gerente)}! 👋</div></td></tr>
 <tr><td style="padding:18px 22px 6px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
 <td width="50%" style="background:#fef2f2;border-radius:12px;padding:14px;text-align:center"><div style="font-size:11px;color:#6b7280">🎯 META DE HOJE</div>
-<div style="font-size:26px;white-space:nowrap;font-weight:bold;color:#b91c1c;margin-top:2px">{R(mh)}</div><div style="font-size:12px;color:#6b7280">faltam {R(L['rest'])} em {B1(DIAS)} dias úteis</div></td><td width="8"></td>
+<div style="font-size:26px;white-space:nowrap;font-weight:bold;color:#b91c1c;margin-top:2px">{R(mh)}</div><div style="font-size:12px;color:#6b7280">faltam {R(L['rest'])} · meta diária do Solcast</div></td><td width="8"></td>
 <td width="50%" style="background:#f9fafb;border-radius:12px;padding:14px;text-align:center"><div style="font-size:11px;color:#6b7280">📈 PROJEÇÃO DO MÊS</div>
 <div style="font-size:26px;white-space:nowrap;font-weight:bold;color:{'#16a34a' if L['alcproj'] >= 1 else '#dc2626'};margin-top:2px">{P(L['alcproj'])}</div><div style="font-size:12px;color:#6b7280">{R(L['proj'])} de {R(L['meta'])}</div></td></tr></table>
 <div style="margin:16px 0 6px;font-size:13px"><b>Mês: {P(L['alc'])}</b> <span style="color:#6b7280">· {R(L['fat'])} vendidos · o traço preto marca onde deveria estar hoje ({P(ESP)})</span></div>{barra(L['alc'], cor(L['alc']), 14)}"""]
@@ -109,12 +111,12 @@ def gerar(cod):
         em, el = EU['loja']; f = max(em - el, 0); p = el / em if em else 0
         h.append(f"""<div style="margin:18px 0 0;background:#ecfdf5;border-radius:12px;padding:14px"><table role="presentation" width="100%"><tr><td style="font-size:14px"><b style="color:#047857">🪣 EUCATEX</b> <span style="color:#6b7280">· {LT(el)} de {LT(em)}</span></td>
 <td align="right" style="font-size:18px;font-weight:bold;color:{cor(p)}">{P(p)}</td></tr></table><div style="margin:8px 0">{barra(p, '#059669', 12, '#d1fae5')}</div>
-<div style="font-size:13px">{'Meta batida ✔' if not f else f"Hoje a loja precisa de <b style='font-size:16px;color:#047857'>{B1(f / DIAS / 18)} baldes</b> de 18 L <span style='color:#6b7280'>({LT(f / DIAS)})</span>"} · bônus R$ 50 por vendedor em 100%</div></div>""")
+<div style="font-size:13px">{'Meta batida ✔' if not f else f"Hoje a loja precisa de <b style='font-size:16px;color:#047857'>{B1(f / DIV / 18)} baldes</b> de 18 L <span style='color:#6b7280'>({LT(f / DIV)})</span>"} · bônus R$ 50 por vendedor em 100%</div></div>""")
     h.append("""<div style="margin:22px 0 8px;font-size:16px;font-weight:bold">🏁 Placar do time hoje</div><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:13px">
 <tr style="color:#6b7280;font-size:11px"><td style="padding:4px 0">VENDEDOR</td><td align="right">META HOJE</td><td align="right">FAZ/DIA</td><td align="center">🪣</td></tr>""")
     def bd(v):
         if not v['euc']: return '—'
-        em, el = v['euc']; return '✔' if el >= em else f"{B1(max(em - el, 0) / DIAS / 18)} 🪣"
+        em, el = v['euc']; return '✔' if el >= em else f"{B1(max(em - el, 0) / DIV / 18)} 🪣"
     for v in VS:
         ok = v['ritmo'] >= v['md']
         h.append(f"<tr style='border-top:1px solid #f3f4f6'><td style='padding:9px 0'><b>{'🟢' if ok else '🔴'} {e(v['nome'].split()[0])}</b></td><td align='right' style='white-space:nowrap'><b>{R(v['md'])}</b></td><td align='right' style='white-space:nowrap;padding-left:6px;color:{'#16a34a' if ok else '#dc2626'}'>{R(v['ritmo'])}</td><td align='center'>{bd(v)}</td></tr>")
@@ -150,7 +152,7 @@ def gerar(cod):
     if sd:
         h.append("<tr><td style='padding:10px 22px'><div style='background:#f9fafb;border-radius:12px;padding:14px'><div style='font-size:14px;font-weight:bold;margin-bottom:6px'>📋 Para você distribuir hoje</div><div style='font-size:12px;color:#6b7280;margin-bottom:6px'>Clientes sem vendedor que pararam de comprar</div>"
                  + ''.join(f"<div style='font-size:13px;padding:5px 0;border-top:1px solid #e5e7eb'>👤 {e(x['cli'].title()[:42])} <span style='color:#6b7280'>· ~{R(x['u3'])}/mês</span></div>" for x in sd) + "</div></td></tr>")
-    h.append(f"<tr><td style='padding:12px 22px 20px;font-size:11px;color:#9ca3af'>Meta de hoje = meta restante ÷ {B1(DIAS)} dias úteis restantes (sábado conta meio dia; domingos e feriados não contam). 🟢 vende por dia pelo menos a meta de hoje · 🔴 abaixo. Traço preto = onde deveria estar hoje. Ligar hoje = comprou em pelo menos 2 dos últimos 3 meses e ainda não comprou neste mês. Dados do Solcast e do Painel de Metas.</td></tr></table></div>")
+    h.append(f"<tr><td style='padding:12px 22px 20px;font-size:11px;color:#9ca3af'>Meta de hoje = meta diária do Solcast (sábado conta meio dia; domingos e feriados não contam). Vendedor: meta restante ÷ {B1(DIV)} dias úteis. 🟢 vende por dia pelo menos a meta de hoje · 🔴 abaixo. Traço preto = onde deveria estar hoje. Ligar hoje = comprou em pelo menos 2 dos últimos 3 meses e ainda não comprou neste mês. Dados do Solcast e do Painel de Metas.</td></tr></table></div>")
     txt = [f"Meta do dia {HOJE:%d/%m} · {loja_nome} (loja {cod})", f"Meta de hoje: {R(mh)} · mês {P(L['alc'])} (esperado {P(ESP)}) · projeção {P(L['alcproj'])}", ""]
     for v in VS: txt.append(f"{v['nome']}: meta hoje {R(v['md'])}" + (f" · ligar: {', '.join(x['cli'].title() for x in v['sem'][:3])}" if v['sem'] else ''))
     return dict(cod=cod, loja=loja_nome, gerente=G.get('gerente'), email=G.get('email'), meta_hoje=round(mh), vendedores=len(VS), euc=bool(EU.get('loja')),
