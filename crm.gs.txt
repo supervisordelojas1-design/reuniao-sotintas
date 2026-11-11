@@ -1,0 +1,178 @@
+/* ============================================================================
+   CRM DE VENDAS — registros de contato dos orçamentos (etapa 1)
+   Só Tintas App · novembro/2026 (app sw ast-v162, tela crm.html)
+
+   Para o SERVIDOR DE DADOS ST (o mesmo que responde 'entrar', 'semana',
+   'pdi'...). A tela do CRM já está no app. Enquanto este arquivo não estiver
+   no servidor, nada quebra: cada registro fica guardado no aparelho de quem
+   registrou e sobe sozinho na primeira vez que a tela abrir com o servidor
+   respondendo.
+
+   COMO USAR
+   1. No Apps Script do Servidor de Dados, clique no + ao lado de "Arquivos"
+      → Script. Nomeie "crm" e cole tudo isto.
+   2. No Código.gs, dentro do doPost, junto dos outros testes de ação,
+      acrescente UMA linha (use o nome da variável do seu doPost; aqui "d"):
+
+         if (/^crm/.test(d.acao)) return crmAcao_(d);
+
+      Se o seu doPost já confere o crachá antes e tem a pessoa numa variável
+      (o nome, ou um objeto com nome/perfil/lojas), passe-a junto:
+         if (/^crm/.test(d.acao)) return crmAcao_(d, quem);
+   3. Implantar → Gerenciar implantações → lápis → Nova versão.
+   4. Abra o CRM no app e registre um contato. A aba CRM_CONTATOS é criada
+      sozinha no primeiro registro.
+
+   O QUE ELE GRAVA (uma linha por contato; nunca apaga nem altera linha):
+   ID · QUANDO · POR · LOJA · DOC · CLIENTE · VENDEDOR · VALOR · CANAL ·
+   RESULTADO · STATUS · PREVISAO · CHANCE · MOTIVO · OBS · PROXIMO ·
+   COMPRADOR · TELEFONE · EMAIL
+
+   QUEM VÊ O QUÊ
+   Vendedor: só o que ele mesmo registrou. Gerente: os registros das lojas
+   dele. Supervisão, análise e coordenação: todas as lojas pedidas.
+   Quem o servidor não reconhecer só vê os próprios registros.
+   ========================================================================== */
+
+var CRM_ABA = 'CRM_CONTATOS';
+var CRM_CAB = ['ID', 'QUANDO', 'POR', 'LOJA', 'DOC', 'CLIENTE', 'VENDEDOR', 'VALOR', 'CANAL', 'RESULTADO',
+               'STATUS', 'PREVISAO', 'CHANCE', 'MOTIVO', 'OBS', 'PROXIMO', 'COMPRADOR', 'TELEFONE', 'EMAIL'];
+var CRM_CAMPOS = ['id', 'em', 'por', 'loja', 'doc', 'cli', 'vend', 'valor', 'canal', 'res',
+                  'status', 'prev', 'chance', 'motivo', 'obs', 'prox', 'cNome', 'cTel', 'cEmail'];
+var CRM_DIAS = 120;   /* a tela recebe os contatos dos últimos 120 dias */
+
+function crmAcao_(d, quem) {
+  try {
+    var p = crmQuem_(d, quem);
+    if (!p.nome) return crmResp_({ ok: false, erro: 'Crachá inválido.', cracha: true });
+    if (d.acao === 'crmSalvar') return crmResp_(crmSalvar_(d, p));
+    if (d.acao === 'crmListar') return crmResp_(crmListar_(d, p));
+    return crmResp_({ ok: false, erro: 'Ação do CRM desconhecida.' });
+  } catch (err) {
+    return crmResp_({ ok: false, erro: String(err) });
+  }
+}
+
+function crmSalvar_(d, p) {
+  var regs = (d.regs || []).slice(0, 50);
+  if (!regs.length) return { ok: true, gravados: 0 };
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var ab = crmAba_(), n = ab.getLastRow(), ja = {};
+    if (n > 1) ab.getRange(2, 1, n - 1, 1).getValues().forEach(function (l) { ja[String(l[0])] = 1; });
+    var linhas = [];
+    regs.forEach(function (r) {
+      var id = crmTxt_(r.id, 40); if (!id || ja[id]) return;
+      ja[id] = 1;
+      r.por = p.nome;                                   /* quem registrou é sempre o dono do crachá */
+      r.loja = ('00' + String(r.loja || '').replace(/\D/g, '')).slice(-3);
+      if (['neg', 'fechado', 'perdido', 'prorrogado'].indexOf(r.status) < 0) return;
+      linhas.push(CRM_CAMPOS.map(function (c) {
+        if (c === 'valor') return Number(r.valor) || 0;
+        if (c === 'em') { var q = new Date(r.em); return isNaN(q.getTime()) ? new Date() : q; }
+        return crmTxt_(r[c], c === 'obs' ? 300 : 80);
+      }));
+    });
+    if (linhas.length) ab.getRange(ab.getLastRow() + 1, 1, linhas.length, CRM_CAB.length).setValues(linhas);
+    return { ok: true, gravados: linhas.length };
+  } finally { lock.releaseLock(); }
+}
+
+function crmListar_(d, p) {
+  var ab = SpreadsheetApp.getActive().getSheetByName(CRM_ABA);
+  if (!ab || ab.getLastRow() < 2) return { ok: true, regs: [] };
+  var pedidas = (d.lojas || []).map(function (c) { return ('00' + String(c).replace(/\D/g, '')).slice(-3); });
+  var desde = Date.now() - CRM_DIAS * 86400000, eu = crmNorm_(p.nome);
+  var vals = ab.getRange(2, 1, ab.getLastRow() - 1, CRM_CAB.length).getValues(), regs = [];
+  vals.forEach(function (l) {
+    var q = l[1] instanceof Date ? l[1] : new Date(l[1]);
+    if (isNaN(q.getTime()) || q.getTime() < desde) return;
+    var loja = ('00' + String(l[3]).replace(/\D/g, '')).slice(-3), meu = crmNorm_(l[2]) === eu;
+    var pode = meu || (p.tudo && pedidas.indexOf(loja) >= 0) || (p.ger && p.lojas.indexOf(loja) >= 0);
+    if (!pode) return;
+    var r = {};
+    CRM_CAMPOS.forEach(function (c, i) { r[c] = c === 'em' ? q.toISOString() : (c === 'valor' ? Number(l[i]) || 0 : crmData_(l[i])); });
+    r.loja = loja;
+    regs.push(r);
+  });
+  return { ok: true, regs: regs };
+}
+
+/* ── apoio ──────────────────────────────────────────────────────────────── */
+
+function crmAba_() {
+  var ss = SpreadsheetApp.getActive(), ab = ss.getSheetByName(CRM_ABA);
+  if (!ab) {
+    ab = ss.insertSheet(CRM_ABA);
+    ab.appendRow(CRM_CAB); ab.setFrozenRows(1);
+    ab.getRange(1, 1, 1, CRM_CAB.length).setFontWeight('bold');
+    /* tudo como texto, menos QUANDO e VALOR: o número do orçamento e as datas não são convertidos */
+    ab.getRange(2, 3, ab.getMaxRows() - 1, 5).setNumberFormat('@');
+    ab.getRange(2, 9, ab.getMaxRows() - 1, 11).setNumberFormat('@');
+  }
+  return ab;
+}
+
+function crmResp_(o) {
+  return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function crmNorm_(s) {
+  return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+/* texto seguro para a planilha: sem fórmula, sem quebra, com tamanho máximo */
+function crmTxt_(v, max) {
+  var t = String(v == null ? '' : v).replace(/[\r\n\t]+/g, ' ').trim().slice(0, max || 80);
+  return /^[=+\-@]/.test(t) ? "'" + t : t;
+}
+
+/* a planilha pode devolver data onde gravamos "2026-11-20": volta para o texto */
+function crmData_(v) {
+  if (v instanceof Date) return Utilities.formatDate(v, 'America/Sao_Paulo', 'yyyy-MM-dd');
+  return String(v == null ? '' : v).replace(/^'/, '');
+}
+
+/* quem é a pessoa: usa o que o doPost passou; senão confere o crachá com a
+   função que o servidor já tem. Sem conferir, não grava nem lista. */
+function crmQuem_(d, quem) {
+  var nome = '', perfil = '', lojas = [];
+  if (quem && typeof quem === 'object') { nome = quem.nome || quem.n || ''; perfil = quem.perfil || ''; lojas = quem.lojas || []; }
+  else if (typeof quem === 'string') nome = quem;
+  if (!nome && d && d.tk) {
+    var tenta = ['crachaNome_', 'nomeDoCracha_', 'conferirCracha_', 'validarCracha_', 'lerCracha_'];
+    for (var i = 0; i < tenta.length && !nome; i++) {
+      var f = this[tenta[i]];
+      if (typeof f !== 'function') continue;
+      var r = f(d.tk);
+      if (!r) break;
+      if (typeof r === 'string') nome = r;
+      else { nome = r.nome || r.n || ''; perfil = perfil || r.perfil || ''; lojas = lojas.length ? lojas : (r.lojas || []); }
+    }
+  }
+  if (nome && !perfil) { var u = crmUsuario_(nome); perfil = u.perfil; if (!lojas.length) lojas = u.lojas; }
+  var pf = crmNorm_(perfil);
+  lojas = [].concat(lojas || []).join(' ').match(/\d{3}/g) || [];
+  return { nome: nome, lojas: lojas,
+           tudo: /coord|anl|analista|sup/.test(pf),
+           ger: /^ger|gerente/.test(pf) };
+}
+
+/* perfil e loja lidos da aba USUARIOS pelos cabeçalhos */
+function crmUsuario_(nome) {
+  var fora = { perfil: '', lojas: [] };
+  try {
+    var ab = SpreadsheetApp.getActive().getSheetByName('USUARIOS');
+    if (!ab || ab.getLastRow() < 2) return fora;
+    var dados = ab.getDataRange().getValues(), cab = dados[0].map(function (c) { return crmNorm_(c); });
+    function col() { for (var a = 0; a < arguments.length; a++) { var i = cab.indexOf(arguments[a]); if (i >= 0) return i; } return -1; }
+    var cN = col('nome', 'usuario', 'colaborador'), cP = col('perfil', 'cargo', 'papel'), cL = col('loja', 'filial', 'lojas', 'lotacao', 'gerencia');
+    if (cN < 0) return fora;
+    for (var i = 1; i < dados.length; i++) {
+      if (crmNorm_(dados[i][cN]) === crmNorm_(nome)) {
+        return { perfil: cP >= 0 ? String(dados[i][cP]) : '', lojas: cL >= 0 ? [String(dados[i][cL])] : [] };
+      }
+    }
+  } catch (e) {}
+  return fora;
+}

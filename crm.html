@@ -1,0 +1,327 @@
+<!doctype html><html lang="pt-BR" data-theme="dark" style="color-scheme:dark"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>CRM de Vendas · Só Tintas</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#0f1522; --surface:#1a2336; --surface2:#222d44; --ink:#eef2fb; --muted:#9aa5bb; --line:#2c3850;
+  --accent:#ff3b47; --navy:#4f7cf0; --ok:#3fbf7f; --bad:#ff6b6b; --warn:#ffab5e;
+  --okbg:#12301f; --badbg:#3a1a20; --warnbg:#3a2717; --navybg:#1e2b4d;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Public Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+html[data-theme="light"]{
+  --bg:#f5f7fb; --surface:#ffffff; --surface2:#eef2f8; --ink:#16233d; --muted:#5a677f; --line:#e4e9f3;
+  --accent:#b91c1c; --navy:#1C3F8F; --ok:#178048; --bad:#c42a22; --warn:#b35600;
+  --okbg:#e1f3e8; --badbg:#fdeceb; --warnbg:#ffefdd; --navybg:#e7edf9;
+  color-scheme:light;
+}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+.wrap{max-width:760px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-right,0px)) 70px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
+.topbar{height:8px;background:var(--accent);border-radius:0 0 6px 6px;margin:-20px 0 4px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(24px,4vw,32px);line-height:1.05;margin:4px 0 0;color:var(--accent)}
+h2{font-family:var(--f-display);font-size:18px;margin:0 0 8px}
+.sub{color:var(--muted);font-size:13px}
+.btn{min-height:44px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:9px 14px;font:700 14px var(--f-body);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.forte{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.zap{background:var(--okbg);border-color:var(--okbg);color:var(--ok)}
+.btn:disabled{opacity:.5;cursor:default}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 6px;text-align:center}
+.kpi span{display:block;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}.kpi b{font-size:17px;font-variant-numeric:tabular-nums}
+.filtros{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.filtros button{flex:none;min-height:40px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 14px;font:700 13px var(--f-body);cursor:pointer}
+.filtros button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.topo{display:flex;justify-content:space-between;gap:10px}
+.topo b{font-size:15px;overflow-wrap:anywhere}
+.valor{font-size:16px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+.chip{display:inline-flex;border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:800;white-space:nowrap}
+.s-novo{background:var(--surface2);color:var(--muted)}.s-neg{background:var(--navybg);color:var(--navy)}.s-fechado{background:var(--okbg);color:var(--ok)}
+.s-perdido{background:var(--badbg);color:var(--bad)}.s-prorrogado{background:var(--warnbg);color:var(--warn)}
+.ult{font-size:12.5px;background:var(--surface2);border-radius:8px;padding:6px 9px}
+.alerta{color:var(--bad);font-weight:700}
+.acoes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.aviso{background:var(--warnbg);border-radius:10px;padding:8px 12px;font-size:13px}
+select.sel{min-height:44px;background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:0 10px;font:600 14px var(--f-body);max-width:100%}
+dialog{width:min(520px,calc(100% - 20px));max-height:calc(100dvh - 20px);border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink);padding:0}
+dialog::backdrop{background:rgba(6,10,20,.66)}
+form.reg{padding:16px;display:flex;flex-direction:column;gap:12px}
+fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+legend,.rot{font-size:12px;font-weight:700;color:var(--muted);padding:0;margin-bottom:2px}
+.ops{display:flex;flex-wrap:wrap;gap:6px}
+.ops label{position:relative;cursor:pointer}
+.ops input{position:absolute;opacity:0;inset:0}
+.ops span{display:inline-flex;align-items:center;min-height:40px;border:1px solid var(--line);background:var(--surface2);border-radius:999px;padding:6px 13px;font-weight:700;font-size:13px}
+.ops input:checked+span{background:var(--navy);border-color:var(--navy);color:#fff}
+.ops input:focus-visible+span{outline:2px solid var(--navy);outline-offset:2px}
+.campo{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;color:var(--muted)}
+.campo input,.campo textarea,.campo select{min-height:44px;background:var(--surface2);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px 10px;font:500 15px var(--f-body);width:100%}
+.duas{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.erro{color:var(--bad);font-size:13px;font-weight:700;min-height:18px}
+.toast{position:fixed;left:0;right:0;margin:auto;bottom:18px;width:max-content;max-width:calc(100% - 24px);background:#16233d;color:#fff;padding:10px 16px;border-radius:999px;font-weight:700;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.hist{margin:0;padding:0;list-style:none;display:grid;gap:4px;font-size:12.5px;color:var(--muted)}
+.mais{background:none;border:0;color:var(--navy);font:700 12.5px var(--f-body);cursor:pointer;padding:6px 0;text-align:left;min-height:32px}
+@media(max-width:420px){.kpi b{font-size:15px}.btn{padding:9px 8px;font-size:13px}}
+</style></head><body>
+<div class="wrap">
+  <div class="topbar"></div>
+  <header>
+    <div><div class="eyebrow">Só Tintas · CRM de vendas</div><h1>Orçamentos em aberto</h1><div class="sub" id="sub">Carregando…</div></div>
+    <button type="button" class="btn" id="btnTema"><span id="temaIc">🌙</span> <span id="temaTx">Escuro</span></button>
+  </header>
+  <main id="raiz" style="display:flex;flex-direction:column;gap:12px"><p class="sub">Carregando os orçamentos…</p></main>
+</div>
+<dialog id="dlg" aria-labelledby="dlgTit"></dialog>
+<script>
+(function(){
+  function qp(n){try{return new URLSearchParams(location.search).get(n);}catch(e){return null;}}
+  function ls(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+  var p=(qp('tema')||'').toLowerCase(), t=(p==='claro'||p==='light')?'light':(p==='escuro'||p==='dark')?'dark':null;
+  if(!t){ var s=(ls('st_tema')||'').toLowerCase(); t=(s==='light'||s==='claro')?'light':'dark'; }
+  window.__setTema=function(tema){ document.documentElement.setAttribute('data-theme',tema); document.documentElement.style.colorScheme=tema;
+    var ic=document.getElementById('temaIc'), tx=document.getElementById('temaTx'); if(ic) ic.textContent=tema==='light'?'☀️':'🌙'; if(tx) tx.textContent=tema==='light'?'Claro':'Escuro';
+    try{localStorage.setItem('st_tema',tema);}catch(e){} try{ if(window.parent&&window.parent!==window) window.parent.postMessage({st_tema:tema},'*'); }catch(e){} };
+  window.__setTema(t);
+  window.addEventListener('message',function(ev){ var d=ev&&ev.data; if(d&&(d.st_tema==='light'||d.st_tema==='dark')) window.__setTema(d.st_tema); });
+  document.getElementById('btnTema').onclick=function(){ window.__setTema(document.documentElement.getAttribute('data-theme')==='light'?'dark':'light'); };
+})();
+</script>
+<script src="st-hora.js?v=1"></script>
+<script src="st-dados.js?v=91"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   CRM DE VENDAS — etapa 1: orçamentos em aberto, registro de contato e status.
+   Piloto: loja 002.
+
+   De onde vêm os orçamentos: do pacote do Painel de Metas (mesmo crachá) e,
+   para o vendedor, da ficha do PDI Semanal (que já vem no nome dele).
+   Onde ficam os registros: no Servidor de Dados ST (ações crmListar e
+   crmSalvar — arquivo crm.gs.txt). Enquanto o servidor não tiver essas ações,
+   ou sem internet, o registro fica guardado NESTE aparelho e sobe sozinho
+   na próxima vez que a tela abrir com o servidor respondendo.
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+  var PAINEL_API_URL='https://script.google.com/macros/s/AKfycbzVe8joykTW_ee-gYcNSAEIXTkWy_ed1_C0JgSiZqO5_5S0SyWKeNOPc6S0RsC8RT6ZJQ/exec';
+  var PILOTO=['002'];
+  var $=function(id){return document.getElementById(id);};
+  var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
+  var brl=function(n){return 'R$ '+Math.round(Number(n)||0).toLocaleString('pt-BR');};
+  var mil=function(n){n=Number(n)||0;return n>=1000?'R$ '+(n/1000).toLocaleString('pt-BR',{maximumFractionDigits:n>=100000?0:1})+' mil':brl(n);};
+  var norm=function(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+N\s?\d+$/i,'').replace(/^\d+\s*-\s*/,'').replace(/[^A-Za-z ]/g,'').replace(/\s+/g,' ').trim().toUpperCase();};
+  var nm=function(s){return String(s||'').replace(/^\d+\s*-\s*/,'').replace(/\s+N\s?\d+$/i,'').trim();};
+  var code3=function(c){var m=/\d{1,3}/.exec(String(c||''));return m?('00'+m[0]).slice(-3):'';};
+  var p2=function(n){return (n<10?'0':'')+n;};
+  var agora=function(){return window.STHora?STHora.data():new Date();};
+  var hojeISO=function(){var d=agora();return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());};
+  var dBr=function(iso){var p=String(iso||'').slice(0,10).split('-');return p.length===3?p[2]+'/'+p[1]:'';};
+  function toast(m){ var t=document.createElement('div'); t.className='toast'; t.setAttribute('role','status'); t.textContent=m; document.body.appendChild(t); setTimeout(function(){t.remove();},3200); }
+
+  var STATUS={novo:'Sem contato',neg:'Em negociação',fechado:'Fechado',perdido:'Perdido',prorrogado:'Prorrogado'};
+  var CANAIS=['Ligação','WhatsApp','Visita','E-mail','Na loja'];
+  var RESULT=['Falei com o cliente','Não atendeu','Deixei recado'];
+  var MOTIVOS=['Preço','Comprou no concorrente','Sem estoque','Prazo de entrega','Cliente adiou a obra','Cliente não responde','Outro'];
+  var CHANCE={alta:['Alta',.7],media:['Média',.4],baixa:['Baixa',.15]};
+
+  var C=null, S=null, PERFIL='', LOJAS=[], LOJA='', ORCS=[], REG=[], FILTRO='todos', VEND='', SERVIDOR=null, LER=false, ABERTO={};
+  var chaveLS=function(){ return 'st_crm_v1:'+norm(S&&S.nome); };
+  function lerLocal(){ try{ return JSON.parse(localStorage.getItem(chaveLS())||'[]')||[]; }catch(e){ return []; } }
+  function gravarLocal(l){ try{ localStorage.setItem(chaveLS(),JSON.stringify(l.slice(-400))); }catch(e){} }
+
+  /* ───────── orçamentos ───────── */
+  function dataOrc(x){ var t=String(x||''), m=/^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(t); if(m) return new Date(+m[1],+m[2]-1,+m[3],12,0,0);
+    m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(t); if(m) return new Date(+m[3],+m[2]-1,+m[1],12,0,0); var d=new Date(t); return isNaN(d.getTime())?null:d; }
+  function doPainel(){
+    return fetch(PAINEL_API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({tipo:'dados',u:'cracha',p:C.tk})})
+      .then(function(r){return r.json();}).then(function(j){
+        var O=j&&((j.dados&&j.dados.O)||j.O); if(!O) return [];
+        var h=agora(), base=new Date(h.getFullYear(),h.getMonth(),h.getDate(),12,0,0), l=[];
+        Object.keys(O).forEach(function(cod){ (O[cod]||[]).forEach(function(r){
+          if(!r||!r[6]) return; var d=dataOrc(r[2]);
+          l.push({loja:code3(cod),vend:nm(r[0]),doc:String(r[6]),cli:String(r[3]||'').replace(/^\d+-/,'').trim(),tel:String(r[4]||''),valor:Number(r[5])||0,dias:d?Math.max(0,Math.round((base-d)/86400000)):null});
+        }); });
+        return l;
+      }).catch(function(){ return []; });
+  }
+  function daSemana(){
+    return STDados.chamar('semana').then(function(j){
+      if(!j||!j.ok) return null;
+      var a=(j.linhas||[]).filter(function(x){return x.semana===j.atual;})[0]||(j.linhas||[])[0];
+      if(!a||!a.comp) return null;
+      return {nome:a.comp.nome||'',orcs:(a.comp.orcs||[]).map(function(o){ return {loja:LOJAS[0]||'',vend:nm(a.comp.nome||S.nome),doc:String(o.doc||''),cli:String(o.cli||''),tel:String(o.tel||''),valor:Number(o.valor)||0,dias:o.dias}; }).filter(function(o){return o.doc;})};
+    }).catch(function(){ return null; });
+  }
+  function meuNome(v,oficial){
+    var a=norm(v), b=norm(oficial||''), c=norm(S.nome); if(!a) return false;
+    if(b&&a===b) return true;
+    var t=c.split(' ').filter(Boolean); return t.length>0&&t.every(function(x){ return (' '+a+' ').indexOf(' '+x+' ')>=0; });
+  }
+  function carregarOrcs(){
+    if(PERFIL!=='vend') return doPainel();
+    return Promise.all([daSemana(),doPainel()]).then(function(r){
+      var sem=r[0], pn=r[1].filter(function(o){ return meuNome(o.vend,sem&&sem.nome); });
+      return pn.length?pn:(sem?sem.orcs:[]);
+    });
+  }
+
+  /* ───────── registros (servidor + cópia no aparelho) ───────── */
+  function juntar(a,b){ var m={}; a.concat(b).forEach(function(x){ if(x&&x.id) m[x.id]=Object.assign(m[x.id]||{},x); }); return Object.keys(m).map(function(k){return m[k];}); }
+  function sincronizar(){
+    var loc=lerLocal(), pend=loc.filter(function(x){return !x.ok;});
+    var sobe=pend.length&&!LER?STDados.chamar('crmSalvar',{regs:pend},true).then(function(r){
+      if(r&&r.ok){ loc.forEach(function(x){ x.ok=1; }); gravarLocal(loc); SERVIDOR=true; } else SERVIDOR=false;
+    }).catch(function(){ SERVIDOR=false; }):Promise.resolve();
+    return sobe.then(function(){ return STDados.chamar('crmListar',{lojas:LOJAS}); }).then(function(r){
+      if(r&&r.ok){ SERVIDOR=true; REG=juntar((r.regs||[]).map(function(x){x.ok=1;return x;}),lerLocal()); }
+      else { SERVIDOR=false; REG=lerLocal(); }
+    }).catch(function(){ SERVIDOR=false; REG=lerLocal(); });
+  }
+  function historico(o){ return REG.filter(function(x){return String(x.doc)===o.doc;}).sort(function(a,b){return String(b.em).localeCompare(String(a.em));}); }
+  function estado(o){ var h=historico(o), u=h[0]; return {h:h,u:u,st:(u&&u.status)||'novo',horas:u?(Date.now()-new Date(u.em).getTime())/36e5:null}; }
+
+  /* ───────── tela ───────── */
+  function visiveis(){
+    return ORCS.filter(function(o){ return (!LOJA||o.loja===LOJA)&&(!VEND||norm(o.vend)===VEND); }).map(function(o){ o.e=estado(o); return o; });
+  }
+  function entra(o){
+    var e=o.e, hj=hojeISO();
+    if(FILTRO==='todos') return e.st!=='fechado'&&e.st!=='perdido';
+    if(FILTRO==='sem') return e.st==='novo';
+    if(FILTRO==='hoje') return !!(e.u&&e.u.prox&&e.u.prox<=hj&&e.st!=='fechado'&&e.st!=='perdido');
+    if(FILTRO==='venc') return e.st==='neg'&&e.u.prev&&e.u.prev<hj;
+    return e.st===FILTRO;
+  }
+  function telLimpo(t){ var d=String(t||'').replace(/\D/g,''); return d.length>=10?d:''; }
+  function cartao(o){
+    var e=o.e, u=e.u, tel=telLimpo((u&&u.cTel)||o.tel), hj=hojeISO(), h='';
+    h+='<article class="card"><div class="topo"><div><b>'+esc(o.cli||'Cliente sem nome')+'</b><div class="sub">Nº '+esc(o.doc)+(o.dias!=null?' · há '+o.dias+' dia'+(o.dias===1?'':'s'):'')+(PERFIL!=='vend'&&o.vend?' · '+esc(o.vend):'')+'</div></div>'+
+       '<div style="text-align:right"><div class="valor">'+brl(o.valor)+'</div><span class="chip s-'+e.st+'">'+esc(STATUS[e.st])+'</span></div></div>';
+    if(u){
+      var linha=esc(dBr(u.em))+' · '+esc(u.canal||'')+' · '+esc(u.res||'');
+      if(e.st==='neg'&&u.prev) linha+=' · fecha até <b'+(u.prev<hj?' class="alerta"':'')+'>'+esc(dBr(u.prev))+'</b>'+(u.chance&&CHANCE[u.chance]?' (chance '+CHANCE[u.chance][0].toLowerCase()+')':'');
+      if(e.st==='perdido'&&u.motivo) linha+=' · motivo: '+esc(u.motivo);
+      if(e.st==='fechado') linha+=' · o gerente confere quando faturar';
+      h+='<div class="ult">'+linha+(u.obs?'<br>“'+esc(u.obs)+'”':'')+(u.prox&&e.st!=='fechado'&&e.st!=='perdido'?'<br>Próximo contato: <b'+(u.prox<=hj?' class="alerta"':'')+'>'+esc(dBr(u.prox))+'</b>':'')+(u.ok?'':'<br><span class="alerta">Guardado só neste aparelho</span>')+'</div>';
+      if(e.h.length>1) h+='<button type="button" class="mais" data-hist="'+esc(o.doc)+'" aria-expanded="'+(ABERTO[o.doc]?'true':'false')+'">'+(ABERTO[o.doc]?'Esconder':'Ver')+' os '+e.h.length+' contatos</button>'+
+        (ABERTO[o.doc]?'<ul class="hist">'+e.h.slice(1).map(function(x){ return '<li>'+esc(dBr(x.em))+' · '+esc(x.canal||'')+' · '+esc(x.res||'')+' · '+esc(STATUS[x.status]||'')+(x.obs?' · “'+esc(x.obs)+'”':'')+'</li>'; }).join('')+'</ul>':'');
+    } else if(o.dias!=null&&o.dias>=2) h+='<div class="ult alerta">Nenhum contato registrado.</div>';
+    h+='<div class="acoes">'+
+      (tel?'<a class="btn forte" href="tel:+55'+tel+'">Ligar</a><a class="btn zap" target="_blank" rel="noopener" href="https://wa.me/55'+tel+'">WhatsApp</a>':'<span class="btn" aria-disabled="true" style="opacity:.5">Sem telefone</span><span></span>')+
+      (LER?'':'<button type="button" class="btn" data-reg="'+esc(o.doc)+'">Registrar</button>')+'</div></article>';
+    return h;
+  }
+  function montar(){
+    var L=visiveis(), ab=L.filter(function(o){return o.e.st!=='fechado'&&o.e.st!=='perdido';}), hj=hojeISO();
+    var sem=ab.filter(function(o){return o.e.st==='novo';}), prev=0;
+    ab.forEach(function(o){ var u=o.e.u; if(o.e.st==='neg'&&u.chance&&CHANCE[u.chance]) prev+=o.valor*CHANCE[u.chance][1]; });
+    var cont=function(f){ var a=FILTRO; FILTRO=f; var n=L.filter(entra).length; FILTRO=a; return n; };
+    $('sub').textContent=(PERFIL==='vend'?nm(S.nome):'Loja '+(LOJA||LOJAS.join(', ')))+' · '+ab.length+' em aberto · '+mil(ab.reduce(function(s,o){return s+o.valor;},0));
+    var h='';
+    if(LER) h+='<div class="aviso">Modo “Ver como”: só leitura.</div>';
+    if(SERVIDOR===false) h+='<div class="aviso" role="status">Os registros estão ficando guardados <b>só neste aparelho</b> por enquanto. Eles sobem sozinhos quando o servidor do CRM estiver ligado.</div>';
+    if(LOJAS.length>1||PERFIL!=='vend'){
+      var vs={}; ORCS.forEach(function(o){ if(!LOJA||o.loja===LOJA) vs[norm(o.vend)]=o.vend; });
+      h+='<div style="display:flex;flex-wrap:wrap;gap:8px">'+
+        (LOJAS.length>1?'<label class="sub">Loja <select class="sel" id="selLoja">'+LOJAS.map(function(c){return '<option'+(c===LOJA?' selected':'')+'>'+esc(c)+'</option>';}).join('')+'</select></label>':'')+
+        (PERFIL!=='vend'?'<label class="sub">Vendedor <select class="sel" id="selVend"><option value="">Todos</option>'+Object.keys(vs).sort().map(function(k){return '<option value="'+esc(k)+'"'+(k===VEND?' selected':'')+'>'+esc(vs[k])+'</option>';}).join('')+'</select></label>':'')+'</div>';
+    }
+    h+='<div class="kpis"><div class="kpi"><span>Em aberto</span><b>'+ab.length+'</b></div><div class="kpi"><span>Sem contato</span><b'+(sem.length?' class="alerta"':'')+'>'+sem.length+'</b></div>'+
+       '<div class="kpi"><span>Ligar hoje</span><b>'+cont('hoje')+'</b></div><div class="kpi"><span>Previsão</span><b>'+mil(prev)+'</b></div></div>';
+    var F=[['todos','Em aberto'],['sem','Sem contato'],['hoje','Ligar hoje'],['neg','Em negociação'],['venc','Previsão vencida'],['prorrogado','Prorrogados'],['fechado','Fechados'],['perdido','Perdidos']];
+    h+='<div class="filtros" role="group" aria-label="Filtrar orçamentos">'+F.map(function(f){ return '<button type="button" data-f="'+f[0]+'" aria-pressed="'+(FILTRO===f[0])+'">'+f[1]+' '+cont(f[0])+'</button>'; }).join('')+'</div>';
+    var lista=L.filter(entra).sort(function(a,b){ var pa=a.e.st==='novo'?0:1, pb=b.e.st==='novo'?0:1; return pa-pb||b.valor-a.valor; });
+    if(!ORCS.length) h+='<div class="card"><h2>Nenhum orçamento em aberto'+(PERFIL==='vend'?' no seu nome':'')+'</h2><p class="sub">A lista vem do Painel de Metas e é atualizada todo dia de manhã.</p></div>';
+    else if(!lista.length) h+='<div class="card"><p class="sub" style="margin:0">Nada neste filtro.</p></div>';
+    else h+=lista.map(cartao).join('');
+    h+='<p class="sub">Guardamos só o necessário para o retorno ao cliente: nome, telefone, e-mail do comprador e o andamento do orçamento.</p>';
+    $('raiz').innerHTML=h;
+  }
+  $('raiz').addEventListener('click',function(ev){
+    var b=ev.target.closest('button'); if(!b) return;
+    if(b.dataset.f){ FILTRO=b.dataset.f; montar(); }
+    else if(b.dataset.hist){ ABERTO[b.dataset.hist]=!ABERTO[b.dataset.hist]; montar(); }
+    else if(b.dataset.reg){ abrirRegistro(b.dataset.reg); }
+  });
+  $('raiz').addEventListener('change',function(ev){
+    if(ev.target.id==='selLoja'){ LOJA=ev.target.value; VEND=''; montar(); }
+    if(ev.target.id==='selVend'){ VEND=ev.target.value; montar(); }
+  });
+
+  /* ───────── registrar contato ───────── */
+  function ops(nome,lista,marcado){ return '<div class="ops">'+lista.map(function(x){ var v=Array.isArray(x)?x[0]:x, t=Array.isArray(x)?x[1]:x; return '<label><input type="radio" name="'+nome+'" value="'+esc(v)+'"'+(v===marcado?' checked':'')+'><span>'+esc(t)+'</span></label>'; }).join('')+'</div>'; }
+  function abrirRegistro(doc){
+    var o=ORCS.filter(function(x){return x.doc===doc;})[0]; if(!o) return;
+    var u=estado(o).u||{}, d=$('dlg');
+    d.innerHTML='<form class="reg" method="dialog" novalidate>'+
+      '<div><h2 id="dlgTit" style="margin:0">Registrar contato</h2><div class="sub">'+esc(o.cli)+' · Nº '+esc(o.doc)+' · '+brl(o.valor)+'</div></div>'+
+      '<fieldset><legend>Como foi o contato?</legend>'+ops('canal',CANAIS,'Ligação')+'</fieldset>'+
+      '<fieldset><legend>Resultado</legend>'+ops('res',RESULT,'Falei com o cliente')+'</fieldset>'+
+      '<fieldset><legend>Situação do orçamento</legend>'+ops('status',[['neg','Em negociação'],['fechado','Fechado'],['perdido','Perdido'],['prorrogado','Prorrogado']],u.status&&u.status!=='novo'?u.status:'neg')+'</fieldset>'+
+      '<div id="bNeg" class="duas"><label class="campo">Previsão de fechamento<input type="date" name="prev" min="'+hojeISO()+'" value="'+esc(u.prev&&u.prev>=hojeISO()?u.prev:'')+'"></label>'+
+        '<fieldset><legend>Chance de fechar</legend>'+ops('chance',[['alta','Alta'],['media','Média'],['baixa','Baixa']],u.chance||'media')+'</fieldset></div>'+
+      '<label id="bPer" class="campo" hidden>Por que perdemos?<select name="motivo"><option value="">Escolha o motivo</option>'+MOTIVOS.map(function(m){return '<option>'+esc(m)+'</option>';}).join('')+'</select></label>'+
+      '<div id="bFec" class="aviso" hidden>Marque “Fechado” quando o cliente confirmar o pedido. O gerente confere quando a venda for faturada.</div>'+
+      '<label class="campo">O que o cliente disse (opcional)<textarea name="obs" rows="2" maxlength="300"></textarea></label>'+
+      '<label id="bProx" class="campo">Próximo contato<input type="date" name="prox" min="'+hojeISO()+'"></label>'+
+      '<details><summary class="rot" style="cursor:pointer;min-height:32px">Contato do comprador'+(u.cNome||u.cTel?' (já preenchido)':'')+'</summary><div class="duas" style="margin-top:6px">'+
+        '<label class="campo">Nome<input type="text" name="cNome" autocomplete="off" maxlength="60" value="'+esc(u.cNome||'')+'"></label>'+
+        '<label class="campo">Telefone / WhatsApp<input type="tel" name="cTel" inputmode="tel" autocomplete="off" maxlength="20" value="'+esc(u.cTel||o.tel||'')+'"></label>'+
+        '<label class="campo">E-mail<input type="email" name="cEmail" autocomplete="off" maxlength="80" value="'+esc(u.cEmail||'')+'"></label></div></details>'+
+      '<div class="erro" id="regErro" role="alert"></div>'+
+      '<div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="btn" id="regCanc">Cancelar</button><button type="submit" class="btn forte" id="regOk">Salvar</button></div></form>';
+    var f=d.querySelector('form');
+    function ajusta(){ var st=f.status.value; $('bNeg').hidden=st!=='neg'&&st!=='prorrogado'; $('bPer').hidden=st!=='perdido'; $('bFec').hidden=st!=='fechado'; $('bProx').hidden=st==='fechado'||st==='perdido'; }
+    f.addEventListener('change',function(){ $('regErro').textContent=''; ajusta(); }); ajusta();
+    $('regCanc').onclick=function(){ d.close(); };
+    f.onsubmit=function(ev){
+      ev.preventDefault();
+      var st=f.status.value, er='';
+      if((st==='neg'||st==='prorrogado')&&!f.prev.value) er='Informe a previsão de fechamento.';
+      else if(st==='perdido'&&!f.motivo.value) er='Escolha o motivo da perda.';
+      else if(f.cEmail.value&&!/^\S+@\S+\.\S+$/.test(f.cEmail.value.trim())) er='Confira o e-mail do comprador.';
+      if(er){ $('regErro').textContent=er; return; }
+      var ativo=st==='neg'||st==='prorrogado';
+      var r={id:'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),em:new Date().toISOString(),por:S.nome,loja:o.loja,doc:o.doc,cli:o.cli,vend:o.vend,valor:o.valor,
+        canal:f.canal.value,res:f.res.value,status:st,prev:ativo?f.prev.value:'',chance:ativo?f.chance.value:'',motivo:st==='perdido'?f.motivo.value:'',
+        obs:f.obs.value.trim(),prox:ativo?f.prox.value:'',cNome:f.cNome.value.trim(),cTel:f.cTel.value.trim(),cEmail:f.cEmail.value.trim()};
+      var loc=lerLocal(); loc.push(r); gravarLocal(loc); REG=juntar(REG,[r]);
+      $('regOk').disabled=true; $('regOk').textContent='Salvando…';
+      STDados.chamar('crmSalvar',{regs:[r]},true).then(function(j){
+        if(j&&j.ok){ SERVIDOR=true; var l=lerLocal(); l.concat(REG).forEach(function(x){ if(x.id===r.id) x.ok=1; }); gravarLocal(l); toast('Contato registrado.'); }
+        else { SERVIDOR=false; toast('Guardado neste aparelho. Sobe quando o servidor estiver ligado.'); }
+      }).catch(function(){ SERVIDOR=false; toast('Sem conexão: guardado neste aparelho.'); }).then(function(){ d.close(); montar(); });
+    };
+    d.showModal();
+  }
+
+  /* ───────── início ───────── */
+  function falha(t,m){ $('sub').textContent=''; $('raiz').innerHTML='<div class="card"><h2>'+esc(t)+'</h2><p class="sub">'+esc(m)+'</p></div>'; }
+  function iniciar(){
+    if(!window.STDados) return falha('Não consegui abrir','Abra pelo Só Tintas App.');
+    S=STDados.sessaoVisao?STDados.sessaoVisao():null;
+    if(!S||!S.nome) return falha('Entre no Só Tintas App primeiro','O CRM abre com o seu nome e PIN do app.');
+    STDados.cracha().then(function(){
+      C=STDados.crachaGuardado(); LER=!!(STDados.visao&&STDados.visao());
+      PERFIL=C.perfil||''; var todas=(C.lojas||[]).map(code3).filter(Boolean), lider=/^(coord|anl|sup)$/.test(PERFIL);
+      LOJAS=lider?PILOTO.slice():todas.filter(function(c){return PILOTO.indexOf(c)>=0;});
+      if(!LOJAS.length) return falha('CRM em piloto','Por enquanto o CRM está em teste na loja 002. Em breve chega à sua loja.');
+      LOJA=LOJAS[0];
+      return Promise.all([carregarOrcs(),sincronizar()]).then(function(r){
+        ORCS=(r[0]||[]).filter(function(o){ return LOJAS.indexOf(o.loja)>=0; });
+        /* orçamento que já saiu da lista do Painel mas tem registro: continua visível em Fechados/Perdidos */
+        var tem={}; ORCS.forEach(function(o){tem[o.doc]=1;});
+        REG.forEach(function(x){ if(x.doc&&!tem[x.doc]&&LOJAS.indexOf(x.loja)>=0&&(x.status==='fechado'||x.status==='perdido')){ tem[x.doc]=1; ORCS.push({loja:x.loja,vend:x.vend||'',doc:String(x.doc),cli:x.cli||'',tel:x.cTel||'',valor:Number(x.valor)||0,dias:null}); } });
+        montar();
+      });
+    }).catch(function(e){ falha('Não consegui abrir',(e&&e.message)||String(e)); });
+  }
+  iniciar();
+})();
+</script>
+</body></html>

@@ -9236,6 +9236,11 @@ syncNav();
         <span class="ini-txt"><span class="ini-nm">PDI Semanal</span><span class="ini-ds">Os 3 compromissos da semana e a avaliação</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
+      <button type="button" class="ini-card feat" data-act="crm" data-crm="1" data-vend="1" style="display:none">
+        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg></span>
+        <span class="ini-txt"><span class="ini-nm">CRM de Vendas</span><span class="ini-ds">Orçamentos em aberto: registrar o contato e a situação (piloto loja 002)</span></span>
+        <span class="ini-go" aria-hidden="true">&rarr;</span>
+      </button>
       <button type="button" class="ini-card feat" data-act="acessos" data-lider="1">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
         <span class="ini-txt"><span class="ini-nm">Acesso de usuários</span><span class="ini-ds">Liberar, novo PIN de gerente e vendedor, desativar</span></span>
@@ -9458,6 +9463,9 @@ body.foco .wrap{padding-bottom:40px}
       var s=sessao(); c.style.display = (mkt || (s&&!ehVend()&&s.escopo==='todos'&&String(s.papel||'').toLowerCase()!=='analista')) ? '' : 'none';
     });
     Array.prototype.forEach.call(grid.querySelectorAll('[data-avulsas]'),function(c){ var pf=(window.STDados&&STDados.perfil)?STDados.perfil():''; c.style.display=(pf==='vend'||pf==='ger'||pf==='sup')?'':'none'; });
+    /* nov/2026: CRM de Vendas em piloto — loja 002 e a liderança (supervisão, análise, coordenação) */
+    Array.prototype.forEach.call(grid.querySelectorAll('[data-crm]'),function(c){ var k=(window.STDados&&STDados.crachaGuardado)?STDados.crachaGuardado():null, pf=k?k.perfil:'';
+      c.style.display=(k&&(/^(coord|anl|sup)$/.test(pf)||(k.lojas||[]).some(function(l){ return /(^|\D)0*2(\D|$)/.test(String(l)); })))?'':'none'; });
     /* nov/2026: só a coordenação (o analista não publica) */
     Array.prototype.forEach.call(grid.querySelectorAll('[data-coordonly]'),function(c){
       var s=sessao(); c.style.display = (s&&!ehVend()&&s.escopo==='todos'&&String(s.papel||'').toLowerCase()!=='analista') ? '' : 'none';
@@ -9586,6 +9594,12 @@ body.foco .wrap{padding-bottom:40px}
     if(!ovD||!ifrD) return; titOv('Ranking ST · Só Tintas');
     var tema=(window.STtema?window.STtema.get():'light');
     ifrD.setAttribute('src','pontos.html?tema='+tema+'&v='+Date.now());
+    ovD.style.display='flex'; document.body.style.overflow='hidden';
+  }
+  function abrirCrm(){
+    if(!ovD||!ifrD) return; titOv('CRM de Vendas · Só Tintas');
+    var tema=(window.STtema?window.STtema.get():'light');
+    ifrD.setAttribute('src','crm.html?tema='+tema+'&v='+Date.now());
     ovD.style.display='flex'; document.body.style.overflow='hidden';
   }
   function abrirSemana(){
@@ -9737,6 +9751,7 @@ body.foco .wrap{padding-bottom:40px}
     if(act==='proposta'){ abrirProposta(); return; }
     if(act==='pdi'){ abrirPdi(); return; }
     if(act==='semana'){ abrirSemana(); return; }
+    if(act==='crm'){ abrirCrm(); return; }
     if(act==='provas'){ abrirProvas(); return; }
     if(act==='avulsas'){ abrirAvulsas(); return; }
     if(act==='uso'){ abrirUso(); return; }
