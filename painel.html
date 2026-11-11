@@ -619,7 +619,7 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
   <div class="hdtop">
    <div class="brand">
     <div class="logo">ST</div>
-    <div><h1 id="hTit">Coordenação de Supervisão</h1><span id="hSub">Só Tintas · Painel de Performance · <b style="color:#FFD100">v43</b></span></div>
+    <div><h1 id="hTit">Coordenação de Supervisão</h1><span id="hSub">Só Tintas · Painel de Performance · <b style="color:#FFD100">v44</b></span></div>
    </div>
    <div class="per"><select class="mes" id="selMes" style="display:none" title="Escolher o mês"></select><b id="hPer">—</b><span id="hDias">—</span><span id="btnUp" style="display:none" onclick="abrirUpload()"> · ⚙️ atualizar dados</span><span id="lnkSair" style="display:none" onclick="sairPainel()"> · sair</span></div>
   </div>
@@ -694,6 +694,14 @@ P.fechado=false;
 /* v41: mês do histórico (aba PAINEL_MESES do servidor): o pacote vem com f=1 quando é um mês fechado */
 if(_.f){ P.fechado=true; P.hist=true; } else if(mesURL()){ P.hist=true; }
 const UT=P.utTotal,UD=P.utDecorridos,UR=P.utRestantes;
+/* v44: "necessário por dia" na mesma conta da Meta diária do Solcast (BI) e do e-mail Meta do dia:
+   o que falta ÷ dias úteis DEPOIS do dia do Solcast. Quando o Solcast já está num dia posterior à data-base
+   (o dia de hoje, em andamento), esse dia sai do divisor. Sem a data do Solcast, fica a conta de antes. */
+const URN=(function(){const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String((_.t||[])[4]||''));
+ if(!m||P.fechado||!UR) return UR;
+ if(!((m[1]+'-'+m[2]+'-'+m[3])>String(P.dataBase).slice(0,10))) return UR;
+ return Math.max(UR-pesoDia(+m[1],+m[2]-1,+m[3]),0.5)})();
+const URT=URN!==UR?' depois de hoje':'';
 const FRAC=UT?UD/UT:1;
 const sm=(a,f)=>a.reduce((s,x)=>s+f(x),0);
 const _m=+P.dataBase.slice(5,7), NOVA=(P.ano>2026)||(P.ano==2026&&_m>=10);
@@ -725,7 +733,7 @@ function roll(arr){const s=i=>arr.reduce((a,x)=>a+x[i],0),A=s(6);
 function blk(ml,mt,f,pr){return{metaLoja:ml,metaTime:mt,fat:f,proj:pr,
  pctLoja:ml?f/ml:null,pctTime:mt?f/mt:null,pctProj:ml?pr/ml:null,
  restLoja:Math.max(ml-f,0),restTime:Math.max(mt-f,0),
- ritmoNec:UR?Math.max(ml-f,0)/UR:0,ritmoReal:UD?f/UD:0}}
+ ritmoNec:URN?Math.max(ml-f,0)/URN:0,ritmoReal:UD?f/UD:0}}
 /* v40: projecao da loja — se o servidor mandar zerada (primeiros dias do mes), projeta pelo ritmo dos dias uteis, como ja se faz com o vendedor */
 const projLoja=a=>(a[6]>0)?a[6]:((UD&&UT&&!P.fechado)?a[5]/UD*UT:a[5]||0);
 const lojas=_.L.map(a=>{const o=blk(a[3],a[4],a[5],projLoja(a));
@@ -735,7 +743,7 @@ const lojas=_.L.map(a=>{const o=blk(a[3],a[4],a[5],projLoja(a));
  o.vendedores=a[9].map(v=>{const nv=nvVend(v[3],o.nv),C=v.slice(4);return{
   nome:v[0],meta:v[1],fat:v[2],med90:v[3],Craw:C,I:ind(C,v[2]),
   pct:v[1]?v[2]/v[1]:null,rest:Math.max(v[1]-v[2],0),
-  ritmoNec:UR?Math.max(v[1]-v[2],0)/UR:0,proj:UD?v[2]/UD*UT:0,
+  ritmoNec:URN?Math.max(v[1]-v[2],0)/URN:0,proj:UD?v[2]/UD*UT:0,
   nv:nv,nvRot:ROTV[nv],prox:proxV(v[3],o.nv)}});
  return o});
 const sups=[...new Set(lojas.map(l=>l.sup))].map(s=>{const ls=lojas.filter(l=>l.sup==s);
@@ -1270,7 +1278,7 @@ function termometro(tit,meta,fat,proj,rest,porDia){
  const tc=pct>=1?'var(--ok,#1a8f4a)':pj>=1?'#2f9e5b':pj>=.95?'var(--warn,#b7791f)':'var(--bad,#d9363e)';
  const UR=D.periodo.utRestantes;
  const txt=pct>=1?`<b>Meta batida!</b> ${PC(pct)} da meta — cada real a mais agora é bônus.`
-  :`Faltam <b>${K(rest)}</b> · <b>${BRL(porDia)}</b> por dia útil · ${DUF(UR)} dia${UR===1?'':'s'} úte${UR===1?'l':'is'}. Projeção de fechamento: <b style="color:${tc}">${PC(pj)}</b>.`;
+  :`Faltam <b>${K(rest)}</b> · <b>${BRL(porDia)}</b> por dia útil · ${DUF(URN)} dia${URN===1?'':'s'} úte${URN===1?'l':'is'}${URT}. Projeção de fechamento: <b style="color:${tc}">${PC(pj)}</b>.`;
  return `<div class="termo" style="--tc:${tc}"><div class="termo-top"><b>🌡️ ${tit}</b><span>${PC(pct)} de ${K(meta)}</span></div>
   <div class="termo-tubo"><span class="termo-bulbo"></span><div class="termo-trilho"><i class="termo-fill" style="--p:${esc120(pct).toFixed(1)}%"></i>
    <em class="termo-marca hoje" style="left:${esc120(RE).toFixed(1)}%"><span>hoje deveria estar</span></em>
@@ -1301,7 +1309,7 @@ function ritmoBox(o){
  let c,ic,msg;
  if(pc>=.05){c='g';ic='✅';msg=`Ritmo <b>acima</b> do necessário em ${BRL(Math.abs(dif))}/dia. Mantendo esta média, a meta fecha antes do último dia.`}
  else if(pc>=-.05){c='y';ic='⚠️';msg=`Ritmo <b>colado</b> no necessário. Não há folga: um dia fraco já joga o fechamento para baixo da meta.`}
- else{c='r';ic='🔴';msg=`Ritmo <b>abaixo</b> do necessário em ${BRL(Math.abs(dif))}/dia. Nos próximos ${DUF(D.periodo.utRestantes)} dias é preciso subir <b>${PC(Math.abs(pc))}</b> a média diária.`}
+ else{c='r';ic='🔴';msg=`Ritmo <b>abaixo</b> do necessário em ${BRL(Math.abs(dif))}/dia. Nos próximos ${DUF(URN)} dias${URT} é preciso subir <b>${PC(Math.abs(pc))}</b> a média diária.`}
  return `<div class="ritmo"><h3>Ritmo diário — o que decide o mês</h3>
   <div class="rgrid">
    <div class="rbox"><div class="l">Média realizada por dia útil</div><div class="v">${BRL(o.ritmoReal)}</div></div>
@@ -1465,7 +1473,7 @@ function painelPrincipal(){
    <div class="ppc"><div class="l">Faturado</div><div class="v">${BRL(g.fat)}</div><div class="f">média de ${BRL(g.ritmoReal)} por dia útil</div></div>
    <div class="ppc"><div class="l">Meta Loja</div><div class="v">${BRL(g.metaLoja)}</div><div class="f">atingido ${PPCT(g.pctLoja)}</div></div>
    <div class="ppc"><div class="l">Meta Time</div><div class="v">${BRL(g.metaTime)}</div><div class="f">atingido ${PPCT(g.pctTime)}</div></div>
-   <div class="ppc"><div class="l">Falta para a meta</div><div class="v">${BRL(g.restLoja)}</div><div class="f">${BRL(g.ritmoNec)}/dia em ${DUF(UR)} dias úteis</div></div>
+   <div class="ppc"><div class="l">Falta para a meta</div><div class="v">${BRL(g.restLoja)}</div><div class="f">${BRL(g.ritmoNec)}/dia em ${DUF(URN)} dias úteis${URT}</div></div>
    <div class="ppc"><div class="l">Projeção de fechamento</div><div class="v">${BRL(g.proj)}</div><div class="f">${PPCT(g.pctProj)} da meta</div></div>
    <div class="ppc"><div class="l">Ritmo</div><div class="v">${g.ritmoReal>=g.ritmoNec?'No ritmo':'Abaixo'}</div><div class="f">${g.ritmoReal>=g.ritmoNec?'folga de ':'déficit de '}${BRL(Math.abs(g.ritmoReal-g.ritmoNec))}/dia</div></div>
   </div>`;
@@ -1741,7 +1749,7 @@ function alinhOportunidades(d){
  var o=d.o,f=[],I=o.I||{};
  var gap=(o.ritmoNec||0)-(o.ritmoReal||0);
  if(gap>0&&UR>0) f.push('<b>Ritmo abaixo do necessário.</b> Está saindo '+BRL(o.ritmoReal)+
-  ' por dia útil e precisa de '+BRL(o.ritmoNec)+' — um gap de <b>'+BRL(gap)+' por dia</b> nos '+DUF(UR)+
+  ' por dia útil e precisa de '+BRL(o.ritmoNec)+' — um gap de <b>'+BRL(gap)+' por dia</b> nos '+DUF(URN)+
   ' dias úteis que restam. Observe se o time começa o dia sabendo quanto precisa vender, ou se descobre isso no fechamento.');
  else if(o.ritmoReal>0) f.push('<b>Ritmo dentro do necessário.</b> Saem '+BRL(o.ritmoReal)+
   ' por dia útil contra '+BRL(o.ritmoNec)+' exigidos. O risco agora é relaxar: confirme se o esforço está distribuído ou concentrado em poucos dias fortes.');
@@ -1959,7 +1967,7 @@ function vVendedor(){
   <div class="kpi"><div class="lb">Projeção fechamento</div>
    <div class="vl" style="color:${pp>=1?'var(--ok)':pp>=.9?'var(--warn)':'var(--bad)'}">${PC(pp)}</div><div class="ft">${K(v.proj)}</div></div>
   <div class="kpi"><div class="lb">Falta para a meta</div><div class="vl">${K(v.rest)}</div>
-   <div class="ft">${BRL(v.ritmoNec)}/dia · ${DUF(D.periodo.utRestantes)} dias úteis</div></div>
+   <div class="ft">${BRL(v.ritmoNec)}/dia · ${DUF(URN)} dias úteis${URT}</div></div>
   <div class="kpi"><div class="lb">Seu nível</div><div class="vl">V${v.nv} · ${esc(v.nvRot)}</div>
    <div class="ft">${bdgLV(l,'margin:0 0 4px')}<br>${v.prox?'faltam '+K(v.prox.falta)+' de Méd.90d para V'+v.prox.nv:'topo da régua'}<br><span style="color:var(--tx3)">${esc(NIVBASE)}</span></div></div>
  </div>`;
@@ -2329,7 +2337,7 @@ function gerarResumo(id){
  h+=f.c=='g'?`O ritmo está <b>adequado</b> — o esperado para esta altura era ${PC(RE)}.</p>`
    :f.c=='y'?`O ritmo está <b>levemente atrás</b> do esperado para esta altura (${PC(RE)}).</p>`
    :`O ritmo está <b>abaixo</b> do esperado para esta altura (${PC(RE)}) — exige intervenção agora, não no fim do mês.</p>`;
- h+=`<p>Faltam <b>${BRL(o.restLoja)}</b> em <b>${DUF(D.periodo.utRestantes)} dias úteis</b>, o que exige <b>${BRL(o.ritmoNec)}/dia</b>. A média realizada é de <b>${BRL(o.ritmoReal)}/dia</b> — ${dif>=0?`uma folga de ${BRL(dif)}`:`um déficit de ${BRL(-dif)}`} por dia.</p>`;
+ h+=`<p>Faltam <b>${BRL(o.restLoja)}</b> em <b>${DUF(URN)} dias úteis${URT}</b>, o que exige <b>${BRL(o.ritmoNec)}/dia</b>. A média realizada é de <b>${BRL(o.ritmoReal)}/dia</b> — ${dif>=0?`uma folga de ${BRL(dif)}`:`um déficit de ${BRL(-dif)}`} por dia.</p>`;
  h+=piramide(vsN);
  if(top.length){h+=`<p><b>Puxando o resultado:</b></p><ul>`;
   top.forEach(x=>h+=`<li>${esc(x.nome)} — ${PC(x.pctLoja)} (${K(x.fat)})</li>`);h+='</ul>'}

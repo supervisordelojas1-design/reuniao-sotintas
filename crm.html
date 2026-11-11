@@ -170,7 +170,7 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
 
   var C=null, S=null, PERFIL='', LIDER=false, LOJAS=[], LOJA='', OFICIAL='';
   var D={orc:[],cart:[],pos:[],pin:[]}, REG=[], PIN=[], POS=[], HIST={};
-  var PAINEL_FALHOU=false, TAB='orc', FIL={orc:'todos',cart:'todos',pos:'e0',pin:'todos'}, VEND='', SERVIDOR=null, LER=false, ABERTO={}, CARTN=0;
+  var LJ={}, PAINEL_FALHOU=false, TAB='orc', FIL={orc:'todos',cart:'todos',pos:'e0',pin:'todos'}, VEND='', SERVIDOR=null, LER=false, ABERTO={}, CARTN=0;
   var chave=function(k){ return 'st_crm_'+k+'_v1:'+norm(S&&S.nome); };
   function lerLocal(k){ try{ return JSON.parse(localStorage.getItem(chave(k))||'[]')||[]; }catch(e){ return []; } }
   function gravarLocal(k,l){ try{ localStorage.setItem(chave(k),JSON.stringify(l.slice(-500))); }catch(e){} }
@@ -180,7 +180,7 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
     m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(t); if(m) return new Date(+m[3],+m[2]-1,+m[1],12,0,0); var d=new Date(t); return isNaN(d.getTime())?null:d; }
   function doPainel(){
     return fetch(PAINEL_API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({tipo:'dados',u:'cracha',p:C.tk})})
-      .then(function(r){return r.json();}).then(function(j){ var d=(j&&j.dados)||j||{}; return {O:d.O||{},K:d.K||{}}; }).catch(function(){ PAINEL_FALHOU=true; return {O:{},K:{}}; });
+      .then(function(r){return r.json();}).then(function(j){ var d=(j&&j.dados)||j||{}; (d.L||[]).forEach(function(a){ var c=code3(a[0]); if(c) LJ[c]={meta:Number(a[3])||0,fat:Number(a[5])||0}; }); return {O:d.O||{},K:d.K||{}}; }).catch(function(){ PAINEL_FALHOU=true; return {O:{},K:{}}; });
   }
   function orcsDe(O){
     var base=meioDia(), l=[];
@@ -387,7 +387,13 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
     var prev=0; ab.forEach(function(o){ var u=o.e.u; if(u&&u.status==='neg'&&CHANCE[u.chance]) prev+=o.valor*CHANCE[u.chance][1]; });
     var comSt=ab.filter(function(o){return o.e.st!=='novo';}).length;
     h+='<div class="kpis">'+kpi('Em aberto',mil(ab.reduce(function(s,o){return s+o.valor;},0)))+kpi('Com situação',(ab.length?Math.round(comSt/ab.length*100):0)+'%')+kpi('Previsão',mil(prev))+kpi('Contatos hoje',REG.filter(function(x){return daLoja(x)&&x.status!=='validado'&&iso(new Date(x.em))===hj;}).length)+'</div>';
-    h+='<p class="sub" style="margin:-4px 0 0">Previsão = soma dos orçamentos em negociação, pesada pela chance (alta 70%, média 40%, baixa 15%).</p>';
+    var lj=LJ[LOJA], falta=lj?Math.max(lj.meta-lj.fat,0):null;
+    if(lj&&lj.meta>0){ var pp=falta>0?Math.min(prev/falta,1):1;
+      h+='<section class="card"><div class="sub" style="text-transform:uppercase;letter-spacing:.04em;font-size:11px">Previsão dos orçamentos × meta que falta</div>'+
+        '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><b style="font-size:22px;color:var(--navy)">'+mil(prev)+'</b><span class="sub">'+(falta>0?'de '+mil(falta)+' que faltam':'meta do mês batida')+'</span></div>'+
+        '<div class="barra" style="height:12px" role="img" aria-label="'+Math.round(pp*100)+'% do que falta está previsto"><i style="width:'+Math.round(pp*100)+'%;background:var(--navy)"></i></div>'+
+        '<div class="sub">'+(falta>0?'A previsão cobre <b>'+Math.round(pp*100)+'%</b> do que falta para a meta ('+mil(lj.fat)+' vendidos de '+mil(lj.meta)+'). ':'')+'Soma dos orçamentos em negociação, pesada pela chance (alta 70%, média 40%, baixa 15%).</div></section>'; }
+    else h+='<p class="sub" style="margin:-4px 0 0">Previsão = soma dos orçamentos em negociação, pesada pela chance (alta 70%, média 40%, baixa 15%).</p>';
     /* placar da semana, por quem registrou */
     var P={}; REG.filter(function(x){ return daLoja(x)&&x.status!=='validado'&&iso(new Date(x.em))>=segISO; }).forEach(function(x){
       var p=P[norm(x.por)]=P[norm(x.por)]||{nome:x.por,n:0,falou:0,docs:{},fechou:0}; p.n++; if(x.res==='Falei com o cliente') p.falou++;

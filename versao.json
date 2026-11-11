@@ -2,13 +2,13 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
-      "v": "ast-v165",
+      "v": "ast-v166",
       "data": "11/11/2026",
-      "hora": "12:15",
+      "hora": "12:40",
       "itens": [
         {
-          "painel": "CRM de Vendas",
-          "o_que": "Correção: os orçamentos em aberto e a carteira não estavam carregando no CRM (a tela dizia que não encontrava a loja ou mostrava a lista vazia). Agora carregam normalmente.",
+          "painel": "CRM de Vendas (novo)",
+          "o_que": "Nova área para todas as lojas: Orçamentos em aberto, Carteira (clientes CNPJ parados), Pós-venda (clientes CPF com compra de R$ 500 ou mais) e Pintores. Em cada cliente, o botão Registrar abre a ficha do contato: como foi, o que o cliente disse, a situação (em negociação com previsão, fechado, perdido com motivo) e o próximo contato. O gerente acompanha na aba Loja: placar da semana, o que precisa de ação, previsão dos orçamentos contra a meta que falta e motivos de perda.",
           "para": [
             "coord",
             "anl",
@@ -16,53 +16,10 @@
             "ger",
             "vend"
           ]
-        }
-      ]
-    },
-    {
-      "v": "ast-v164",
-      "data": "11/11/2026",
-      "hora": "11:50",
-      "itens": [
+        },
         {
-          "painel": "CRM de Vendas",
-          "o_que": "O CRM de Vendas saiu do piloto e agora está liberado para todas as lojas: Orçamentos, Carteira, Pós-venda, Pintores e a visão do gerente. Em cada cliente, o botão Registrar abre a ficha do contato: como foi, o que o cliente disse, a situação e o próximo contato.",
-          "para": [
-            "coord",
-            "anl",
-            "sup",
-            "ger",
-            "vend"
-          ]
-        }
-      ]
-    },
-    {
-      "v": "ast-v163",
-      "data": "11/11/2026",
-      "hora": "11:20",
-      "itens": [
-        {
-          "painel": "CRM de Vendas (piloto loja 002)",
-          "o_que": "O CRM ganhou quatro áreas novas: Carteira (clientes CNPJ sem compra no mês ou abaixo do normal, com o contato do comprador), Pós-venda (clientes CPF com compra de R$ 500 ou mais, nas etapas de 3, 15, 45 dias e 6 meses, com roteiro), Pintores (cadastro, obras e ligações) e Loja (visão do gerente: placar da semana, o que precisa de ação, validação das vendas fechadas e motivos de perda).",
-          "para": [
-            "coord",
-            "anl",
-            "sup",
-            "ger",
-            "vend"
-          ]
-        }
-      ]
-    },
-    {
-      "v": "ast-v162",
-      "data": "11/11/2026",
-      "hora": "10:45",
-      "itens": [
-        {
-          "painel": "CRM de Vendas (piloto loja 002)",
-          "o_que": "Nova área para o vendedor registrar o contato com o cliente de cada orçamento em aberto e marcar a situação: em negociação (com previsão de fechamento e chance), fechado, perdido (com o motivo) ou prorrogado. Tem botão de ligar e de WhatsApp, próximo contato e o contato do comprador. O gerente vê os orçamentos da loja por vendedor.",
+          "painel": "Painel de Metas",
+          "o_que": "O valor necessário por dia passou a usar a mesma conta do BI e do e-mail Meta do dia: o que falta dividido pelos dias úteis depois de hoje.",
           "para": [
             "coord",
             "anl",
