@@ -18,9 +18,18 @@ FERIADOS = {  # nacionais + RJ (23/04). Acrescente feriados aqui.
 MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro']
 SEM = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
 
+# Correções do cadastro enquanto a EQUIPE do app não é atualizada (informadas pelo Bruno)
+GERENTE_FIX = {
+    '023': {'gerente': 'Carlos Alexandre', 'email': 'depositodastintasvarzea@sotintasnet.com.br'},  # 11/11/2026, login 042
+}
+EMAIL_FIX = {'novaiguacu@sotintasnet.com': 'novaiguacu@sotintasnet.com.br'}
+
 pasta, extra_f, data_s, saida = sys.argv[1:5]
 HOJE = datetime.date.fromisoformat(data_s)
 EX = json.load(open(extra_f, encoding='utf-8'))
+for _c, _g in GERENTE_FIX.items(): EX.setdefault('ger', {}).setdefault(_c, {}).update(_g)
+for _g in EX.get('ger', {}).values():
+    if _g.get('email') in EMAIL_FIX: _g['email'] = EMAIL_FIX[_g['email']]
 os.makedirs(saida, exist_ok=True)
 
 
