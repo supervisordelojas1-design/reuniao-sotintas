@@ -18,6 +18,14 @@ Layout aprovado pelo Bruno em 11/11/2026: canvas "CRM Só Tintas — layout" (ht
 - **Aba Loja:** cartão "Previsão dos orçamentos × meta que falta".
 - **Pendente:** o Google Drive do computador não envia arquivos novos para a nuvem desde 06/11 (a base de CPF e os arquivos do dia existem só no computador).
 
+## Ordem dos envios (11/11/2026)
+Regra do Bruno: a atualização do Painel vem antes de qualquer envio.
+- 7h: rotina diária (Solcast → Painel → e-mail Meta do dia antes das 8h → Drive → CPF/CRM).
+- 8h–9h, todo dia: resumo diário do Assistente (compromissos e visitas); era 5h–6h.
+- Segunda 8h–9h: resumo semanal dos gerentes. Segunda 12h–13h: PDI semanal de gerentes e de supervisores.
+- Dia 1º 8h40: PDI mensal (rotina). Dia 1º 10h–11h: base mensal dos gestores; era 6h–7h, antes do fechamento.
+- **Trava no servidor do Painel** (`trava.gs` no projeto Apps Script "Projeto sem título"): `resumoSemanalGerentes`, `pdiGerentesSemanal`, `pdiSupervisoresSemanal` e `baseGestoresMensal` só enviam se o carimbo `ATZ_NUMEROS` for de hoje; senão tentam de novo a cada 30 min por 4 h e avisam o Bruno por e-mail. As funções "...Agora" não passam pela trava.
+
 ## Onde
 Dentro do Só Tintas App (login nome + PIN). Dados no Servidor de Dados ST (Apps Script, `STDados.chamar`). O código do servidor não está no repositório: a tela vai no app e o trecho `.gs` é colado no Apps Script pelo Bruno.
 
