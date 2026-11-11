@@ -653,6 +653,22 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbzVe8joykFt0rWX9CjFgpeO
 function iniciarPainel(__D__, __L__) {
 const _ = __D__;
 const P={mes:_.p[0],ano:_.p[1],dataBase:_.p[2],utTotal:_.p[3],utDecorridos:_.p[4],utRestantes:_.p[5]};
+/* v43: calendário do Solcast (BI) — seg a sex = 1 dia útil, sábado = 0,5, domingo e feriado = 0.
+   O servidor manda os dias úteis contando o sábado inteiro; aqui o painel refaz a conta pelo calendário do BI
+   (conferido em 11/11/2026: 21 dias no mês, 6,5 decorridos, a mesma projeção do Solcast). */
+const ST_FERIADOS=new Set(['2026-01-01','2026-04-03','2026-04-21','2026-04-23','2026-05-01','2026-09-07','2026-10-12','2026-11-02','2026-11-15','2026-11-20','2026-12-25',
+ '2027-01-01','2027-03-26','2027-04-21','2027-04-23','2027-05-01','2027-09-07','2027-10-12','2027-11-02','2027-11-15','2027-11-20','2027-12-25']);
+function pesoDia(Y,M,d){const x=new Date(Y,M,d,12),w=x.getDay(),iso=Y+'-'+String(M+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+ return (w===0||ST_FERIADOS.has(iso))?0:(w===6?0.5:1)}
+const DUF=x=>(Math.round((+x||0)*2)/2).toLocaleString('pt-BR');   /* 14.5 -> "14,5" */
+(function(){
+ const b=new Date(P.dataBase+'T12:00'); if(isNaN(b)) return;
+ const Y=b.getFullYear(),M=b.getMonth(),dia=b.getDate(),dim=new Date(Y,M+1,0).getDate();
+ let t=0,d=0; for(let i=1;i<=dim;i++){const w=pesoDia(Y,M,i); t+=w; if(i<=dia) d+=w;}   /* dataBase = último dia apurado (entra nos decorridos) */
+ if(!(t>0)) return;
+ const cheio=P.utTotal&&P.utDecorridos>=P.utTotal;               /* servidor já mandou o mês completo */
+ P.utTotal=t; P.utDecorridos=cheio?t:d; P.utRestantes=Math.max(t-P.utDecorridos,0);
+})();
 /* MES FECHADO: no fim do mes o projetado alcanca o faturado e a deducao de dias
    uteis zera, jogando o painel para o dia 1 do mes seguinte. Quando isso
    acontece, o export e o fechamento do mes anterior — rotula e conta assim. */
@@ -1101,7 +1117,7 @@ function pdfEvo(){
  document.getElementById('parea').innerHTML='<div class="pdoc">'+
   '<div class="ph"><div><h1>Evolução da Carteira CNPJ — '+esc(E.titulo)+'</h1>'+
   '<div class="sub">Só Tintas · Coordenação de Supervisão · '+mesRot(0,true)+' a '+mesRot(n-1,true)+anoSerie()+' · '+S.clientes+' clientes · meta do mês = média mensal dos meses fechados</div></div>'+
-  '<div class="dt">Emitido em '+new Date().toLocaleDateString('pt-BR')+'<br>Base '+new Date(D.periodo.dataBase+'T12:00').toLocaleDateString('pt-BR')+' · '+UD+' de '+UT+' dias úteis</div></div>'+
+  '<div class="dt">Emitido em '+new Date().toLocaleDateString('pt-BR')+'<br>Base '+new Date(D.periodo.dataBase+'T12:00').toLocaleDateString('pt-BR')+' · '+DUF(UD)+' de '+DUF(UT)+' dias úteis</div></div>'+
   corpo+'<div class="fo">* mês atual parcial, projetado com '+PPCT(FRAC)+' do mês. Status: tendência dos últimos 3 meses contra os anteriores (±15%). Valores em R$ (mil / mi).</div></div>';
  document.body.classList.add('impr');
  imprimirComo(nomePdf('Evolucao da carteira',(ST.vend||null)));
@@ -1132,12 +1148,12 @@ const SEMANAS = (function(){
  for(var d=1; d<=dim; d++){
   var dow=new Date(Y,M,d).getDay();        // 0=Dom … 6=Sáb
   if(dow===0) continue;                     // domingo não é dia útil
-  if(cur===null || dow===1){ cur={dias:[], ini:d, fim:d}; weeks.push(cur); }
-  cur.dias.push(d); cur.fim=d;
+  if(cur===null || dow===1){ cur={dias:[], ini:d, fim:d, peso:0}; weeks.push(cur); }
+  cur.dias.push(d); cur.fim=d; cur.peso+=pesoDia(Y,M,d);   // v43: sábado vale meio dia, feriado não conta
  }
- var tot=0; weeks.forEach(function(w){ tot+=w.dias.length; }); tot=tot||UT||1;
+ var tot=0; weeks.forEach(function(w){ tot+=w.peso; }); tot=tot||UT||1;
  var acc=0;
- weeks.forEach(function(w,i){ w.n=i+1; w.nd=w.dias.length; w.fIni=acc/tot; acc+=w.nd; w.fFim=acc/tot; });
+ weeks.forEach(function(w,i){ w.n=i+1; w.nd=w.peso; w.fIni=acc/tot; acc+=w.nd; w.fFim=acc/tot; });
  return weeks;
 })();
 const UTSEM = SEMANAS.reduce(function(a,w){return a+w.nd;},0) || UT;
@@ -1180,7 +1196,7 @@ function wkRuler(mL,mT,un){
  var h='';
  SEMANAS.forEach(function(w){
   var c=(SX(w.fIni*100)+SX(w.fFim*100))/2, on=(w.n===SEMATUAL), range=_dd(w.ini)+'–'+_dd(w.fim);
-  var d=' data-sem="'+w.n+'" data-dr="'+range+'" data-nd="'+w.nd+'" data-un="'+(un||'')+'"'
+  var d=' data-sem="'+w.n+'" data-dr="'+range+'" data-nd="'+DUF(w.nd)+'" data-un="'+(un||'')+'"'
        +' data-pcsem="'+(w.nd/UTSEM*100).toFixed(1).replace('.',',')+'"'
        +' data-dl="'+Math.round(dL)+'" data-mlsem="'+Math.round(dL*w.nd)+'"'
        +' data-single="'+(mT==null?1:0)+'"'
@@ -1254,7 +1270,7 @@ function termometro(tit,meta,fat,proj,rest,porDia){
  const tc=pct>=1?'var(--ok,#1a8f4a)':pj>=1?'#2f9e5b':pj>=.95?'var(--warn,#b7791f)':'var(--bad,#d9363e)';
  const UR=D.periodo.utRestantes;
  const txt=pct>=1?`<b>Meta batida!</b> ${PC(pct)} da meta — cada real a mais agora é bônus.`
-  :`Faltam <b>${K(rest)}</b> · <b>${BRL(porDia)}</b> por dia útil · ${UR} dia${UR===1?'':'s'} úte${UR===1?'l':'is'}. Projeção de fechamento: <b style="color:${tc}">${PC(pj)}</b>.`;
+  :`Faltam <b>${K(rest)}</b> · <b>${BRL(porDia)}</b> por dia útil · ${DUF(UR)} dia${UR===1?'':'s'} úte${UR===1?'l':'is'}. Projeção de fechamento: <b style="color:${tc}">${PC(pj)}</b>.`;
  return `<div class="termo" style="--tc:${tc}"><div class="termo-top"><b>🌡️ ${tit}</b><span>${PC(pct)} de ${K(meta)}</span></div>
   <div class="termo-tubo"><span class="termo-bulbo"></span><div class="termo-trilho"><i class="termo-fill" style="--p:${esc120(pct).toFixed(1)}%"></i>
    <em class="termo-marca hoje" style="left:${esc120(RE).toFixed(1)}%"><span>hoje deveria estar</span></em>
@@ -1265,7 +1281,7 @@ function kpiGrid(o,lbl){
  const f=farol(o.pctLoja), fp=o.pctProj;
  return `<div class="kpis">
   <div class="kpi hero"><div class="lb">Faturado ${lbl}</div><div class="vl">${K(o.fat)}</div>
-   <div class="ft">${D.periodo.utDecorridos} de ${D.periodo.utTotal} dias úteis</div></div>
+   <div class="ft">${DUF(D.periodo.utDecorridos)} de ${DUF(D.periodo.utTotal)} dias úteis</div></div>
   <div class="kpi dual cl" style="cursor:pointer" onclick="goInd('pctLoja')"><div class="lb">% Meta Loja ›</div>
    <div class="vl" style="color:${cor(f.c)}">${PC(o.pctLoja)}</div>
    <div class="ft">meta ${K(o.metaLoja)}</div></div>
@@ -1276,7 +1292,7 @@ function kpiGrid(o,lbl){
    <div class="vl" style="color:${fp>=1?'var(--ok)':fp>=.9?'var(--warn)':'var(--bad)'}">${PC(fp)}</div>
    <div class="ft">${K(o.proj)}</div></div>
   <div class="kpi"><div class="lb">Falta para a meta</div><div class="vl">${K(o.restLoja)}</div>
-   <div class="ft">${D.periodo.utRestantes} dias úteis restantes</div></div>
+   <div class="ft">${DUF(D.periodo.utRestantes)} dias úteis restantes</div></div>
  </div>`;
 }
 
@@ -1285,7 +1301,7 @@ function ritmoBox(o){
  let c,ic,msg;
  if(pc>=.05){c='g';ic='✅';msg=`Ritmo <b>acima</b> do necessário em ${BRL(Math.abs(dif))}/dia. Mantendo esta média, a meta fecha antes do último dia.`}
  else if(pc>=-.05){c='y';ic='⚠️';msg=`Ritmo <b>colado</b> no necessário. Não há folga: um dia fraco já joga o fechamento para baixo da meta.`}
- else{c='r';ic='🔴';msg=`Ritmo <b>abaixo</b> do necessário em ${BRL(Math.abs(dif))}/dia. Nos próximos ${D.periodo.utRestantes} dias é preciso subir <b>${PC(Math.abs(pc))}</b> a média diária.`}
+ else{c='r';ic='🔴';msg=`Ritmo <b>abaixo</b> do necessário em ${BRL(Math.abs(dif))}/dia. Nos próximos ${DUF(D.periodo.utRestantes)} dias é preciso subir <b>${PC(Math.abs(pc))}</b> a média diária.`}
  return `<div class="ritmo"><h3>Ritmo diário — o que decide o mês</h3>
   <div class="rgrid">
    <div class="rbox"><div class="l">Média realizada por dia útil</div><div class="v">${BRL(o.ritmoReal)}</div></div>
@@ -1388,7 +1404,7 @@ function eucDet(I){
  if(!I||!I.metaEuc) return 'sem meta Eucatex';
  const falta=Math.max(I.metaEuc-(I.litEuc||0),0), bd=falta/18, bdDia=UR?bd/UR:0;
  return `${LT(I.litEuc)} de ${LT(I.metaEuc)}`+(falta
-  ?` · falta ${LT(falta)} · 🪣 ${NUM(Math.ceil(bd))} baldes de 18 L · ${DEC(bdDia,1)}/dia em ${UR} dia${UR==1?'':'s'}`
+  ?` · falta ${LT(falta)} · 🪣 ${NUM(Math.ceil(bd))} baldes de 18 L · ${DEC(bdDia,1)}/dia em ${DUF(UR)} dia${UR==1?'':'s'}`
   :' · ✔ meta batida');
 }
 function eucGrupo(o,vend){
@@ -1403,7 +1419,7 @@ function eucGrupo(o,vend){
  const bd=falta/18, bdDia=UR?bd/UR:0;
  h+=`<div class="indc"><div class="l">Falta para 100%</div><div class="v">${falta?LT(falta):'—'}</div>
   <div class="d ${falta?'dn':'up'}">${falta?'🪣 '+NUM(Math.ceil(bd))+' baldes de 18 L':'✔ meta batida'}</div>
-  <div class="s">${falta?(UR?DEC(falta/UR,0)+' L/dia · '+DEC(bdDia,1)+' balde'+(bdDia>=2?'s':'')+'/dia em '+UR+' dias úteis':'último dia do mês'):'nada a fazer'}</div></div>`;
+  <div class="s">${falta?(UR?DEC(falta/UR,0)+' L/dia · '+DEC(bdDia,1)+' balde'+(bdDia>=2?'s':'')+'/dia em '+DUF(UR)+' dias úteis':'último dia do mês'):'nada a fazer'}</div></div>`;
  h+=`<div class="indc"><div class="l">Projeção de fechamento</div><div class="v" style="color:${corEuc(pj)}">${PPCT(pj)}</div>
   <div class="s">no ritmo de hoje</div></div>`;
  if(vend){
@@ -1443,13 +1459,13 @@ function painelPrincipal(){
  const pl=n=>(dl[n]/g.nLojas*100).toFixed(1).replace('.',',')+'%';
  let h=`<div class="pp"><div class="pph">
   <div><h2>Painel de Coordenação Comercial</h2>
-   <span>${D.periodo.mes} ${D.periodo.ano} · apurado até ${solTxt()||new Date(D.periodo.dataBase+'T12:00').toLocaleDateString('pt-BR')} · ${UD} de ${UT} dias úteis (${PPCT(RE)} do mês)</span>${selo(ATZ.num,'ppselo')}</div>
+   <span>${D.periodo.mes} ${D.periodo.ano} · apurado até ${solTxt()||new Date(D.periodo.dataBase+'T12:00').toLocaleDateString('pt-BR')} · ${DUF(UD)} de ${DUF(UT)} dias úteis (${PPCT(RE)} do mês)</span>${selo(ATZ.num,'ppselo')}</div>
   <div class="ppb">${g.nLojas} lojas · ${g.nSups} supervisores · ${tv} vendedores</div></div>
   <div class="ppg">
    <div class="ppc"><div class="l">Faturado</div><div class="v">${BRL(g.fat)}</div><div class="f">média de ${BRL(g.ritmoReal)} por dia útil</div></div>
    <div class="ppc"><div class="l">Meta Loja</div><div class="v">${BRL(g.metaLoja)}</div><div class="f">atingido ${PPCT(g.pctLoja)}</div></div>
    <div class="ppc"><div class="l">Meta Time</div><div class="v">${BRL(g.metaTime)}</div><div class="f">atingido ${PPCT(g.pctTime)}</div></div>
-   <div class="ppc"><div class="l">Falta para a meta</div><div class="v">${BRL(g.restLoja)}</div><div class="f">${BRL(g.ritmoNec)}/dia em ${UR} dias úteis</div></div>
+   <div class="ppc"><div class="l">Falta para a meta</div><div class="v">${BRL(g.restLoja)}</div><div class="f">${BRL(g.ritmoNec)}/dia em ${DUF(UR)} dias úteis</div></div>
    <div class="ppc"><div class="l">Projeção de fechamento</div><div class="v">${BRL(g.proj)}</div><div class="f">${PPCT(g.pctProj)} da meta</div></div>
    <div class="ppc"><div class="l">Ritmo</div><div class="v">${g.ritmoReal>=g.ritmoNec?'No ritmo':'Abaixo'}</div><div class="f">${g.ritmoReal>=g.ritmoNec?'folga de ':'déficit de '}${BRL(Math.abs(g.ritmoReal-g.ritmoNec))}/dia</div></div>
   </div>`;
@@ -1457,7 +1473,7 @@ function painelPrincipal(){
   ${wkRuler(g.metaLoja,g.metaTime)}
   <div class="bl"><span class="tag">LOJA</span><span class="bar" style="--pjc:${corPjNavy(g.metaLoja?g.proj/g.metaLoja:null)}">${barIn(g.pctLoja,g.metaLoja?g.proj/g.metaLoja:null,g.pctLoja>=RE?'#2FD08E':'#FF6B70')}</span><span class="pc">${PPCT(g.pctLoja)}</span>${projTxt(g.metaLoja?g.proj/g.metaLoja:null,corPjNavy(g.metaLoja?g.proj/g.metaLoja:null))}</div>
   <div class="bl"><span class="tag">TIME</span><span class="bar" style="--pjc:${corPjNavy(g.metaTime?g.proj/g.metaTime:null)}">${barIn(g.pctTime,g.metaTime?g.proj/g.metaTime:null,g.pctTime>=RE?'#2FD08E':'#FF6B70',.65)}</span><span class="pc">${PPCT(g.pctTime)}</span>${projTxt(g.metaTime?g.proj/g.metaTime:null,corPjNavy(g.metaTime?g.proj/g.metaTime:null))}</div>
-  <div class="ppleg">Cada bloco é uma semana do mês (seg–sáb). Passe o mouse em uma semana para ver a meta da semana e a meta/dia. A faixa amarela é a semana atual (<b>S${SEMATUAL}</b>); a linha branca em <b>${PPCT(RE)}</b> marca o quanto do mês já passou (${UD} de ${UT} dias úteis). Barra além da linha = no ritmo. O trecho listrado e o <b>proj.</b> mostram onde o mês fecha se o ritmo de hoje continuar (dias úteis). Depois dos <b>100%</b> ficam as faixas <b>110 · 115 · 120 · 130</b>, trancadas até a meta ser batida; acima de 130%, \ud83d\udca5.</div>
+  <div class="ppleg">Cada bloco é uma semana do mês (seg–sáb). Passe o mouse em uma semana para ver a meta da semana e a meta/dia. A faixa amarela é a semana atual (<b>S${SEMATUAL}</b>); a linha branca em <b>${PPCT(RE)}</b> marca o quanto do mês já passou (${DUF(UD)} de ${DUF(UT)} dias úteis). Barra além da linha = no ritmo. O trecho listrado e o <b>proj.</b> mostram onde o mês fecha se o ritmo de hoje continuar (dias úteis). Depois dos <b>100%</b> ficam as faixas <b>110 · 115 · 120 · 130</b>, trancadas até a meta ser batida; acima de 130%, \ud83d\udca5.</div>
  </div></div>`;
  h+=gaugeBox(g,'Atingimento da rede');
  h+=semanaBox(g.metaLoja,g.metaTime,'Rede \u00b7 '+D.periodo.mes+'/'+D.periodo.ano);
@@ -1725,7 +1741,7 @@ function alinhOportunidades(d){
  var o=d.o,f=[],I=o.I||{};
  var gap=(o.ritmoNec||0)-(o.ritmoReal||0);
  if(gap>0&&UR>0) f.push('<b>Ritmo abaixo do necessário.</b> Está saindo '+BRL(o.ritmoReal)+
-  ' por dia útil e precisa de '+BRL(o.ritmoNec)+' — um gap de <b>'+BRL(gap)+' por dia</b> nos '+UR+
+  ' por dia útil e precisa de '+BRL(o.ritmoNec)+' — um gap de <b>'+BRL(gap)+' por dia</b> nos '+DUF(UR)+
   ' dias úteis que restam. Observe se o time começa o dia sabendo quanto precisa vender, ou se descobre isso no fechamento.');
  else if(o.ritmoReal>0) f.push('<b>Ritmo dentro do necessário.</b> Saem '+BRL(o.ritmoReal)+
   ' por dia útil contra '+BRL(o.ritmoNec)+' exigidos. O risco agora é relaxar: confirme se o esforço está distribuído ou concentrado em poucos dias fortes.');
@@ -1831,12 +1847,12 @@ function alinhamento(tipo,chave){
  '<button class="np" onclick="window.print()">Imprimir / salvar PDF</button>'+
  '<div class="hd"><div class="lg">ST</div><div><h1>'+esc(d.titulo)+'</h1>'+
  '<div class="s">'+esc(d.sub)+'</div></div>'+
- '<div class="r"><b>Resumo de alinhamento</b><br>'+P.mes+'/'+P.ano+' · '+UD+' de '+UT+' dias úteis<br>emitido em '+hoje+'</div></div>';
+ '<div class="r"><b>Resumo de alinhamento</b><br>'+P.mes+'/'+P.ano+' · '+DUF(UD)+' de '+DUF(UT)+' dias úteis<br>emitido em '+hoje+'</div></div>';
  h+='<h2>Onde o mês está</h2><div class="g">'+
   num('Meta Loja',BRL(o.metaLoja))+
   num('Meta Time',BRL(o.metaTime))+
   num('Faturado',BRL(o.fat),PCT0(o.pctLoja)+' da meta loja · '+PCT0(o.pctTime)+' da meta time')+
-  num('Falta para a meta',BRL(o.restLoja),UR+' dias úteis restantes')+
+  num('Falta para a meta',BRL(o.restLoja),DUF(UR)+' dias úteis restantes')+
   num('Restante por dia útil',BRL(o.ritmoNec),'ritmo necessário')+
   num('Ritmo realizado',BRL(o.ritmoReal),'média por dia útil')+
   num('Projeção de fechamento',BRL(o.proj),PCT0(o.pctProj)+' da meta')+
@@ -1937,13 +1953,13 @@ function vVendedor(){
  const pp=v.meta?v.proj/v.meta:null, f=farol(v.pct);
  let h=termometro('Termômetro da sua meta',v.meta,v.fat,v.proj,v.rest,v.ritmoNec)+`<div class="kpis">
   <div class="kpi hero"><div class="lb">Seu faturado</div><div class="vl">${K(v.fat)}</div>
-   <div class="ft">${D.periodo.utDecorridos} de ${D.periodo.utTotal} dias úteis</div></div>
+   <div class="ft">${DUF(D.periodo.utDecorridos)} de ${DUF(D.periodo.utTotal)} dias úteis</div></div>
   <div class="kpi"><div class="lb">% da sua meta</div><div class="vl" style="color:${cor(f.c)}">${PC(v.pct)}</div>
    <div class="ft">meta ${K(v.meta)}</div></div>
   <div class="kpi"><div class="lb">Projeção fechamento</div>
    <div class="vl" style="color:${pp>=1?'var(--ok)':pp>=.9?'var(--warn)':'var(--bad)'}">${PC(pp)}</div><div class="ft">${K(v.proj)}</div></div>
   <div class="kpi"><div class="lb">Falta para a meta</div><div class="vl">${K(v.rest)}</div>
-   <div class="ft">${BRL(v.ritmoNec)}/dia · ${D.periodo.utRestantes} dias úteis</div></div>
+   <div class="ft">${BRL(v.ritmoNec)}/dia · ${DUF(D.periodo.utRestantes)} dias úteis</div></div>
   <div class="kpi"><div class="lb">Seu nível</div><div class="vl">V${v.nv} · ${esc(v.nvRot)}</div>
    <div class="ft">${bdgLV(l,'margin:0 0 4px')}<br>${v.prox?'faltam '+K(v.prox.falta)+' de Méd.90d para V'+v.prox.nv:'topo da régua'}<br><span style="color:var(--tx3)">${esc(NIVBASE)}</span></div></div>
  </div>`;
@@ -2025,7 +2041,7 @@ function semanaBox(mL,mT,tit){
   var pcs=(w.nd/UTSEM*100).toFixed(1).replace('.',','), ac=acc/UTSEM;
   h+='<tr'+(w.n===SEMATUAL?' class="cur"':'')+'><td><b>S'+w.n+'</b> \u00b7 dias '+_dd(w.ini)+'\u2013'+_dd(w.fim)+
     (w.n===SEMATUAL?' <span class="mut">(semana atual)</span>':'')+'</td>'+
-   '<td class="r">'+w.nd+'</td><td class="r">'+pcs+'%</td>'+
+   '<td class="r">'+DUF(w.nd)+'</td><td class="r">'+pcs+'%</td>'+
    '<td class="r">'+BRL(dL*w.nd)+(dT!=null?' <span class="mut">time '+BRL(dT*w.nd)+'</span>':'')+'</td>'+
    '<td class="r">'+BRL(dL)+(dT!=null?' <span class="mut">time '+BRL(dT)+'</span>':'')+'</td>'+
    '<td class="r">'+BRL(mL*ac)+' <span class="mut">'+(ac*100).toFixed(1).replace('.',',')+'%</span></td></tr>';
@@ -2133,7 +2149,7 @@ function pdfPlano(){
   <div class="ph"><div><h1>Plano de Ação — ${esc(p.ctx.nome)}</h1>
    <div class="sub">Só Tintas · Coordenação de Supervisão · ${D.periodo.mes}/${D.periodo.ano}</div></div>
    <div class="dt">Emitido em ${new Date().toLocaleDateString('pt-BR')}<br>
-    Base ${new Date(D.periodo.dataBase+'T12:00').toLocaleDateString('pt-BR')} · ${UD} de ${UT} dias úteis</div></div>
+    Base ${new Date(D.periodo.dataBase+'T12:00').toLocaleDateString('pt-BR')} · ${DUF(UD)} de ${DUF(UT)} dias úteis</div></div>
   <div class="kp">
    <div><b>Faturado</b><span>${BRL(o.fat)}</span></div>
    <div><b>% Meta Loja</b><span>${PPCT(o.pctLoja)}</span></div>
@@ -2156,7 +2172,7 @@ function pdfPlano(){
 function enviarWA(){
  const p=txtPlano(),o=p.ctx.o;
  const t=['*PLANO DE AÇÃO — '+p.ctx.nome+'*',
-  D.periodo.mes+'/'+D.periodo.ano+' · '+UD+' de '+UT+' dias úteis','',
+  D.periodo.mes+'/'+D.periodo.ano+' · '+DUF(UD)+' de '+DUF(UT)+' dias úteis','',
   '*Atingimento:* '+PPCT(o.pctLoja)+' da meta',
   '*Projeção de fechamento:* '+PPCT(o.pctProj),
   '*Ritmo necessário:* '+BRL(o.ritmoNec)+'/dia','',
@@ -2213,7 +2229,7 @@ function pdfOrient(elId,lab){
   <div class="ph"><div><h1>${esc(lab)} — ${esc(c.nome)}</h1>
    <div class="sub">Só Tintas · Coordenação de Supervisão · ${D.periodo.mes}/${D.periodo.ano}</div></div>
    <div class="dt">Emitido em ${new Date().toLocaleDateString('pt-BR')}<br>
-    Base ${new Date(D.periodo.dataBase+'T12:00').toLocaleDateString('pt-BR')} · ${UD} de ${UT} dias úteis</div></div>
+    Base ${new Date(D.periodo.dataBase+'T12:00').toLocaleDateString('pt-BR')} · ${DUF(UD)} de ${DUF(UT)} dias úteis</div></div>
   <div class="porient">${h}</div>
   <div class="ass"><div>Gerente</div><div>Supervisor</div></div>
   <div class="fo">Documento gerado pelo Painel de Coordenação de Supervisão.</div></div>`;
@@ -2224,7 +2240,7 @@ function waOrient(elId,lab){
  const h=conteudoOrient(elId); if(!h) return;
  const c=ctxAtual();
  const t=['*'+lab.toUpperCase()+' — '+c.nome+'*',
-  D.periodo.mes+'/'+D.periodo.ano+' · '+UD+' de '+UT+' dias úteis','',
+  D.periodo.mes+'/'+D.periodo.ano+' · '+DUF(UD)+' de '+DUF(UT)+' dias úteis','',
   htm2wa(h)].join('\n');
  window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank','noopener,noreferrer');
 }
@@ -2309,11 +2325,11 @@ function gerarResumo(id){
  const f=farol(o.pctLoja), dif=o.ritmoReal-o.ritmoNec;
  const conc=ord.length&&o.fat?(ord.slice(0,Math.ceil(ord.length/2)).reduce((s,x)=>s+x.fat,0)/o.fat):0;
  let h=`<h4>Resumo — ${esc(nome)} · ${D.periodo.mes}/${D.periodo.ano}</h4>`;
- h+=`<p>Com <b>${D.periodo.utDecorridos} de ${D.periodo.utTotal} dias úteis</b> (${PC(RE)} do mês), o atingimento está em <b>${PC(o.pctLoja)}</b> sobre a meta de loja e <b>${PC(o.pctTime)}</b> sobre a meta do time. `;
+ h+=`<p>Com <b>${DUF(D.periodo.utDecorridos)} de ${DUF(D.periodo.utTotal)} dias úteis</b> (${PC(RE)} do mês), o atingimento está em <b>${PC(o.pctLoja)}</b> sobre a meta de loja e <b>${PC(o.pctTime)}</b> sobre a meta do time. `;
  h+=f.c=='g'?`O ritmo está <b>adequado</b> — o esperado para esta altura era ${PC(RE)}.</p>`
    :f.c=='y'?`O ritmo está <b>levemente atrás</b> do esperado para esta altura (${PC(RE)}).</p>`
    :`O ritmo está <b>abaixo</b> do esperado para esta altura (${PC(RE)}) — exige intervenção agora, não no fim do mês.</p>`;
- h+=`<p>Faltam <b>${BRL(o.restLoja)}</b> em <b>${D.periodo.utRestantes} dias úteis</b>, o que exige <b>${BRL(o.ritmoNec)}/dia</b>. A média realizada é de <b>${BRL(o.ritmoReal)}/dia</b> — ${dif>=0?`uma folga de ${BRL(dif)}`:`um déficit de ${BRL(-dif)}`} por dia.</p>`;
+ h+=`<p>Faltam <b>${BRL(o.restLoja)}</b> em <b>${DUF(D.periodo.utRestantes)} dias úteis</b>, o que exige <b>${BRL(o.ritmoNec)}/dia</b>. A média realizada é de <b>${BRL(o.ritmoReal)}/dia</b> — ${dif>=0?`uma folga de ${BRL(dif)}`:`um déficit de ${BRL(-dif)}`} por dia.</p>`;
  h+=piramide(vsN);
  if(top.length){h+=`<p><b>Puxando o resultado:</b></p><ul>`;
   top.forEach(x=>h+=`<li>${esc(x.nome)} — ${PC(x.pctLoja)} (${K(x.fat)})</li>`);h+='</ul>'}
@@ -2580,7 +2596,7 @@ function pdfCart(completo){
  document.getElementById('parea').innerHTML='<div class="pdoc">'+
   '<div class="ph"><div><h1>Carteira de Clientes — '+esc(ST.vend?ST.vend+' · Loja '+(l?l.cod:''):l?l.cod+' · '+l.nome:REG?'Região '+ST.sup:'')+'</h1>'+
   '<div class="sub">Só Tintas · Coordenação de Supervisão · '+D.periodo.mes+'/'+D.periodo.ano+'</div></div>'+
-  '<div class="dt">Emitido em '+new Date().toLocaleDateString('pt-BR')+'<br>Base '+new Date(D.periodo.dataBase+'T12:00').toLocaleDateString('pt-BR')+' · '+UD+' de '+UT+' dias úteis</div></div>'+
+  '<div class="dt">Emitido em '+new Date().toLocaleDateString('pt-BR')+'<br>Base '+new Date(D.periodo.dataBase+'T12:00').toLocaleDateString('pt-BR')+' · '+DUF(UD)+' de '+DUF(UT)+' dias úteis</div></div>'+
   corpo+
   '<div class="ass"><div>Gerente</div><div>Supervisor</div></div>'+
   '<div class="fo">A coluna Contato é para anotar à mão o retorno de cada cliente.</div></div>';
@@ -2699,7 +2715,7 @@ function render(){
  pintarAbas();
  const p=D.periodo;
  document.getElementById('hPer').textContent=p.mes+' '+p.ano;
- document.getElementById('hDias').textContent=`até ${solTxt()||new Date(p.dataBase+'T12:00').toLocaleDateString('pt-BR')} · ${p.utDecorridos}/${p.utTotal} dias úteis`
+ document.getElementById('hDias').textContent=`até ${solTxt()||new Date(p.dataBase+'T12:00').toLocaleDateString('pt-BR')} · ${DUF(p.utDecorridos)}/${DUF(p.utTotal)} dias úteis`
   +(p.fechado?' · MÊS FECHADO':'')+(p.hist?' · HISTÓRICO':'');
  /* v41: faixa amarela quando a tela mostra um mês do histórico, com o caminho de volta */
  (function(){ var ha=document.getElementById('histAviso');
@@ -2794,7 +2810,7 @@ function rxEscopo(){
   lojas:D.lojas.slice(),vends:[].concat.apply([],D.lojas.map(l=>l.vendedores.map(v=>[v,l]))),K:KRede(),orc:OSoma(cods),nov:novSoma(cods)} }
 /* folha A4 (794 × 1123 px) com cabeçalho e rodapé Só Tintas; o corpo é preenchido por blocos */
 function rxPagina(E){
- const per=P.fechado?'<b style="color:#1C3F8F">MÊS FECHADO</b>':UD+' de '+UT+' dias úteis · '+rxP(RE)+' do mês';
+ const per=P.fechado?'<b style="color:#1C3F8F">MÊS FECHADO</b>':UD+' de '+DUF(UT)+' dias úteis · '+rxP(RE)+' do mês';
  return '<div class="rx-pg"><div class="rx-hd"><img src="pdi-logo.jpg" alt=""><div class="rx-hd-t"><small>Resumo Executivo · Painel de Metas e Indicadores</small><h2>'+(P.fechado?'Fechamento de ':'Resultado de ')+esc(rxMes())+(P.fechado?'':' <small>parcial</small>')+'</h2><span>'+esc(E.titulo)+' · '+esc(E.sub)+'</span></div>'+
   '<div class="rx-hd-n"><b>'+esc(tcPdf(P.mes))+' '+P.ano+'</b>apurado até '+rxDB()+'<br>'+per+'</div></div><div class="rx-faixa"><i></i><i></i><i></i></div>'+
   '<div class="rx-corpo"></div><div class="rx-ft"><span><b>Só Tintas</b> · Colorindo Vidas e Realizando Sonhos</span><span>Resumo Executivo · gerado em '+rxAgora()+' · documento interno</span><span data-pg></span></div></div>';
@@ -2841,7 +2857,7 @@ function rxConteudo(E,op,bloco,tabela,lista,pagina){
  const stM=(k,v)=>{ const ok=bateMeta(IND.find(x=>x.k==k),v); return ok==null?['','—']:ok?['rx-ok','✔ Bateu']:['rx-bd','✘ Não bateu'] };
  const pjEuc=eucProj(I), pjCnpj=I.alcCNPJ!=null&&RE?I.alcCNPJ/RE:null;
  /* 1. o placar */
- let h='<section class="rx-sec"><h3>'+sec(fech?'Placar do mês':'Placar do mês (parcial)')+' <small>'+esc(E.titulo)+' · '+(fech?'fechamento de '+esc(rxMes()):UD+' de '+UT+' dias úteis · projeção no ritmo atual')+'</small></h3><div class="rx-tiles c4">';
+ let h='<section class="rx-sec"><h3>'+sec(fech?'Placar do mês':'Placar do mês (parcial)')+' <small>'+esc(E.titulo)+' · '+(fech?'fechamento de '+esc(rxMes()):UD+' de '+DUF(UT)+' dias úteis · projeção no ritmo atual')+'</small></h3><div class="rx-tiles c4">';
  h+=rxTile('Faturado',BRL(o.fat),(ehV?'meta individual ':'meta loja ')+BRL(o.metaLoja),'hero');
  h+=rxTile('% da meta',rxCorV(rxP(o.pctLoja),o.pctLoja>=1?'ok':fech?'bd':rxFar(o.pctLoja)),fech?(o.pctLoja>=1?'meta batida':'faltaram '+BRL(o.restLoja)):'projeção '+rxP(fp)+' · falta '+BRL(o.restLoja));
  h+=I.metaEuc!=null?rxTile('Eucatex',rxCorV(rxP(eucPct(I)),rxEucC(eucPct(I))),LT(I.litEuc)+' de '+LT(I.metaEuc)):rxTile('Meta CNPJ',rxCorV(rxP(I.alcCNPJ),rxAlcC(I.alcCNPJ)),BRL(I.fatCNPJ)+' de '+BRL(I.metaCNPJ));
@@ -3068,7 +3084,7 @@ function rxConteudo(E,op,bloco,tabela,lista,pagina){
  }
  const atz=t=>{ const m=/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/.exec(String(t||'')); return m?m[3]+'/'+m[2]+' '+m[4]+'h'+m[5]:(t?esc(String(t)):'—') };
  bloco('<div class="rx-fonte">Fonte: Painel de Metas e Indicadores do Só Tintas App · números atualizados em '+atz(ATZ.num)+' · carteira '+atz(ATZ.cart)+' · orçamentos '+atz(ATZ.orc)+' · níveis: '+esc(NIVBASE)+'. '+
-  (P.fechado?'Fechamento de '+esc(rxMes())+'.':'Projeções no ritmo dos dias úteis decorridos ('+UD+' de '+UT+'); "esperado hoje" é a fração do mês já passada.')+' Cores: verde no ritmo ou meta batida · âmbar atenção · vermelho abaixo.</div>');
+  (P.fechado?'Fechamento de '+esc(rxMes())+'.':'Projeções no ritmo dos dias úteis decorridos ('+DUF(UD)+' de '+DUF(UT)+'); "esperado hoje" é a fração do mês já passada.')+' Cores: verde no ritmo ou meta batida · âmbar atenção · vermelho abaixo.</div>');
 }
 /* monta as folhas, rasteriza cada uma e devolve o PDF (A4 retrato) */
 async function rxGerarPdf(E,op){
@@ -3109,11 +3125,11 @@ async function rxGerarPdf(E,op){
 /* versão em texto para o WhatsApp (vai junto do PDF ou sozinha, no computador) */
 function rxTexto(E){
  const o=E.o, I=o.I||{}, r=rxRitmo(o.pctLoja);
- const L=['*RESUMO EXECUTIVO'+(P.fechado?' · FECHAMENTO':'')+' — '+E.titulo.toUpperCase()+'*', rxMes()+' · '+(P.fechado?'mês fechado':UD+' de '+UT+' dias úteis ('+rxP(RE)+' do mês)'), ''];
+ const L=['*RESUMO EXECUTIVO'+(P.fechado?' · FECHAMENTO':'')+' — '+E.titulo.toUpperCase()+'*', rxMes()+' · '+(P.fechado?'mês fechado':DUF(UD)+' de '+DUF(UT)+' dias úteis ('+rxP(RE)+' do mês)'), ''];
  L.push('*Faturado:* '+BRL(o.fat)+' — '+rxP(o.pctLoja)+' da meta'+(E.tipo=='vend'?'':' loja ('+BRL(o.metaLoja)+')')+(o.pctTime!=null?' · '+rxP(o.pctTime)+' da meta time':''));
  if(P.fechado) L.push('*Resultado:* '+(o.pctLoja>=1?'✅ meta batida':'❌ meta não batida — faltaram '+BRL(o.restLoja))+' · média de '+BRL(o.ritmoReal)+'/dia');
  else L.push('*Projeção:* '+BRL(o.proj)+' ('+rxP(o.pctProj)+') · '+r.t.toLowerCase()+' · '+BRL(o.ritmoReal)+'/dia');
- if(o.restLoja>0&&!P.fechado) L.push('*Falta:* '+BRL(o.restLoja)+' · '+BRL(o.ritmoNec)+'/dia em '+UR+' dia'+(UR==1?'':'s')+' úte'+(UR==1?'l':'is'));
+ if(o.restLoja>0&&!P.fechado) L.push('*Falta:* '+BRL(o.restLoja)+' · '+BRL(o.ritmoNec)+'/dia em '+DUF(UR)+' dia'+(UR==1?'':'s')+' úte'+(UR==1?'l':'is'));
  if(I.metaEuc!=null){ const p=eucPct(I), falta=Math.max((I.metaEuc||0)-(I.litEuc||0),0);
   const vs=E.tipo=='vend'?[]:E.vends.map(x=>x[0]).filter(v=>v.I&&v.I.metaEuc!=null), ok=vs.filter(v=>eucPct(v.I)>=1).length;
   L.push('*Eucatex:* '+LT(I.litEuc)+' de '+LT(I.metaEuc)+' ('+rxP(p)+')'+(falta?(P.fechado?' · faltaram ':' · faltam ')+LT(falta)+' ('+NUM(Math.ceil(falta/18))+' baldes)':' · meta batida')+(vs.length?' · '+ok+' de '+vs.length+' vendedores em 100%':'')); }
