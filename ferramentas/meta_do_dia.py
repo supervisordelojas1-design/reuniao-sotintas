@@ -4,7 +4,9 @@ Uso:  python3 -I meta_do_dia.py <pasta_solcast> <extra.json> <AAAA-MM-DD> <saida
   pasta_solcast: META - MES ATUAL.xlsx, INDICADORES - MES ATUAL.xlsx, EVOLUCAO MENSAL POR CLIENTE - <cod>.xlsx
   extra.json:    {"euc": {cod: {loja:[meta,litros], vend:{nome:[meta,litros]}}}, "ger": {cod: {gerente,email}}}
                  (lido do Painel de Metas pela rotina: Eucatex por loja/vendedor e gerente/e-mail da EQUIPE)
-Saída: <saida>/<cod>.html (e-mail completo), <saida>/<cod>.png (o mesmo em imagem) e <saida>/manifesto.json
+Saída, por loja: <saida>/<cod>.pdf  — folhas A4: a 1ª com o resumo da loja e depois UMA FOLHA POR VENDEDOR (para imprimir e entregar)
+                 <saida>/<cod>.png  — a 1ª folha (resumo da loja) em imagem, para ir no corpo do e-mail
+                 <saida>/<cod>.html — as mesmas folhas, e <saida>/manifesto.json
 Calendário (o do Solcast): seg–sex = 1, sábado = 0,5, domingo e feriado = 0.
 Meta de hoje = (meta restante + faturado hoje) ÷ dias úteis depois de hoje — a mesma 'Meta diária' do Solcast.
 """
@@ -83,7 +85,8 @@ def carteira(cod):
         if not r[0] or ' - VEND.: ' not in str(r[0]): continue
         cli, vend = str(r[0]).split(' - VEND.: ', 1)
         vals = [x or 0 for x in r[1:1 + n]]; ant3 = vals[-4:-1]
-        C.append(dict(cli=cli.strip(), vend=norm(vend), atual=vals[-1], u3=sum(ant3) / 3, compras3=sum(1 for x in ant3 if x > 0)))
+        C.append(dict(cli=re.sub(r'\s+', ' ', re.sub(r'\b\d{11,14}\b', '', cli)).strip(),  # nome sem CPF/CNPJ colado
+                       vend=norm(vend), atual=vals[-1], u3=sum(ant3) / 3, compras3=sum(1 for x in ant3 if x > 0)))
     return C
 
 
@@ -105,12 +108,7 @@ def gerar(cod):
     gerente = (G.get('gerente') or 'gerente').split()[0]
     loja_nome = (G.get('loja') or '').split(' - ', 1)[-1].strip() or (L['nome'].split('(')[-1].rstrip(')').title() if '(' in L['nome'] else L['nome'][6:].title())
     mh = L['diaria'] if L['diaria'] else (L['rest'] + L['hoje']) / DIV
-    h = [f"""<div style="background:#f3f4f6;padding:16px 8px;font-family:Arial,Helvetica,sans-serif;color:#111827">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;border-collapse:separate">
-<tr><td style="background:#b91c1c;padding:20px 22px;color:#fff"><div style="font-size:12px;letter-spacing:1px;opacity:.85">SÓ TINTAS · META DO DIA</div>
-<div style="font-size:22px;font-weight:bold;margin-top:4px">{e(loja_nome)} · loja {cod}</div>
-<div style="font-size:13px;opacity:.9;margin-top:2px">{SEM[HOJE.weekday()]}, {HOJE:%d/%m} · bom dia, {e(gerente)}! 👋</div></td></tr>
-<tr><td style="padding:18px 22px 6px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+    h = [f"""<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
 <td width="50%" style="background:#fef2f2;border-radius:12px;padding:14px;text-align:center"><div style="font-size:11px;color:#6b7280">🎯 META DE HOJE</div>
 <div style="font-size:26px;white-space:nowrap;font-weight:bold;color:#b91c1c;margin-top:2px">{R(mh)}</div><div style="font-size:12px;color:#6b7280">faltam {R(L['rest'])} · meta diária do Solcast</div></td><td width="8"></td>
 <td width="50%" style="background:#f9fafb;border-radius:12px;padding:14px;text-align:center"><div style="font-size:11px;color:#6b7280">📈 PROJEÇÃO DO MÊS</div>
@@ -129,43 +127,63 @@ def gerar(cod):
     for v in VS:
         ok = v['ritmo'] >= v['md']
         h.append(f"<tr style='border-top:1px solid #f3f4f6'><td style='padding:9px 0'><b>{'🟢' if ok else '🔴'} {e(v['nome'].split()[0])}</b></td><td align='right' style='white-space:nowrap'><b>{R(v['md'])}</b></td><td align='right' style='white-space:nowrap;padding-left:6px;color:{'#16a34a' if ok else '#dc2626'}'>{R(v['ritmo'])}</td><td align='center'>{bd(v)}</td></tr>")
-    h.append("</table></td></tr>")
+    h.append("</table>")
+    PV = []
     for v in VS:
         ok = v['ritmo'] >= v['md']; c = cor(v['alc']); falta = v['md'] - v['ritmo']
-        h.append(f"""<tr><td style="padding:10px 22px"><div style="border:1px solid #e5e7eb;border-left:6px solid {'#16a34a' if ok else '#dc2626'};border-radius:12px;padding:14px">
+        vh = [f"""<div style="border:1px solid #e5e7eb;border-left:6px solid {'#16a34a' if ok else '#dc2626'};border-radius:12px;padding:14px">
 <table role="presentation" width="100%"><tr><td><div style="font-size:16px;font-weight:bold">{e(v['nome'])}</div><div style="font-size:12px;color:#6b7280">{R(v['fat'])} de {R(v['meta'])} no mês</div></td>
 <td align="right" valign="top" style="white-space:nowrap"><span style="background:{'#dcfce7' if ok else '#fee2e2'};color:{'#166534' if ok else '#991b1b'};font-size:11px;font-weight:bold;padding:4px 8px;border-radius:20px">{'NO RITMO' if ok else 'ACELERAR'}</span>{'' if ok else f"<div style='font-size:11px;color:#991b1b;margin-top:4px'>+{R(falta)}/dia</div>"}</td></tr></table>
 <table role="presentation" width="100%" style="margin:10px 0 4px"><tr>
 <td width="33%" style="text-align:center;background:#f9fafb;border-radius:8px;padding:8px"><div style="font-size:10px;color:#6b7280">META HOJE</div><div style="font-size:16px;white-space:nowrap;font-weight:bold">{R(v['md'])}</div></td><td width="6"></td>
 <td width="33%" style="text-align:center;background:#f9fafb;border-radius:8px;padding:8px"><div style="font-size:10px;color:#6b7280">NO MÊS</div><div style="font-size:16px;white-space:nowrap;font-weight:bold;color:{c}">{P(v['alc'])}</div></td><td width="6"></td>
 <td width="33%" style="text-align:center;background:#ecfdf5;border-radius:8px;padding:8px"><div style="font-size:10px;color:#6b7280">EUCATEX HOJE</div><div style="font-size:16px;white-space:nowrap;font-weight:bold;color:#047857">{bd(v)}</div></td></tr></table>
-<div style="font-size:11px;color:#6b7280;margin:8px 0 4px">Meta do mês</div>{barra(v['alc'], c, 10)}""")
+<div style="font-size:11px;color:#6b7280;margin:8px 0 4px">Meta do mês</div>{barra(v['alc'], c, 10)}"""]
         if v['euc'] and v['euc'][0]:
-            em, el = v['euc']; h.append(f"<div style='font-size:11px;color:#6b7280;margin:10px 0 4px'>Eucatex · {LT(el)} de {LT(em)}</div>{barra(el / em, '#059669', 8, '#d1fae5')}")
+            em, el = v['euc']; vh.append(f"<div style='font-size:11px;color:#6b7280;margin:10px 0 4px'>Eucatex · {LT(el)} de {LT(em)}</div>{barra(el / em, '#059669', 8, '#d1fae5')}")
         if v['sem']:
-            h.append(f"<div style='font-size:13px;font-weight:bold;margin:14px 0 4px'>Ligar hoje <span style='font-weight:normal;color:#6b7280'>· compravam e ainda não compraram em {MESES[HOJE.month - 1]}</span></div>")
-            h += [f"<div style='background:#fff7ed;border-radius:8px;padding:7px 10px;margin:4px 0;font-size:13px'>📞 <b>{e(x['cli'].title()[:42])}</b><div style='color:#9a3412;font-size:12px;margin-left:22px'>costuma comprar ~{R(x['u3'])}/mês</div></div>" for x in v['sem'][:3]]
-            resto = v['sem'][3:]
+            vh.append(f"<div style='font-size:13px;font-weight:bold;margin:14px 0 4px'>Ligar hoje <span style='font-weight:normal;color:#6b7280'>· compravam e ainda não compraram em {MESES[HOJE.month - 1]}</span></div>")
+            vh += [f"<div style='background:#fff7ed;border-radius:8px;padding:7px 10px;margin:4px 0;font-size:13px'>📞 <b>{e(x['cli'].title()[:42])}</b><div style='color:#9a3412;font-size:12px;margin-left:22px'>costuma comprar ~{R(x['u3'])}/mês</div></div>" for x in v['sem'][:3]]
+            resto = v['sem'][3:11]; fora = len(v['sem']) - 3 - len(resto)
             if resto:
-                h.append(f"<div style='font-size:12px;color:#6b7280;margin:8px 0 4px'>Mais {len(resto)} clientes parados · {R(sum(x['u3'] for x in v['sem']))}/mês no total da lista</div><table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='border-collapse:collapse;font-size:12px'>"
-                         + ''.join(f"<tr style='border-top:1px solid #f3f4f6'><td style='padding:5px 0;color:#9ca3af;width:22px'>{i}</td><td style='padding:5px 0'>{e(x['cli'].title()[:40])}</td><td align='right' style='padding:5px 0;white-space:nowrap;color:#9a3412'>~{R(x['u3'])}</td></tr>" for i, x in enumerate(resto, 4)) + "</table>")
+                vh.append(f"<div style='font-size:12px;color:#6b7280;margin:8px 0 4px'>Mais {len(v['sem']) - 3} clientes parados · {R(sum(x['u3'] for x in v['sem']))}/mês no total da lista</div><table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='border-collapse:collapse;font-size:12px'>"
+                         + ''.join(f"<tr style='border-top:1px solid #f3f4f6'><td style='padding:5px 0;color:#9ca3af;width:22px'>{i}</td><td style='padding:5px 0'>{e(x['cli'].title()[:40])}</td><td align='right' style='padding:5px 0;white-space:nowrap;color:#9a3412'>~{R(x['u3'])}</td></tr>" for i, x in enumerate(resto, 4)) + "</table>"
+                         + (f"<div style='font-size:12px;color:#6b7280;margin-top:4px'>… e mais {fora} na Carteira do CRM de Vendas, no app.</div>" if fora > 0 else ''))
         if v['baixo']:
-            h.append("<div style='font-size:13px;font-weight:bold;margin:12px 0 4px'>Completar pedido <span style='font-weight:normal;color:#6b7280'>· compraram abaixo do normal</span></div>")
-            h += [f"<div style='background:#eff6ff;border-radius:8px;padding:7px 10px;margin:4px 0;font-size:13px'>🛒 <b>{e(x['cli'].title()[:42])}</b><div style='color:#1e40af;font-size:12px;margin-left:22px'>{R(x['atual'])} no mês · costuma ~{R(x['u3'])}</div></div>" for x in v['baixo']]
+            vh.append("<div style='font-size:13px;font-weight:bold;margin:12px 0 4px'>Completar pedido <span style='font-weight:normal;color:#6b7280'>· compraram abaixo do normal</span></div>")
+            vh += [f"<div style='background:#eff6ff;border-radius:8px;padding:7px 10px;margin:4px 0;font-size:13px'>🛒 <b>{e(x['cli'].title()[:42])}</b><div style='color:#1e40af;font-size:12px;margin-left:22px'>{R(x['atual'])} no mês · costuma ~{R(x['u3'])}</div></div>" for x in v['baixo']]
         dic = []
         if v['pos'] is not None and v['pos'] < 0.3 and v['ativos']: dic.append(f"🎯 Positivação CNPJ {P(v['pos'])} ({v['posit'] or 0}/{v['ativos']})")
         if v['desc'] and v['desc'] > 0.07: dic.append(f"✂️ Desconto CNPJ {P(v['desc'])}: segurar")
         if v['itens'] and v['itens'] < 2.2: dic.append(f"🧺 {B1(v['itens'])} itens/venda: oferecer complemento")
-        if dic: h.append("<div style='margin-top:10px'>" + ''.join(f"<span style='display:inline-block;background:#f3f4f6;border-radius:20px;padding:4px 10px;margin:3px 4px 0 0;font-size:12px'>{d}</span>" for d in dic) + "</div>")
-        h.append("</div></td></tr>")
+        if dic: vh.append("<div style='margin-top:10px'>" + ''.join(f"<span style='display:inline-block;background:#f3f4f6;border-radius:20px;padding:4px 10px;margin:3px 4px 0 0;font-size:12px'>{d}</span>" for d in dic) + "</div>")
+        vh.append("</div>"); PV.append((v, ''.join(vh)))
     if sd:
-        h.append("<tr><td style='padding:10px 22px'><div style='background:#f9fafb;border-radius:12px;padding:14px'><div style='font-size:14px;font-weight:bold;margin-bottom:6px'>📋 Para você distribuir hoje</div><div style='font-size:12px;color:#6b7280;margin-bottom:6px'>Clientes sem vendedor que pararam de comprar</div>"
-                 + ''.join(f"<div style='font-size:13px;padding:5px 0;border-top:1px solid #e5e7eb'>👤 {e(x['cli'].title()[:42])} <span style='color:#6b7280'>· ~{R(x['u3'])}/mês</span></div>" for x in sd) + "</div></td></tr>")
-    h.append(f"<tr><td style='padding:12px 22px 20px;font-size:11px;color:#9ca3af'>Meta de hoje = meta diária do Solcast (sábado conta meio dia; domingos e feriados não contam). Vendedor: meta restante ÷ {B1(DIV)} dias úteis. 🟢 vende por dia pelo menos a meta de hoje · 🔴 abaixo. Traço preto = onde deveria estar hoje. Ligar hoje = comprou em pelo menos 2 dos últimos 3 meses e ainda não comprou neste mês. Dados do Solcast e do Painel de Metas.</td></tr></table></div>")
+        h.append("<div style='margin-top:18px;background:#f9fafb;border-radius:12px;padding:14px'><div style='font-size:14px;font-weight:bold;margin-bottom:6px'>📋 Para você distribuir hoje</div><div style='font-size:12px;color:#6b7280;margin-bottom:6px'>Clientes sem vendedor que pararam de comprar</div>"
+                 + ''.join(f"<div style='font-size:13px;padding:5px 0;border-top:1px solid #e5e7eb'>👤 {e(x['cli'].title()[:42])} <span style='color:#6b7280'>· ~{R(x['u3'])}/mês</span></div>" for x in sd) + "</div>")
+    rod = (f"Meta de hoje = meta diária do Solcast (sábado conta meio dia; domingos e feriados não contam). Vendedor: meta restante ÷ {B1(DIV)} dias úteis. "
+           "🟢 vende por dia pelo menos a meta de hoje · 🔴 abaixo. Traço preto = onde deveria estar hoje. "
+           "Ligar hoje = comprou em pelo menos 2 dos últimos 3 meses e ainda não comprou neste mês. Dados do Solcast e do Painel de Metas.")
+    dia = f"{SEM[HOJE.weekday()]}, {HOJE:%d/%m}"
+    def folha(titulo, sub, corpo, n):
+        return (f"<section class='pg'><div class='cab'><div class='k'>SÓ TINTAS · META DO DIA · {HOJE:%d/%m/%Y}</div><div class='t'>{titulo}</div><div class='s'>{sub}</div></div>"
+                f"<div class='corpo'>{corpo}</div><div class='rod'><span>folha {n} de {len(PV) + 1}</span>{e(rod)}</div></section>")
+    pags = [folha(f"{e(loja_nome)} · loja {cod}", f"{dia} · bom dia, {e(gerente)}! 👋 · resumo da loja", ''.join(h), 1)]
+    pags += [folha(e(v['nome']), f"{e(loja_nome)} · loja {cod} · {dia} · folha do vendedor", c, i) for i, (v, c) in enumerate(PV, 2)]
+    doc = ("<!doctype html><html lang='pt-BR'><head><meta charset='utf-8'><title>Meta do dia</title><style>"
+           "@page{size:A4;margin:9mm}*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}"
+           "body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#111827;background:#fff}"
+           ".pg{width:192mm;margin:0 auto;break-after:page;page-break-after:always}.pg:last-child{break-after:auto;page-break-after:auto}"
+           ".cab{background:#b91c1c;color:#fff;padding:14px 18px;border-radius:12px}.cab .k{font-size:11px;letter-spacing:1px;opacity:.85}"
+           ".cab .t{font-size:24px;font-weight:bold;margin-top:3px}.cab .s{font-size:13px;opacity:.92;margin-top:2px}"
+           ".corpo{padding:12px 2px 4px;zoom:1.1}.rod{margin-top:10px;border-top:1px solid #e5e7eb;padding-top:6px;font-size:9.5px;color:#6b7280}"
+           ".rod span{float:right;margin-left:8px;font-weight:bold}</style></head><body>" + ''.join(pags) + "</body></html>")
     txt = [f"Meta do dia {HOJE:%d/%m} · {loja_nome} (loja {cod})", f"Meta de hoje: {R(mh)} · mês {P(L['alc'])} (esperado {P(ESP)}) · projeção {P(L['alcproj'])}", ""]
+    txt += [f"Em anexo, o PDF para imprimir: a 1ª folha é o resumo da loja e cada vendedor tem a sua folha ({len(PV)} vendedores).", ""]
     for v in VS: txt.append(f"{v['nome']}: meta hoje {R(v['md'])}" + (f" · ligar: {', '.join(x['cli'].title() for x in v['sem'][:3])}" if v['sem'] else ''))
     return dict(cod=cod, loja=loja_nome, gerente=G.get('gerente'), email=G.get('email'), meta_hoje=round(mh), vendedores=len(VS), euc=bool(EU.get('loja')),
-                assunto=f"🎯 Meta do dia {HOJE:%d/%m} · {loja_nome} {cod} · {R(mh)} hoje", html=''.join(h), texto='\n'.join(txt))
+                assunto=f"🎯 Meta do dia {HOJE:%d/%m} · {loja_nome} {cod} · {R(mh)} hoje", html=doc, texto='\n'.join(txt), folhas=len(PV) + 1,
+                anexo=f"Meta do dia {HOJE:%d-%m} - loja {cod} {loja_nome}.pdf")
 
 
 MAN = []
@@ -177,18 +195,24 @@ for cod in sorted(META):
     open(os.path.join(saida, f'{cod}.html'), 'w', encoding='utf-8').write(r.pop('html'))
     MAN.append(r)
 
-try:  # imagem de cada e-mail (vai embutida no corpo do e-mail)
+try:  # PDF (uma folha A4 por seção) e a imagem da 1ª folha, que vai no corpo do e-mail
     from playwright.sync_api import sync_playwright
     with sync_playwright() as pw:
-        b = pw.chromium.launch(); pg = b.new_page(viewport={'width': 600, 'height': 900}, device_scale_factor=1.5)
+        b = pw.chromium.launch(); pg = b.new_page(viewport={'width': 760, 'height': 1000}, device_scale_factor=1.5)
         for r in MAN:
             if 'erro' in r: continue
-            pg.goto('file://' + os.path.abspath(os.path.join(saida, f"{r['cod']}.html")))
-            pg.screenshot(path=os.path.join(saida, f"{r['cod']}.png"), full_page=True, type='png')
-            r['png'] = os.path.abspath(os.path.join(saida, f"{r['cod']}.png"))
+            base = os.path.abspath(os.path.join(saida, r['cod']))
+            pg.goto('file://' + base + '.html')
+            pg.locator('.pg').first.screenshot(path=base + '.png', type='png')
+            pg.pdf(path=base + '.pdf', format='A4', print_background=True, prefer_css_page_size=True)
+            r['png'] = base + '.png'; r['pdf'] = base + '.pdf'
+            try:
+                import pypdf; r['paginas_pdf'] = len(pypdf.PdfReader(base + '.pdf').pages)
+            except Exception: pass
         b.close()
 except Exception as ex:
-    print('sem imagem:', ex)
+    print('sem imagem/PDF:', ex)
 json.dump(dict(data=data_s, dias=DIAS, esperado=ESP, lojas=MAN), open(os.path.join(saida, 'manifesto.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 print(json.dumps(dict(dias=DIAS, esperado=round(ESP, 3), ok=sum('erro' not in r for r in MAN), erros=[r for r in MAN if 'erro' in r],
-                      sem_email=[r['cod'] for r in MAN if 'erro' not in r and not r.get('email')], sem_euc=[r['cod'] for r in MAN if 'erro' not in r and not r['euc']]), ensure_ascii=False))
+                      sem_email=[r['cod'] for r in MAN if 'erro' not in r and not r.get('email')], sem_euc=[r['cod'] for r in MAN if 'erro' not in r and not r['euc']],
+                      folha_estourou=[r['cod'] for r in MAN if r.get('paginas_pdf') and r['paginas_pdf'] != r['folhas']]), ensure_ascii=False))
