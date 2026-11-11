@@ -27,6 +27,15 @@ GERENTE_FIX = {
 EMAIL_FIX = {'novaiguacu@sotintasnet.com': 'novaiguacu@sotintasnet.com.br'}
 
 pasta, extra_f, data_s, saida = sys.argv[1:5]
+# Hora dos dados do Solcast (opcional, 5º argumento "HH:MM"; sem ele, a hora de agora em Brasília).
+# Antes das 8h o "$ Fat. Hoje" do Solcast ainda é o do DIA ANTERIOR (conferido em 11/11/2026: às 06h54 trazia as vendas de 10/11)
+# e a "Meta diária" do BI sai inflada; nesse horário a meta de hoje é só o que falta ÷ dias úteis depois de hoje.
+try:
+    _h = sys.argv[5] if len(sys.argv) > 5 else datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=-3))).strftime('%H:%M')
+    HORA = int(_h[:2]) + int(_h[3:5]) / 60
+except Exception:
+    HORA = 7.0
+FAT_HOJE_VALE = HORA >= 8
 HOJE = datetime.date.fromisoformat(data_s)
 EX = json.load(open(extra_f, encoding='utf-8'))
 for _c, _g in GERENTE_FIX.items(): EX.setdefault('ger', {}).setdefault(_c, {}).update(_g)
@@ -90,6 +99,26 @@ def carteira(cod):
     return C
 
 
+def crm_vend(cod, k):
+    """Orçamentos em aberto do vendedor (do Painel) cruzados com os registros do CRM de Vendas.
+    Devolve None se a rotina não trouxe os dados do CRM."""
+    if 'orc' not in EX: return None
+    CR = EX.get('crm') or {}; hoje = HOJE.isoformat(); sem = []; ret = []; tot = 0
+    for o in EX['orc'].get(cod, []):
+        vend, cli, valor, dias, doc = o
+        kv = semcod(re.sub(r'^\d+\s*-\s*', '', vend or '')); kv = re.sub(r'\s+N\s?\d+$', '', kv)
+        if not kv or not (kv == k or kv.startswith(k) or k.startswith(kv)): continue
+        r = CR.get(str(doc))
+        if r and r[0] in ('fechado', 'validado', 'perdido'): continue
+        tot += 1; it = dict(cli=re.sub(r'^\d+-', '', cli or '').strip(), valor=valor or 0, dias=dias, doc=doc)
+        if not r:
+            if dias is not None and dias >= 2: sem.append(it)
+        elif (r[2] and r[2] <= hoje) or (r[0] == 'neg' and r[1] and r[1] < hoje):
+            it['quando'] = r[2] or r[1]; ret.append(it)
+    sem.sort(key=lambda x: -x['valor']); ret.sort(key=lambda x: -x['valor'])
+    return dict(tot=tot, sem=sem, ret=ret)
+
+
 def gerar(cod):
     m = META[cod]; L = dict(nome=m[0], meta=m[1] or 0, fat=m[2] or 0, alc=m[3] or 0, proj=m[4] or 0, alcproj=m[5] or 0, rest=max(m[6] or 0, 0), hoje=m[8] or 0, diaria=m[7])
     C = carteira(cod); EU = EX['euc'].get(cod, {}); G = EX['ger'].get(cod, {})
@@ -102,15 +131,15 @@ def gerar(cod):
         rest = max(v['$ Meta restante'] or 0, 0)
         VS.append(dict(nome=nm(v['Vendedor']), meta=v['$ Meta'], fat=v['$ Faturado'] or 0, alc=v['% Alc. Meta'] or 0, md=rest / DIV, ritmo=v['$ Diária'] or 0,
                        euc=EUV.get(norm(nm(v['Vendedor']))), sem=sem, baixo=baixo[:2], pos=v['% Positivados CNPJ'], posit=v['Clientes positivados CNPJ'],
-                       ativos=v['Clientes ativos CNPJ'], desc=v['% Desconto CNPJ'], itens=v['Itens CPF']))
+                       ativos=v['Clientes ativos CNPJ'], desc=v['% Desconto CNPJ'], itens=v['Itens CPF'], crm=crm_vend(cod, k)))
     VS.sort(key=lambda x: -x['md'])
     sd = sorted([c for c in C if 'NOVO' in c['vend'] and c['atual'] <= 0 and c['compras3'] >= 1], key=lambda c: -c['u3'])[:5]
     gerente = (G.get('gerente') or 'gerente').split()[0]
     loja_nome = (G.get('loja') or '').split(' - ', 1)[-1].strip() or (L['nome'].split('(')[-1].rstrip(')').title() if '(' in L['nome'] else L['nome'][6:].title())
-    mh = L['diaria'] if L['diaria'] else (L['rest'] + L['hoje']) / DIV
+    mh = (L['rest'] + (L['hoje'] if FAT_HOJE_VALE else 0)) / DIV   # meta do dia fixada no começo do dia (igual à do BI depois das 8h)
     h = [f"""<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
 <td width="50%" style="background:#fef2f2;border-radius:12px;padding:14px;text-align:center"><div style="font-size:11px;color:#6b7280">🎯 META DE HOJE</div>
-<div style="font-size:26px;white-space:nowrap;font-weight:bold;color:#b91c1c;margin-top:2px">{R(mh)}</div><div style="font-size:12px;color:#6b7280">faltam {R(L['rest'])} · meta diária do Solcast</div></td><td width="8"></td>
+<div style="font-size:26px;white-space:nowrap;font-weight:bold;color:#b91c1c;margin-top:2px">{R(mh)}</div><div style="font-size:12px;color:#6b7280">faltam {R(L['rest'])} · {B1(DIV)} dias úteis depois de hoje</div></td><td width="8"></td>
 <td width="50%" style="background:#f9fafb;border-radius:12px;padding:14px;text-align:center"><div style="font-size:11px;color:#6b7280">📈 PROJEÇÃO DO MÊS</div>
 <div style="font-size:26px;white-space:nowrap;font-weight:bold;color:{'#16a34a' if L['alcproj'] >= 1 else '#dc2626'};margin-top:2px">{P(L['alcproj'])}</div><div style="font-size:12px;color:#6b7280">{R(L['proj'])} de {R(L['meta'])}</div></td></tr></table>
 <div style="margin:16px 0 6px;font-size:13px"><b>Mês: {P(L['alc'])}</b> <span style="color:#6b7280">· {R(L['fat'])} vendidos · o traço preto marca onde deveria estar hoje ({P(ESP)})</span></div>{barra(L['alc'], cor(L['alc']), 14)}"""]
@@ -120,14 +149,17 @@ def gerar(cod):
 <td align="right" style="font-size:18px;font-weight:bold;color:{cor(p)}">{P(p)}</td></tr></table><div style="margin:8px 0">{barra(p, '#059669', 12, '#d1fae5')}</div>
 <div style="font-size:13px">{'Meta batida ✔' if not f else f"Hoje a loja precisa de <b style='font-size:16px;color:#047857'>{B1(f / DIV / 18)} baldes</b> de 18 L <span style='color:#6b7280'>({LT(f / DIV)})</span>"} · bônus R$ 50 por vendedor em 100%</div></div>""")
     h.append("""<div style="margin:22px 0 8px;font-size:16px;font-weight:bold">🏁 Placar do time hoje</div><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:13px">
-<tr style="color:#6b7280;font-size:11px"><td style="padding:4px 0">VENDEDOR</td><td align="right">META HOJE</td><td align="right">FAZ/DIA</td><td align="center">🪣</td></tr>""")
+<tr style="color:#6b7280;font-size:11px"><td style="padding:4px 0">VENDEDOR</td><td align="right">META HOJE</td><td align="right">FAZ/DIA</td><td align="center">🪣</td><td align="right">ORÇ. SEM CONTATO</td></tr>""")
     def bd(v):
         if not v['euc']: return '—'
         em, el = v['euc']; return '✔' if el >= em else f"{B1(max(em - el, 0) / DIV / 18)} 🪣"
     for v in VS:
         ok = v['ritmo'] >= v['md']
-        h.append(f"<tr style='border-top:1px solid #f3f4f6'><td style='padding:9px 0'><b>{'🟢' if ok else '🔴'} {e(v['nome'].split()[0])}</b></td><td align='right' style='white-space:nowrap'><b>{R(v['md'])}</b></td><td align='right' style='white-space:nowrap;padding-left:6px;color:{'#16a34a' if ok else '#dc2626'}'>{R(v['ritmo'])}</td><td align='center'>{bd(v)}</td></tr>")
+        h.append(f"<tr style='border-top:1px solid #f3f4f6'><td style='padding:9px 0'><b>{'🟢' if ok else '🔴'} {e(v['nome'].split()[0])}</b></td><td align='right' style='white-space:nowrap'><b>{R(v['md'])}</b></td><td align='right' style='white-space:nowrap;padding-left:6px;color:{'#16a34a' if ok else '#dc2626'}'>{R(v['ritmo'])}</td><td align='center'>{bd(v)}</td><td align='right' style='white-space:nowrap'>{(str(len(v['crm']['sem'])) + (' · ' + R(sum(x['valor'] for x in v['crm']['sem'])) if v['crm']['sem'] else '')) if v['crm'] else '—'}</td></tr>")
     h.append("</table>")
+    if any(v['crm'] for v in VS):
+        ns = sum(len(v['crm']['sem']) for v in VS if v['crm']); vs_ = sum(x['valor'] for v in VS if v['crm'] for x in v['crm']['sem']); nr = sum(len(v['crm']['ret']) for v in VS if v['crm'])
+        h.append(f"<div style='margin-top:12px;background:#eff6ff;border-radius:12px;padding:12px 14px;font-size:13px'><b style='color:#1e3a8a'>📋 CRM de Vendas</b> · <b>{ns}</b> orçamentos sem contato há 2 dias ou mais ({R(vs_)}) · <b>{nr}</b> retornos de hoje ou vencidos. <span style='color:#6b7280'>Cada vendedor registra o contato no app; você acompanha na aba Loja.</span></div>")
     PV = []
     for v in VS:
         ok = v['ritmo'] >= v['md']; c = cor(v['alc']); falta = v['md'] - v['ritmo']
@@ -141,10 +173,23 @@ def gerar(cod):
 <div style="font-size:11px;color:#6b7280;margin:8px 0 4px">Meta do mês</div>{barra(v['alc'], c, 10)}"""]
         if v['euc'] and v['euc'][0]:
             em, el = v['euc']; vh.append(f"<div style='font-size:11px;color:#6b7280;margin:10px 0 4px'>Eucatex · {LT(el)} de {LT(em)}</div>{barra(el / em, '#059669', 8, '#d1fae5')}")
+        cr = v['crm']; tem_crm = bool(cr and (cr['sem'] or cr['ret']))
+        if tem_crm:
+            def lin(x, extra=''):
+                return (f"<tr style='border-top:1px solid #dbeafe'><td style='padding:5px 0'><b>{e(x['cli'].title()[:38])}</b><div style='font-size:11px;color:#6b7280'>Nº {e(str(x['doc']))}"
+                        + (f" · há {x['dias']} dias" if x['dias'] is not None else '') + extra + f"</div></td><td align='right' style='white-space:nowrap;font-weight:bold'>{R(x['valor'])}</td></tr>")
+            vh.append(f"<div style='margin-top:12px;background:#eff6ff;border-radius:10px;padding:10px 12px'><div style='font-size:13px;font-weight:bold;color:#1e3a8a'>📋 Orçamentos para retornar hoje <span style='font-weight:normal;color:#6b7280'>· registre o contato no CRM de Vendas do app</span></div>")
+            if cr['ret']:
+                vh.append(f"<div style='font-size:12px;margin:8px 0 2px'><b>{len(cr['ret'])}</b> com retorno marcado para hoje ou vencido</div><table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='border-collapse:collapse;font-size:12.5px'>"
+                          + ''.join(lin(x, f" · retorno {x['quando'][8:10]}/{x['quando'][5:7]}") for x in cr['ret'][:3]) + "</table>")
+            if cr['sem']:
+                vh.append(f"<div style='font-size:12px;margin:8px 0 2px'><b>{len(cr['sem'])}</b> sem nenhum contato registrado · {R(sum(x['valor'] for x in cr['sem']))} · os maiores:</div><table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='border-collapse:collapse;font-size:12.5px'>"
+                          + ''.join(lin(x) for x in cr['sem'][:4 if cr['ret'] else 5]) + "</table>")
+            vh.append("</div>")
         if v['sem']:
             vh.append(f"<div style='font-size:13px;font-weight:bold;margin:14px 0 4px'>Ligar hoje <span style='font-weight:normal;color:#6b7280'>· compravam e ainda não compraram em {MESES[HOJE.month - 1]}</span></div>")
             vh += [f"<div style='background:#fff7ed;border-radius:8px;padding:7px 10px;margin:4px 0;font-size:13px'>📞 <b>{e(x['cli'].title()[:42])}</b><div style='color:#9a3412;font-size:12px;margin-left:22px'>costuma comprar ~{R(x['u3'])}/mês</div></div>" for x in v['sem'][:3]]
-            resto = v['sem'][3:11]; fora = len(v['sem']) - 3 - len(resto)
+            resto = v['sem'][3:(5 if tem_crm else 11)]; fora = len(v['sem']) - 3 - len(resto)
             if resto:
                 vh.append(f"<div style='font-size:12px;color:#6b7280;margin:8px 0 4px'>Mais {len(v['sem']) - 3} clientes parados · {R(sum(x['u3'] for x in v['sem']))}/mês no total da lista</div><table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='border-collapse:collapse;font-size:12px'>"
                          + ''.join(f"<tr style='border-top:1px solid #f3f4f6'><td style='padding:5px 0;color:#9ca3af;width:22px'>{i}</td><td style='padding:5px 0'>{e(x['cli'].title()[:40])}</td><td align='right' style='padding:5px 0;white-space:nowrap;color:#9a3412'>~{R(x['u3'])}</td></tr>" for i, x in enumerate(resto, 4)) + "</table>"
@@ -161,7 +206,7 @@ def gerar(cod):
     if sd:
         h.append("<div style='margin-top:18px;background:#f9fafb;border-radius:12px;padding:14px'><div style='font-size:14px;font-weight:bold;margin-bottom:6px'>📋 Para você distribuir hoje</div><div style='font-size:12px;color:#6b7280;margin-bottom:6px'>Clientes sem vendedor que pararam de comprar</div>"
                  + ''.join(f"<div style='font-size:13px;padding:5px 0;border-top:1px solid #e5e7eb'>👤 {e(x['cli'].title()[:42])} <span style='color:#6b7280'>· ~{R(x['u3'])}/mês</span></div>" for x in sd) + "</div>")
-    rod = (f"Meta de hoje = meta diária do Solcast (sábado conta meio dia; domingos e feriados não contam). Vendedor: meta restante ÷ {B1(DIV)} dias úteis. "
+    rod = (f"Meta de hoje = o que falta ÷ {B1(DIV)} dias úteis depois de hoje, na conta do Solcast e do Painel de Metas (sábado conta meio dia; domingos e feriados não contam). "
            "🟢 vende por dia pelo menos a meta de hoje · 🔴 abaixo. Traço preto = onde deveria estar hoje. "
            "Ligar hoje = comprou em pelo menos 2 dos últimos 3 meses e ainda não comprou neste mês. Dados do Solcast e do Painel de Metas.")
     dia = f"{SEM[HOJE.weekday()]}, {HOJE:%d/%m}"
@@ -181,7 +226,7 @@ def gerar(cod):
     txt = [f"Meta do dia {HOJE:%d/%m} · {loja_nome} (loja {cod})", f"Meta de hoje: {R(mh)} · mês {P(L['alc'])} (esperado {P(ESP)}) · projeção {P(L['alcproj'])}", ""]
     txt += [f"Em anexo, o PDF para imprimir: a 1ª folha é o resumo da loja e cada vendedor tem a sua folha ({len(PV)} vendedores).", ""]
     for v in VS: txt.append(f"{v['nome']}: meta hoje {R(v['md'])}" + (f" · ligar: {', '.join(x['cli'].title() for x in v['sem'][:3])}" if v['sem'] else ''))
-    return dict(cod=cod, loja=loja_nome, gerente=G.get('gerente'), email=G.get('email'), meta_hoje=round(mh), vendedores=len(VS), euc=bool(EU.get('loja')),
+    return dict(cod=cod, loja=loja_nome, gerente=G.get('gerente'), email=G.get('email'), meta_hoje=round(mh), vendedores=len(VS), euc=bool(EU.get('loja')), crm='orc' in EX,
                 assunto=f"🎯 Meta do dia {HOJE:%d/%m} · {loja_nome} {cod} · {R(mh)} hoje", html=doc, texto='\n'.join(txt), folhas=len(PV) + 1,
                 anexo=f"Meta do dia {HOJE:%d-%m} - loja {cod} {loja_nome}.pdf")
 
@@ -214,5 +259,5 @@ except Exception as ex:
     print('sem imagem/PDF:', ex)
 json.dump(dict(data=data_s, dias=DIAS, esperado=ESP, lojas=MAN), open(os.path.join(saida, 'manifesto.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 print(json.dumps(dict(dias=DIAS, esperado=round(ESP, 3), ok=sum('erro' not in r for r in MAN), erros=[r for r in MAN if 'erro' in r],
-                      sem_email=[r['cod'] for r in MAN if 'erro' not in r and not r.get('email')], sem_euc=[r['cod'] for r in MAN if 'erro' not in r and not r['euc']],
+                      sem_email=[r['cod'] for r in MAN if 'erro' not in r and not r.get('email')], sem_euc=[r['cod'] for r in MAN if 'erro' not in r and not r['euc']], crm=('orc' in EX), crm_erro=EX.get('crm_erro'),
                       folha_estourou=[r['cod'] for r in MAN if r.get('paginas_pdf') and r['paginas_pdf'] != r['folhas']]), ensure_ascii=False))
