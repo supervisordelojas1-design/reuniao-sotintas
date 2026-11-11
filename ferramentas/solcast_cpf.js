@@ -9,6 +9,8 @@
      3. fase = 'pronto' → baixa "solcast_cpf_AAAAMMDD.json" na pasta Downloads
    Dias: por padrão, ontem (Brasília). Para outros dias, antes de colar:
      window.__ST_DIAS = ['2026-11-09','2026-11-10']
+   No máximo 2 dias por execução (≈3,5 min por dia): em execuções longas a aba do Solcast cai e o que foi lido se perde.
+   Enquanto roda, consulte o estado a cada ~60 s.
    O filtro de valor (compras de R$ 500 ou mais) é aplicado depois, no converter_cpf.py.
    No fim devolve os filtros da página ao normal (Filial e CPF/CNPJ = Todos, sem período).
    ═══════════════════════════════════════════════════════════════ */
