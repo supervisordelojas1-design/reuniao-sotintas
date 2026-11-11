@@ -2,6 +2,24 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v161",
+      "data": "11/11/2026",
+      "hora": "09:00",
+      "itens": [
+        {
+          "painel": "Painel de Metas",
+          "o_que": "Os dias úteis passaram a seguir o calendário do Solcast: sábado conta meio dia e feriados não contam (novembro tem 21 dias úteis). Projeção, ritmo necessário por dia, semanas do mês e baldes de Eucatex por dia ficaram iguais aos do BI.",
+          "para": [
+            "coord",
+            "anl",
+            "sup",
+            "ger",
+            "vend"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v160",
       "data": "09/11/2026",
       "hora": "20:20",
@@ -9,7 +27,12 @@
         {
           "painel": "Central de Provas",
           "o_que": "Relatório agora também por gerente (ficha do gerente e semana a semana) e com acerto por tema detalhado: tema por supervisor, loja ou vendedor e quem mais erra em cada tema.",
-          "para": ["coord", "anl", "sup", "ger"]
+          "para": [
+            "coord",
+            "anl",
+            "sup",
+            "ger"
+          ]
         }
       ]
     },
@@ -21,7 +44,12 @@
         {
           "painel": "Central de Provas",
           "o_que": "Botão Relatório: PDF geral, por supervisor ou por loja, com leitura do consultor, pendências, Trilha Mentor, avulsas e histórico, para salvar ou mandar no WhatsApp.",
-          "para": ["coord", "anl", "sup", "ger"]
+          "para": [
+            "coord",
+            "anl",
+            "sup",
+            "ger"
+          ]
         }
       ]
     },
@@ -33,7 +61,12 @@
         {
           "painel": "Central de Provas",
           "o_que": "Nova aba Histórico: evolução das provas semana a semana, acerto por tema e o caminho de cada pessoa.",
-          "para": ["coord", "anl", "sup", "ger"]
+          "para": [
+            "coord",
+            "anl",
+            "sup",
+            "ger"
+          ]
         }
       ]
     },
@@ -45,12 +78,21 @@
         {
           "painel": "Minhas Provas",
           "o_que": "Card novo na tela inicial: as provas lançadas para você responder, com prazo e nota na hora.",
-          "para": ["vend", "ger", "sup"]
+          "para": [
+            "vend",
+            "ger",
+            "sup"
+          ]
         },
         {
           "painel": "Central de Provas",
           "o_que": "Nova aba Avulsas: quem fez, quem falta e as notas de cada prova lançada.",
-          "para": ["coord", "anl", "sup", "ger"]
+          "para": [
+            "coord",
+            "anl",
+            "sup",
+            "ger"
+          ]
         }
       ]
     },
@@ -62,7 +104,12 @@
         {
           "painel": "Central de Provas",
           "o_que": "Nova aba Trilha Mentor: quem foi aprovado, quem está estudando, quem precisa refazer e quem não iniciou, com o resultado módulo a módulo, por supervisor e por loja.",
-          "para": ["coord", "anl", "sup", "ger"]
+          "para": [
+            "coord",
+            "anl",
+            "sup",
+            "ger"
+          ]
         }
       ]
     },
@@ -74,7 +121,12 @@
         {
           "painel": "Central de Provas",
           "o_que": "Provas da Semana agora é a Central de Provas: vendedores, gerentes e supervisores no mesmo painel, com gráfico de notas, quadro de honra, contagem do prazo, ficha de cada pessoa e botão para copiar a cobrança.",
-          "para": ["coord", "anl", "sup", "ger"]
+          "para": [
+            "coord",
+            "anl",
+            "sup",
+            "ger"
+          ]
         }
       ]
     },
@@ -86,7 +138,10 @@
         {
           "painel": "Acessos ao App",
           "o_que": "O uso da tela Provas da Semana passa a aparecer no relatório de acessos.",
-          "para": ["coord", "anl"]
+          "para": [
+            "coord",
+            "anl"
+          ]
         }
       ]
     },
@@ -98,7 +153,10 @@
         {
           "painel": "Provas da Semana",
           "o_que": "Agora dá para abrir a prova de cada vendedor, com as respostas e o gabarito. A coordenação também ajusta o prazo por vendedor, loja ou semana toda.",
-          "para": ["coord", "sup"]
+          "para": [
+            "coord",
+            "sup"
+          ]
         }
       ]
     },
@@ -110,7 +168,12 @@
         {
           "painel": "Provas da Semana",
           "o_que": "Tela nova: quem fez e quem não fez a prova do PDI semanal, as notas, por supervisor e por loja, com filtros e busca.",
-          "para": ["coord", "anl", "sup", "ger"]
+          "para": [
+            "coord",
+            "anl",
+            "sup",
+            "ger"
+          ]
         }
       ]
     },
