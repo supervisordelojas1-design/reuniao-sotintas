@@ -181,15 +181,17 @@ def gerar(cod):
             vh.append(f"<div style='margin-top:12px;background:#eff6ff;border-radius:10px;padding:10px 12px'><div style='font-size:13px;font-weight:bold;color:#1e3a8a'>📋 Orçamentos para retornar hoje <span style='font-weight:normal;color:#6b7280'>· registre o contato no CRM de Vendas do app</span></div>")
             if cr['ret']:
                 vh.append(f"<div style='font-size:12px;margin:8px 0 2px'><b>{len(cr['ret'])}</b> com retorno marcado para hoje ou vencido</div><table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='border-collapse:collapse;font-size:12.5px'>"
-                          + ''.join(lin(x, f" · retorno {x['quando'][8:10]}/{x['quando'][5:7]}") for x in cr['ret'][:3]) + "</table>")
+                          + ''.join(lin(x, f" · retorno {x['quando'][8:10]}/{x['quando'][5:7]}") for x in cr['ret'][:2]) + "</table>")
             if cr['sem']:
                 vh.append(f"<div style='font-size:12px;margin:8px 0 2px'><b>{len(cr['sem'])}</b> sem nenhum contato registrado · {R(sum(x['valor'] for x in cr['sem']))} · os maiores:</div><table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='border-collapse:collapse;font-size:12.5px'>"
-                          + ''.join(lin(x) for x in cr['sem'][:4 if cr['ret'] else 5]) + "</table>")
+                          + ''.join(lin(x) for x in cr['sem'][:2 if cr['ret'] else 4]) + "</table>")
             vh.append("</div>")
         if v['sem']:
             vh.append(f"<div style='font-size:13px;font-weight:bold;margin:14px 0 4px'>Ligar hoje <span style='font-weight:normal;color:#6b7280'>· compravam e ainda não compraram em {MESES[HOJE.month - 1]}</span></div>")
             vh += [f"<div style='background:#fff7ed;border-radius:8px;padding:7px 10px;margin:4px 0;font-size:13px'>📞 <b>{e(x['cli'].title()[:42])}</b><div style='color:#9a3412;font-size:12px;margin-left:22px'>costuma comprar ~{R(x['u3'])}/mês</div></div>" for x in v['sem'][:3]]
-            resto = v['sem'][3:(5 if tem_crm else 11)]; fora = len(v['sem']) - 3 - len(resto)
+            resto = v['sem'][3:(3 if tem_crm else 11)]; fora = len(v['sem']) - 3 - len(resto)
+            if not resto and fora > 0:
+                vh.append(f"<div style='font-size:12px;color:#6b7280;margin:6px 0 2px'>Mais {fora} clientes parados ({R(sum(x['u3'] for x in v['sem']))}/mês no total da lista): estão na Carteira do CRM de Vendas, no app.</div>")
             if resto:
                 vh.append(f"<div style='font-size:12px;color:#6b7280;margin:8px 0 4px'>Mais {len(v['sem']) - 3} clientes parados · {R(sum(x['u3'] for x in v['sem']))}/mês no total da lista</div><table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='border-collapse:collapse;font-size:12px'>"
                          + ''.join(f"<tr style='border-top:1px solid #f3f4f6'><td style='padding:5px 0;color:#9ca3af;width:22px'>{i}</td><td style='padding:5px 0'>{e(x['cli'].title()[:40])}</td><td align='right' style='padding:5px 0;white-space:nowrap;color:#9a3412'>~{R(x['u3'])}</td></tr>" for i, x in enumerate(resto, 4)) + "</table>"
