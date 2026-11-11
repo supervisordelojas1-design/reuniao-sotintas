@@ -33,7 +33,7 @@ Registro de contato (todas as áreas): canal (ligação/WhatsApp/visita/e-mail/n
 - Fonte: Solcast, página "Painel indicadores de vendas", tabela EVOLUÇÃO MENSAL POR CLIENTE com filtro CPF + Filial + Período (filtro de 1 dia) → dá cliente, vendedor do cadastro, grupo de produto e valor no dia. Não há telefone nem CPF no Solcast.
 - Scripts: `ferramentas/solcast_cpf.js` (≈7 s por loja, ≈3,5 min por dia; no máximo 2 dias por execução) e `ferramentas/converter_cpf.py` (junta à base sem duplicar).
 - Base: pasta "5 - Clientes CPF (pós-venda)" da Central de Atualização, arquivo `CLIENTES CPF - BASE POS-VENDA.xlsx` (Data, Loja, Cliente, Vendedor do cadastro, Valor, Produtos). A rotina diária das 7h acrescenta o dia anterior e completa dias faltantes desde 03/11/2026.
-- Situação em 11/11: script validado na loja 002 e conversor testado; a carga das 30 lojas ainda não foi feita — a base começa na rotina de 12/11.
+- Situação em 11/11: base carregada com as 30 lojas, de 03/11 a 10/11 (574 compras de R$ 500 ou mais), gravada na pasta 5 da Central. Ainda não está no app: o envio depende do `crm.gs.txt` instalado no servidor.
 - Fila do pós-venda: D+3 satisfação + avaliação Google; D+15 complemento (conforme grupo comprado); D+45 acabamento/recompra; D+180 manutenção. Telefone: o vendedor registra no CRM na 1ª vez (ou vem do Autcom, abaixo). LGPD: só nome, telefone e o que comprou; cliente que não quiser contato sai da fila.
 
 ## Autcom WebService
