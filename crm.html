@@ -67,12 +67,26 @@ legend,.rot{font-size:12px;font-weight:700;color:var(--muted);padding:0;margin-b
 .toast{position:fixed;left:0;right:0;margin:auto;bottom:18px;width:max-content;max-width:calc(100% - 24px);background:#16233d;color:#fff;padding:10px 16px;border-radius:999px;font-weight:700;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.35)}
 .hist{margin:0;padding:0;list-style:none;display:grid;gap:4px;font-size:12.5px;color:var(--muted)}
 .mais{background:none;border:0;color:var(--navy);font:700 12.5px var(--f-body);cursor:pointer;padding:6px 0;text-align:left;min-height:32px}
+.abas{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.abas button{flex:1 0 auto;min-height:44px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 10px;font:700 12.5px var(--f-body);cursor:pointer}
+.abas button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.semtel{opacity:.55;cursor:default}
+.agir{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;min-height:44px;text-align:left;border:0;border-radius:10px;padding:8px 12px;font:500 13px var(--f-body);color:var(--ink);background:var(--surface2)}
+button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:var(--warnbg)}.agir.v{background:var(--okbg)}
+.plc{width:100%;border-collapse:collapse;font-size:13px}
+.plc th,.plc td{padding:7px 4px;border-top:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+.plc thead th{border-top:0;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.plc th:first-child{text-align:left}
+.mot{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) auto;align-items:center;gap:8px;font-size:12.5px}
+.barra{height:10px;background:var(--surface2);border-radius:10px;overflow:hidden}.barra i{display:block;height:100%;background:var(--bad)}
+.marca{display:flex;align-items:center;gap:8px;min-height:40px;font-weight:600}.marca input{width:20px;height:20px;accent-color:var(--navy)}
+.obra{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px}.obra legend{padding:0 6px}
 @media(max-width:420px){.kpi b{font-size:15px}.btn{padding:9px 8px;font-size:13px}}
 </style></head><body>
 <div class="wrap">
   <div class="topbar"></div>
   <header>
-    <div><div class="eyebrow">Só Tintas · CRM de vendas</div><h1>Orçamentos em aberto</h1><div class="sub" id="sub">Carregando…</div></div>
+    <div><div class="eyebrow">Só Tintas · CRM de vendas</div><h1>CRM de Vendas</h1><div class="sub" id="sub">Carregando…</div></div>
     <button type="button" class="btn" id="btnTema"><span id="temaIc">🌙</span> <span id="temaTx">Escuro</span></button>
   </header>
   <main id="raiz" style="display:flex;flex-direction:column;gap:12px"><p class="sub">Carregando os orçamentos…</p></main>
@@ -96,206 +110,461 @@ legend,.rot{font-size:12px;font-weight:700;color:var(--muted);padding:0;margin-b
 <script src="st-dados.js?v=91"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════
-   CRM DE VENDAS — etapa 1: orçamentos em aberto, registro de contato e status.
-   Piloto: loja 002.
+   CRM DE VENDAS — orçamentos em aberto, carteira CNPJ, pós-venda CPF,
+   pintores imobiliários e a visão do gerente. Piloto: loja 002.
 
-   De onde vêm os orçamentos: do pacote do Painel de Metas (mesmo crachá) e,
-   para o vendedor, da ficha do PDI Semanal (que já vem no nome dele).
-   Onde ficam os registros: no Servidor de Dados ST (ações crmListar e
-   crmSalvar — arquivo crm.gs.txt). Enquanto o servidor não tiver essas ações,
-   ou sem internet, o registro fica guardado NESTE aparelho e sobe sozinho
-   na próxima vez que a tela abrir com o servidor respondendo.
+   De onde vêm as listas:
+     · orçamentos e carteira CNPJ: pacote do Painel de Metas (mesmo crachá);
+       para o vendedor, casa pelo nome oficial da ficha do PDI Semanal.
+     · pós-venda CPF: base enviada ao servidor pela rotina diária (compras
+       de R$ 500 ou mais), nas janelas de 3, 15, 45 e 180 dias.
+     · pintores: cadastrados aqui mesmo.
+   Onde ficam os registros: no Servidor de Dados ST (ações crm* — arquivo
+   crm.gs.txt). Enquanto o servidor não tiver essas ações, ou sem internet,
+   tudo fica guardado NESTE aparelho e sobe sozinho na próxima vez que a
+   tela abrir com o servidor respondendo.
    ═══════════════════════════════════════════════════════════════ */
 (function(){
   'use strict';
   var PAINEL_API_URL='https://script.google.com/macros/s/AKfycbzVe8joykTW_ee-gYcNSAEIXTkWy_ed1_C0JgSiZqO5_5S0SyWKeNOPc6S0RsC8RT6ZJQ/exec';
-  var PILOTO=['002'];
+  var PILOTO=['002'], MAXL=60;
   var $=function(id){return document.getElementById(id);};
   var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
   var brl=function(n){return 'R$ '+Math.round(Number(n)||0).toLocaleString('pt-BR');};
   var mil=function(n){n=Number(n)||0;return n>=1000?'R$ '+(n/1000).toLocaleString('pt-BR',{maximumFractionDigits:n>=100000?0:1})+' mil':brl(n);};
   var norm=function(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+N\s?\d+$/i,'').replace(/^\d+\s*-\s*/,'').replace(/[^A-Za-z ]/g,'').replace(/\s+/g,' ').trim().toUpperCase();};
-  var nm=function(s){return String(s||'').replace(/^\d+\s*-\s*/,'').replace(/\s+N\s?\d+$/i,'').trim();};
+  var NK=function(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,' ').trim().toUpperCase();};
+  var nm=function(s){return String(s||'').replace(/^\d+\s*-\s*/,'').replace(/\s*-?\s*N\s?\d+$/i,'').trim();};
   var code3=function(c){var m=/\d{1,3}/.exec(String(c||''));return m?('00'+m[0]).slice(-3):'';};
   var p2=function(n){return (n<10?'0':'')+n;};
   var agora=function(){return window.STHora?STHora.data():new Date();};
-  var hojeISO=function(){var d=agora();return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());};
-  var dBr=function(iso){var p=String(iso||'').slice(0,10).split('-');return p.length===3?p[2]+'/'+p[1]:'';};
-  function toast(m){ var t=document.createElement('div'); t.className='toast'; t.setAttribute('role','status'); t.textContent=m; document.body.appendChild(t); setTimeout(function(){t.remove();},3200); }
+  var iso=function(d){return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());};
+  var hojeISO=function(){return iso(agora());};
+  var meioDia=function(){var h=agora();return new Date(h.getFullYear(),h.getMonth(),h.getDate(),12,0,0);};
+  var dBr=function(s){var p=String(s||'').slice(0,10).split('-');return p.length===3?p[2]+'/'+p[1]:'';};
+  var diasDesde=function(s){var t=new Date(s).getTime();return isNaN(t)?null:(Date.now()-t)/864e5;};
+  function toast(m){ [].forEach.call(document.querySelectorAll('.toast'),function(x){x.remove();}); var t=document.createElement('div'); t.className='toast'; t.setAttribute('role','status'); t.textContent=m; document.body.appendChild(t); setTimeout(function(){t.remove();},3200); }
+  function novoId(p){ return p+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
 
-  var STATUS={novo:'Sem contato',neg:'Em negociação',fechado:'Fechado',perdido:'Perdido',prorrogado:'Prorrogado'};
+  var STATUS={novo:'Sem contato',neg:'Em negociação',fechado:'Fechado',validado:'Fechado e validado',perdido:'Perdido',prorrogado:'Prorrogado',
+              contato:'Em conversa',pedido:'Vai comprar',semint:'Sem compra agora',feito:'Pós-venda feito',venda:'Gerou nova venda',naoquer:'Não quer contato'};
+  var COR={novo:'novo',neg:'neg',contato:'neg',fechado:'fechado',validado:'fechado',pedido:'fechado',feito:'fechado',venda:'fechado',perdido:'perdido',naoquer:'perdido',prorrogado:'prorrogado',semint:'prorrogado'};
+  var FIM=/^(fechado|validado|perdido|pedido|semint|feito|venda|naoquer)$/;
   var CANAIS=['Ligação','WhatsApp','Visita','E-mail','Na loja'];
   var RESULT=['Falei com o cliente','Não atendeu','Deixei recado'];
-  var MOTIVOS=['Preço','Comprou no concorrente','Sem estoque','Prazo de entrega','Cliente adiou a obra','Cliente não responde','Outro'];
   var CHANCE={alta:['Alta',.7],media:['Média',.4],baixa:['Baixa',.15]};
+  var TIPO={
+    orc:{sit:[['neg','Em negociação'],['fechado','Fechado'],['perdido','Perdido'],['prorrogado','Prorrogado']],def:'neg',
+         motivos:['Preço','Comprou no concorrente','Sem estoque','Prazo de entrega','Cliente adiou a obra','Cliente não responde','Outro']},
+    cart:{sit:[['contato','Em conversa'],['pedido','Vai comprar'],['semint','Sem compra agora']],def:'contato',
+         motivos:['Sem obra no momento','Comprou no concorrente','Preço','Problema com entrega ou atendimento','Outro']},
+    pos:{sit:[['feito','Pós-venda feito'],['venda','Gerou nova venda'],['naoquer','Não quer contato']],def:'feito'},
+    pin:{sit:[['contato','Ligação feita']],def:'contato',assuntos:['Acompanhamento de obra','Oferta ou campanha','Convite para treinamento ou evento','Pós-venda','Outro']}
+  };
+  var ETAPAS=[[3,12,'3 dias','Satisfação','“Deu tudo certo com o material? Precisa de mais alguma coisa para terminar?” Peça a avaliação no Google.'],
+              [15,24,'15 dias','Complemento','Como está a obra? Ofereça o que costuma faltar: selador, massa, rolo, fita e a tinta de acabamento.'],
+              [45,54,'45 dias','Recompra','Obra terminada? Pergunte da próxima etapa (fachada, muro, portões) e peça indicação.'],
+              [180,189,'6 meses','Manutenção','Seis meses da pintura: ofereça retoque, limpeza e proteção. Lembre das campanhas do mês.']];
+  var ESPEC=['Residencial','Predial / condomínio','Textura / grafiato','Epóxi / piso','Madeira'];
+  var ABAS=[['orc','Orçamentos'],['cart','Carteira'],['pos','Pós-venda'],['pin','Pintores'],['ger','Loja']];
 
-  var C=null, S=null, PERFIL='', LOJAS=[], LOJA='', ORCS=[], REG=[], FILTRO='todos', VEND='', SERVIDOR=null, LER=false, ABERTO={};
-  var chaveLS=function(){ return 'st_crm_v1:'+norm(S&&S.nome); };
-  function lerLocal(){ try{ return JSON.parse(localStorage.getItem(chaveLS())||'[]')||[]; }catch(e){ return []; } }
-  function gravarLocal(l){ try{ localStorage.setItem(chaveLS(),JSON.stringify(l.slice(-400))); }catch(e){} }
+  var C=null, S=null, PERFIL='', LIDER=false, LOJAS=[], LOJA='', OFICIAL='';
+  var D={orc:[],cart:[],pos:[],pin:[]}, REG=[], PIN=[], POS=[], HIST={};
+  var TAB='orc', FIL={orc:'todos',cart:'todos',pos:'e0',pin:'todos'}, VEND='', SERVIDOR=null, LER=false, ABERTO={}, CARTN=0;
+  var chave=function(k){ return 'st_crm_'+k+'_v1:'+norm(S&&S.nome); };
+  function lerLocal(k){ try{ return JSON.parse(localStorage.getItem(chave(k))||'[]')||[]; }catch(e){ return []; } }
+  function gravarLocal(k,l){ try{ localStorage.setItem(chave(k),JSON.stringify(l.slice(-500))); }catch(e){} }
 
-  /* ───────── orçamentos ───────── */
+  /* ───────── fontes ───────── */
   function dataOrc(x){ var t=String(x||''), m=/^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(t); if(m) return new Date(+m[1],+m[2]-1,+m[3],12,0,0);
     m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(t); if(m) return new Date(+m[3],+m[2]-1,+m[1],12,0,0); var d=new Date(t); return isNaN(d.getTime())?null:d; }
   function doPainel(){
     return fetch(PAINEL_API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({tipo:'dados',u:'cracha',p:C.tk})})
-      .then(function(r){return r.json();}).then(function(j){
-        var O=j&&((j.dados&&j.dados.O)||j.O); if(!O) return [];
-        var h=agora(), base=new Date(h.getFullYear(),h.getMonth(),h.getDate(),12,0,0), l=[];
-        Object.keys(O).forEach(function(cod){ (O[cod]||[]).forEach(function(r){
-          if(!r||!r[6]) return; var d=dataOrc(r[2]);
-          l.push({loja:code3(cod),vend:nm(r[0]),doc:String(r[6]),cli:String(r[3]||'').replace(/^\d+-/,'').trim(),tel:String(r[4]||''),valor:Number(r[5])||0,dias:d?Math.max(0,Math.round((base-d)/86400000)):null});
-        }); });
-        return l;
-      }).catch(function(){ return []; });
+      .then(function(r){return r.json();}).then(function(j){ var d=(j&&j.dados)||j||{}; return {O:d.O||{},K:d.K||{}}; }).catch(function(){ return {O:{},K:{}}; });
+  }
+  function orcsDe(O){
+    var base=meioDia(), l=[];
+    Object.keys(O).forEach(function(cod){ (O[cod]||[]).forEach(function(r){
+      if(!r||!r[6]) return; var d=dataOrc(r[2]);
+      l.push({tipo:'orc',loja:code3(cod),vend:nm(r[0]),doc:String(r[6]),cli:String(r[3]||'').replace(/^\d+-/,'').trim(),tel:String(r[4]||''),valor:Number(r[5])||0,dias:d?Math.max(0,Math.round((base-d)/864e5)):null});
+    }); });
+    return l;
+  }
+  /* carteira CNPJ: mesma regra do Painel — zerado no mês (a positivar) ou projetando menos de 70% da própria média */
+  function cartDe(K){
+    var l=[], visto={};
+    Object.keys(K).forEach(function(cod){ var box=K[cod]||{}, n=box.n||1, loja=code3(cod);
+      (box.c||[]).forEach(function(c){
+        var pv=String(c[0]||'').split(/ - VEND\.?:\s*/i), nome=pv[0].replace(/^\d+-/,'').trim(), media=Number(c[1])||0, ativos=Number(c[2])||0, proj=Number(c[3])||0;
+        var g=proj<=0?(media>0?'POS':''):(proj<media*0.7?'SUB':''); if(!g||!nome) return;
+        var doc='C:'+loja+':'+NK(nome); if(visto[doc]) return; visto[doc]=1;
+        l.push({tipo:'cart',loja:loja,vend:pv.length>1?nm(pv[1]):'',doc:doc,cli:nome,tel:'',grupo:g,rec:g==='POS'&&ativos>=5,media:media,ativos:ativos,meses:n,proj:proj,valor:g==='POS'?media:media-proj});
+      });
+    });
+    return l;
   }
   function daSemana(){
     return STDados.chamar('semana').then(function(j){
       if(!j||!j.ok) return null;
       var a=(j.linhas||[]).filter(function(x){return x.semana===j.atual;})[0]||(j.linhas||[])[0];
       if(!a||!a.comp) return null;
-      return {nome:a.comp.nome||'',orcs:(a.comp.orcs||[]).map(function(o){ return {loja:LOJAS[0]||'',vend:nm(a.comp.nome||S.nome),doc:String(o.doc||''),cli:String(o.cli||''),tel:String(o.tel||''),valor:Number(o.valor)||0,dias:o.dias}; }).filter(function(o){return o.doc;})};
+      return {nome:a.comp.nome||'',orcs:(a.comp.orcs||[]).map(function(o){ return {tipo:'orc',loja:LOJAS[0]||'',vend:nm(a.comp.nome||S.nome),doc:String(o.doc||''),cli:String(o.cli||''),tel:String(o.tel||''),valor:Number(o.valor)||0,dias:o.dias}; }).filter(function(o){return o.doc;})};
     }).catch(function(){ return null; });
   }
-  function meuNome(v,oficial){
-    var a=norm(v), b=norm(oficial||''), c=norm(S.nome); if(!a) return false;
-    if(b&&a===b) return true;
+  function meuNome(v){
+    var a=norm(v), b=norm(OFICIAL), c=norm(S.nome); if(!a) return false;
+    if(b&&(a===b||a.indexOf(b)===0||b.indexOf(a)===0)) return true;
     var t=c.split(' ').filter(Boolean); return t.length>0&&t.every(function(x){ return (' '+a+' ').indexOf(' '+x+' ')>=0; });
   }
-  function carregarOrcs(){
-    if(PERFIL!=='vend') return doPainel();
-    return Promise.all([daSemana(),doPainel()]).then(function(r){
-      var sem=r[0], pn=r[1].filter(function(o){ return meuNome(o.vend,sem&&sem.nome); });
-      return pn.length?pn:(sem?sem.orcs:[]);
+  function posDe(linhas){
+    var base=meioDia(), l=[];
+    (linhas||[]).forEach(function(r){
+      var d=dataOrc(r.data); if(!d) return; var dias=Math.round((base-d)/864e5), e=-1;
+      ETAPAS.forEach(function(E,i){ if(dias>=E[0]&&dias<=E[1]) e=i; }); if(e<0) return;
+      var loja=code3(r.loja), ck=loja+':'+NK(r.cli);
+      l.push({tipo:'pos',loja:loja,vend:nm(r.vend),doc:'P:'+String(r.data).slice(0,10)+':'+ck+':'+ETAPAS[e][0],ck:ck,cli:r.cli,tel:'',valor:Number(r.valor)||0,prod:r.prod||'',data:String(r.data).slice(0,10),dias:dias,etapa:e});
     });
+    return l;
   }
 
   /* ───────── registros (servidor + cópia no aparelho) ───────── */
-  function juntar(a,b){ var m={}; a.concat(b).forEach(function(x){ if(x&&x.id) m[x.id]=Object.assign(m[x.id]||{},x); }); return Object.keys(m).map(function(k){return m[k];}); }
+  function juntar(a,b,campo){ var m={}; a.concat(b).forEach(function(x){ if(!x||!x.id) return; var y=m[x.id];
+      if(!y||!campo||String(x[campo]||'')>=String(y[campo]||'')) m[x.id]=campo?x:Object.assign({},y||{},x); }); return Object.keys(m).map(function(k){return m[k];}); }
+  function indexar(){ HIST={}; REG.forEach(function(x){ (HIST[x.doc]=HIST[x.doc]||[]).push(x); });
+    Object.keys(HIST).forEach(function(k){ HIST[k].sort(function(a,b){return String(b.em).localeCompare(String(a.em));}); }); }
+  function sobe(k,acao,campo){
+    var loc=lerLocal(k), pend=loc.filter(function(x){return !x.ok;}); if(!pend.length||LER) return Promise.resolve();
+    var corpo={}; corpo[campo]=pend;
+    return STDados.chamar(acao,corpo,true).then(function(r){ if(r&&r.ok){ loc.forEach(function(x){x.ok=1;}); gravarLocal(k,loc); } else SERVIDOR=false; }).catch(function(){ SERVIDOR=false; });
+  }
   function sincronizar(){
-    var loc=lerLocal(), pend=loc.filter(function(x){return !x.ok;});
-    var sobe=pend.length&&!LER?STDados.chamar('crmSalvar',{regs:pend},true).then(function(r){
-      if(r&&r.ok){ loc.forEach(function(x){ x.ok=1; }); gravarLocal(loc); SERVIDOR=true; } else SERVIDOR=false;
-    }).catch(function(){ SERVIDOR=false; }):Promise.resolve();
-    return sobe.then(function(){ return STDados.chamar('crmListar',{lojas:LOJAS}); }).then(function(r){
-      if(r&&r.ok){ SERVIDOR=true; REG=juntar((r.regs||[]).map(function(x){x.ok=1;return x;}),lerLocal()); }
-      else { SERVIDOR=false; REG=lerLocal(); }
-    }).catch(function(){ SERVIDOR=false; REG=lerLocal(); });
+    return Promise.all([sobe('reg','crmSalvar','regs'),sobe('pin','crmPintorSalvar','pintores')]).then(function(){ return STDados.chamar('crmListar',{lojas:LOJAS}); }).then(function(r){
+      var ok=function(x){x.ok=1;return x;};
+      if(r&&r.ok){ SERVIDOR=true; REG=juntar((r.regs||[]).map(ok),lerLocal('reg')); PIN=juntar((r.pintores||[]).map(ok),lerLocal('pin'),'atual'); POS=r.pos||[]; }
+      else { SERVIDOR=false; REG=lerLocal('reg'); PIN=lerLocal('pin'); POS=[]; }
+    }).catch(function(){ SERVIDOR=false; REG=lerLocal('reg'); PIN=lerLocal('pin'); POS=[]; }).then(indexar);
   }
-  function historico(o){ return REG.filter(function(x){return String(x.doc)===o.doc;}).sort(function(a,b){return String(b.em).localeCompare(String(a.em));}); }
-  function estado(o){ var h=historico(o), u=h[0]; return {h:h,u:u,st:(u&&u.status)||'novo',horas:u?(Date.now()-new Date(u.em).getTime())/36e5:null}; }
+  function estado(o){
+    var h=HIST[o.doc]||[], u=h[0], st=(u&&u.status)||'novo';
+    if(o.tipo==='cart'&&u&&diasDesde(u.em)>30) st='novo';       /* carteira: o contato vale por 30 dias */
+    if(o.tipo==='pin') st=o.status||'potencial';
+    return {h:h,u:u,st:st};
+  }
+  function contato(o){ var h=HIST[o.doc]||[], r={}; for(var i=h.length-1;i>=0;i--){ ['cNome','cCargo','cTel','cEmail','cHora'].forEach(function(k){ if(h[i][k]) r[k]=h[i][k]; }); } return r; }
+  function gravarReg(r,msg){
+    var loc=lerLocal('reg'); loc.push(r); gravarLocal('reg',loc); REG=juntar(REG,[r]); indexar();
+    return STDados.chamar('crmSalvar',{regs:[r]},true).then(function(j){
+      if(j&&j.ok){ SERVIDOR=true; var l=lerLocal('reg'); l.concat(REG).forEach(function(x){ if(x.id===r.id) x.ok=1; }); gravarLocal('reg',l); toast(msg||'Contato registrado.'); }
+      else { SERVIDOR=false; toast('Guardado neste aparelho. Sobe quando o servidor estiver ligado.'); }
+    }).catch(function(){ SERVIDOR=false; toast('Sem conexão: guardado neste aparelho.'); });
+  }
 
-  /* ───────── tela ───────── */
-  function visiveis(){
-    return ORCS.filter(function(o){ return (!LOJA||o.loja===LOJA)&&(!VEND||norm(o.vend)===VEND); }).map(function(o){ o.e=estado(o); return o; });
+  /* ───────── listas ───────── */
+  function montarDados(pn,sem){
+    var naLoja=function(o){ return LOJAS.indexOf(o.loja)>=0; };
+    var orc=orcsDe(pn.O).filter(naLoja), cart=cartDe(pn.K).filter(naLoja);
+    CARTN=cart.length;
+    if(PERFIL==='vend'){ var meus=orc.filter(function(o){return meuNome(o.vend);}); orc=meus.length?meus:(sem?sem.orcs:[]); cart=cart.filter(function(o){return meuNome(o.vend);}); }
+    /* orçamento que já saiu da lista do Painel mas tem registro: continua visível em Fechados/Perdidos */
+    var tem={}; orc.forEach(function(o){tem[o.doc]=1;});
+    REG.forEach(function(x){ var t=x.tipo||'orc'; if(t==='orc'&&x.doc&&!tem[x.doc]&&LOJAS.indexOf(x.loja)>=0&&/^(fechado|validado|perdido)$/.test(x.status)&&(HIST[x.doc]||[])[0]===x){ tem[x.doc]=1;
+      orc.push({tipo:'orc',loja:x.loja,vend:x.vend||'',doc:String(x.doc),cli:x.cli||'',tel:x.cTel||'',valor:Number(x.valor)||0,dias:null,fora:true}); } });
+    D.orc=orc; D.cart=cart;
+    /* pós-venda: quem pediu para não receber contato sai de todas as etapas; o telefone anotado vale para as próximas */
+    var fora={}, tel={};
+    REG.forEach(function(x){ if(x.tipo!=='pos') return; var ck=String(x.doc).split(':').slice(2,4).join(':'); if(x.status==='naoquer') fora[ck]=1; if(x.cTel&&!tel[ck]) tel[ck]=x.cTel; });
+    D.pos=posDe(POS).filter(function(o){ o.tel=tel[o.ck]||''; return naLoja(o)&&(!fora[o.ck]||(HIST[o.doc]||[]).length); });
+    if(PERFIL==='vend'){ var mp=D.pos.filter(function(o){return meuNome(o.vend);}); if(mp.length) D.pos=mp; }
+    D.pin=PIN.filter(function(p){ return !p.arq&&LOJAS.indexOf(p.loja)>=0; }).map(function(p){ return Object.assign({tipo:'pin',doc:'T:'+p.id,cli:p.nome,vend:p.resp||p.por||'',valor:0},p); });
   }
-  function entra(o){
+  function daAba(){ return D[TAB].filter(function(o){ return (!LOJA||o.loja===LOJA)&&(!VEND||norm(o.vend)===VEND); }).map(function(o){ o.e=estado(o); return o; }); }
+  function proxHoje(o){ var u=o.e.u; return !!(u&&u.prox&&u.prox<=hojeISO()&&(o.tipo==='pin'||!FIM.test(o.e.st))); }
+  function entra(o,f){
     var e=o.e, hj=hojeISO();
-    if(FILTRO==='todos') return e.st!=='fechado'&&e.st!=='perdido';
-    if(FILTRO==='sem') return e.st==='novo';
-    if(FILTRO==='hoje') return !!(e.u&&e.u.prox&&e.u.prox<=hj&&e.st!=='fechado'&&e.st!=='perdido');
-    if(FILTRO==='venc') return e.st==='neg'&&e.u.prev&&e.u.prev<hj;
-    return e.st===FILTRO;
+    if(f==='hoje') return proxHoje(o);
+    if(o.tipo==='orc'){
+      if(f==='todos') return !FIM.test(e.st);
+      if(f==='sem') return e.st==='novo';
+      if(f==='venc') return e.st==='neg'&&e.u.prev&&e.u.prev<hj;
+      if(f==='fechado') return e.st==='fechado'||e.st==='validado';
+      return e.st===f;
+    }
+    if(o.tipo==='cart'){
+      var aberto=e.st==='novo';
+      if(f==='todos') return aberto;
+      if(f==='rec') return aberto&&o.rec;
+      if(f==='sub') return aberto&&o.grupo==='SUB';
+      return f==='feitos'&&!aberto;
+    }
+    if(o.tipo==='pos'){ if(f==='feitos') return e.st!=='novo'; return e.st==='novo'&&f==='e'+o.etapa; }
+    if(f==='todos') return true;
+    if(f==='s30'){ var d=e.u?diasDesde(e.u.em):null; return d==null||d>30; }
+    return e.st===f;
   }
-  function telLimpo(t){ var d=String(t||'').replace(/\D/g,''); return d.length>=10?d:''; }
+  function telLimpo(t){ var d=String(t||'').replace(/\D/g,''); if(d.length>11&&d.indexOf('55')===0) d=d.slice(2); return d.length>=10?d:''; }
   function cartao(o){
-    var e=o.e, u=e.u, tel=telLimpo((u&&u.cTel)||o.tel), hj=hojeISO(), h='';
-    h+='<article class="card"><div class="topo"><div><b>'+esc(o.cli||'Cliente sem nome')+'</b><div class="sub">Nº '+esc(o.doc)+(o.dias!=null?' · há '+o.dias+' dia'+(o.dias===1?'':'s'):'')+(PERFIL!=='vend'&&o.vend?' · '+esc(o.vend):'')+'</div></div>'+
-       '<div style="text-align:right"><div class="valor">'+brl(o.valor)+'</div><span class="chip s-'+e.st+'">'+esc(STATUS[e.st])+'</span></div></div>';
+    var e=o.e, u=e.u, ct=contato(o), tel=telLimpo(ct.cTel||o.tel), hj=hojeISO(), h='', sub='', dir='';
+    if(o.tipo==='orc') sub='Nº '+esc(o.doc)+(o.dias!=null?' · há '+o.dias+' dia'+(o.dias===1?'':'s'):'')+(PERFIL!=='vend'&&o.vend?' · '+esc(o.vend):'');
+    if(o.tipo==='cart') sub=(o.rec?'Recorrente sumido':o.grupo==='POS'?'Sem compra no mês':'Comprando abaixo do normal')+' · média '+brl(o.media)+'/mês · ativo em '+o.ativos+' de '+o.meses+' meses'+(PERFIL!=='vend'&&o.vend?' · '+esc(o.vend):'');
+    if(o.tipo==='pos') sub='Comprou em '+esc(dBr(o.data))+' · há '+o.dias+' dias'+(o.vend?' · '+esc(o.vend):'');
+    if(o.tipo==='pin') sub=[o.apelido?'“'+o.apelido+'”':'',(o.espec||[]).join(', '),o.cidade,PERFIL!=='vend'?o.vend:''].filter(Boolean).map(esc).join(' · ');
+    if(o.tipo==='pin') dir='<span class="chip s-'+({potencial:'neg',ativo:'fechado',inativo:'novo'}[e.st]||'novo')+'">'+esc({potencial:'Potencial',ativo:'Ativo',inativo:'Inativo'}[e.st]||e.st)+'</span>';
+    else dir='<div class="valor">'+brl(o.valor)+'</div>'+(o.tipo==='pos'&&e.st==='novo'?'<span class="chip s-neg">'+esc(ETAPAS[o.etapa][3])+'</span>':'<span class="chip s-'+COR[e.st]+'">'+esc(STATUS[e.st])+'</span>');
+    h+='<article class="card"><div class="topo"><div><b>'+esc(o.cli||'Cliente sem nome')+'</b><div class="sub">'+sub+'</div></div><div style="text-align:right">'+dir+'</div></div>';
+    if(o.tipo==='pos'){ if(o.prod) h+='<div class="ult">Levou: '+esc(o.prod)+'</div>'; if(e.st==='novo') h+='<div class="sub"><b>Roteiro:</b> '+esc(ETAPAS[o.etapa][4])+'</div>'; }
+    if(o.tipo==='cart'&&o.grupo==='SUB'&&e.st==='novo') h+='<div class="sub">Projeta '+brl(o.proj)+' neste mês: faltam '+brl(o.valor)+' para a média.</div>';
+    if(o.tipo==='pin'){ var ob=(o.obras||[]).filter(function(x){return x.status!=='Concluída';});
+      if(ob.length) h+='<div class="ult">'+ob.map(function(x){ return '<b>'+esc(x.status||'Obra')+'</b> · '+esc(x.local||'')+(x.tam?' · '+esc(x.tam):'')+(x.fim?' · até '+esc(dBr(x.fim)):''); }).join('<br>')+'</div>'; }
+    if(ct.cNome&&o.tipo!=='pin') h+='<div class="sub">Comprador: <b>'+esc(ct.cNome)+'</b>'+(ct.cCargo?' · '+esc(ct.cCargo):'')+(ct.cHora?' · melhor horário: '+esc(ct.cHora):'')+(ct.cEmail?' · '+esc(ct.cEmail):'')+'</div>';
     if(u){
-      var linha=esc(dBr(u.em))+' · '+esc(u.canal||'')+' · '+esc(u.res||'');
-      if(e.st==='neg'&&u.prev) linha+=' · fecha até <b'+(u.prev<hj?' class="alerta"':'')+'>'+esc(dBr(u.prev))+'</b>'+(u.chance&&CHANCE[u.chance]?' (chance '+CHANCE[u.chance][0].toLowerCase()+')':'');
-      if(e.st==='perdido'&&u.motivo) linha+=' · motivo: '+esc(u.motivo);
-      if(e.st==='fechado') linha+=' · o gerente confere quando faturar';
-      h+='<div class="ult">'+linha+(u.obs?'<br>“'+esc(u.obs)+'”':'')+(u.prox&&e.st!=='fechado'&&e.st!=='perdido'?'<br>Próximo contato: <b'+(u.prox<=hj?' class="alerta"':'')+'>'+esc(dBr(u.prox))+'</b>':'')+(u.ok?'':'<br><span class="alerta">Guardado só neste aparelho</span>')+'</div>';
+      var st=u.status, linha=esc(dBr(u.em))+' · '+esc(u.canal||'')+' · '+esc(u.res||'')+(o.tipo==='pin'&&u.motivo?' · '+esc(u.motivo):'');
+      if(o.tipo==='orc'){
+        if((st==='neg'||st==='prorrogado')&&u.prev) linha+=' · fecha até <b'+(u.prev<hj?' class="alerta"':'')+'>'+esc(dBr(u.prev))+'</b>'+(u.chance&&CHANCE[u.chance]?' (chance '+CHANCE[u.chance][0].toLowerCase()+')':'');
+        if(st==='fechado') linha+=' · o gerente confere quando faturar';
+        if(st==='validado') linha+=' · validado por '+esc(u.por||'');
+      }
+      if((st==='perdido'||st==='semint')&&u.motivo) linha+=' · motivo: '+esc(u.motivo);
+      h+='<div class="ult">'+linha+(u.obs?'<br>“'+esc(u.obs)+'”':'')+(u.prox&&(o.tipo==='pin'||!FIM.test(st))?'<br>Próximo contato: <b'+(u.prox<=hj?' class="alerta"':'')+'>'+esc(dBr(u.prox))+'</b>':'')+(u.ok?'':'<br><span class="alerta">Guardado só neste aparelho</span>')+'</div>';
       if(e.h.length>1) h+='<button type="button" class="mais" data-hist="'+esc(o.doc)+'" aria-expanded="'+(ABERTO[o.doc]?'true':'false')+'">'+(ABERTO[o.doc]?'Esconder':'Ver')+' os '+e.h.length+' contatos</button>'+
         (ABERTO[o.doc]?'<ul class="hist">'+e.h.slice(1).map(function(x){ return '<li>'+esc(dBr(x.em))+' · '+esc(x.canal||'')+' · '+esc(x.res||'')+' · '+esc(STATUS[x.status]||'')+(x.obs?' · “'+esc(x.obs)+'”':'')+'</li>'; }).join('')+'</ul>':'');
-    } else if(o.dias!=null&&o.dias>=2) h+='<div class="ult alerta">Nenhum contato registrado.</div>';
+    } else if(o.tipo==='orc'&&o.dias!=null&&o.dias>=2) h+='<div class="ult alerta">Nenhum contato registrado.</div>';
+    else if(o.tipo==='pin') h+='<div class="ult">Nenhuma ligação registrada.</div>';
+    if(o.tipo==='pin'&&o.ok!==1) h+='<div class="sub alerta">Ficha guardada só neste aparelho</div>';
     h+='<div class="acoes">'+
-      (tel?'<a class="btn forte" href="tel:+55'+tel+'">Ligar</a><a class="btn zap" target="_blank" rel="noopener" href="https://wa.me/55'+tel+'">WhatsApp</a>':'<span class="btn" aria-disabled="true" style="opacity:.5">Sem telefone</span><span></span>')+
-      (LER?'':'<button type="button" class="btn" data-reg="'+esc(o.doc)+'">Registrar</button>')+'</div></article>';
+      (tel?'<a class="btn forte" href="tel:+55'+tel+'">Ligar</a><a class="btn zap" target="_blank" rel="noopener" href="https://wa.me/55'+tel+'">WhatsApp</a>':'<span class="btn semtel">Sem telefone</span><span></span>')+
+      (LER?'':'<button type="button" class="btn" data-reg="'+esc(o.doc)+'">Registrar</button>')+'</div>'+
+      (o.tipo==='pin'&&!LER?'<button type="button" class="mais" data-ficha="'+esc(o.id)+'">Abrir a ficha do pintor</button>':'')+'</article>';
     return h;
   }
+  function kpi(r,v,al){ return '<div class="kpi"><span>'+r+'</span><b'+(al?' class="alerta"':'')+'>'+v+'</b></div>'; }
+  function vLista(){
+    var L=daAba(), n=function(f){ return L.filter(function(o){return entra(o,f);}).length; }, soma=function(l){ return l.reduce(function(s,o){return s+o.valor;},0); }, h='', F, vazio, sub;
+    if(TAB==='orc'){
+      var ab=L.filter(function(o){return !FIM.test(o.e.st);}), prev=0;
+      ab.forEach(function(o){ var u=o.e.u; if(u&&u.status==='neg'&&CHANCE[u.chance]) prev+=o.valor*CHANCE[u.chance][1]; });
+      sub=ab.length+' em aberto · '+mil(soma(ab));
+      h+='<div class="kpis">'+kpi('Em aberto',ab.length)+kpi('Sem contato',n('sem'),n('sem'))+kpi('Ligar hoje',n('hoje'))+kpi('Previsão',mil(prev))+'</div>';
+      F=[['todos','Em aberto'],['sem','Sem contato'],['hoje','Ligar hoje'],['neg','Em negociação'],['venc','Previsão vencida'],['prorrogado','Prorrogados'],['fechado','Fechados'],['perdido','Perdidos']];
+      vazio=['Nenhum orçamento em aberto'+(PERFIL==='vend'?' no seu nome':''),'A lista vem do Painel de Metas e é atualizada todo dia de manhã.'];
+    } else if(TAB==='cart'){
+      var lig=L.filter(function(o){return entra(o,'todos');});
+      sub=lig.length+' clientes para ligar · '+mil(soma(lig))+' por mês';
+      h+='<div class="kpis">'+kpi('Para ligar',lig.length)+kpi('Recorrentes',n('rec'),n('rec'))+kpi('Contatados',n('feitos'))+kpi('Potencial',mil(soma(lig)))+'</div>';
+      F=[['todos','Para ligar'],['rec','Recorrentes sumidos'],['sub','Abaixo do normal'],['hoje','Ligar hoje'],['feitos','Contatados']];
+      vazio=[CARTN?'Nenhum cliente da carteira no seu nome':'A carteira desta loja ainda não foi carregada','São os clientes CNPJ que compravam e estão sem compra no mês, ou comprando abaixo de 70% da própria média.'];
+    } else if(TAB==='pos'){
+      sub='Clientes CPF com compra de R$ 500 ou mais';
+      h+='<div class="kpis">'+ETAPAS.map(function(E,i){ return kpi(E[2],n('e'+i)); }).join('')+'</div>';
+      F=ETAPAS.map(function(E,i){ return ['e'+i,E[3]]; }).concat([['feitos','Feitos']]);
+      vazio=['A base do pós-venda ainda não chegou ao app','Ela é enviada todo dia de manhã pela rotina de atualização (compras CPF de R$ 500 ou mais) e depende do servidor do CRM estar ligado.'];
+    } else {
+      var obras=0; L.forEach(function(p){ obras+=(p.obras||[]).filter(function(x){return x.status!=='Concluída';}).length; });
+      sub=L.length+' pintor'+(L.length===1?'':'es')+' cadastrado'+(L.length===1?'':'s');
+      h+=(LER?'':'<button type="button" class="btn forte" id="novoPin">+ Cadastrar pintor</button>')+
+         '<div class="kpis">'+kpi('Pintores',L.length)+kpi('Ativos',n('ativo'))+kpi('Obras',obras)+kpi('Sem contato',n('s30'),n('s30'))+'</div>';
+      F=[['todos','Todos'],['hoje','Ligar hoje'],['s30','Sem contato há 30 dias'],['potencial','Potenciais'],['ativo','Ativos'],['inativo','Inativos']];
+      vazio=['Nenhum pintor cadastrado','Cadastre os pintores que atendem imobiliárias, condomínios e obras da região para acompanhar as obras e as ligações.'];
+    }
+    var f=FIL[TAB];
+    h+='<div class="filtros" role="group" aria-label="Filtrar a lista">'+F.map(function(x){ return '<button type="button" data-f="'+x[0]+'" aria-pressed="'+(f===x[0])+'">'+x[1]+' '+n(x[0])+'</button>'; }).join('')+'</div>';
+    var lista=L.filter(function(o){return entra(o,f);}).sort(function(a,b){
+      if(TAB==='pin') return String(a.cli).localeCompare(String(b.cli));
+      if(TAB==='cart') return (b.rec-a.rec)||b.valor-a.valor;
+      var pa=a.e.st==='novo'?0:1, pb=b.e.st==='novo'?0:1; return pa-pb||b.valor-a.valor; });
+    if(!D[TAB].length) h+='<div class="card"><h2>'+vazio[0]+'</h2><p class="sub">'+vazio[1]+'</p></div>';
+    else if(!lista.length) h+='<div class="card"><p class="sub" style="margin:0">Nada neste filtro.</p></div>';
+    else h+=lista.slice(0,MAXL).map(cartao).join('')+(lista.length>MAXL?'<p class="sub">Mostrando os '+MAXL+' primeiros de '+lista.length+'. Registre os contatos e a lista anda.</p>':'');
+    if(TAB==='pos'&&PERFIL==='coord'&&!LER) h+='<div class="card"><label class="campo">Atualizar a base do pós-venda (arquivo pos_venda_cpf.json)<input type="file" id="posArq" accept=".json,application/json"></label><div class="sub" id="posMsg" role="status"></div></div>';
+    h+='<p class="sub">'+(TAB==='pos'?'Guardamos só nome, telefone e o que o cliente comprou. Quem não quiser contato sai da fila.':TAB==='pin'?'Guardamos só os dados profissionais do pintor, usados para o relacionamento com a loja.':'Guardamos só o necessário para o retorno ao cliente: nome, telefone e e-mail profissional do comprador e o andamento.')+'</p>';
+    return {h:h,sub:sub};
+  }
+
+  /* ───────── visão do gerente ───────── */
+  function vGer(){
+    var h='', hj=hojeISO(), ag=agora(), seg=new Date(ag.getFullYear(),ag.getMonth(),ag.getDate()-((ag.getDay()+6)%7)), segISO=iso(seg), mes=hj.slice(0,7);
+    var daLoja=function(x){ return !LOJA||x.loja===LOJA; };
+    var orc=D.orc.filter(daLoja).map(function(o){ o.e=estado(o); return o; }), ab=orc.filter(function(o){return !FIM.test(o.e.st);});
+    var prev=0; ab.forEach(function(o){ var u=o.e.u; if(u&&u.status==='neg'&&CHANCE[u.chance]) prev+=o.valor*CHANCE[u.chance][1]; });
+    var comSt=ab.filter(function(o){return o.e.st!=='novo';}).length;
+    h+='<div class="kpis">'+kpi('Em aberto',mil(ab.reduce(function(s,o){return s+o.valor;},0)))+kpi('Com situação',(ab.length?Math.round(comSt/ab.length*100):0)+'%')+kpi('Previsão',mil(prev))+kpi('Contatos hoje',REG.filter(function(x){return daLoja(x)&&x.status!=='validado'&&iso(new Date(x.em))===hj;}).length)+'</div>';
+    h+='<p class="sub" style="margin:-4px 0 0">Previsão = soma dos orçamentos em negociação, pesada pela chance (alta 70%, média 40%, baixa 15%).</p>';
+    /* placar da semana, por quem registrou */
+    var P={}; REG.filter(function(x){ return daLoja(x)&&x.status!=='validado'&&iso(new Date(x.em))>=segISO; }).forEach(function(x){
+      var p=P[norm(x.por)]=P[norm(x.por)]||{nome:x.por,n:0,falou:0,docs:{},fechou:0}; p.n++; if(x.res==='Falei com o cliente') p.falou++;
+      if((x.tipo||'orc')==='orc') p.docs[x.doc]=1; if(x.status==='fechado'||x.status==='venda') p.fechou+=Number(x.valor)||0; });
+    var pl=Object.keys(P).map(function(k){return P[k];}).sort(function(a,b){return b.n-a.n;});
+    h+='<section class="card"><h2 style="margin:0">Placar da semana</h2><div class="sub">Desde segunda, '+dBr(segISO)+'.</div>';
+    if(!pl.length) h+='<p class="sub" style="margin:0">Nenhum contato registrado nesta semana.</p>';
+    else h+='<table class="plc"><thead><tr><th scope="col">Quem</th><th scope="col">Contatos</th><th scope="col">Falou</th><th scope="col">Orçam.</th><th scope="col">Fechou</th></tr></thead><tbody>'+
+      pl.map(function(p){ return '<tr><th scope="row">'+esc(nm(p.nome))+'</th><td>'+p.n+'</td><td>'+p.falou+'</td><td>'+Object.keys(p.docs).length+'</td><td>'+(p.fechou?mil(p.fechou):'—')+'</td></tr>'; }).join('')+'</tbody></table>';
+    h+='</section>';
+    /* para agir */
+    var sem=ab.filter(function(o){return o.e.st==='novo'&&o.dias!=null&&o.dias>=2;}), venc=ab.filter(function(o){return o.e.st==='neg'&&o.e.u.prev&&o.e.u.prev<hj;});
+    var val=orc.filter(function(o){return o.e.st==='fechado';}), tres=ab.filter(function(o){ var x=o.e.h; return x.length>=3&&x.slice(0,3).every(function(r){return r.res==='Não atendeu';}); });
+    var cart=D.cart.filter(daLoja).map(function(o){o.e=estado(o);return o;}).filter(function(o){return o.rec&&o.e.st==='novo';});
+    var pin30=D.pin.filter(daLoja).filter(function(p){ var u=(HIST[p.doc]||[])[0], d=u?diasDesde(u.em):null; return d==null||d>30; });
+    h+='<section class="card"><h2 style="margin:0">Para você agir</h2>';
+    var item=function(cls,txt,aba,fil){ return '<button type="button" class="agir '+cls+'" data-ir="'+aba+'" data-fil="'+fil+'">'+txt+'<span aria-hidden="true">→</span></button>'; }, tem=0;
+    if(sem.length){ tem++; h+=item('r','<span><b>'+sem.length+'</b> orçamento'+(sem.length===1?'':'s')+' sem contato há 2 dias ou mais ('+mil(sem.reduce(function(s,o){return s+o.valor;},0))+')</span>','orc','sem'); }
+    if(venc.length){ tem++; h+=item('a','<span><b>'+venc.length+'</b> previs'+(venc.length===1?'ão vencida':'ões vencidas')+' sem atualização</span>','orc','venc'); }
+    if(tres.length){ tem++; h+='<div class="agir a"><span><b>'+tres.length+'</b> cliente'+(tres.length===1?'':'s')+' com 3 “não atendeu” seguidos: '+esc(tres.slice(0,3).map(function(o){return o.cli;}).join('; '))+'</span></div>'; }
+    if(cart.length){ tem++; h+=item('a','<span><b>'+cart.length+'</b> cliente'+(cart.length===1?' recorrente sumido':'s recorrentes sumidos')+' sem contato ('+mil(cart.reduce(function(s,o){return s+o.valor;},0))+' por mês)</span>','cart','rec'); }
+    if(pin30.length){ tem++; h+=item('a','<span><b>'+pin30.length+'</b> pintor'+(pin30.length===1?'':'es')+' sem contato há mais de 30 dias</span>','pin','s30'); }
+    val.forEach(function(o){ tem++; h+='<div class="agir v"><span><b>'+esc(o.cli)+'</b> marcado “Fechado” por '+esc(nm(o.e.u.por))+' · '+brl(o.valor)+' · Nº '+esc(o.doc)+'<br>Confira no Autcom se faturou.</span>'+(LER?'':'<button type="button" class="btn" data-validar="'+esc(o.doc)+'">Validar</button>')+'</div>'; });
+    if(!tem) h+='<p class="sub" style="margin:0">Nada pendente agora.</p>';
+    h+='</section>';
+    /* por que perdemos (mês) */
+    var M={}, tot=0; orc.forEach(function(o){ var u=o.e.u; if(u&&u.status==='perdido'&&String(u.em).slice(0,7)===mes){ M[u.motivo||'Outro']=(M[u.motivo||'Outro']||0)+o.valor; tot+=o.valor; } });
+    var ms=Object.keys(M).sort(function(a,b){return M[b]-M[a];});
+    h+='<section class="card"><h2 style="margin:0">Por que perdemos (mês)</h2>'+(ms.length?ms.map(function(k){ return '<div class="mot"><span>'+esc(k)+'</span><div class="barra"><i style="width:'+Math.round(M[k]/M[ms[0]]*100)+'%"></i></div><b>'+mil(M[k])+'</b></div>'; }).join('')+'<div class="sub">Total perdido no mês: '+brl(tot)+'</div>':'<p class="sub" style="margin:0">Nenhum orçamento marcado como perdido neste mês.</p>')+'</section>';
+    if(SERVIDOR===false) h+='<p class="sub">Os contatos dos vendedores só aparecem aqui depois que o servidor do CRM estiver ligado.</p>';
+    return {h:h,sub:'Visão do gerente · semana de '+dBr(segISO)};
+  }
+
   function montar(){
-    var L=visiveis(), ab=L.filter(function(o){return o.e.st!=='fechado'&&o.e.st!=='perdido';}), hj=hojeISO();
-    var sem=ab.filter(function(o){return o.e.st==='novo';}), prev=0;
-    ab.forEach(function(o){ var u=o.e.u; if(o.e.st==='neg'&&u.chance&&CHANCE[u.chance]) prev+=o.valor*CHANCE[u.chance][1]; });
-    var cont=function(f){ var a=FILTRO; FILTRO=f; var n=L.filter(entra).length; FILTRO=a; return n; };
-    $('sub').textContent=(PERFIL==='vend'?nm(S.nome):'Loja '+(LOJA||LOJAS.join(', ')))+' · '+ab.length+' em aberto · '+mil(ab.reduce(function(s,o){return s+o.valor;},0));
-    var h='';
+    var abas=ABAS.filter(function(a){ return a[0]!=='ger'||PERFIL!=='vend'; }), v=TAB==='ger'?vGer():vLista(), h='';
+    h+='<nav class="abas" role="tablist" aria-label="Áreas do CRM">'+abas.map(function(a){ return '<button type="button" role="tab" data-aba="'+a[0]+'" aria-selected="'+(TAB===a[0])+'">'+a[1]+'</button>'; }).join('')+'</nav>';
     if(LER) h+='<div class="aviso">Modo “Ver como”: só leitura.</div>';
     if(SERVIDOR===false) h+='<div class="aviso" role="status">Os registros estão ficando guardados <b>só neste aparelho</b> por enquanto. Eles sobem sozinhos quando o servidor do CRM estiver ligado.</div>';
-    if(LOJAS.length>1||PERFIL!=='vend'){
-      var vs={}; ORCS.forEach(function(o){ if(!LOJA||o.loja===LOJA) vs[norm(o.vend)]=o.vend; });
+    if(LOJAS.length>1||(PERFIL!=='vend'&&TAB!=='ger')){
+      var vs={}; (D[TAB]||[]).forEach(function(o){ if((!LOJA||o.loja===LOJA)&&o.vend) vs[norm(o.vend)]=o.vend; });
       h+='<div style="display:flex;flex-wrap:wrap;gap:8px">'+
         (LOJAS.length>1?'<label class="sub">Loja <select class="sel" id="selLoja">'+LOJAS.map(function(c){return '<option'+(c===LOJA?' selected':'')+'>'+esc(c)+'</option>';}).join('')+'</select></label>':'')+
-        (PERFIL!=='vend'?'<label class="sub">Vendedor <select class="sel" id="selVend"><option value="">Todos</option>'+Object.keys(vs).sort().map(function(k){return '<option value="'+esc(k)+'"'+(k===VEND?' selected':'')+'>'+esc(vs[k])+'</option>';}).join('')+'</select></label>':'')+'</div>';
+        (PERFIL!=='vend'&&TAB!=='ger'?'<label class="sub">Vendedor <select class="sel" id="selVend"><option value="">Todos</option>'+Object.keys(vs).sort().map(function(k){return '<option value="'+esc(k)+'"'+(k===VEND?' selected':'')+'>'+esc(vs[k])+'</option>';}).join('')+'</select></label>':'')+'</div>';
     }
-    h+='<div class="kpis"><div class="kpi"><span>Em aberto</span><b>'+ab.length+'</b></div><div class="kpi"><span>Sem contato</span><b'+(sem.length?' class="alerta"':'')+'>'+sem.length+'</b></div>'+
-       '<div class="kpi"><span>Ligar hoje</span><b>'+cont('hoje')+'</b></div><div class="kpi"><span>Previsão</span><b>'+mil(prev)+'</b></div></div>';
-    var F=[['todos','Em aberto'],['sem','Sem contato'],['hoje','Ligar hoje'],['neg','Em negociação'],['venc','Previsão vencida'],['prorrogado','Prorrogados'],['fechado','Fechados'],['perdido','Perdidos']];
-    h+='<div class="filtros" role="group" aria-label="Filtrar orçamentos">'+F.map(function(f){ return '<button type="button" data-f="'+f[0]+'" aria-pressed="'+(FILTRO===f[0])+'">'+f[1]+' '+cont(f[0])+'</button>'; }).join('')+'</div>';
-    var lista=L.filter(entra).sort(function(a,b){ var pa=a.e.st==='novo'?0:1, pb=b.e.st==='novo'?0:1; return pa-pb||b.valor-a.valor; });
-    if(!ORCS.length) h+='<div class="card"><h2>Nenhum orçamento em aberto'+(PERFIL==='vend'?' no seu nome':'')+'</h2><p class="sub">A lista vem do Painel de Metas e é atualizada todo dia de manhã.</p></div>';
-    else if(!lista.length) h+='<div class="card"><p class="sub" style="margin:0">Nada neste filtro.</p></div>';
-    else h+=lista.map(cartao).join('');
-    h+='<p class="sub">Guardamos só o necessário para o retorno ao cliente: nome, telefone, e-mail do comprador e o andamento do orçamento.</p>';
-    $('raiz').innerHTML=h;
+    $('sub').textContent=(PERFIL==='vend'?nm(S.nome):'Loja '+(LOJA||LOJAS.join(', ')))+' · '+v.sub;
+    $('raiz').innerHTML=h+v.h;
   }
+  function achar(doc){ for(var k in D){ for(var i=0;i<D[k].length;i++) if(D[k][i].doc===doc) return D[k][i]; } return null; }
   $('raiz').addEventListener('click',function(ev){
-    var b=ev.target.closest('button'); if(!b) return;
-    if(b.dataset.f){ FILTRO=b.dataset.f; montar(); }
-    else if(b.dataset.hist){ ABERTO[b.dataset.hist]=!ABERTO[b.dataset.hist]; montar(); }
-    else if(b.dataset.reg){ abrirRegistro(b.dataset.reg); }
+    var b=ev.target.closest('button'); if(!b) return; var d=b.dataset;
+    if(d.aba){ TAB=d.aba; VEND=''; montar(); window.scrollTo(0,0); }
+    else if(d.f){ FIL[TAB]=d.f; montar(); }
+    else if(d.ir){ TAB=d.ir; FIL[TAB]=d.fil; VEND=''; montar(); window.scrollTo(0,0); }
+    else if(d.hist){ ABERTO[d.hist]=!ABERTO[d.hist]; montar(); }
+    else if(d.reg){ abrirRegistro(d.reg); }
+    else if(d.ficha){ abrirPintor(d.ficha); }
+    else if(b.id==='novoPin'){ abrirPintor(null); }
+    else if(d.validar){ var o=achar(d.validar); if(!o) return; b.disabled=true;
+      gravarReg({id:novoId('c'),em:new Date().toISOString(),por:S.nome,tipo:'orc',loja:o.loja,doc:o.doc,cli:o.cli,vend:o.vend,valor:o.valor,canal:'',res:'Venda conferida',status:'validado'},'Venda validada.').then(montar); }
   });
   $('raiz').addEventListener('change',function(ev){
     if(ev.target.id==='selLoja'){ LOJA=ev.target.value; VEND=''; montar(); }
     if(ev.target.id==='selVend'){ VEND=ev.target.value; montar(); }
+    if(ev.target.id==='posArq'&&ev.target.files[0]) subirPos(ev.target.files[0]);
   });
 
+  /* ───────── base do pós-venda (coordenação / rotina diária) ───────── */
+  function subirPos(arq){
+    var msg=$('posMsg'); msg.textContent='Lendo o arquivo…';
+    arq.text().then(function(t){
+      var j=JSON.parse(t), L=(j.linhas||j||[]).filter(function(r){ return r&&r.data&&r.loja&&r.cli; }); if(!L.length) throw new Error('O arquivo não tem linhas de compra.');
+      var i=0, novas=0;
+      function lote(){ if(i>=L.length) return Promise.resolve();
+        msg.textContent='Enviando '+Math.min(i+400,L.length)+' de '+L.length+'…';
+        return STDados.chamar('crmPosSubir',{linhas:L.slice(i,i+400)},true).then(function(r){ if(!r||!r.ok) throw new Error((r&&r.erro)||'O servidor do CRM ainda não aceita a base do pós-venda.'); novas+=r.novas||0; i+=400; return lote(); }); }
+      return lote().then(function(){ return sincronizar(); }).then(function(){ montarPos(); montar(); $('posMsg').textContent='Base enviada: '+L.length+' compras lidas, '+novas+' novas. POS_OK'; });
+    }).catch(function(e){ msg.textContent='Não consegui enviar: '+((e&&e.message)||e)+' POS_ERRO'; msg.className='sub alerta'; });
+  }
+
   /* ───────── registrar contato ───────── */
-  function ops(nome,lista,marcado){ return '<div class="ops">'+lista.map(function(x){ var v=Array.isArray(x)?x[0]:x, t=Array.isArray(x)?x[1]:x; return '<label><input type="radio" name="'+nome+'" value="'+esc(v)+'"'+(v===marcado?' checked':'')+'><span>'+esc(t)+'</span></label>'; }).join('')+'</div>'; }
+  function ops(nome,lista,marcado,multi){ return '<div class="ops">'+lista.map(function(x){ var v=Array.isArray(x)?x[0]:x, t=Array.isArray(x)?x[1]:x, on=multi?(marcado||[]).indexOf(v)>=0:v===marcado;
+    return '<label><input type="'+(multi?'checkbox':'radio')+'" name="'+nome+'" value="'+esc(v)+'"'+(on?' checked':'')+'><span>'+esc(t)+'</span></label>'; }).join('')+'</div>'; }
+  function campo(rot,nome,val,tipo,extra){ return '<label class="campo">'+rot+'<input type="'+(tipo||'text')+'" name="'+nome+'" autocomplete="off" value="'+esc(val||'')+'" '+(extra||'maxlength="80"')+'></label>'; }
   function abrirRegistro(doc){
-    var o=ORCS.filter(function(x){return x.doc===doc;})[0]; if(!o) return;
-    var u=estado(o).u||{}, d=$('dlg');
+    var o=achar(doc); if(!o) return;
+    var T=TIPO[o.tipo], u=(HIST[o.doc]||[])[0]||{}, ct=contato(o), d=$('dlg'), hj=hojeISO();
+    var stIni=o.tipo==='orc'&&u.status&&/^(neg|prorrogado)$/.test(u.status)?u.status:T.def;
     d.innerHTML='<form class="reg" method="dialog" novalidate>'+
-      '<div><h2 id="dlgTit" style="margin:0">Registrar contato</h2><div class="sub">'+esc(o.cli)+' · Nº '+esc(o.doc)+' · '+brl(o.valor)+'</div></div>'+
+      '<div><h2 id="dlgTit" style="margin:0">Registrar contato</h2><div class="sub">'+esc(o.cli)+(o.tipo==='orc'?' · Nº '+esc(o.doc)+' · '+brl(o.valor):o.tipo==='pos'?' · '+esc(ETAPAS[o.etapa][3])+' · compra de '+esc(dBr(o.data)):'')+'</div></div>'+
       '<fieldset><legend>Como foi o contato?</legend>'+ops('canal',CANAIS,'Ligação')+'</fieldset>'+
       '<fieldset><legend>Resultado</legend>'+ops('res',RESULT,'Falei com o cliente')+'</fieldset>'+
-      '<fieldset><legend>Situação do orçamento</legend>'+ops('status',[['neg','Em negociação'],['fechado','Fechado'],['perdido','Perdido'],['prorrogado','Prorrogado']],u.status&&u.status!=='novo'?u.status:'neg')+'</fieldset>'+
-      '<div id="bNeg" class="duas"><label class="campo">Previsão de fechamento<input type="date" name="prev" min="'+hojeISO()+'" value="'+esc(u.prev&&u.prev>=hojeISO()?u.prev:'')+'"></label>'+
+      (o.tipo==='pin'?'<label class="campo">Assunto<select name="motivo">'+T.assuntos.map(function(m){return '<option>'+esc(m)+'</option>';}).join('')+'</select></label><input type="hidden" name="status" value="contato">'
+        :'<fieldset><legend>'+(o.tipo==='orc'?'Situação do orçamento':'Como ficou?')+'</legend>'+ops('status',T.sit,stIni)+'</fieldset>')+
+      (o.tipo==='orc'?'<div id="bNeg" class="duas"><label class="campo">Previsão de fechamento<input type="date" name="prev" min="'+hj+'" value="'+esc(u.prev&&u.prev>=hj?u.prev:'')+'"></label>'+
         '<fieldset><legend>Chance de fechar</legend>'+ops('chance',[['alta','Alta'],['media','Média'],['baixa','Baixa']],u.chance||'media')+'</fieldset></div>'+
-      '<label id="bPer" class="campo" hidden>Por que perdemos?<select name="motivo"><option value="">Escolha o motivo</option>'+MOTIVOS.map(function(m){return '<option>'+esc(m)+'</option>';}).join('')+'</select></label>'+
-      '<div id="bFec" class="aviso" hidden>Marque “Fechado” quando o cliente confirmar o pedido. O gerente confere quando a venda for faturada.</div>'+
+        '<div id="bFec" class="aviso" hidden>Marque “Fechado” quando o cliente confirmar o pedido. O gerente confere quando a venda for faturada.</div>':'')+
+      (T.motivos?'<label id="bPer" class="campo" hidden>'+(o.tipo==='orc'?'Por que perdemos?':'Por quê? (opcional)')+'<select name="motivo"><option value="">Escolha o motivo</option>'+T.motivos.map(function(m){return '<option>'+esc(m)+'</option>';}).join('')+'</select></label>':'')+
+      (o.tipo==='pos'?'<div id="bNao" class="aviso" hidden>O cliente sai da fila do pós-venda e não aparece mais nas próximas etapas.</div>'+campo('WhatsApp do cliente'+(ct.cTel?'':' (preencha na 1ª vez)'),'cTel',ct.cTel,'tel','inputmode="tel" maxlength="20" placeholder="(21) 9____-____"'):'')+
       '<label class="campo">O que o cliente disse (opcional)<textarea name="obs" rows="2" maxlength="300"></textarea></label>'+
-      '<label id="bProx" class="campo">Próximo contato<input type="date" name="prox" min="'+hojeISO()+'"></label>'+
-      '<details><summary class="rot" style="cursor:pointer;min-height:32px">Contato do comprador'+(u.cNome||u.cTel?' (já preenchido)':'')+'</summary><div class="duas" style="margin-top:6px">'+
-        '<label class="campo">Nome<input type="text" name="cNome" autocomplete="off" maxlength="60" value="'+esc(u.cNome||'')+'"></label>'+
-        '<label class="campo">Telefone / WhatsApp<input type="tel" name="cTel" inputmode="tel" autocomplete="off" maxlength="20" value="'+esc(u.cTel||o.tel||'')+'"></label>'+
-        '<label class="campo">E-mail<input type="email" name="cEmail" autocomplete="off" maxlength="80" value="'+esc(u.cEmail||'')+'"></label></div></details>'+
+      '<label id="bProx" class="campo">Próximo contato<input type="date" name="prox" min="'+hj+'"></label>'+
+      (o.tipo==='orc'||o.tipo==='cart'?'<details'+(o.tipo==='cart'&&!ct.cTel?' open':'')+'><summary class="rot" style="cursor:pointer;min-height:32px">Contato do comprador'+(ct.cNome||ct.cTel?' (já preenchido)':'')+'</summary><div class="duas" style="margin-top:6px">'+
+        campo('Nome','cNome',ct.cNome)+campo('Cargo','cCargo',ct.cCargo)+campo('Telefone / WhatsApp','cTel',ct.cTel||o.tel,'tel','inputmode="tel" maxlength="20"')+campo('E-mail','cEmail',ct.cEmail,'email')+campo('Melhor horário','cHora',ct.cHora)+'</div></details>':'')+
       '<div class="erro" id="regErro" role="alert"></div>'+
       '<div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="btn" id="regCanc">Cancelar</button><button type="submit" class="btn forte" id="regOk">Salvar</button></div></form>';
-    var f=d.querySelector('form');
-    function ajusta(){ var st=f.status.value; $('bNeg').hidden=st!=='neg'&&st!=='prorrogado'; $('bPer').hidden=st!=='perdido'; $('bFec').hidden=st!=='fechado'; $('bProx').hidden=st==='fechado'||st==='perdido'; }
-    f.addEventListener('change',function(){ $('regErro').textContent=''; ajusta(); }); ajusta();
-    $('regCanc').onclick=function(){ d.close(); };
+    var f=d.querySelector('form'), el=function(id){ return d.querySelector('#'+id); };
+    function ajusta(){ var st=f.status.value;
+      if(el('bNeg')) el('bNeg').hidden=st!=='neg'&&st!=='prorrogado'; if(el('bFec')) el('bFec').hidden=st!=='fechado';
+      if(el('bPer')) el('bPer').hidden=st!=='perdido'&&st!=='semint'; if(el('bNao')) el('bNao').hidden=st!=='naoquer';
+      el('bProx').hidden=o.tipo!=='pin'&&FIM.test(st)&&st!=='semint'; }
+    f.addEventListener('change',function(){ el('regErro').textContent=''; ajusta(); }); ajusta();
+    el('regCanc').onclick=function(){ d.close(); };
     f.onsubmit=function(ev){
       ev.preventDefault();
-      var st=f.status.value, er='';
-      if((st==='neg'||st==='prorrogado')&&!f.prev.value) er='Informe a previsão de fechamento.';
-      else if(st==='perdido'&&!f.motivo.value) er='Escolha o motivo da perda.';
-      else if(f.cEmail.value&&!/^\S+@\S+\.\S+$/.test(f.cEmail.value.trim())) er='Confira o e-mail do comprador.';
-      if(er){ $('regErro').textContent=er; return; }
-      var ativo=st==='neg'||st==='prorrogado';
-      var r={id:'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),em:new Date().toISOString(),por:S.nome,loja:o.loja,doc:o.doc,cli:o.cli,vend:o.vend,valor:o.valor,
-        canal:f.canal.value,res:f.res.value,status:st,prev:ativo?f.prev.value:'',chance:ativo?f.chance.value:'',motivo:st==='perdido'?f.motivo.value:'',
-        obs:f.obs.value.trim(),prox:ativo?f.prox.value:'',cNome:f.cNome.value.trim(),cTel:f.cTel.value.trim(),cEmail:f.cEmail.value.trim()};
-      var loc=lerLocal(); loc.push(r); gravarLocal(loc); REG=juntar(REG,[r]);
-      $('regOk').disabled=true; $('regOk').textContent='Salvando…';
-      STDados.chamar('crmSalvar',{regs:[r]},true).then(function(j){
-        if(j&&j.ok){ SERVIDOR=true; var l=lerLocal(); l.concat(REG).forEach(function(x){ if(x.id===r.id) x.ok=1; }); gravarLocal(l); toast('Contato registrado.'); }
-        else { SERVIDOR=false; toast('Guardado neste aparelho. Sobe quando o servidor estiver ligado.'); }
-      }).catch(function(){ SERVIDOR=false; toast('Sem conexão: guardado neste aparelho.'); }).then(function(){ d.close(); montar(); });
+      var st=f.status.value, er='', ativo=st==='neg'||st==='prorrogado', val=function(n){ return f[n]?String(f[n].value||'').trim():''; };
+      if(o.tipo==='orc'&&ativo&&!val('prev')) er='Informe a previsão de fechamento.';
+      else if(st==='perdido'&&!val('motivo')) er='Escolha o motivo da perda.';
+      else if(val('cEmail')&&!/^\S+@\S+\.\S+$/.test(val('cEmail'))) er='Confira o e-mail do comprador.';
+      else if(val('cTel')&&!telLimpo(val('cTel'))) er='Confira o telefone: DDD + número.';
+      if(er){ el('regErro').textContent=er; return; }
+      var r={id:novoId('c'),em:new Date().toISOString(),por:S.nome,tipo:o.tipo,loja:o.loja,doc:o.doc,cli:o.cli,vend:o.vend,valor:o.valor,
+        canal:f.canal.value,res:f.res.value,status:st,prev:ativo?val('prev'):'',chance:ativo?f.chance.value:'',motivo:(st==='perdido'||st==='semint'||o.tipo==='pin')?val('motivo'):'',
+        obs:val('obs'),prox:el('bProx').hidden?'':val('prox'),etapa:o.tipo==='pos'?String(ETAPAS[o.etapa][0]):'',cNome:val('cNome'),cCargo:val('cCargo'),cTel:val('cTel'),cEmail:val('cEmail'),cHora:val('cHora')};
+      el('regOk').disabled=true; el('regOk').textContent='Salvando…';
+      gravarReg(r).then(function(){ d.close(); if(o.tipo==='pos') montarPos(); montar(); });
+    };
+    d.showModal();
+  }
+  function montarPos(){ var o=D.orc, c=D.cart, k=CARTN; montarDados({O:{},K:{}},null); D.orc=o; D.cart=c; CARTN=k; }
+
+  /* ───────── ficha do pintor ───────── */
+  var OBRA_ST=['Prospecção','Orçada','Comprando','Concluída'];
+  function obraHtml(x,i){ x=x||{};
+    return '<fieldset class="obra" data-obra="'+esc(x.id||novoId('o'))+'"><legend>Obra '+(i+1)+'</legend><div class="duas">'+
+      campo('Endereço ou bairro','oLocal',x.local)+
+      '<label class="campo">Tipo<select name="oTipo">'+['Residencial','Predial / condomínio','Comercial','Outro'].map(function(t){return '<option'+(t===x.tipo?' selected':'')+'>'+t+'</option>';}).join('')+'</select></label>'+
+      campo('Tamanho (m² ou litros)','oTam',x.tam,'text','maxlength="30"')+campo('Previsão de término','oFim',x.fim,'date','')+
+      '<label class="campo">Quem compra o material<select name="oCompra">'+['Pintor','Dono da obra'].map(function(t){return '<option'+(t===x.compra?' selected':'')+'>'+t+'</option>';}).join('')+'</select></label>'+
+      '<label class="campo">Situação<select name="oStatus">'+OBRA_ST.map(function(t){return '<option'+(t===x.status?' selected':'')+'>'+t+'</option>';}).join('')+'</select></label></div></fieldset>'; }
+  function abrirPintor(id){
+    var p=id?PIN.filter(function(x){return x.id===id;})[0]:null, d=$('dlg'); p=p||{};
+    d.innerHTML='<form class="reg" method="dialog" novalidate>'+
+      '<h2 id="dlgTit" style="margin:0">'+(p.id?'Ficha do pintor':'Cadastrar pintor')+'</h2>'+
+      '<div class="duas">'+campo('Nome','nome',p.nome,'text','maxlength="60" required')+campo('Apelido','apelido',p.apelido,'text','maxlength="30"')+
+        campo('WhatsApp','tel',p.tel,'tel','inputmode="tel" maxlength="20"')+campo('Cidade / bairro onde atua','cidade',p.cidade)+'</div>'+
+      '<fieldset><legend>Especialidade</legend>'+ops('espec',ESPEC,p.espec||[],true)+'</fieldset>'+
+      '<div class="duas">'+campo('Tamanho da equipe','equipe',p.equipe,'number','min="1" max="99" inputmode="numeric"')+campo('Marcas que usa','marcas',p.marcas)+
+        '<label class="campo">Como chegou<select name="origem">'+['Balcão','Indicação','Evento','Visita em obra','Outro'].map(function(t){return '<option'+(t===p.origem?' selected':'')+'>'+t+'</option>';}).join('')+'</select></label>'+
+        campo('Aniversário (dia/mês)','aniv',p.aniv,'text','maxlength="5" placeholder="dd/mm" inputmode="numeric"')+'</div>'+
+      '<fieldset><legend>Situação</legend>'+ops('status',[['potencial','Potencial'],['ativo','Ativo (comprou nos últimos 60 dias)'],['inativo','Inativo']],p.status||'potencial')+'</fieldset>'+
+      '<label class="marca"><input type="checkbox" name="programa"'+(p.programa?' checked':'')+'> Já está no programa Pintor Cadastrado</label>'+
+      campo('Clientes que ele indicou (opcional)','indic',p.indic,'text','maxlength="200"')+
+      '<label class="campo">Observações<textarea name="obs" rows="2" maxlength="300">'+esc(p.obs||'')+'</textarea></label>'+
+      '<div id="obras">'+(p.obras||[]).map(obraHtml).join('')+'</div>'+
+      '<button type="button" class="btn" id="maisObra">+ Obra</button>'+
+      '<div class="erro" id="regErro" role="alert"></div>'+
+      '<div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="btn" id="regCanc">Cancelar</button><button type="submit" class="btn forte" id="regOk">Salvar</button></div></form>';
+    var f=d.querySelector('form'), el=function(i){ return d.querySelector('#'+i); };
+    el('maisObra').onclick=function(){ el('obras').insertAdjacentHTML('beforeend',obraHtml(null,el('obras').children.length)); var n=el('obras').lastElementChild; n.querySelector('input').focus(); };
+    el('regCanc').onclick=function(){ d.close(); };
+    f.onsubmit=function(ev){
+      ev.preventDefault();
+      var v=function(n){ return String(f[n].value||'').trim(); }, er='';
+      if(!v('nome')) er='Informe o nome do pintor.';
+      else if(v('tel')&&!telLimpo(v('tel'))) er='Confira o WhatsApp: DDD + número.';
+      else if(v('aniv')&&!/^\d{1,2}\/\d{1,2}$/.test(v('aniv'))) er='Aniversário no formato dia/mês, como 05/03.';
+      if(er){ el('regErro').textContent=er; return; }
+      var obras=[].map.call(el('obras').querySelectorAll('.obra'),function(b){ var q=function(n){ return String(b.querySelector('[name='+n+']').value||'').trim(); };
+        return {id:b.dataset.obra,local:q('oLocal'),tipo:q('oTipo'),tam:q('oTam'),fim:q('oFim'),compra:q('oCompra'),status:q('oStatus')}; }).filter(function(x){return x.local;});
+      var r={id:p.id||novoId('p'),criado:p.criado||new Date().toISOString(),atual:new Date().toISOString(),por:p.por||S.nome,resp:p.resp||(PERFIL==='vend'?(OFICIAL?nm(OFICIAL):S.nome):S.nome),loja:p.loja||LOJA,
+        nome:v('nome'),apelido:v('apelido'),tel:v('tel'),cidade:v('cidade'),espec:[].filter.call(f.querySelectorAll('[name=espec]'),function(c){return c.checked;}).map(function(c){return c.value;}),
+        equipe:v('equipe'),marcas:v('marcas'),origem:v('origem'),aniv:v('aniv'),status:f.status.value,programa:f.programa.checked,indic:v('indic'),obs:v('obs'),obras:obras};
+      var loc=lerLocal('pin').filter(function(x){return x.id!==r.id;}); loc.push(r); gravarLocal('pin',loc); PIN=juntar(PIN,[r],'atual');
+      el('regOk').disabled=true; el('regOk').textContent='Salvando…';
+      STDados.chamar('crmPintorSalvar',{pintores:[r]},true).then(function(j){
+        if(j&&j.ok){ SERVIDOR=true; var l=lerLocal('pin'); l.concat(PIN).forEach(function(x){ if(x.id===r.id) x.ok=1; }); gravarLocal('pin',l); toast('Ficha salva.'); }
+        else { SERVIDOR=false; toast('Guardada neste aparelho. Sobe quando o servidor estiver ligado.'); }
+      }).catch(function(){ SERVIDOR=false; toast('Sem conexão: guardada neste aparelho.'); }).then(function(){ d.close(); montarPos(); montar(); });
     };
     d.showModal();
   }
@@ -308,15 +577,16 @@ legend,.rot{font-size:12px;font-weight:700;color:var(--muted);padding:0;margin-b
     if(!S||!S.nome) return falha('Entre no Só Tintas App primeiro','O CRM abre com o seu nome e PIN do app.');
     STDados.cracha().then(function(){
       C=STDados.crachaGuardado(); LER=!!(STDados.visao&&STDados.visao());
-      PERFIL=C.perfil||''; var todas=(C.lojas||[]).map(code3).filter(Boolean), lider=/^(coord|anl|sup)$/.test(PERFIL);
-      LOJAS=lider?PILOTO.slice():todas.filter(function(c){return PILOTO.indexOf(c)>=0;});
+      PERFIL=C.perfil||''; LIDER=/^(coord|anl|sup)$/.test(PERFIL);
+      var todas=(C.lojas||[]).map(code3).filter(Boolean);
+      LOJAS=LIDER?PILOTO.slice():todas.filter(function(c){return PILOTO.indexOf(c)>=0;});
       if(!LOJAS.length) return falha('CRM em piloto','Por enquanto o CRM está em teste na loja 002. Em breve chega à sua loja.');
       LOJA=LOJAS[0];
-      return Promise.all([carregarOrcs(),sincronizar()]).then(function(r){
-        ORCS=(r[0]||[]).filter(function(o){ return LOJAS.indexOf(o.loja)>=0; });
-        /* orçamento que já saiu da lista do Painel mas tem registro: continua visível em Fechados/Perdidos */
-        var tem={}; ORCS.forEach(function(o){tem[o.doc]=1;});
-        REG.forEach(function(x){ if(x.doc&&!tem[x.doc]&&LOJAS.indexOf(x.loja)>=0&&(x.status==='fechado'||x.status==='perdido')){ tem[x.doc]=1; ORCS.push({loja:x.loja,vend:x.vend||'',doc:String(x.doc),cli:x.cli||'',tel:x.cTel||'',valor:Number(x.valor)||0,dias:null}); } });
+      var aba=(new URLSearchParams(location.search).get('aba')||''); if(D[aba]||aba==='ger') TAB=aba;
+      return Promise.all([doPainel(),PERFIL==='vend'?daSemana():null,sincronizar()]).then(function(r){
+        OFICIAL=(r[1]&&r[1].nome)||''; montarDados(r[0],r[1]);
+        if(TAB==='ger'&&PERFIL==='vend') TAB='orc';
+        var e0=D.pos.filter(function(o){return !(HIST[o.doc]||[]).length;}); for(var i=0;i<ETAPAS.length;i++){ if(e0.some(function(o){return o.etapa===i;})){ FIL.pos='e'+i; break; } }
         montar();
       });
     }).catch(function(e){ falha('Não consegui abrir',(e&&e.message)||String(e)); });

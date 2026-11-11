@@ -1,12 +1,13 @@
 /* ============================================================================
-   CRM DE VENDAS — registros de contato dos orçamentos (etapa 1)
-   Só Tintas App · novembro/2026 (app sw ast-v162, tela crm.html)
+   CRM DE VENDAS — servidor (orçamentos, carteira, pós-venda CPF e pintores)
+   Só Tintas App · novembro/2026 (app sw ast-v163, tela crm.html)
 
    Para o SERVIDOR DE DADOS ST (o mesmo que responde 'entrar', 'semana',
    'pdi'...). A tela do CRM já está no app. Enquanto este arquivo não estiver
-   no servidor, nada quebra: cada registro fica guardado no aparelho de quem
-   registrou e sobe sozinho na primeira vez que a tela abrir com o servidor
-   respondendo.
+   no servidor, nada quebra: cada registro e cada ficha de pintor ficam
+   guardados no aparelho de quem registrou e sobem sozinhos na primeira vez
+   que a tela abrir com o servidor respondendo. Só o pós-venda CPF depende do
+   servidor para aparecer (a base de compras fica aqui).
 
    COMO USAR
    1. No Apps Script do Servidor de Dados, clique no + ao lado de "Arquivos"
@@ -20,32 +21,44 @@
       (o nome, ou um objeto com nome/perfil/lojas), passe-a junto:
          if (/^crm/.test(d.acao)) return crmAcao_(d, quem);
    3. Implantar → Gerenciar implantações → lápis → Nova versão.
-   4. Abra o CRM no app e registre um contato. A aba CRM_CONTATOS é criada
-      sozinha no primeiro registro.
+   4. Abra o CRM no app e registre um contato. As abas são criadas sozinhas
+      no primeiro uso.
 
-   O QUE ELE GRAVA (uma linha por contato; nunca apaga nem altera linha):
-   ID · QUANDO · POR · LOJA · DOC · CLIENTE · VENDEDOR · VALOR · CANAL ·
-   RESULTADO · STATUS · PREVISAO · CHANCE · MOTIVO · OBS · PROXIMO ·
-   COMPRADOR · TELEFONE · EMAIL
+   AÇÕES
+   crmSalvar        grava contatos (aba CRM_CONTATOS; nunca apaga nem altera)
+   crmPintorSalvar  cria ou atualiza a ficha do pintor (aba CRM_PINTORES)
+   crmPosSubir      recebe a base de compras CPF de R$ 500+ (aba CRM_POSVENDA;
+                    só liderança; a rotina diária envia pelo próprio app)
+   crmListar        devolve contatos (120 dias), pintores e as compras CPF que
+                    estão nas janelas do pós-venda (3, 15, 45 e 180 dias)
 
    QUEM VÊ O QUÊ
-   Vendedor: só o que ele mesmo registrou. Gerente: os registros das lojas
-   dele. Supervisão, análise e coordenação: todas as lojas pedidas.
-   Quem o servidor não reconhecer só vê os próprios registros.
+   Vendedor: o que ele mesmo registrou e os pintores que ele cadastrou.
+   Gerente: tudo das lojas dele. Supervisão, análise e coordenação: todas as
+   lojas pedidas. Quem o servidor não reconhecer só vê os próprios registros.
+   Compras do pós-venda: só das lojas da pessoa (liderança: as lojas pedidas).
    ========================================================================== */
 
-var CRM_ABA = 'CRM_CONTATOS';
+var CRM_ABA = 'CRM_CONTATOS', CRM_ABA_PIN = 'CRM_PINTORES', CRM_ABA_POS = 'CRM_POSVENDA';
 var CRM_CAB = ['ID', 'QUANDO', 'POR', 'LOJA', 'DOC', 'CLIENTE', 'VENDEDOR', 'VALOR', 'CANAL', 'RESULTADO',
-               'STATUS', 'PREVISAO', 'CHANCE', 'MOTIVO', 'OBS', 'PROXIMO', 'COMPRADOR', 'TELEFONE', 'EMAIL'];
+               'STATUS', 'PREVISAO', 'CHANCE', 'MOTIVO', 'OBS', 'PROXIMO', 'COMPRADOR', 'TELEFONE', 'EMAIL',
+               'TIPO', 'ETAPA', 'CARGO', 'MELHOR_HORARIO'];
 var CRM_CAMPOS = ['id', 'em', 'por', 'loja', 'doc', 'cli', 'vend', 'valor', 'canal', 'res',
-                  'status', 'prev', 'chance', 'motivo', 'obs', 'prox', 'cNome', 'cTel', 'cEmail'];
-var CRM_DIAS = 120;   /* a tela recebe os contatos dos últimos 120 dias */
+                  'status', 'prev', 'chance', 'motivo', 'obs', 'prox', 'cNome', 'cTel', 'cEmail',
+                  'tipo', 'etapa', 'cCargo', 'cHora'];
+var CRM_STATUS = ['neg', 'fechado', 'validado', 'perdido', 'prorrogado', 'contato', 'pedido', 'semint', 'feito', 'venda', 'naoquer'];
+var CRM_CAB_PIN = ['ID', 'ATUALIZADO', 'POR', 'LOJA', 'NOME', 'TELEFONE', 'STATUS', 'FICHA'];
+var CRM_CAB_POS = ['CHAVE', 'DATA', 'LOJA', 'CLIENTE', 'VENDEDOR', 'VALOR', 'PRODUTOS'];
+var CRM_DIAS = 120;                                   /* a tela recebe os contatos dos últimos 120 dias */
+var CRM_JANELAS = [[3, 12], [15, 24], [45, 54], [180, 189]];   /* dias depois da compra em que o pós-venda aparece */
 
 function crmAcao_(d, quem) {
   try {
     var p = crmQuem_(d, quem);
     if (!p.nome) return crmResp_({ ok: false, erro: 'Crachá inválido.', cracha: true });
     if (d.acao === 'crmSalvar') return crmResp_(crmSalvar_(d, p));
+    if (d.acao === 'crmPintorSalvar') return crmResp_(crmPintorSalvar_(d, p));
+    if (d.acao === 'crmPosSubir') return crmResp_(crmPosSubir_(d, p));
     if (d.acao === 'crmListar') return crmResp_(crmListar_(d, p));
     return crmResp_({ ok: false, erro: 'Ação do CRM desconhecida.' });
   } catch (err) {
@@ -53,24 +66,28 @@ function crmAcao_(d, quem) {
   }
 }
 
+function crmLoja_(c) { return ('00' + String(c == null ? '' : c).replace(/\D/g, '')).slice(-3); }
+
 function crmSalvar_(d, p) {
   var regs = (d.regs || []).slice(0, 50);
   if (!regs.length) return { ok: true, gravados: 0 };
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
-    var ab = crmAba_(), n = ab.getLastRow(), ja = {};
+    var ab = crmAba_(CRM_ABA, CRM_CAB), n = ab.getLastRow(), ja = {};
     if (n > 1) ab.getRange(2, 1, n - 1, 1).getValues().forEach(function (l) { ja[String(l[0])] = 1; });
     var linhas = [];
     regs.forEach(function (r) {
       var id = crmTxt_(r.id, 40); if (!id || ja[id]) return;
+      if (CRM_STATUS.indexOf(r.status) < 0) return;
+      if (r.status === 'validado' && !(p.tudo || p.ger)) return;   /* só gerente ou liderança valida venda */
       ja[id] = 1;
       r.por = p.nome;                                   /* quem registrou é sempre o dono do crachá */
-      r.loja = ('00' + String(r.loja || '').replace(/\D/g, '')).slice(-3);
-      if (['neg', 'fechado', 'perdido', 'prorrogado'].indexOf(r.status) < 0) return;
+      r.loja = crmLoja_(r.loja);
+      r.tipo = ['orc', 'cart', 'pos', 'pin'].indexOf(r.tipo) >= 0 ? r.tipo : 'orc';
       linhas.push(CRM_CAMPOS.map(function (c) {
         if (c === 'valor') return Number(r.valor) || 0;
-        if (c === 'em') { var q = new Date(r.em); return isNaN(q.getTime()) ? new Date() : q; }
-        return crmTxt_(r[c], c === 'obs' ? 300 : 80);
+        if (c === 'em') { var q = new Date(r.em); return (isNaN(q.getTime()) ? new Date() : q).toISOString(); }
+        return crmTxt_(r[c], c === 'obs' ? 300 : c === 'doc' || c === 'cli' ? 120 : 80);
       }));
     });
     if (linhas.length) ab.getRange(ab.getLastRow() + 1, 1, linhas.length, CRM_CAB.length).setValues(linhas);
@@ -78,38 +95,107 @@ function crmSalvar_(d, p) {
   } finally { lock.releaseLock(); }
 }
 
+function crmPintorSalvar_(d, p) {
+  var lista = (d.pintores || []).slice(0, 30);
+  if (!lista.length) return { ok: true, gravados: 0 };
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var ab = crmAba_(CRM_ABA_PIN, CRM_CAB_PIN), n = ab.getLastRow(), onde = {}, eu = crmNorm_(p.nome), g = 0;
+    var atuais = n > 1 ? ab.getRange(2, 1, n - 1, 4).getValues() : [];
+    atuais.forEach(function (l, i) { onde[String(l[0])] = { linha: i + 2, por: l[2], loja: crmLoja_(l[3]) }; });
+    lista.forEach(function (x) {
+      var id = crmTxt_(x.id, 40), nome = crmTxt_(x.nome, 60); if (!id || !nome) return;
+      var a = onde[id], loja = crmLoja_(a ? a.loja : x.loja);
+      /* ficha que já existe: só quem cadastrou, o gerente da loja ou a liderança altera */
+      if (a && !(crmNorm_(a.por) === eu || p.tudo || (p.ger && p.lojas.indexOf(loja) >= 0))) return;
+      x.id = id; x.loja = loja; x.por = a ? String(a.por) : p.nome; x.atual = new Date().toISOString(); delete x.ok;
+      var ficha = JSON.stringify(x); if (ficha.length > 20000) return;
+      var linha = [id, x.atual, x.por, loja, nome, crmTxt_(x.tel, 20), crmTxt_(x.status, 20), ficha];
+      if (a) ab.getRange(a.linha, 1, 1, linha.length).setValues([linha]);
+      else { ab.appendRow(linha); onde[id] = { linha: ab.getLastRow(), por: x.por, loja: loja }; }
+      g++;
+    });
+    return { ok: true, gravados: g };
+  } finally { lock.releaseLock(); }
+}
+
+function crmPosSubir_(d, p) {
+  if (!p.tudo) return { ok: false, erro: 'Só a liderança envia a base do pós-venda.' };
+  var linhas = (d.linhas || []).slice(0, 500);
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var ab = crmAba_(CRM_ABA_POS, CRM_CAB_POS), n = ab.getLastRow(), ja = {}, novas = [];
+    if (n > 1) ab.getRange(2, 1, n - 1, 1).getValues().forEach(function (l) { ja[String(l[0])] = 1; });
+    linhas.forEach(function (r) {
+      var data = String(r.data || '').slice(0, 10), loja = crmLoja_(r.loja), cli = crmTxt_(r.cli, 80);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(data) || !cli) return;
+      var chave = data + '|' + loja + '|' + crmNorm_(cli); if (ja[chave]) return;
+      ja[chave] = 1;
+      novas.push([chave, data, loja, cli, crmTxt_(r.vend, 60), Number(r.valor) || 0, crmTxt_(r.prod, 300)]);
+    });
+    if (novas.length) ab.getRange(ab.getLastRow() + 1, 1, novas.length, CRM_CAB_POS.length).setValues(novas);
+    return { ok: true, novas: novas.length };
+  } finally { lock.releaseLock(); }
+}
+
 function crmListar_(d, p) {
-  var ab = SpreadsheetApp.getActive().getSheetByName(CRM_ABA);
-  if (!ab || ab.getLastRow() < 2) return { ok: true, regs: [] };
-  var pedidas = (d.lojas || []).map(function (c) { return ('00' + String(c).replace(/\D/g, '')).slice(-3); });
-  var desde = Date.now() - CRM_DIAS * 86400000, eu = crmNorm_(p.nome);
-  var vals = ab.getRange(2, 1, ab.getLastRow() - 1, CRM_CAB.length).getValues(), regs = [];
-  vals.forEach(function (l) {
-    var q = l[1] instanceof Date ? l[1] : new Date(l[1]);
-    if (isNaN(q.getTime()) || q.getTime() < desde) return;
-    var loja = ('00' + String(l[3]).replace(/\D/g, '')).slice(-3), meu = crmNorm_(l[2]) === eu;
-    var pode = meu || (p.tudo && pedidas.indexOf(loja) >= 0) || (p.ger && p.lojas.indexOf(loja) >= 0);
-    if (!pode) return;
-    var r = {};
-    CRM_CAMPOS.forEach(function (c, i) { r[c] = c === 'em' ? q.toISOString() : (c === 'valor' ? Number(l[i]) || 0 : crmData_(l[i])); });
-    r.loja = loja;
-    regs.push(r);
-  });
-  return { ok: true, regs: regs };
+  var ss = SpreadsheetApp.getActive();
+  var pedidas = (d.lojas || []).map(crmLoja_), eu = crmNorm_(p.nome);
+  var veLoja = function (loja) { return (p.tudo && pedidas.indexOf(loja) >= 0) || (p.ger && p.lojas.indexOf(loja) >= 0); };
+  var out = { ok: true, regs: [], pintores: [], pos: [] };
+
+  var ab = ss.getSheetByName(CRM_ABA);
+  if (ab && ab.getLastRow() > 1) {
+    var desde = Date.now() - CRM_DIAS * 86400000, nc = Math.min(ab.getLastColumn(), CRM_CAB.length);
+    ab.getRange(2, 1, ab.getLastRow() - 1, nc).getValues().forEach(function (l) {
+      var q = l[1] instanceof Date ? l[1] : new Date(l[1]);
+      if (isNaN(q.getTime()) || q.getTime() < desde) return;
+      var loja = crmLoja_(l[3]);
+      if (!(crmNorm_(l[2]) === eu || veLoja(loja))) return;
+      var r = {};
+      CRM_CAMPOS.forEach(function (c, i) { r[c] = c === 'em' ? q.toISOString() : (c === 'valor' ? Number(l[i]) || 0 : crmData_(l[i])); });
+      r.loja = loja; r.tipo = r.tipo || 'orc';
+      out.regs.push(r);
+    });
+  }
+
+  ab = ss.getSheetByName(CRM_ABA_PIN);
+  if (ab && ab.getLastRow() > 1) {
+    ab.getRange(2, 1, ab.getLastRow() - 1, CRM_CAB_PIN.length).getValues().forEach(function (l) {
+      var loja = crmLoja_(l[3]);
+      if (!(crmNorm_(l[2]) === eu || veLoja(loja))) return;
+      try { var x = JSON.parse(l[7]); x.loja = loja; out.pintores.push(x); } catch (e) {}
+    });
+  }
+
+  ab = ss.getSheetByName(CRM_ABA_POS);
+  if (ab && ab.getLastRow() > 1) {
+    /* lojas do pós-venda: as da pessoa; liderança, as pedidas; sem loja reconhecida, só a 1ª pedida */
+    var lj = p.tudo ? pedidas : (p.lojas.length ? p.lojas : pedidas.slice(0, 1));
+    var hoje = new Date(Utilities.formatDate(new Date(), 'America/Sao_Paulo', 'yyyy-MM-dd') + 'T12:00:00Z').getTime();
+    ab.getRange(2, 1, ab.getLastRow() - 1, CRM_CAB_POS.length).getValues().forEach(function (l) {
+      var loja = crmLoja_(l[2]); if (lj.indexOf(loja) < 0) return;
+      var data = crmData_(l[1]).slice(0, 10), dias = Math.round((hoje - new Date(data + 'T12:00:00Z').getTime()) / 86400000);
+      if (!CRM_JANELAS.some(function (j) { return dias >= j[0] && dias <= j[1]; })) return;
+      out.pos.push({ data: data, loja: loja, cli: String(l[3]), vend: String(l[4]), valor: Number(l[5]) || 0, prod: String(l[6]) });
+    });
+  }
+  return out;
 }
 
 /* ── apoio ──────────────────────────────────────────────────────────────── */
 
-function crmAba_() {
-  var ss = SpreadsheetApp.getActive(), ab = ss.getSheetByName(CRM_ABA);
+function crmAba_(nome, cab) {
+  var ss = SpreadsheetApp.getActive(), ab = ss.getSheetByName(nome);
   if (!ab) {
-    ab = ss.insertSheet(CRM_ABA);
-    ab.appendRow(CRM_CAB); ab.setFrozenRows(1);
-    ab.getRange(1, 1, 1, CRM_CAB.length).setFontWeight('bold');
-    /* tudo como texto, menos QUANDO e VALOR: o número do orçamento e as datas não são convertidos */
-    ab.getRange(2, 3, ab.getMaxRows() - 1, 5).setNumberFormat('@');
-    ab.getRange(2, 9, ab.getMaxRows() - 1, 11).setNumberFormat('@');
+    ab = ss.insertSheet(nome);
+    ab.setFrozenRows(1);
+    /* tudo como texto: número de orçamento, telefone e datas "2026-11-20" não são convertidos */
+    ab.getRange(1, 1, ab.getMaxRows(), Math.max(cab.length, ab.getMaxColumns())).setNumberFormat('@');
   }
+  /* cabeçalho sempre completo (a aba pode ter nascido numa versão com menos colunas) */
+  if (ab.getMaxColumns() < cab.length) ab.insertColumnsAfter(ab.getMaxColumns(), cab.length - ab.getMaxColumns());
+  ab.getRange(1, 1, 1, cab.length).setValues([cab]).setFontWeight('bold');
   return ab;
 }
 
@@ -166,7 +252,7 @@ function crmUsuario_(nome) {
     if (!ab || ab.getLastRow() < 2) return fora;
     var dados = ab.getDataRange().getValues(), cab = dados[0].map(function (c) { return crmNorm_(c); });
     function col() { for (var a = 0; a < arguments.length; a++) { var i = cab.indexOf(arguments[a]); if (i >= 0) return i; } return -1; }
-    var cN = col('nome', 'usuario', 'colaborador'), cP = col('perfil', 'cargo', 'papel'), cL = col('loja', 'filial', 'lojas', 'lotacao', 'gerencia');
+    var cN = col('nome', 'usuario', 'colaborador'), cP = col('perfil', 'cargo', 'papel', 'funcao'), cL = col('loja', 'filial', 'lojas', 'lotacao', 'gerencia');
     if (cN < 0) return fora;
     for (var i = 1; i < dados.length; i++) {
       if (crmNorm_(dados[i][cN]) === crmNorm_(nome)) {

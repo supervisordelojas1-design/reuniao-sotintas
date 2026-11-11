@@ -5,9 +5,10 @@ Objetivo: acompanhar os contatos do vendedor com clientes (orçamentos em aberto
 Layout aprovado pelo Bruno em 11/11/2026: canvas "CRM Só Tintas — layout" (https://claude.ai/artifact/SmG2rsradpbUYz71kExhbL), 7 telas: Meus contatos, Registrar contato, Ficha do cliente, Pintores, Ficha do pintor, Visão do gerente, Pós-venda CPF.
 
 ## Situação (11/11/2026)
-- **Etapa 1 publicada no app (sw ast-v162): `crm.html`** — orçamentos em aberto, registro de contato e situação. Piloto: loja 002 (vendedores e gerente) e a liderança (supervisão, análise, coordenação). O cartão "CRM de Vendas" só aparece na tela inicial para esse grupo.
-- **Servidor: `crm.gs.txt` ainda precisa ser colado no Servidor de Dados ST** (ações `crmSalvar` e `crmListar`, aba `CRM_CONTATOS`). Enquanto isso não for feito, cada registro fica guardado só no aparelho de quem registrou (o gerente não vê) e sobe sozinho quando o servidor passar a responder.
-- De onde vêm os orçamentos: pacote do Painel de Metas (`O`, com o mesmo crachá). Para o vendedor, casa pelo nome oficial que vem na ficha do PDI Semanal; se o Painel não responder, usa a lista da própria ficha da semana.
+- **Tudo publicado no app (sw ast-v163): `crm.html`**, com cinco áreas: Orçamentos, Carteira, Pós-venda, Pintores e Loja (visão do gerente). Piloto: loja 002 (vendedores e gerente) e a liderança. O cartão "CRM de Vendas" só aparece na tela inicial para esse grupo.
+- **Servidor: `crm.gs.txt` ainda precisa ser colado no Servidor de Dados ST** (ações `crmSalvar`, `crmPintorSalvar`, `crmPosSubir` e `crmListar`; abas `CRM_CONTATOS`, `CRM_PINTORES` e `CRM_POSVENDA`). Enquanto isso não for feito: contatos e fichas de pintor ficam só no aparelho de quem registrou (o gerente não vê) e sobem sozinhos depois; o Pós-venda fica vazio, porque a base de compras mora no servidor.
+- De onde vêm as listas: orçamentos e carteira CNPJ do pacote do Painel de Metas (`O` e `K`, com o mesmo crachá; para o vendedor, casa pelo nome oficial da ficha do PDI Semanal). Carteira = cliente zerado no mês com média positiva, ou projetando menos de 70% da própria média (mesma regra do Painel). Pós-venda = `pos_venda_cpf.json`, gerado pelo `converter_cpf.py` e enviado pela coordenação na aba Pós-venda (a rotina diária faz isso).
+- Ainda não feito: validação automática do "Fechado" pelo faturamento, alertas por e-mail/Meta do dia, placar no Painel de Metas e a ligação com o Autcom WebService (dependem da credencial da Citel ou do código do servidor).
 
 ## Onde
 Dentro do Só Tintas App (login nome + PIN). Dados no Servidor de Dados ST (Apps Script, `STDados.chamar`). O código do servidor não está no repositório: a tela vai no app e o trecho `.gs` é colado no Apps Script pelo Bruno.
@@ -52,6 +53,8 @@ Pedir à Citel só as rotas de leitura acima (+ venda-perdida e crm, se for grav
 - Indicadores: contatos/dia, % orçamentos com status, conversão, valor perdido por motivo, clientes resgatados, pintores ativos, pós-vendas feitos e venda gerada.
 
 ## Fases
-1. Orçamentos (lista + registro + situação) — piloto loja 002. **No ar em 11/11/2026 (falta colar o `crm.gs.txt` no servidor).**
-2. Carteira + ficha do comprador; Pintores (cadastro + ligações + obras); Pós-venda CPF.
-3. Painel do gerente (validação, alertas, previsão) + integrações.
+1. Orçamentos (lista + registro + situação) — **no ar em 11/11/2026 (v162).**
+2. Carteira + ficha do comprador; Pintores (cadastro + ligações + obras); Pós-venda CPF — **no ar em 11/11/2026 (v163).**
+3. Painel do gerente (placar, o que agir, validação manual, previsão, motivos de perda) — **no ar em 11/11/2026 (v163).** Integrações (Meta do dia, PDI semanal, Painel de Metas, Autcom): pendentes.
+
+Falta para tudo funcionar entre aparelhos: colar o `crm.gs.txt` no Servidor de Dados ST e implantar nova versão.

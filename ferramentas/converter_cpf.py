@@ -5,6 +5,7 @@ Uso:  python3 -I converter_cpf.py <solcast_cpf_AAAAMMDD.json> <pasta_saida> [bas
   mantém só as compras de R$ 500 ou mais (--min) e junta com a base anterior (se informada), sem duplicar
   (chave: data + loja + cliente; o dado novo substitui o antigo).
 Saída: <pasta_saida>/CLIENTES CPF - BASE POS-VENDA.xlsx
+       <pasta_saida>/pos_venda_cpf.json  (o mesmo conteúdo, últimos 200 dias, para enviar ao CRM do app: aba Pós-venda)
   colunas: Data · Loja · Cliente · Vendedor (cadastro do cliente) · Valor · Produtos (grupos, do maior para o menor)
 LGPD: guarda só nome, loja, vendedor, valor e grupo de produto. Não há CPF, telefone nem endereço no Solcast.
 """
@@ -65,6 +66,14 @@ for linha in sorted(base.values(), key=lambda x: (str(x[0]), float(x[4] or 0)), 
 for col, w in zip('ABCDEF', (12, 38, 42, 32, 12, 90)): ws.column_dimensions[col].width = w
 ws.freeze_panes = 'A2'
 wb.save(os.path.join(saida, NOME))
+
+# pacote para o CRM do app (aba Pós-venda): compras dos últimos 200 dias, sem nada além do que já está na planilha
+import datetime
+corte = (datetime.date.today() - datetime.timedelta(days=200)).isoformat()
+linhas = [dict(data=str(x[0])[:10], loja=str(x[1])[:3], cli=str(x[2]), vend=str(x[3] or ''), valor=float(x[4] or 0), prod=str(x[5] or ''))
+          for x in base.values() if str(x[0])[:10] >= corte]
+json.dump(dict(gerado=datetime.datetime.now().isoformat(timespec='seconds'), linhas=linhas),
+          open(os.path.join(saida, 'pos_venda_cpf.json'), 'w', encoding='utf-8'), ensure_ascii=False)
 
 por_dia = collections.Counter(k[0] for k in novas)
 print(json.dumps(dict(dias=P.get('dias'), clientes_dia_lidos=brutos, compras_minimo=MIN, novas=len(novas), por_dia=dict(sorted(por_dia.items())),
