@@ -163,6 +163,7 @@ label.linha{flex-wrap:nowrap;align-items:flex-start}label.linha input[type=check
   var clone=function(o){return JSON.parse(JSON.stringify(o));};
   var B=window.CONTEUDO||{};
   var CONT={}, PERFIL=null, ABA='banners', PREV={}, PROVA=null, ADM=null, FORN_ABERTO=null;
+  var AVL=null, AVL_CARR=false, AVL_ERR='', MT=null;
   var BANNERS_PADRAO=[['acelera-coral','Acelera Coral · Copa Só Tintas de Kart · 01/10 a 22/11/26'],['pintor-cadastrado','Pintor cadastrado, prêmio garantido · R$ 5 por cadastro Citel, R$ 10 a partir do 11º'],
     ['pix-semanal','Pix Semanal · bônus extra por antecipação'],['elite-das-vendas','Elite das Vendas · premiação mensal e trimestral'],['trinca-de-ouro','Trinca de Ouro · maior venda CNPJ da semana'],
     ['boca-de-caixa-suvinil','Boca de Caixa Suvinil · balde R$ 10, galão R$ 5, bônus liberado ao acumular R$ 20']]
@@ -352,8 +353,51 @@ label.linha{flex-wrap:nowrap;align-items:flex-start}label.linha input[type=check
       '<div class="linha"><button class="btnp azul" type="button" data-pv-gerar="1">✨ Gerar questões</button><span class="sub" id="pvStatus" role="status"></span></div></section>';
     if(PROVA&&PROVA.questoes) h+=revisaoHtml(M);
     h+='<section class="card"><h2>Módulos e quantidade de questões</h2><p class="sub" style="margin:0 0 6px">O quiz de cada módulo sorteia destas questões; as marcadas "avaliação final" também entram na prova final da trilha. Para editar uma por uma, use a aba Trilha do Mentor.</p><ul class="lista">'+
-      M.map(function(m){ return '<li><span>'+esc(m.icone||'📘')+' <b>'+esc(m.titulo)+'</b> <span class="cod">'+esc(m.id)+'</span></span><span>'+cnt(m.id)+' questões</span></li>'; }).join('')+'</ul></section>';
+      M.map(function(m){ return '<li><span>'+esc(m.icone||'📘')+' <b>'+esc(m.titulo)+'</b> <span class="cod">'+esc(m.id)+'</span></span><span>'+cnt(m.id)+' questões'+(pvCoord()?' <button class="btnp" type="button" data-md-del="'+esc(m.id)+'">excluir</button>':'')+'</span></li>'; }).join('')+'</ul></section>';
+    if(pvCoord()){ h+='<section class="card"><h2>Provas avulsas lançadas</h2><p class="sub" style="margin:0 0 6px">Para parar de cobrar sem perder os resultados, use Encerrar na Central de Provas. Excluir apaga a prova e as respostas.</p><div id="pvAvL">'+avulsasHtml()+'</div></section>'; carregarAvulsas(); }
     return h;
+  }
+  /* ── excluir: módulo da trilha (com as questões e aulas dele) e prova avulsa (com as respostas) ── */
+  function pzBr(p){ return dBr(String(p).slice(0,10))+' '+String(p).slice(11,16); }
+  function avulsasHtml(){
+    if(AVL_ERR) return '<p class="ruim">'+esc(AVL_ERR)+'</p>';
+    if(!AVL) return '<p class="sub">Carregando as provas lançadas…</p>';
+    if(!AVL.length) return '<p class="sub">Nenhuma prova avulsa lançada. Gere a prova acima e escolha o destino “Prova avulsa”.</p>';
+    return '<ul class="lista">'+AVL.slice().reverse().map(function(p){ var nr=(p.respostas||[]).length;
+      return '<li><span><b>'+esc(p.titulo)+'</b> <span class="cod">'+(p.ativa?'até '+pzBr(p.prazo):'encerrada')+'</span></span><span>'+nr+(nr===1?' resposta':' respostas')+(p.ativa&&nr?' <span class="cod">encerre na Central para excluir</span>':' <button class="btnp" type="button" data-av-del="'+esc(p.id)+'">excluir</button>')+'</span></li>'; }).join('')+'</ul>';
+  }
+  function pintaAvulsas(){ var el=$('pvAvL'); if(el) el.innerHTML=avulsasHtml(); }
+  function carregarAvulsas(){
+    if(AVL||AVL_CARR) return; AVL_CARR=true;
+    STDados.chamar('avulsaResultados').then(function(j){ AVL_CARR=false; if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não respondeu.'); AVL=j.provas||[]; AVL_ERR=''; pintaAvulsas(); })
+      .catch(function(e){ AVL_CARR=false; AVL_ERR=e.message||String(e); pintaAvulsas(); });
+  }
+  function excluirAvulsa(id){
+    var p=(AVL||[]).filter(function(x){return x.id===id;})[0]; if(!p) return; var nr=(p.respostas||[]).length;
+    if(p.ativa&&nr){ toast('Encerre a prova na Central de Provas antes de excluir.'); return; }
+    if(!confirm('Excluir a prova “'+(p.titulo||'')+'”?\n\n'+(nr?'As '+nr+(nr===1?' resposta':' respostas')+' e as notas vão embora junto com a prova.':'Ela ainda não tem nenhuma resposta.')+'\nA prova sai da Central, do histórico e da tela de quem ia responder.\n\nNão dá para voltar atrás.')) return;
+    STDados.chamar('avulsaExcluir',{id:id}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não confirmou.'); AVL=(AVL||[]).filter(function(x){return x.id!==id;}); pintaAvulsas(); toast('✓ Prova excluída.'); })
+      .catch(function(e){ toast(e.message||String(e)); });
+  }
+  function contaAprov(id){ if(!MT) return null; var n=0; MT.forEach(function(r){ if((r.progresso||[]).some(function(x){return x.item_tipo==='quiz'&&x.item_id===id;})||(r.tentativas||[]).some(function(t){return t.modulo_id===id&&t.aprovado;})) n++; }); return n; }
+  function aprovadosModulo(id){
+    if(MT) return Promise.resolve(contaAprov(id));
+    return STDados.chamar('mentorLer').then(function(j){ MT=(j&&j.ok&&j.equipe)||[]; return contaAprov(id); }).catch(function(){ MT=[]; return null; });
+  }
+  function excluirModulo(id){
+    var M=tab('modulos'), m=M.filter(function(x){return x.id===id;})[0]; if(!m) return;
+    var Q=tab('questoes'), A=tab('aulas');
+    var nq=Q.filter(function(q){return q.modulo_id===id;}).length, na=A.filter(function(a){return a.modulo_id===id;}).length;
+    aprovadosModulo(id).then(function(ap){
+      var t='Excluir o módulo “'+(m.titulo||id)+'” da trilha?\n\nSai do Mentor com '+nq+(nq===1?' questão':' questões')+(na?' e '+na+(na===1?' aula':' aulas'):'')+'.\n';
+      if(ap) t+='Já tem '+ap+(ap===1?' pessoa aprovada':' pessoas aprovadas')+' nele: o resultado de cada uma fica guardado, mas o módulo desaparece da trilha de todo mundo.\n';
+      t+='\nNão dá para voltar atrás.';
+      if(!confirm(t)) return;
+      var T={modulos:M.filter(function(x){return x.id!==id;})};
+      if(nq) T.questoes=Q.filter(function(q){return q.modulo_id!==id;});
+      if(na) T.aulas=A.filter(function(a){return a.modulo_id!==id;});
+      salvar(T,'✓ Módulo excluído.').then(montar).catch(function(e){ toast(e.message); });
+    });
   }
   function revisaoHtml(M){
     var P=PROVA, L='ABCD';
@@ -522,6 +566,8 @@ label.linha{flex-wrap:nowrap;align-items:flex-start}label.linha input[type=check
     if(d.pvMais){ lerRevisao(); PROVA.questoes.push({enunciado:'',opcoes:['','','',''],correta:0,explicacao:''}); montar(); return; }
     if(d.pvDescartar){ if(!confirm('Descartar as questões geradas?')) return; PROVA=null; montar(); return; }
     if(d.pvPub){ publicarProva(); return; }
+    if(d.mdDel){ excluirModulo(d.mdDel); return; }
+    if(d.avDel){ excluirAvulsa(d.avDel); return; }
     /* vídeos */
     if(d.vdNovo){ vdModal(null); return; }
     if(d.vdEd!=null){ vdModal(+d.vdEd); return; }
