@@ -2,13 +2,13 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
-      "v": "ast-v171",
+      "v": "ast-v172",
       "data": "12/11/2026",
-      "hora": "14:40",
+      "hora": "15:10",
       "itens": [
         {
           "painel": "Acesso · PIN e paineis",
-          "o_que": "Quem trocava o PIN parava de entrar nos paineis uma semana depois: o cracha do aparelho vale 7 dias e era emitido com o PIN antigo. Agora, ao trocar o PIN, o acesso aos paineis e refeito na hora; se algum painel recusar, o app avisa na hora em vez de deixar a surpresa para o setimo dia; e em Minha conta ha o botao Reparar acesso aos paineis, que resolve com o seu PIN atual."
+          "o_que": "O acesso aos paineis vale 7 dias no aparelho e, ao vencer, era refeito pedindo o PIN. Quem tinha trocado o PIN topava com essa janelinha uma semana depois e nao passava. Agora o acesso se renova sozinho enquanto voce usa o app, a troca de PIN passa a valer nos paineis na hora, e em Minha conta ha o botao Reparar acesso aos paineis para resolver com o seu PIN atual. Se algum painel nao confirmar, o app avisa na hora em vez de deixar a surpresa para depois."
         },
         {
           "painel": "Minha conta · Atualizar agora",

@@ -75,22 +75,21 @@
     return fetch(URL_APP, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ tipo: 'login', nome: nome, pin: pin }) })
       .then(function (r) { return r.json(); }).then(function (r) { return !!(r && r.ok); }).catch(function () { return false; });
   }
-  /* manda este servidor acertar o PIN de alguem a partir da fonte (usado na troca e na liberacao).
-     Se o servidor ainda nao tiver a acao, nada acontece e nada quebra. */
-  function sincPinDe(nome, pin) {
-    return post({ acao: 'sincPin', nome: nome, pin: pin }).catch(function () { return null; });
-  }
-  /* ENTRADA OFICIAL: tenta o cracha; se este servidor recusar o PIN mas a fonte aceitar,
-     pede a sincronizacao e tenta de novo. So entao desiste — e com um recado que diz o que fazer. */
+  /* ENTRADA OFICIAL. O servidor de dados nao guarda PIN: ele pergunta ao servidor do app
+     (a aba USUARIOS e a unica fonte). Entao, quando ele recusa um PIN que o app aceita, o
+     problema nao e o PIN — e a conversa entre os dois servidores, que falhou. Nesse caso
+     tentamos de novo uma vez e, se ainda assim nao vier, dizemos o que esta acontecendo
+     em vez de mandar a pessoa adivinhar a senha. */
   function reparar(nome, pin) {
     return entrar(nome, pin).catch(function (err) {
       if (!err || !err.recusado) throw err;
       return pinValeNoApp(nome, pin).then(function (vale) {
         if (!vale) throw err;
-        return sincPinDe(nome, pin).then(function (s) {
-          if (s && s.ok) return entrar(nome, pin);
-          var e2 = new Error('Seu PIN está certo no app, mas os painéis ainda estão com o PIN anterior. Avise a coordenação para reparar o acesso — enquanto isso, use aqui o PIN anterior (ou o 1234 inicial).');
-          e2.divergente = true; throw e2;
+        return new Promise(function (ok) { setTimeout(ok, 1200); }).then(function () {
+          return entrar(nome, pin).catch(function () {
+            var e2 = new Error('Seu PIN está certo — quem não respondeu agora foi o servidor dos painéis. Toque de novo em instantes; o app do dia a dia continua funcionando.');
+            e2.servidor = true; throw e2;
+          });
         });
       });
     });
@@ -318,7 +317,7 @@
   function telaAtual() { var p = location.pathname; if (/\/mentor\//.test(p)) return 'mentor'; var f = p.split('/').pop(); return Object.prototype.hasOwnProperty.call(TELAS_ARQ, f) ? TELAS_ARQ[f] : ''; }
   setTimeout(function () { var t = telaAtual(); if (t) registrar(t); }, 2500);
 
-  g.STDados = { URL: URL_DADOS, URL_APP: URL_APP, chamar: chamar, entrar: entrar, reparar: reparar, sincPinDe: sincPinDe, diag: diag, cracha: cracha, esquecer: esquecer, perfil: perfil, crachaGuardado: crachaGuardado,
+  g.STDados = { URL: URL_DADOS, URL_APP: URL_APP, chamar: chamar, entrar: entrar, reparar: reparar, diag: diag, cracha: cracha, esquecer: esquecer, perfil: perfil, crachaGuardado: crachaGuardado,
     visao: visao, sessaoVisao: sessaoVisao, semCache: semCache, limparCache: limparCache, entrarVisao: entrarVisao, sairVisao: sairVisao, ehCoordReal: ehCoordReal, faixaVisao: faixaVisao, registrar: registrar,
     atualizarPerfil: atualizarPerfil, ehMkt: ehMkt, arquivoUrl: arquivoUrl, preencherArquivos: preencherArquivos };
 })(window);

@@ -1,0 +1,51 @@
+/* ============================================================================
+   CRACHÁ · RENOVAR SEM PEDIR O PIN — Servidor de Dados ST · novembro/2026
+
+   JÁ ESTÁ APLICADO no projeto "Servidor PDI" (Código.gs). Este arquivo é a
+   cópia versionada do que foi colocado lá, para não se perder.
+
+   POR QUE EXISTE
+   O crachá vale 7 dias (VALIDADE_DIAS). Quem entrava num dia topava com a
+   janelinha "Confirme seu PIN" exatamente no 7º dia — no meio do trabalho,
+   sem aviso. Quem não lembrava o PIN que tinha cadastrado ficava de fora dos
+   painéis (PDI, Níveis, Ranking, Metas, Mentor), embora o app do dia a dia
+   seguisse aberto. Era isso que a equipe relatava como "depois de 7 dias não
+   entro mais com a senha que cadastrei".
+
+   O QUE MUDA
+   O app passa a pedir a renovação quando falta menos de 36h, apresentando o
+   próprio crachá como prova — sem PIN, sem janelinha, sem interromper. A
+   corrente de renovações dura no máximo RENOVA_MAX_DIAS; depois disso o PIN é
+   pedido de novo, de propósito. Quem foi arquivado não renova: o doPost barra
+   antes, em arquivadoBarra_.
+
+   ONDE ENTRA (duas inserções no Código.gs)
+   1. No doPost, logo depois de  var c = cracha_(d.tk);  ... :
+
+          if (d.acao === 'renovar') return json_(renovar_(c));
+
+   2. A função abaixo, no fim do arquivo.
+   ============================================================================ */
+
+var RENOVA_MAX_DIAS = 90;
+
+function renovar_(c) {
+  var ini = Number(c.ini || 0) || Date.now();
+  if (Date.now() - ini > RENOVA_MAX_DIAS * 864e5) return { ok: false, cracha: true, erro: 'Confirme seu PIN para seguir.' };
+  var ex = Date.now() + VALIDADE_DIAS * 864e5;
+  return { ok: true, tk: assinar_({ n: c.n, pf: c.pf, lj: c.lj, ini: ini, ex: ex }), nome: c.n, perfil: c.pf, lojas: c.lj, ex: ex };
+}
+
+/* ----------------------------------------------------------------------------
+   PARA O REGISTRO — o que foi conferido no servidor em 12/11/2026
+
+   · O Servidor de Dados NÃO guarda PIN. Em entrar_(), ele repassa nome e PIN
+     ao servidor do app (chamarApp_ -> tipo 'login') e só então assina o
+     crachá. A aba USUARIOS do app é a única fonte do PIN — não existem duas
+     bases de senha para sincronizar.
+   · VALIDADE_DIAS = 7. Era daí que vinha a parede do 7º dia.
+   · Na base, 32 dos 113 vendedores ainda constam como "falta trocar o PIN",
+     ou seja, seguem no PIN inicial. Esses não travam pelo crachá: travam pela
+     regra de troca obrigatória do app. Para eles, o caminho é novo PIN pela
+     tela Acesso de usuários.
+   ---------------------------------------------------------------------------- */
