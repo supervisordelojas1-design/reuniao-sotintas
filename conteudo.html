@@ -492,9 +492,9 @@ label.linha{flex-wrap:nowrap;align-items:flex-start}label.linha input[type=check
   /* ═════════ VÍDEOS ═════════ */
   function telaVideos(){
     var V=ordenar(tab('videos'));
-    return '<section class="card"><div class="linha" style="justify-content:space-between"><div><h2>Videoteca do Mentor</h2><p class="sub" style="margin:0">Cole o link do YouTube (pode ser "não listado") ou de um arquivo do Google Drive compartilhado com "qualquer pessoa com o link". Cada vídeo assistido vale pontos ST.</p></div><button class="btnp azul" type="button" data-vd-novo="1">＋ Novo vídeo</button></div></section>'+
+    return '<section class="card"><div class="linha" style="justify-content:space-between"><div><h2>Videoteca do Mentor</h2><p class="sub" style="margin:0">Cole o link do YouTube (pode ser "não listado") ou de um arquivo do Google Drive compartilhado com "qualquer pessoa com o link". Cada vídeo assistido vale pontos ST. <b>Vídeo novo é anunciado na tela de abertura do app</b> até cada pessoa marcar que assistiu.</p></div><button class="btnp azul" type="button" data-vd-novo="1">＋ Novo vídeo</button></div></section>'+
       '<section class="card"><ul class="lista">'+(V.map(function(v,i){ return '<li class="item"><span style="min-width:0"><b class="corta">'+esc(v.titulo)+'</b><span class="sub corta">'+esc(v.categoria||'')+' · '+(v.url?'🔗 '+esc(v.url):'<span class="ruim">sem link</span>')+'</span></span><span class="linha acoes">'+(v.ativo===false?'<span class="chip s-semacesso">oculto</span>':'')+
-        '<button class="btnp" type="button" data-vd-sobe="'+i+'" '+(i?'':'disabled')+' aria-label="Subir">↑</button><button class="btnp" type="button" data-vd-ed="'+i+'">editar</button></span></li>'; }).join('')||'<li class="sub">Nenhum vídeo.</li>')+'</ul></section>';
+        (v.anunciar?'<span class="chip">anunciando</span><button class="btnp" type="button" data-vd-parar="'+i+'">parar de anunciar</button>':'')+'<button class="btnp" type="button" data-vd-sobe="'+i+'" '+(i?'':'disabled')+' aria-label="Subir">↑</button><button class="btnp" type="button" data-vd-ed="'+i+'">editar</button></span></li>'; }).join('')||'<li class="sub">Nenhum vídeo.</li>')+'</ul></section>';
   }
   function vdModal(i){
     var V=ordenar(tab('videos')), v=i==null?{id:'',titulo:'',descricao:'',categoria:'Institucional',url:'',xp:15,ativo:true}:clone(V[i]);
@@ -510,7 +510,7 @@ label.linha{flex-wrap:nowrap;align-items:flex-start}label.linha input[type=check
       v.titulo=$('vdTit').value.trim(); v.url=$('vdUrl').value.trim(); v.categoria=$('vdCat').value; v.descricao=$('vdDesc').value.trim(); v.xp=Number($('vdXp').value)||15; v.ativo=$('vdAtivo').checked;
       if(!v.titulo){ $('mdErro').textContent='Informe o título.'; return; }
       if(v.url&&!/^https?:\/\//i.test(v.url)){ $('mdErro').textContent='O link tem de começar com https://'; return; }
-      if(i==null){ v.id=novoId('v',V); v.ordem=V.reduce(function(m,x){return Math.max(m,Number(x.ordem)||0);},0)+1; V.push(v); } else V[i]=v;
+      if(i==null){ v.id=novoId('v',V); v.ordem=V.reduce(function(m,x){return Math.max(m,Number(x.ordem)||0);},0)+1; v.criado_em=hoje(); v.anunciar=true; V.push(v); } else V[i]=v;
       this.disabled=true; fecharModal(); salvar({videos:V},'✓ Vídeo publicado.').then(montar).catch(function(e){ toast(e.message); });
     };
   }
@@ -571,6 +571,7 @@ label.linha{flex-wrap:nowrap;align-items:flex-start}label.linha input[type=check
     /* vídeos */
     if(d.vdNovo){ vdModal(null); return; }
     if(d.vdEd!=null){ vdModal(+d.vdEd); return; }
+    if(d.vdParar!=null){ var VP=ordenar(tab('videos')); VP[+d.vdParar].anunciar=false; salvar({videos:VP},'✓ Parou de anunciar.').then(montar).catch(function(er){ toast(er.message); }); return; }
     if(d.vdSobe!=null){ var V=ordenar(tab('videos')), q=+d.vdSobe; if(!q) return; var y=V[q]; V[q]=V[q-1]; V[q-1]=y; V.forEach(function(v,n){ v.ordem=n; }); salvar({videos:V},'✓ Ordem salva.').then(montar).catch(function(er){ toast(er.message); }); return; }
     /* administradores */
     if(d.admAdd){ var nm=$('admNome').value.trim(); if(!nm){ toast('Digite o nome.'); return; } admSalvar(ADM.lista.concat([nm])); return; }

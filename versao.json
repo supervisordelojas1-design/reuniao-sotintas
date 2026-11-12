@@ -2,6 +2,31 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v169",
+      "data": "11/11/2026",
+      "hora": "23:50",
+      "itens": [
+        {
+          "painel": "Tela inicial · Vídeo novo",
+          "o_que": "Quando a coordenação publica um vídeo novo na Videoteca, ele é anunciado na abertura do app, no mesmo lugar do vídeo institucional: título, descrição e o vídeo para assistir ali mesmo. “Assistir depois” adia para o dia seguinte e o aviso volta a cada abertura até a pessoa marcar “Já assisti!”.",
+          "para": [
+            "coord",
+            "anl",
+            "sup",
+            "ger",
+            "vend"
+          ]
+        },
+        {
+          "painel": "Painel de Conteúdo · Vídeos",
+          "o_que": "Todo vídeo novo já entra anunciando na tela de abertura. Na lista, o vídeo que está sendo anunciado aparece marcado como “anunciando”, com a opção “parar de anunciar” quando o aviso já cumpriu o papel.",
+          "para": [
+            "coord"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v168",
       "data": "11/11/2026",
       "hora": "23:25",
