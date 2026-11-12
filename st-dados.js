@@ -12,6 +12,12 @@
   'use strict';
   var URL_DADOS = 'https://script.google.com/macros/s/AKfycbznIM0I8T-wkPiOvRbO-uhJifdyQUXToIwYd8PtEf855I5pFxb5nz5kn1eDm8HEy2JyEA/exec';
   var LS_SESSAO = 'sotintas_sessao_v1', LS_CRACHA = 'st_cracha_v1', LS_VISAO = 'st_vercomo_v1';
+  /* Servidor do APP (aba USUARIOS): e a FONTE do PIN — login, troca de PIN e liberacao gravam la.
+     Este arquivo fala com o SERVIDOR DE DADOS, que emite o cracha. Quando os dois nao estao na
+     mesma planilha, um PIN trocado no app podia ser recusado aqui, e isso so aparecia no 7o dia,
+     quando o cracha vencia. Com a URL do app aqui, a recusa deixa de ser um mistero: conferimos
+     o PIN na fonte e pedimos o reparo. */
+  var URL_APP = 'https://script.google.com/macros/s/AKfycbxC916U8rNw_-HFTW7vtFZz4AC_B1bHcTLE3bvMDWji6E5lAqkXgC0EIgQFtjHYTp8I/exec';
 
   function ler(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
   function norm(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim(); }
@@ -58,9 +64,57 @@
   /* chamado pelo login do app, com o PIN que a pessoa acabou de digitar */
   function entrar(nome, pin) {
     return post({ acao: 'entrar', nome: nome, pin: pin }).then(function (r) {
-      if (!r || !r.ok) throw new Error((r && r.erro) || 'Não consegui confirmar o PIN.');
+      if (!r || !r.ok) { var e = new Error((r && r.erro) || 'Não consegui confirmar o PIN.'); e.recusado = true; throw e; }
       guardar(r); return r;
     });
+  }
+
+  /* o PIN confere na FONTE (servidor do app)? */
+  function pinValeNoApp(nome, pin) {
+    if (!URL_APP) return Promise.resolve(false);
+    return fetch(URL_APP, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ tipo: 'login', nome: nome, pin: pin }) })
+      .then(function (r) { return r.json(); }).then(function (r) { return !!(r && r.ok); }).catch(function () { return false; });
+  }
+  /* manda este servidor acertar o PIN de alguem a partir da fonte (usado na troca e na liberacao).
+     Se o servidor ainda nao tiver a acao, nada acontece e nada quebra. */
+  function sincPinDe(nome, pin) {
+    return post({ acao: 'sincPin', nome: nome, pin: pin }).catch(function () { return null; });
+  }
+  /* ENTRADA OFICIAL: tenta o cracha; se este servidor recusar o PIN mas a fonte aceitar,
+     pede a sincronizacao e tenta de novo. So entao desiste — e com um recado que diz o que fazer. */
+  function reparar(nome, pin) {
+    return entrar(nome, pin).catch(function (err) {
+      if (!err || !err.recusado) throw err;
+      return pinValeNoApp(nome, pin).then(function (vale) {
+        if (!vale) throw err;
+        return sincPinDe(nome, pin).then(function (s) {
+          if (s && s.ok) return entrar(nome, pin);
+          var e2 = new Error('Seu PIN está certo no app, mas os painéis ainda estão com o PIN anterior. Avise a coordenação para reparar o acesso — enquanto isso, use aqui o PIN anterior (ou o 1234 inicial).');
+          e2.divergente = true; throw e2;
+        });
+      });
+    });
+  }
+
+  /* renova o cracha ANTES de vencer, usando o proprio cracha: assim ninguem mais topa com a
+     janelinha do PIN no 7o dia so por estar usando o app normalmente. */
+  var renovando = false;
+  function renovarSePerto() {
+    try {
+      var c = crachaGuardado(true);
+      if (renovando || !c || !c.tk) return;
+      if (Number(c.ex || 0) - Date.now() > 36 * 3600000) return;
+      renovando = true;
+      post({ acao: 'renovar', tk: c.tk }).then(function (r) {
+        if (r && r.ok && r.tk) guardar({ nome: r.nome || c.nome, tk: r.tk, ex: r.ex, perfil: r.perfil || c.perfil, lojas: r.lojas || c.lojas });
+      }).catch(function () {}).then(function () { renovando = false; });
+    } catch (e) { renovando = false; }
+  }
+  /* estado do acesso, para a tela Minha conta */
+  function diag() {
+    var s = sessao(), c = ler(LS_CRACHA);
+    return { nome: (s && s.nome) || '', temCracha: !!(c && c.tk), expira: c ? Number(c.ex || 0) : 0,
+      valido: !!(c && c.tk && Number(c.ex || 0) > Date.now()), perfil: c ? c.perfil : null };
   }
 
   /* janelinha para confirmar o PIN (sessões antigas ou crachá vencido) */
@@ -91,7 +145,7 @@
         e.preventDefault();
         var p = pin.value.trim(); if (!p) { msg.textContent = 'Digite o PIN.'; return; }
         bt.disabled = true; bt.textContent = 'Conferindo…'; msg.textContent = '';
-        entrar(s.nome, p).then(function (r) { fim(); ok(r.tk); })
+        reparar(s.nome, p).then(function (r) { fim(); ok(r.tk); })
           .catch(function (err) { bt.disabled = false; bt.textContent = 'Confirmar'; msg.textContent = err.message || 'PIN não confere.'; pin.select(); });
       };
     });
@@ -99,7 +153,7 @@
   }
 
   function cracha(real) {
-    var c = crachaGuardado(real); if (c) return Promise.resolve(c.tk);
+    var c = crachaGuardado(real); if (c) { renovarSePerto(); return Promise.resolve(c.tk); }
     var s = sessao(); if (!s || !s.nome) return Promise.reject(new Error('Entre no Só Tintas App primeiro.'));
     return pedirPin();
   }
@@ -264,7 +318,7 @@
   function telaAtual() { var p = location.pathname; if (/\/mentor\//.test(p)) return 'mentor'; var f = p.split('/').pop(); return Object.prototype.hasOwnProperty.call(TELAS_ARQ, f) ? TELAS_ARQ[f] : ''; }
   setTimeout(function () { var t = telaAtual(); if (t) registrar(t); }, 2500);
 
-  g.STDados = { URL: URL_DADOS, chamar: chamar, entrar: entrar, cracha: cracha, esquecer: esquecer, perfil: perfil, crachaGuardado: crachaGuardado,
+  g.STDados = { URL: URL_DADOS, URL_APP: URL_APP, chamar: chamar, entrar: entrar, reparar: reparar, sincPinDe: sincPinDe, diag: diag, cracha: cracha, esquecer: esquecer, perfil: perfil, crachaGuardado: crachaGuardado,
     visao: visao, sessaoVisao: sessaoVisao, semCache: semCache, limparCache: limparCache, entrarVisao: entrarVisao, sairVisao: sairVisao, ehCoordReal: ehCoordReal, faixaVisao: faixaVisao, registrar: registrar,
     atualizarPerfil: atualizarPerfil, ehMkt: ehMkt, arquivoUrl: arquivoUrl, preencherArquivos: preencherArquivos };
 })(window);

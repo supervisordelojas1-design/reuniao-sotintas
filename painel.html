@@ -583,7 +583,7 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="st-hora.js?v=1"></script>
-<script src="st-dados.js?v=91"></script>
+<script src="st-dados.js?v=92"></script>
 </head>
 <body>
 
@@ -3386,14 +3386,17 @@ function fazerLogin(){
  if(!u||!p){er.textContent='Preencha nome e PIN.';return}
  bt.disabled=true; er.textContent=''; bt.textContent='Entrando...';
  var falha=function(msg){er.textContent=msg;bt.disabled=false;bt.textContent='Entrar'};
- var URLD=(window.STDados&&STDados.URL)||'';
- fetch(URLD,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:'entrar',nome:u,pin:p})})
-  .then(function(r){return r.json()}).then(function(r){
+ /* nov/2026: entra pelo st-dados.js (STDados.reparar). Se este servidor recusar um PIN que a
+    aba USUARIOS aceita, ele sincroniza e tenta de novo — e, se nao der, diz o que fazer em vez
+    de um "nome ou PIN nao conferem" que mandava a pessoa adivinhar. */
+ var ent=(window.STDados&&STDados.reparar)?STDados.reparar(u,p):null;
+ if(!ent){ falha('Recarregue a página e tente de novo.'); return; }
+ ent.then(function(r){
     if(!r||!r.ok){ falha((r&&r.erro)||'Nome ou PIN não conferem.'); return; }
     try{localStorage.setItem(PCK,JSON.stringify({tk:r.tk,ex:r.ex,nome:r.nome})); localStorage.removeItem(PKEY);}catch(e){}
     window.PNL_CRED=credDe(r.tk);
     pedirDados('cracha',r.tk,function(res){ if(!res||!res.ok){ falha((res&&res.erro)||'Falha no acesso.'); return; } abrirCom(res); },falha);
-  }).catch(function(){ falha('Sem conexão com o servidor.'); });
+  }).catch(function(e){ falha((e&&e.message)||'Sem conexão com o servidor.'); });
 }
 (function boot(){
  if(EMBUTIDO){ iniciarPainel(EMBUTIDO, LOCK_EMB); return; }

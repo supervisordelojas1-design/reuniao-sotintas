@@ -1914,6 +1914,11 @@ html[data-tema="escuro"] .dpq, html[data-theme="dark"] .dpq{border-color:#5a4a1c
     </div>
     <label>PIN atual <span style="color:var(--red)">*</span></label>
     <input type="password" id="cnAtual" inputmode="numeric" maxlength="6" placeholder="&#8226;&#8226;&#8226;&#8226;">
+    <div id="cnCracha" class="hint" style="margin-top:8px"></div>
+    <div class="btnrow" style="margin-top:4px;margin-bottom:6px">
+      <button type="button" class="btn btn-ghost btn-sm" id="cnReparar">&#128295; Reparar acesso aos pain&eacute;is</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="cnAtualizar">&#128260; Atualizar agora</button>
+    </div>
     <div class="grid2">
       <div><label>PIN novo</label><input type="password" id="cnNovo" inputmode="numeric" maxlength="6" placeholder="opcional"></div>
       <div><label>Repita o novo</label><input type="password" id="cnNovo2" inputmode="numeric" maxlength="6"></div>
@@ -1999,7 +2004,7 @@ html[data-tema="escuro"] .dpq, html[data-theme="dark"] .dpq{border-color:#5a4a1c
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 <script src="st-hora.js?v=1"></script>
 <script>try{ STHora.relogio(document.getElementById('horaBR')); }catch(e){}</script>
-<script src="st-dados.js?v=91"></script>
+<script src="st-dados.js?v=92"></script>
 <script src="st-novidades.js?v=1"></script>
 <script src="st-anima.js?v=3"></script>
 <script src="st-mascote.js?v=2"></script>
@@ -7036,6 +7041,35 @@ function aplicarEscopo(){
      Quem monta a lista certa agora é montarFiltroAgenda(). */
 }
 
+/* Acesso aos paineis (PDI, Niveis, Ranking, Metas, Mentor): o PIN mora na aba USUARIOS e o
+   cracha e emitido pelo Servidor de Dados. Quando um recusa o que o outro aceitou, a pessoa
+   precisa saber na hora — e ter um botao para resolver. */
+var CRACHA_ERRO='';
+function avisarCracha(err){
+  CRACHA_ERRO=(err&&err.message)||'Os paineis nao confirmaram seu PIN.';
+  try{ $('btnUser').classList.add('alerta'); }catch(e){}
+  toast('Entrei no app, mas os paineis nao confirmaram seu PIN. Abra "Minha conta" e toque em Reparar acesso.');
+}
+function crachaTexto(){
+  var d=null; try{ d=window.STDados&&STDados.diag(); }catch(e){}
+  if(CRACHA_ERRO) return '<b style="color:var(--red)">Acesso aos paineis pendente.</b> '+esc(CRACHA_ERRO);
+  if(!d||!d.temCracha) return 'Sem cracha neste aparelho. Toque em <b>Reparar acesso</b> com seu PIN no campo acima.';
+  if(!d.valido) return 'O cracha deste aparelho venceu. Toque em <b>Reparar acesso</b> com seu PIN no campo acima.';
+  var dias=Math.max(0,Math.round((d.expira-Date.now())/86400000));
+  return 'Acesso liberado neste aparelho'+(dias?' — renova sozinho (hoje vale por '+dias+' dia'+(dias>1?'s':'')+').':'.');
+}
+/* limpa tudo o que este aparelho guardou e busca de novo: resolve o caso do numero do
+   navegador diferente do numero do app instalado (sao dois armazenamentos separados). */
+function atualizarAgora(){
+  try{ if(window.STDados) STDados.limparCache(); }catch(e){}
+  try{ Object.keys(localStorage).forEach(function(k){
+    if(k.indexOf('st_cache_v1:')===0||k.indexOf('st_painel_cache_v1:')===0||k.indexOf('pnl_dados')===0) localStorage.removeItem(k); }); }catch(e){}
+  try{ sessionStorage.clear(); }catch(e){}
+  try{ if(navigator.serviceWorker) navigator.serviceWorker.getRegistration().then(function(r){ if(r) r.update(); }); }catch(e){}
+  toast('Buscando os numeros de novo...');
+  setTimeout(function(){ location.reload(); }, 700);
+}
+
 $('lgEntrar').onclick=function(){
   var nome=$('lgNome').value.trim(), pin=$('lgPin').value.trim();
   if(!nome){ lgErro('Digite seu nome ou código.'); return; }
@@ -7064,7 +7098,10 @@ $('lgEntrar').onclick=function(){
                 vendedor:!!res.vendedor, lotacao:res.lotacao||'', carteira:res.carteira||[],
                 gerencia:res.gerencia||[], trocarPin:!!res.trocarPin});
       /* crachá do Servidor de Dados (PDI, Níveis, Ranking, Mentor): aproveita o PIN que acabou de ser digitado */
-      try{ if(window.STDados) STDados.entrar(res.nome||nome, pin).then(function(){ try{ STDados.registrar('inicio'); }catch(e){} }).catch(function(){}); }catch(e){}
+      /* nov/2026: antes isto terminava em .catch(function(){}) — se os paineis recusassem o PIN,
+         ninguem ficava sabendo, e a parede aparecia 7 dias depois, quando o cracha vencia. */
+      try{ if(window.STDados) STDados.reparar(res.nome||nome, pin).then(function(){ try{ STDados.registrar('inicio'); }catch(e){} })
+        .catch(function(err){ avisarCracha(err); }); }catch(e){}
       if(res.novo) setTimeout(function(){ toast('Acesso criado. Confira seus dados em Minha conta.'); }, 900);
     })
     .catch(function(){
@@ -7101,8 +7138,29 @@ function abrirConta(){
   $('cnDeOnde').classList.remove('hidden');
   $('cnStatus').classList.add('hidden');
   $('cnAviso').classList.toggle('hidden', !SESSAO.pinPadrao);
+  if($('cnCracha')) $('cnCracha').innerHTML=crachaTexto();
   $('modalConta').classList.add('show');
 }
+/* Reparar: reemite o cracha dos paineis com o PIN atual. Resolve na hora quem travou
+   depois dos 7 dias por ter trocado o PIN sem que os paineis soubessem. */
+(function(){
+  var br=document.getElementById('cnReparar'), ba=document.getElementById('cnAtualizar');
+  if(br) br.onclick=function(){
+    var pin=($('cnAtual').value||'').trim();
+    if(!/^\d{4,6}$/.test(pin)){ cnBox('erro','Digite seu PIN atual no campo <b>PIN atual</b> e toque em Reparar de novo.'); $('cnAtual').focus(); return; }
+    if(!window.STDados){ cnBox('erro','Recarregue a página e tente de novo.'); return; }
+    br.disabled=true; cnBox('info','Reparando o acesso...');
+    STDados.reparar(SESSAO.nome, pin).then(function(){
+      br.disabled=false; CRACHA_ERRO=''; try{ $('btnUser').classList.remove('alerta'); }catch(e){}
+      cnBox('ok', ICO('check')+' Acesso reparado. Os painéis já abrem com este PIN.');
+      $('cnCracha').innerHTML=crachaTexto();
+    }).catch(function(err){
+      br.disabled=false; CRACHA_ERRO=(err&&err.message)||'';
+      cnBox('erro', esc(CRACHA_ERRO)); $('cnCracha').innerHTML=crachaTexto();
+    });
+  };
+  if(ba) ba.onclick=function(){ atualizarAgora(); };
+})();
 $('cnFechar').onclick=function(){
   if(SESSAO && SESSAO.pinPadrao){ cnBox('erro','Troque o PIN inicial para continuar usando o app (prazo de 10 minutos).'); return; }
   $('modalConta').classList.remove('show'); };
@@ -7142,6 +7200,18 @@ $('cnSalvar').onclick=function(){
       $('cnAviso').classList.add('hidden');
       cnBox('ok', ICO('check')+' Salvo.'+(novo?' Use o PIN novo da próxima vez.':'')+
         ($('cnEmail').value.trim()?' O resumo da manhã vai para esse e-mail.':''));
+      /* nov/2026: o cracha dos paineis foi emitido com o PIN ANTIGO e vale 7 dias. Sem reemitir
+         aqui, o PIN novo so era cobrado uma semana depois — e recusado. */
+      var pinAgora = novo || $('cnAtual').value.trim();
+      try{ if(window.STDados) STDados.reparar(SESSAO.nome, pinAgora).then(function(){
+            CRACHA_ERRO=''; try{ $('btnUser').classList.remove('alerta'); }catch(e){}
+            cnBox('ok', ICO('check')+' Salvo. O PIN novo já vale no app <b>e</b> nos painéis.');
+            if($('cnCracha')) $('cnCracha').innerHTML=crachaTexto();
+          }).catch(function(err){
+            CRACHA_ERRO=(err&&err.message)||'';
+            cnBox('erro','PIN trocado no app, mas os painéis recusaram: '+esc(CRACHA_ERRO));
+            if($('cnCracha')) $('cnCracha').innerHTML=crachaTexto();
+          }); }catch(e){}
     })
     .catch(function(){ $('cnSalvar').disabled=false; cnBox('erro','Sem sinal — nada foi alterado.'); });
 };
@@ -9674,6 +9744,8 @@ body.foco .wrap{padding-bottom:40px}
         if(!res||!res.ok){ acStatus('✕ '+acEsc((res&&res.erro)||'Não consegui gravar.'),'#D32027'); return; }
         acStatus(o.acao==='desativar' ? '✓ Acesso de '+acEsc(res.nome)+' desativado.'
           : '✓ '+acEsc(res.nome)+' liberado. Passe para ele: entrar no Assistente ST com o nome <b>'+acEsc(res.nome)+'</b> e o PIN <b>'+acEsc(o.pin)+'</b> — no primeiro acesso o app pede para trocar.','var(--ok,#177a4d)');
+        /* o PIN novo vale no app na hora; nos paineis, so depois de sincronizar */
+        try{ if(window.STDados && o.pin && o.acao!=='desativar') STDados.sincPinDe(res.nome||o.nome, o.pin); }catch(e){}
         acEl('acNovoNome').value=''; acCarregar(true);
       })
       .catch(function(){ acStatus('Sem conexão — nada foi gravado.','#D32027'); });
