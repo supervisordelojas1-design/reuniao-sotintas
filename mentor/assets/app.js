@@ -365,7 +365,7 @@
     return App.cabecalho(m.titulo, m.subtitulo, { voltar: '#/trilha', cor: m.cor === 'verde' ? 'verde' : m.cor === 'azul' ? 'azul' : m.cor === 'amarelo' ? 'amarelo' : m.cor === 'cinza' ? 'escuro' : '' }) + `<div class="tela">
       <div class="card"><p class="pequeno" style="margin:0 0 8px">${esc(m.descricao)}</p><div class="linha entre pequeno"><span>📘 ${esc(m.fonte)}</span><b>${p.pct}%</b></div><div class="barra mt-1"><span style="width:${p.pct}%"></span></div>${m.pdf && !(window.SOTINTAS_CONFIG && window.SOTINTAS_CONFIG.DEMO_PUBLICA) ? `<a class="btn mini contorno mt-1" href="${esc(m.pdf)}" target="_blank" rel="noopener" download>📄 Baixar o guia em PDF (${m.paginas} pág.)</a>` : ''}</div>
       ${p.aulas.map((a, i) => { const ok = App.feito('aula', a.id); return `<div class="item-lista ${ok ? 'feito' : ''}" onclick="location.hash='#/aula/${a.id}'"><span class="num">${ok ? '✔' : i + 1}</span><div class="cresce"><div class="titulo">${esc(a.titulo)}</div><div class="desc">${a.duracao_min} min · páginas ${a.pagina_inicial}–${a.pagina_final} · +${a.xp || App.cont.regras_xp.aula} ST</div></div><span class="seta">›</span></div>`; }).join('')}
-      <div class="item-lista ${p.quiz ? 'feito' : (p.feitas === p.aulas.length ? 'atual' : 'bloqueado')}" onclick="${p.feitas === p.aulas.length ? `location.hash='#/quiz/${m.id}'` : `App.toast('Conclua todas as aulas para liberar o quiz')`}"><span class="num">${p.quiz ? '✔' : '📝'}</span><div class="cresce"><div class="titulo">Quiz do módulo</div><div class="desc">${App.cont.questoes.filter(q => q.modulo_id === m.id).length} questões · nota mínima ${fmtNum(App.cont.config.nota_aprovacao)} · +${App.cont.regras_xp.quiz_aprovado} ST${melhor != null ? ` · melhor nota: <b>${fmtNum(melhor)}</b>` : ''}</div></div><span class="seta">›</span></div>
+      <div class="item-lista ${p.quiz ? 'feito' : (p.feitas === p.aulas.length ? 'atual' : 'bloqueado')}" onclick="${p.feitas === p.aulas.length ? `location.hash='#/quiz/${m.id}'` : `App.toast('Conclua todas as aulas para liberar o quiz')`}"><span class="num">${p.quiz ? '✔' : '📝'}</span><div class="cresce"><div class="titulo">Quiz do módulo</div><div class="desc">${App.cont.questoes.filter(q => q.modulo_id === m.id).length} questões · nota mínima ${fmtNum(App.corte(m.id))} · +${App.cont.regras_xp.quiz_aprovado} ST${melhor != null ? ` · melhor nota: <b>${fmtNum(melhor)}</b>` : ''}</div></div><span class="seta">›</span></div>
       ${p.concluido ? `<div class="card sucesso centro">🏅 Módulo concluído! Bônus de ${m.xp_bonus} ST recebido.</div>` : ''}
       ${App.ck ? App.ck.cardModulo(m.id) : ''}
     </div>`;
@@ -413,7 +413,7 @@
     const r = st.resultado; const aprovado = r.aprovado; const nota = Number(r.nota);
     const mapa = {}; (r.detalhes || []).forEach(d => mapa[d.questao_id] = d);
     return App.cabecalho(titulo, sub, { voltar: opts.voltar, cor: aprovado ? 'verde' : '' }) + `<div class="tela">
-      <div class="card centro ${aprovado ? 'sucesso' : 'erro'}"><div class="nota-grande">${fmtNum(nota)}</div><div class="negrito">${aprovado ? '🎉 Aprovado!' : '😕 Ainda não foi dessa vez'}</div><div class="pequeno texto-2">${r.acertos} de ${r.total} acertos · nota mínima ${fmtNum(App.cont.config.nota_aprovacao)}${r.xp_ganho ? ` · <b>+${r.xp_ganho} ST</b>` : ''}</div></div>
+      <div class="card centro ${aprovado ? 'sucesso' : 'erro'}"><div class="nota-grande">${fmtNum(nota)}</div><div class="negrito">${aprovado ? '🎉 Aprovado!' : '😕 Ainda não foi dessa vez'}</div><div class="pequeno texto-2">${r.acertos} de ${r.total} acertos · nota mínima ${fmtNum(opts.corte != null ? opts.corte : App.cont.config.nota_aprovacao)}${r.xp_ganho ? ` · <b>+${r.xp_ganho} ST</b>` : ''}</div></div>
       ${aprovado && opts.aprovadoHtml ? opts.aprovadoHtml : ''}
       <h3 class="mt-2">Gabarito comentado</h3>
       ${st.questoes.map((q, i) => { const d = mapa[q.id] || {}; const certa = d.certa; return `<div class="card"><div class="pequeno negrito mb-1">${i + 1}. ${esc(q.enunciado)}</div>${q.opcoes.map((o, k) => { let cls = 'desab'; if (k === d.correta) cls += ' certa'; else if (k === d.escolhida && !certa) cls += ' errada'; return `<div class="quiz-opcao ${cls}"><span class="letra">${'ABCD'[k]}</span><span class="pequeno">${esc(o)}</span></div>`; }).join('')}${d.explicacao ? `<div class="dica-box pequeno">${esc(d.explicacao)}</div>` : ''}</div>`; }).join('')}
@@ -431,13 +431,19 @@
       if (r.aprovado) setTimeout(() => App.celebrar(r, st.final ? 'Você é um Campeão Só Tintas!' : 'Quiz aprovado!'), 300);
     } catch (e) { App.toast('Erro ao enviar: ' + e.message); }
   };
+  App.corte = (moduloId) => {
+    const padrao = Number(App.cont.config.nota_aprovacao || 7);
+    const m = (App.cont.modulos || []).filter(x => x.id === moduloId)[0];
+    const v = m == null ? null : Number(m.nota_minima);
+    return (v != null && isFinite(v) && v > 0) ? v : padrao;
+  };
   App.views.quiz = ([moduloId]) => {
     const m = App.cont.modulos.find(x => x.id === moduloId); if (!m) return App.views.trilha();
     const questoes = App.cont.questoes.filter(q => q.modulo_id === m.id).sort((a, b) => a.ordem - b.ordem);
     if (!questoes.length) return App.cabecalho('Quiz', m.titulo, { voltar: `#/modulo/${m.id}` }) + '<div class="tela"><div class="card">Este módulo ainda não tem questões cadastradas. O gestor pode adicionar pelo painel.</div></div>';
     const chave = 'quiz:' + m.id;
     if (!App.cache.quiz || App.cache.quiz.chave !== chave) App.cache.quiz = { chave, i: 0, resp: {}, resultado: null, questoes, moduloId: m.id, final: false };
-    return montarQuiz(questoes, 'Quiz: ' + m.titulo, `${questoes.length} questões · nota mínima ${fmtNum(App.cont.config.nota_aprovacao)}`, null, { chave, voltar: `#/modulo/${m.id}` });
+    return montarQuiz(questoes, 'Quiz: ' + m.titulo, `${questoes.length} questões · nota mínima ${fmtNum(App.corte(m.id))}`, null, { chave, voltar: `#/modulo/${m.id}`, corte: App.corte(m.id) });
   };
   function sortearFinal() {
     const pool = App.cont.questoes.filter(q => q.final !== false);

@@ -2,6 +2,31 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v167",
+      "data": "11/11/2026",
+      "hora": "22:40",
+      "itens": [
+        {
+          "painel": "Painel de Conteúdo · Provas",
+          "o_que": "Na criação da prova agora dá para definir a média para aprovação (nota de 0 a 10) na própria tela, junto do destino. Vale tanto para a prova avulsa quanto para o quiz do módulo da trilha: cada prova pode ter a sua média, em vez de todas usarem a nota única do Mentor.",
+          "para": [
+            "coord"
+          ]
+        },
+        {
+          "painel": "Mentor ST PRO · Quiz dos módulos",
+          "o_que": "O quiz de cada módulo passa a cobrar a média definida para aquela prova. Onde nenhuma média foi definida, segue valendo a nota mínima geral do Mentor. A tela do quiz e o resultado mostram a média que está valendo.",
+          "para": [
+            "coord",
+            "anl",
+            "sup",
+            "ger",
+            "vend"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v166",
       "data": "11/11/2026",
       "hora": "12:40",

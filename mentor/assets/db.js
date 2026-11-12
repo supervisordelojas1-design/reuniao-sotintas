@@ -213,11 +213,18 @@
       return null;
     },
 
+    corteModulo(cont, moduloId) {
+      const padrao = Number(cont.config.nota_aprovacao || 7);
+      const m = (cont.modulos || []).filter(x => x.id === moduloId)[0];
+      const v = m == null ? null : Number(m.nota_minima);
+      return (v != null && isFinite(v) && v > 0) ? v : padrao;
+    },
+
     async enviarQuiz(uid, moduloId, respostas) {
       const d = Demo.ler(); const cont = Demo.conteudo();
       const questoes = cont.questoes.filter(q => q.modulo_id === moduloId);
       const res = Gamificacao.corrigirQuiz(questoes, respostas);
-      const aprovado = res.nota >= (cont.config.nota_aprovacao || 7);
+      const aprovado = res.nota >= Demo.corteModulo(cont, moduloId);
       d.tentativas[uid] = d.tentativas[uid] || [];
       d.tentativas[uid].push({ id: uuid(), modulo_id: moduloId, nota: res.nota, acertos: res.acertos, total: res.total, aprovado, realizado_em: agora(), respostas });
       Demo._marcarAtividade(d, uid);
