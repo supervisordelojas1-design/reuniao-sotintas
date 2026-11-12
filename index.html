@@ -10075,6 +10075,14 @@ button[id^="ov"][id$="Fechar"]:hover{transform:translateY(-1px);box-shadow:0 6px
     ov.querySelector('[data-vn=ok]').onclick=function(){ fecha('visto'); };
     setTimeout(function(){ var b=ov.querySelector('[data-vn=ok]'); if(b) b.focus(); },50);
   }
+  /* preview do anúncio (coordenação, pelo console) e "ver de novo" dos anúncios já marcados */
+  window.STVideoNovo={
+    previa:function(v){ abrirVideoNovo(v||{id:'previa',titulo:'Vídeo novo de exemplo',descricao:'Prévia do anúncio — nada foi publicado.',categoria:'Institucional',url:''},'st_videonovo_previa',new Date().toDateString(),function(){}); },
+    rever:function(){ var s=null; try{ s=JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); }catch(e){}
+      if(!s||!s.nome) return; var pre='st_videonovo_v1:'+String(s.nome).toLowerCase().trim()+':', i, k, fora=[];
+      try{ for(i=0;i<localStorage.length;i++){ k=localStorage.key(i); if(k&&k.indexOf(pre)===0) fora.push(k); } fora.forEach(function(x){ localStorage.removeItem(x); }); }catch(e){}
+      videoNovo(function(){}); }
+  };
   window.STBoasVindas={ rever:function(){ try{ var s=JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); localStorage.removeItem('st_boasvindas_v1:'+String(s.nome).toLowerCase().trim()); }catch(e){} var vai=function(){ boasVindas(function(){}); }; if(window.STMascote) STMascote.mostrar(vai,true); else vai(); } };
   (function(){ var a=document.getElementById('iniBoasVindas'), t=document.getElementById('iniTour');
     if(a) a.onclick=function(){ window.STBoasVindas.rever(); };
