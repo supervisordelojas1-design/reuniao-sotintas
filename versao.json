@@ -2,6 +2,20 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v184",
+      "data": "13/11/2026",
+      "hora": "19:50",
+      "itens": [
+        {
+          "painel": "Direitos de Acesso",
+          "o_que": "O aviso de salvamento ficava entre a grade e os campos de login e, em tela estreita, saía da área visível — dava a impressão de que nada tinha acontecido. Agora sobe uma faixa flutuante por cima de tudo, verde quando salva e vermelha quando recusa, e o botão confirma com \"✓ Salvo\".",
+          "para": [
+            "coord"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v183",
       "data": "13/11/2026",
       "hora": "19:45",

@@ -10050,8 +10050,27 @@ body.foco .wrap{padding-bottom:40px}
     document.body.appendChild(ov);
     var grade=ov.querySelector('#dxGrade'), msg=ov.querySelector('#dxMsg');
     var ITENS=[], ORIG={}, ATUAL={};
-    function aviso(t,cor){ msg.innerHTML=t||''; msg.style.color=cor||'#5a677f'; }
-    function fechar(){ ov.remove(); document.removeEventListener('keydown',tecla); }
+    /* O aviso vivia entre a grade e os campos de login e, em tela estreita,
+       ficava fora da vista: quem salvava não via se tinha dado certo. Agora
+       além da linha no modal sobe uma faixa flutuante por cima de tudo. */
+    function faixa(html,cor){
+      var f=document.getElementById('dxFaixa');
+      if(!f){ f=document.createElement('div'); f.id='dxFaixa'; f.setAttribute('role','status');
+        f.style.cssText='position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:2147483600;'+
+          'max-width:min(560px,calc(100% - 24px));padding:12px 16px;border-radius:12px;'+
+          'font:700 13px "Public Sans",system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.35)';
+        document.body.appendChild(f); }
+      f.style.background = cor==='erro' ? '#fbe3e1' : cor==='ok' ? '#dcf3e6' : '#eef2f8';
+      f.style.color      = cor==='erro' ? '#8c1d18' : cor==='ok' ? '#0f6b40' : '#16233d';
+      f.innerHTML=html;
+      clearTimeout(f._t); f._t=setTimeout(function(){ if(f.parentNode) f.remove(); }, 9000);
+    }
+    function aviso(t,cor){
+      msg.innerHTML=t||''; msg.style.color = cor==='erro' ? '#b3261e' : cor==='ok' ? '#0f6b40' : '#5a677f';
+      if(t) { faixa(t, cor); try{ msg.scrollIntoView({block:'nearest'}); }catch(e){} }
+    }
+    function fechar(){ ov.remove(); document.removeEventListener('keydown',tecla);
+      var f=document.getElementById('dxFaixa'); if(f) f.remove(); }
     function tecla(e){ if(e.key==='Escape') fechar(); }
     document.addEventListener('keydown',tecla);
 
@@ -10091,16 +10110,16 @@ body.foco .wrap{padding-bottom:40px}
       ITENS=res.itens||[];
       ITENS.forEach(function(i){ ORIG[i.cargo]=texto(mapa(i.paineis)); ATUAL[i.cargo]=mapa(i.paineis); });
       desenhar();
-    }).catch(function(e){ grade.innerHTML='<p style="padding:14px;margin:0;color:#b3261e;font-size:13px">'+esc(e.message)+'</p>'; });
+    }).catch(function(e){ grade.innerHTML='<p style="padding:14px;margin:0;color:#b3261e;font-size:13px">'+esc(e.message)+'</p>'; aviso(esc(e.message),'erro'); });
 
     ov.addEventListener('click',function(e){
       if(e.target===ov){ fechar(); return; }
       var b=e.target.closest('[data-dx]'); if(!b) return;
       if(b.dataset.dx==='x'){ fechar(); return; }
       var mudou=ITENS.filter(function(i){ return texto(ATUAL[i.cargo])!==ORIG[i.cargo]; });
-      if(!mudou.length){ aviso('Nada mudou ainda.','#5a677f'); return; }
+      if(!mudou.length){ aviso('Nada mudou ainda — toque nas células para alterar.','info'); return; }
       var login=(ov.querySelector('#dxLogin').value||'').trim(), pin=(ov.querySelector('#dxPin').value||'').trim();
-      if(!login||!pin){ aviso('Informe seu login do Autcom e sua senha.','#b3261e'); return; }
+      if(!login||!pin){ aviso('Informe seu login do Autcom e sua senha.','erro'); return; }
       b.disabled=true; b.textContent='Salvando…'; aviso('');
       var feitos=[], falhas=[];
       mudou.reduce(function(seq,i){
@@ -10115,12 +10134,14 @@ body.foco .wrap{padding-bottom:40px}
             .catch(function(er){ falhas.push(esc(i.cargo)+': '+esc(er.message||String(er))); });
         });
       }, Promise.resolve()).then(function(){
-        b.disabled=false; b.textContent='Salvar alterações';
+        b.disabled=false;
+        b.textContent = falhas.length ? 'Salvar alterações' : '✓ Salvo';
+        setTimeout(function(){ b.textContent='Salvar alterações'; }, 4000);
         ov.querySelector('#dxPin').value='';
         var t='';
         if(feitos.length) t+='<b style="color:#0f6b40">Salvo:</b> '+feitos.map(esc).join(', ')+'. ';
         if(falhas.length) t+='<b style="color:#b3261e">Não salvou:</b> '+falhas.join(' · ');
-        aviso(t||'Nada a salvar.', falhas.length?'#b3261e':'#0f6b40');
+        aviso(t||'Nada a salvar.', falhas.length?'erro':'ok');
         try{ if(window.carregarMinhaRegua) carregarMinhaRegua(); }catch(e2){}
       });
     });
