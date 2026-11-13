@@ -167,6 +167,12 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
   }
 
   function montar(){
+    /* nov/2026: o analista é leitura da rede, mas não entra no Cadastro da Equipe */
+    if(D.perfil==='anl'){
+      $('raiz').innerHTML='<div class="card"><h2>Painel restrito</h2><p class="sub">O perfil Analista tem leitura dos painéis de resultado. O Cadastro da Equipe é da coordenação.</p></div>';
+      $('sub').textContent='Acesso não liberado para este perfil';
+      return;
+    }
     var P=D.pessoas, rot=(D.perfil==='coord'||D.perfil==='anl'||D.perfil==='mkt')?'Rede Só Tintas':D.perfil==='sup'?'Sua carteira':'Sua loja';
     var nAt=P.filter(function(p){return p.ativo;}).length;
     $('sub').textContent=rot+' · '+nAt+' pessoas ativas';

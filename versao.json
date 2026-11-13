@@ -2,17 +2,32 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v177",
+      "data": "13/11/2026",
+      "hora": "18:20",
+      "itens": [
+        {
+          "painel": "Perfil Analista · acessos",
+          "o_que": "O perfil Analista passa a ver só os painéis de resultado da rede. Cadastro da Equipe, Acesso de usuários, Painel de Conteúdo e Central de Atualização deixam de aparecer para esse perfil e ficam barrados também por link direto. Nenhum outro perfil muda.",
+          "para": [
+            "coord",
+            "anl"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v176",
       "data": "13/11/2026",
       "hora": "15:28",
       "itens": [
         {
-          "painel": "Especialista ST \u00b7 Calculadora de materiais",
-          "o_que": "A obra passou a mostrar, gravar e enviar o Produto final \u2014 o acabamento da obra (a tinta, o esmalte ou o verniz, separado do selador, do fundo e da massa): marca, embalagem, quantidade, dem\u00e3os, superf\u00edcies, dilui\u00e7\u00e3o, secagem e rendimento, como vem do cat\u00e1logo Coral/Eucatex. No resumo do WhatsApp ele aparece embaixo do total, antes da lista de complementos, e em Meus c\u00e1lculos o cart\u00e3o da obra mostra qual \u00e9 o produto final."
+          "painel": "Especialista ST · Calculadora de materiais",
+          "o_que": "A obra passou a mostrar, gravar e enviar o Produto final — o acabamento da obra (a tinta, o esmalte ou o verniz, separado do selador, do fundo e da massa): marca, embalagem, quantidade, demãos, superfícies, diluição, secagem e rendimento, como vem do catálogo Coral/Eucatex. No resumo do WhatsApp ele aparece embaixo do total, antes da lista de complementos, e em Meus cálculos o cartão da obra mostra qual é o produto final."
         },
         {
-          "painel": "CRM \u00b7 Ficha do pintor",
-          "o_que": "Cada obra da ficha do pintor ganhou Produto final (a tinta de acabamento que vai na obra) e a lista de Complementos para marcar o que a obra leva \u2014 rolo, trincha, bandeja, fita crepe, lixa, lona, esp\u00e1tula, extensor, solvente \u2014 mais um campo para outros complementos. Os tr\u00eas aparecem embaixo da obra no card do pintor, junto com a observa\u00e7\u00e3o."
+          "painel": "CRM · Ficha do pintor",
+          "o_que": "Cada obra da ficha do pintor ganhou Produto final (a tinta de acabamento que vai na obra) e a lista de Complementos para marcar o que a obra leva — rolo, trincha, bandeja, fita crepe, lixa, lona, espátula, extensor, solvente — mais um campo para outros complementos. Os três aparecem embaixo da obra no card do pintor, junto com a observação."
         }
       ]
     },
@@ -22,8 +37,8 @@
       "hora": "15:14",
       "itens": [
         {
-          "painel": "Especialista ST \u00b7 Calculadora de materiais",
-          "o_que": "A lista \"N\u00e3o esque\u00e7a os complementos\" (rolo, trincha, bandeja, fita crepe, lixa, lona, esp\u00e1tula e extensor, com a quantidade calculada pela \u00e1rea) passou a fazer parte da obra: ela \u00e9 gravada junto quando voc\u00ea salva em Meus c\u00e1lculos e vai no resumo enviado pelo WhatsApp, embaixo do total, com a quantidade e a dica de uso de cada item. No cart\u00e3o da obra salva aparece quantos complementos ela tem."
+          "painel": "Especialista ST · Calculadora de materiais",
+          "o_que": "A lista \"Não esqueça os complementos\" (rolo, trincha, bandeja, fita crepe, lixa, lona, espátula e extensor, com a quantidade calculada pela área) passou a fazer parte da obra: ela é gravada junto quando você salva em Meus cálculos e vai no resumo enviado pelo WhatsApp, embaixo do total, com a quantidade e a dica de uso de cada item. No cartão da obra salva aparece quantos complementos ela tem."
         }
       ]
     },
@@ -33,8 +48,8 @@
       "hora": "14:30",
       "itens": [
         {
-          "painel": "CRM \u00b7 Ficha do pintor",
-          "o_que": "Cada obra da ficha do pintor agora tem um campo de Observa\u00e7\u00e3o, para o vendedor anotar o que n\u00e3o cabe nos outros campos: quem \u00e9 o contato na obra, em que etapa ela est\u00e1, o produto que vai usar, prazo de pagamento, o que combinaram. A observa\u00e7\u00e3o aparece embaixo da obra no card do pintor, para a equipe ver antes de ligar."
+          "painel": "CRM · Ficha do pintor",
+          "o_que": "Cada obra da ficha do pintor agora tem um campo de Observação, para o vendedor anotar o que não cabe nos outros campos: quem é o contato na obra, em que etapa ela está, o produto que vai usar, prazo de pagamento, o que combinaram. A observação aparece embaixo da obra no card do pintor, para a equipe ver antes de ligar."
         }
       ]
     },

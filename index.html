@@ -9316,7 +9316,7 @@ syncNav();
         <span class="ini-txt"><span class="ini-nm">CRM de Vendas</span><span class="ini-ds">Orçamentos, carteira, pós-venda e pintores: registrar cada contato </span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
-      <button type="button" class="ini-card feat" data-act="acessos" data-lider="1">
+      <button type="button" class="ini-card feat" data-act="acessos" data-lider="1" data-noanl="1">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
         <span class="ini-txt"><span class="ini-nm">Acesso de usuários</span><span class="ini-ds">Liberar, novo PIN de gerente e vendedor, desativar</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
@@ -9346,7 +9346,7 @@ syncNav();
         <span class="ini-txt"><span class="ini-nm">Painel de Conteúdo</span><span class="ini-ds">Banners, fornecedores, provas, vídeos e trilha do Mentor</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
-      <button type="button" class="ini-card feat" data-act="cadastro" data-lider="1">
+      <button type="button" class="ini-card feat" data-act="cadastro" data-lider="1" data-noanl="1">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-user"/></svg></span>
         <span class="ini-txt"><span class="ini-nm">Cadastro da Equipe</span><span class="ini-ds">Uma pessoa, um código · liberar, arquivar e restaurar</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
@@ -9524,6 +9524,11 @@ body.foco .wrap{padding-bottom:40px}
     return s.escopo==='todos' || s.escopo==='lojas' || p.indexOf('coorden')>=0 || p.indexOf('supervis')>=0 || p.indexOf('gerente')>=0 || p==='analista'; }
   /* nov/2026: administrador de conteúdo (Marketing) — só Mentor, Cadastro da Equipe e Painel de Conteúdo na Gestão */
   function ehMkt(){ return !!(window.STDados&&STDados.ehMkt&&STDados.ehMkt()); }
+  /* nov/2026: analista = leitura da rede inteira, sem os painéis de administração
+     (Cadastro da Equipe, Acesso de usuários, Painel de Conteúdo, Central de Atualização) */
+  function ehAnl(){ var s=sessao(); if(!s) return false;
+    if(String(s.papel||'').trim().toLowerCase()==='analista') return true;
+    try{ return !!(window.STDados&&STDados.perfil&&STDados.perfil()==='anl'); }catch(e){ return false; } }
   function aplicarGate(){
     var ver=podeVer(), vend=ehVend(), mkt=ehMkt();
     document.body.classList.toggle('modo-vendedor', vend);
@@ -9532,7 +9537,8 @@ body.foco .wrap{padding-bottom:40px}
       c.style.display = (ver || (vend && c.hasAttribute('data-vend')) || (ehGer() && c.hasAttribute('data-ger'))) ? '' : 'none';
     });
     Array.prototype.forEach.call(grid.querySelectorAll('[data-lider]'),function(c){
-      c.style.display = (ehLider() || (mkt && c.getAttribute('data-act')==='cadastro')) ? '' : 'none';
+      var bloq = ehAnl() && c.hasAttribute('data-noanl');
+      c.style.display = (!bloq && (ehLider() || (mkt && c.getAttribute('data-act')==='cadastro'))) ? '' : 'none';
     });
     Array.prototype.forEach.call(grid.querySelectorAll('[data-conteudo]'),function(c){
       var s=sessao(); c.style.display = (mkt || (s&&!ehVend()&&s.escopo==='todos'&&String(s.papel||'').toLowerCase()!=='analista')) ? '' : 'none';
@@ -9648,18 +9654,21 @@ body.foco .wrap{padding-bottom:40px}
     ovD.style.display='flex'; document.body.style.overflow='hidden';
   }
   function abrirCadastro(){
+    if(ehAnl()) return;
     if(!ovD||!ifrD) return; titOv('Cadastro da Equipe · Só Tintas');
     var tema=(window.STtema?window.STtema.get():'light');
     ifrD.setAttribute('src','cadastro.html?tema='+tema+'&v='+Date.now());
     ovD.style.display='flex'; document.body.style.overflow='hidden';
   }
   function abrirConteudo(){
+    if(ehAnl()) return;
     if(!ovD||!ifrD) return; titOv('Painel de Conteúdo · Só Tintas');
     var tema=(window.STtema?window.STtema.get():'light');
     ifrD.setAttribute('src','conteudo.html?tema='+tema+'&v='+Date.now());
     ovD.style.display='flex'; document.body.style.overflow='hidden';
   }
   function abrirCentral(){
+    if(ehAnl()) return;
     if(!ovD||!ifrD) return; titOv('Central de Atualização · Só Tintas');
     var tema=(window.STtema?window.STtema.get():'light');
     ifrD.setAttribute('src','atualizar.html?tema='+tema+'&v='+Date.now());
@@ -9787,6 +9796,7 @@ body.foco .wrap{padding-bottom:40px}
     }).catch(function(){});
   }
   function abrirAcessos(){
+    if(ehAnl()) return;
     var m=acEl('modalAcessos'); if(!m) return;
     acStatus(''); m.classList.add('show'); acCarregar(false);
   }
