@@ -9996,11 +9996,14 @@ body.foco .wrap{padding-bottom:40px}
 
 <script>
 
-/* ===== DIREITOS DE ACESSO (quem edita equipe) =====================
-   Liga e desliga painel por painel, por cargo. Grava na coluna Painéis da aba
-   PERMISSOES, que guarda só as EXCEÇÕES — "padrão" quer dizer não escrever nada e
-   seguir a regra do app. Para gravar pede o login do Autcom + a senha, como
-   todo o resto do app; quem confere é o servidor, não esta tela. */
+/* ===== DIREITOS DE ACESSO — grade Cargo × Acesso ==================
+   Uma célula por cruzamento. Três estados, em ciclo ao toque:
+     –  padrão    (não escreve nada: vale a regra de hoje)
+     ✓  liberado  (grava chave:1)
+     ✗  bloqueado (grava chave:0)
+   Botões próprios em vez de <select>: o menu nativo herdava a cor do tema e
+   ficava ilegível. Grava só os cargos que mudaram, um pedido por cargo, com
+   login do Autcom + senha — quem confere é o servidor. */
 (function(){
   var PAINEIS=[
     ['verMetas','Painel de Metas'],['verNiveis','Níveis'],['verPDI','PDI Mensal'],
@@ -10011,81 +10014,112 @@ body.foco .wrap{padding-bottom:40px}
     ['gerirCadastro','Cadastro da Equipe'],['gerirAcessos','Acesso de usuários'],
     ['gerirConteudo','Painel de Conteúdo'],['gerirCentral','Central de Atualização']
   ];
+  var CICLO={'':'1','1':'0','0':''};
+  var VISUAL={ '':['–','#8a95a8','#f1f4f9','padrão'],
+               '1':['✓','#0f6b40','#dcf3e6','liberado'],
+               '0':['✗','#b3261e','#fbe3e1','bloqueado'] };
   function esc(t){ return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  function curto(c){ return String(c||'').replace(/\(a\)/g,'').replace(/\s+de\s+Loja/i,'').replace(/\s+Junior/i,'').trim(); }
   function mapa(txt){ var m={}; String(txt||'').split(/[;,\n]+/).forEach(function(par){
       var q=par.split(':'); if(q.length<2) return; var k=q[0].trim(); if(!k) return;
       var v=q[1].trim().toLowerCase();
       m[k]=(v==='0'||v==='nao'||v==='não'||v==='n'||v==='false'||v==='')?'0':'1'; });
     return m; }
-  function texto(m){ return Object.keys(m).filter(function(k){ return m[k]==='0'||m[k]==='1'; })
-      .map(function(k){ return k+':'+m[k]; }).join(', '); }
+  function texto(m){ var o=[]; Object.keys(m).forEach(function(k){ if(m[k]==='0'||m[k]==='1') o.push(k+':'+m[k]); }); return o.join(', '); }
 
   window.abrirDireitos=function(){
     var ov=document.createElement('div'); ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true');
-    ov.style.cssText='position:fixed;inset:0;z-index:2147483000;background:rgba(6,10,20,.66);display:flex;align-items:flex-start;justify-content:center;padding:28px 14px;overflow:auto;font-family:"Public Sans",system-ui,sans-serif';
-    var campo='display:block;width:100%;margin-top:5px;padding:9px 11px;border-radius:9px;border:1px solid #cfd6e4;background:#f5f7fb;color:#16233d;font:600 14px inherit';
-    ov.innerHTML='<div style="width:100%;max-width:620px;background:#fff;color:#16233d;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px">'+
+    ov.style.cssText='position:fixed;inset:0;z-index:2147483000;background:rgba(6,10,20,.66);display:flex;align-items:flex-start;justify-content:center;padding:22px 10px;overflow:auto;font-family:"Public Sans",system-ui,sans-serif';
+    var campo='display:block;width:100%;margin-top:4px;padding:9px 11px;border-radius:9px;border:1px solid #cfd6e4;background:#fff;color:#16233d;font:600 14px inherit';
+    ov.innerHTML='<div style="width:100%;max-width:980px;background:#fff;color:#16233d;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px">'+
       '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div><b style="font-size:18px">🔒 Direitos de Acesso</b>'+
-      '<div style="font-size:12.5px;color:#5a677f;margin-top:2px">O que cada cargo enxerga no app. <b>Padrão</b> deixa a regra de hoje valer; só o que você mudar vira exceção. Vale no próximo abrir do app de cada pessoa.</div></div>'+
-      '<button type="button" data-dx="x" aria-label="Fechar" style="border:0;background:#eef2f8;border-radius:8px;padding:6px 10px;font-weight:700;cursor:pointer">✕</button></div>'+
-      '<label style="font-size:12px;font-weight:700;color:#5a677f">Cargo<select id="dxCargo" style="'+campo+'"><option>Carregando…</option></select></label>'+
-      '<div id="dxLista" style="display:flex;flex-direction:column;gap:6px;max-height:44vh;overflow:auto"></div>'+
-      '<div id="dxMsg" role="status" style="font-size:12.5px;min-height:16px"></div>'+
+      '<div style="font-size:12.5px;color:#5a677f;margin-top:2px">Toque na célula para alternar: <b>–</b> padrão (vale a regra de hoje) · <b style="color:#0f6b40">✓</b> liberado · <b style="color:#b3261e">✗</b> bloqueado. Vale no próximo abrir do app de cada pessoa.</div></div>'+
+      '<button type="button" data-dx="x" aria-label="Fechar" style="border:0;background:#eef2f8;border-radius:8px;padding:6px 10px;font-weight:700;cursor:pointer;color:#16233d">✕</button></div>'+
+      '<div id="dxGrade" style="overflow:auto;max-height:52vh;border:1px solid #e6ebf3;border-radius:10px"><p style="padding:14px;margin:0;color:#5a677f;font-size:13px">Carregando a régua…</p></div>'+
+      '<div id="dxMsg" role="status" style="font-size:12.5px;min-height:16px;color:#5a677f"></div>'+
       '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
-        '<label style="flex:1 1 150px;font-size:12px;font-weight:700;color:#5a677f">Seu login (Autcom)<input id="dxLogin" autocomplete="off" style="'+campo+'"></label>'+
-        '<label style="flex:1 1 120px;font-size:12px;font-weight:700;color:#5a677f">Sua senha<input id="dxPin" type="password" inputmode="numeric" autocomplete="off" style="'+campo+'"></label>'+
+        '<label style="flex:1 1 170px;font-size:12px;font-weight:700;color:#5a677f">SEU LOGIN (AUTCOM)<input id="dxLogin" autocomplete="off" style="'+campo+'"></label>'+
+        '<label style="flex:1 1 130px;font-size:12px;font-weight:700;color:#5a677f">SUA SENHA<input id="dxPin" type="password" inputmode="numeric" autocomplete="off" style="'+campo+'"></label>'+
       '</div>'+
       '<div style="display:flex;gap:8px;justify-content:flex-end">'+
         '<button type="button" data-dx="x" style="padding:9px 14px;border-radius:9px;border:1px solid #cfd6e4;background:#fff;color:#16233d;font-weight:700;cursor:pointer">Cancelar</button>'+
-        '<button type="button" data-dx="ok" style="padding:9px 16px;border-radius:9px;border:0;background:#1C3F8F;color:#fff;font-weight:700;cursor:pointer">Salvar</button></div></div>';
+        '<button type="button" data-dx="ok" style="padding:9px 16px;border-radius:9px;border:0;background:#1C3F8F;color:#fff;font-weight:700;cursor:pointer">Salvar alterações</button></div></div>';
     document.body.appendChild(ov);
-    var selC=ov.querySelector('#dxCargo'), lista=ov.querySelector('#dxLista'), msg=ov.querySelector('#dxMsg');
-    var ITENS=[], ATUAL={};
-    function aviso(t,cor){ msg.textContent=t||''; msg.style.color=cor||'#5a677f'; }
+    var grade=ov.querySelector('#dxGrade'), msg=ov.querySelector('#dxMsg');
+    var ITENS=[], ORIG={}, ATUAL={};
+    function aviso(t,cor){ msg.innerHTML=t||''; msg.style.color=cor||'#5a677f'; }
     function fechar(){ ov.remove(); document.removeEventListener('keydown',tecla); }
     function tecla(e){ if(e.key==='Escape') fechar(); }
     document.addEventListener('keydown',tecla);
-    function desenhar(){
-      var it=ITENS.filter(function(i){ return i.cargo===selC.value; })[0];
-      ATUAL=mapa(it&&it.paineis);
-      lista.innerHTML=PAINEIS.map(function(p){
-        var v=ATUAL[p[0]]||'';
-        return '<div style="display:flex;align-items:center;gap:8px;justify-content:space-between;border-bottom:1px solid #eef2f8;padding:5px 0">'+
-          '<span style="font-size:13.5px">'+esc(p[1])+'</span>'+
-          '<select data-k="'+p[0]+'" style="padding:5px 8px;border-radius:8px;border:1px solid #cfd6e4;background:#f5f7fb;font:600 12.5px inherit">'+
-          '<option value=""'+(v===''?' selected':'')+'>padrão</option>'+
-          '<option value="1"'+(v==='1'?' selected':'')+'>liberado</option>'+
-          '<option value="0"'+(v==='0'?' selected':'')+'>bloqueado</option></select></div>';
-      }).join('');
+
+    function pintar(b){
+      var v=ATUAL[b.dataset.cargo][b.dataset.k]||'', V=VISUAL[v];
+      b.textContent=V[0]; b.style.color=V[1]; b.style.background=V[2];
+      b.setAttribute('aria-label', b.dataset.painel+' para '+b.dataset.cargo+': '+V[3]);
+      b.title=V[3];
     }
-    selC.onchange=desenhar;
+    function desenhar(){
+      var th='padding:7px 8px;font:700 11.5px inherit;color:#5a677f;text-align:center;white-space:nowrap;background:#f7f9fc;position:sticky;top:0;z-index:2';
+      var h='<table style="border-collapse:separate;border-spacing:0;width:100%"><thead><tr>'+
+        '<th style="'+th+';text-align:left;left:0;z-index:3;min-width:150px">Acesso</th>'+
+        ITENS.map(function(i){ return '<th style="'+th+'" title="'+esc(i.cargo)+'">'+esc(curto(i.cargo))+'</th>'; }).join('')+'</tr></thead><tbody>';
+      PAINEIS.forEach(function(p,n){
+        var fundo = n%2 ? '#fff' : '#fcfdff';
+        h+='<tr><td style="padding:5px 8px;font:600 12.5px inherit;color:#16233d;white-space:nowrap;position:sticky;left:0;background:'+fundo+';border-top:1px solid #eef2f8">'+esc(p[1])+'</td>'+
+          ITENS.map(function(i){
+            return '<td style="padding:3px;text-align:center;background:'+fundo+';border-top:1px solid #eef2f8">'+
+              '<button type="button" data-cel="1" data-k="'+p[0]+'" data-cargo="'+esc(i.cargo)+'" data-painel="'+esc(p[1])+'" '+
+              'style="width:34px;height:28px;border:0;border-radius:7px;font:800 14px inherit;cursor:pointer"></button></td>';
+          }).join('')+'</tr>';
+      });
+      grade.innerHTML=h+'</tbody></table>';
+      Array.prototype.forEach.call(grade.querySelectorAll('[data-cel]'),pintar);
+    }
+    grade.addEventListener('click',function(e){
+      var b=e.target.closest('[data-cel]'); if(!b) return;
+      var m=ATUAL[b.dataset.cargo], k=b.dataset.k;
+      m[k]=CICLO[m[k]||''];
+      if(!m[k]) delete m[k];
+      pintar(b); aviso('');
+    });
+
     fetch(ENVIO_URL+'?acao=permissoes').then(function(r){ return r.json(); }).then(function(res){
       if(!res||!res.ok) throw new Error((res&&res.erro)||'Não consegui ler a régua.');
       ITENS=res.itens||[];
-      selC.innerHTML=ITENS.map(function(i){ return '<option>'+esc(i.cargo)+'</option>'; }).join('');
+      ITENS.forEach(function(i){ ORIG[i.cargo]=texto(mapa(i.paineis)); ATUAL[i.cargo]=mapa(i.paineis); });
       desenhar();
-    }).catch(function(e){ aviso(e.message,'#c42a22'); });
+    }).catch(function(e){ grade.innerHTML='<p style="padding:14px;margin:0;color:#b3261e;font-size:13px">'+esc(e.message)+'</p>'; });
+
     ov.addEventListener('click',function(e){
       if(e.target===ov){ fechar(); return; }
       var b=e.target.closest('[data-dx]'); if(!b) return;
       if(b.dataset.dx==='x'){ fechar(); return; }
-      var m={};
-      Array.prototype.forEach.call(lista.querySelectorAll('[data-k]'),function(sl){ if(sl.value) m[sl.getAttribute('data-k')]=sl.value; });
+      var mudou=ITENS.filter(function(i){ return texto(ATUAL[i.cargo])!==ORIG[i.cargo]; });
+      if(!mudou.length){ aviso('Nada mudou ainda.','#5a677f'); return; }
       var login=(ov.querySelector('#dxLogin').value||'').trim(), pin=(ov.querySelector('#dxPin').value||'').trim();
-      if(!login||!pin){ aviso('Informe seu login do Autcom e sua senha.','#c42a22'); return; }
+      if(!login||!pin){ aviso('Informe seu login do Autcom e sua senha.','#b3261e'); return; }
       b.disabled=true; b.textContent='Salvando…'; aviso('');
-      fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:JSON.stringify({tipo:'salvarPaineis', login:login, pin:pin, cargo:selC.value, paineis:texto(m)})})
-        .then(function(r){ return r.json(); })
-        .then(function(res){
-          b.disabled=false; b.textContent='Salvar';
-          if(!res||!res.ok) throw new Error((res&&res.erro)||'Não consegui salvar.');
-          ov.querySelector('#dxPin').value='';
-          var it=ITENS.filter(function(i){ return i.cargo===selC.value; })[0]; if(it) it.paineis=res.paineis;
-          aviso('Salvo para '+res.cargo+'. Vale no próximo abrir do app de cada pessoa.','#177a4d');
-          try{ if(window.carregarMinhaRegua) carregarMinhaRegua(); }catch(e2){}
-        })
-        .catch(function(er){ b.disabled=false; b.textContent='Salvar'; aviso(er.message||String(er),'#c42a22'); });
+      var feitos=[], falhas=[];
+      mudou.reduce(function(seq,i){
+        return seq.then(function(){
+          return fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+            body:JSON.stringify({tipo:'salvarPaineis', login:login, pin:pin, cargo:i.cargo, paineis:texto(ATUAL[i.cargo])})})
+            .then(function(r){ return r.json(); })
+            .then(function(res){
+              if(res&&res.ok){ feitos.push(i.cargo); ORIG[i.cargo]=texto(ATUAL[i.cargo]); i.paineis=res.paineis; }
+              else { falhas.push(esc(i.cargo)+': '+esc((res&&res.erro)||'não salvou')); }
+            })
+            .catch(function(er){ falhas.push(esc(i.cargo)+': '+esc(er.message||String(er))); });
+        });
+      }, Promise.resolve()).then(function(){
+        b.disabled=false; b.textContent='Salvar alterações';
+        ov.querySelector('#dxPin').value='';
+        var t='';
+        if(feitos.length) t+='<b style="color:#0f6b40">Salvo:</b> '+feitos.map(esc).join(', ')+'. ';
+        if(falhas.length) t+='<b style="color:#b3261e">Não salvou:</b> '+falhas.join(' · ');
+        aviso(t||'Nada a salvar.', falhas.length?'#b3261e':'#0f6b40');
+        try{ if(window.carregarMinhaRegua) carregarMinhaRegua(); }catch(e2){}
+      });
     });
   };
 })();

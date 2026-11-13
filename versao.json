@@ -2,13 +2,13 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
-      "v": "ast-v181",
+      "v": "ast-v182",
       "data": "13/11/2026",
-      "hora": "19:30",
+      "hora": "19:40",
       "itens": [
         {
           "painel": "Direitos de Acesso",
-          "o_que": "Painel novo na Gestão, para quem edita equipe: liga e desliga painel por painel, por cargo, sem abrir a planilha. Cada painel fica em padrão (segue a regra de hoje), liberado ou bloqueado. Para salvar, o login do Autcom e a senha — quem confere é o servidor. A coordenação não consegue tirar de si os painéis de administração.",
+          "o_que": "Painel novo na Gestão, para quem edita equipe: uma grade Cargo × Acesso, com os 9 cargos nas colunas e os 18 painéis nas linhas. Toque na célula alterna entre – padrão (vale a regra de hoje), ✓ liberado e ✗ bloqueado. Salva de uma vez todos os cargos que você mexeu, pedindo o login do Autcom e a senha — quem confere é o servidor. A coordenação não consegue tirar de si os painéis de administração.",
           "para": [
             "coord"
           ]
