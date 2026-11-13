@@ -10019,7 +10019,10 @@ body.foco .wrap{padding-bottom:40px}
                '1':['✓','#0f6b40','#dcf3e6','liberado'],
                '0':['✗','#b3261e','#fbe3e1','bloqueado'] };
   function esc(t){ return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
-  function curto(c){ return String(c||'').replace(/\(a\)/g,'').replace(/\s+de\s+Loja/i,'').replace(/\s+Junior/i,'').trim(); }
+  /* Encurta só o que não distingue cargo. NÃO tirar "de Loja": existem
+     "Gerente" e "Gerente de Loja" como cargos diferentes, e juntá-los num
+     rótulo só faria a grade mentir sobre qual coluna é qual. */
+  function curto(c){ return String(c||'').replace(/\(a\)/g,'').replace(/\s+Junior/i,'').replace(/\s+/g,' ').trim(); }
   function mapa(txt){ var m={}; String(txt||'').split(/[;,\n]+/).forEach(function(par){
       var q=par.split(':'); if(q.length<2) return; var k=q[0].trim(); if(!k) return;
       var v=q[1].trim().toLowerCase();
