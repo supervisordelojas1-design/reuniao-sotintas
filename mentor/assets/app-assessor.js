@@ -199,30 +199,38 @@
   }
   App.calc.adicionar = () => { const m = C.rascunho.atual; C.rascunho.materiais.push({ ...m, res: m.res }); C.rascunho.atual = null; calcSalvar(); ir('projeto'); };
   const totalProjeto = (p) => (p.materiais || []).reduce((s, m) => s + ((m.res && m.res.custo) || 0), 0);
+  /* complementos da obra: enquanto a obra está em edição recalcula pelos materiais e pela área; obra salva usa a lista que foi gravada */
+  function complementosDe(p, fresco) {
+    if (!fresco && Array.isArray(p.complementos) && p.complementos.length) return p.complementos;
+    return Assessor.sugerirComplementos(num(p.totalArea), ((p.materiais || []).find(m => /esmalte|verniz/i.test(m.tipo)) ? 'esmalte' : 'tinta'));
+  }
   function calcProjeto() {
     const p = C.rascunho; if (!p) return calcInicio();
-    const complementos = Assessor.sugerirComplementos(num(p.totalArea), (p.materiais.find(m => /esmalte|verniz/i.test(m.tipo)) ? 'esmalte' : 'tinta'));
+    const complementos = complementosDe(p, true);
     return `<div class="card"><div class="linha entre"><input value="${esc(p.nome)}" style="font-weight:800;font-size:1.1rem;border:0;border-bottom:1.5px solid var(--borda);border-radius:0;padding:4px 0;flex:1" onchange="App.calc.C.rascunho.nome=this.value"><span class="etiqueta azul">${fmtNum(p.totalArea, 0)} m²</span></div>
       <h3 class="mt-2">Materiais desta obra</h3>
       ${p.materiais.length ? p.materiais.map((m, i) => `<div class="linha entre" style="padding:8px 0;border-bottom:1px solid var(--borda)"><div class="cresce"><div class="negrito pequeno">${esc(nomeMaterial(m))} · ${esc(m.emb === 'Outro' ? m.embOutro : m.emb)}</div><div class="mini texto-3">${m.res.comprar} un. · ${m.demaos} demão(s) · ${fmtNum(num(m.area), 0)} m²</div></div><b class="pequeno">${fmtBRL(m.res.custo)}</b><button class="btn mini cinza" style="margin-left:6px" onclick="App.calc.removerMaterial(${i})">✕</button></div>`).join('') : '<p class="pequeno texto-3">Nenhum material ainda.</p>'}
       <div class="linha entre mt-2"><b>TOTAL ESTIMADO</b><b style="font-size:1.2rem;color:var(--vermelho)">${fmtBRL(totalProjeto(p))}</b></div></div>
       <button class="btn bloco contorno" onclick="App.calc.C.rascunho.atual=null;App.calc.ir('material')">＋ Calcular outro material</button>
       <div class="card mt-2"><h3>Não esqueça os complementos</h3>${complementos.map(c => `<div class="linha entre pequeno" style="padding:5px 0;border-bottom:1px solid var(--borda)"><span>${esc(c.item)}<div class="mini texto-3">${esc(c.obs)}</div></span><b>${c.qtd}</b></div>`).join('')}</div>
-      <div class="botoes mt-2"><button class="btn verde" onclick="App.calc.salvarProjeto()">💾 Salvar obra</button><a class="btn azul" href="${zap(textoProjeto(p))}" target="_blank" rel="noopener">📲 Enviar resumo</a></div>
+      <div class="botoes mt-2"><button class="btn verde" onclick="App.calc.salvarProjeto()">💾 Salvar obra</button><a class="btn azul" href="${zap(textoProjeto(p, true))}" target="_blank" rel="noopener">📲 Enviar resumo</a></div>
       <button class="btn link bloco mt-1" onclick="App.calc.ir('inicio')">Voltar ao início</button>`;
   }
   App.calc.removerMaterial = (i) => { C.rascunho.materiais.splice(i, 1); calcSalvar(); App.render(); };
-  App.calc.salvarProjeto = () => { const p = C.rascunho; const idx = C.projetos.findIndex(x => x.id === p.id); if (idx >= 0) C.projetos[idx] = p; else C.projetos.push(p); C.rascunho = null; calcSalvar(); App.toast('Obra salva em "Meus cálculos" ✔'); ir('projetos'); };
-  function textoProjeto(p) {
+  App.calc.salvarProjeto = () => { const p = C.rascunho; p.complementos = complementosDe(p, true); const idx = C.projetos.findIndex(x => x.id === p.id); if (idx >= 0) C.projetos[idx] = p; else C.projetos.push(p); C.rascunho = null; calcSalvar(); App.toast('Obra salva em "Meus cálculos" ✔'); ir('projetos'); };
+  function textoProjeto(p, fresco) {
     const l = [`*LISTA DE MATERIAIS — ${p.nome}*`, `Área: ${fmtNum(p.totalArea)} m²`, ''];
     p.materiais.forEach(m => l.push(`• ${nomeMaterial(m)} ${m.emb === 'Outro' ? m.embOutro : m.emb}: ${m.res.comprar} un. (${m.demaos} demão(s)) — ${fmtBRL(m.res.custo)}`));
-    l.push('', `*Total estimado: ${fmtBRL(totalProjeto(p))}*`, '', '_Estimativa gerada no MENTOR ST PRO · Só Tintas. Confira o rendimento na embalagem._');
+    l.push('', `*Total estimado: ${fmtBRL(totalProjeto(p))}*`);
+    const comp = complementosDe(p, fresco);
+    if (comp.length) { l.push('', '*NÃO ESQUEÇA OS COMPLEMENTOS*'); comp.forEach(c => { l.push(`• ${c.item} — ${c.qtd}`); if (c.obs) l.push(`  _${c.obs}_`); }); }
+    l.push('', '_Estimativa gerada no MENTOR ST PRO · Só Tintas. Confira o rendimento na embalagem._');
     return l.join('\n');
   }
   const zap = (t) => 'https://wa.me/?text=' + encodeURIComponent(t);
   function calcProjetos() {
     return `<div class="linha entre mb-1"><h2 style="margin:0">Meus cálculos</h2><button class="btn pequeno" onclick="App.calc.novo()">＋ NOVO</button></div>
-      ${C.projetos.length ? C.projetos.slice().reverse().map(p => `<div class="card"><div class="linha entre"><div><div class="negrito">${esc(p.nome)}</div><div class="pequeno texto-2">${fmtNum(p.totalArea, 0)} m² · ${p.materiais.length} material(is) · ${new Date(p.criado_em).toLocaleDateString('pt-BR')}</div></div><b>${fmtBRL(totalProjeto(p))}</b></div><div class="botoes mt-1"><button class="btn mini azul" onclick="App.calc.abrirProjeto('${p.id}')">Editar</button><button class="btn mini cinza" onclick="App.calc.duplicarProjeto('${p.id}')">Duplicar</button><a class="btn mini cinza" href="${zap(textoProjeto(p))}" target="_blank" rel="noopener">Enviar</a><button class="btn mini contorno vermelho" onclick="App.calc.excluirProjeto('${p.id}')">Excluir</button></div></div>`).join('') : '<p class="pequeno texto-3">Nenhum cálculo salvo ainda.</p>'}
+      ${C.projetos.length ? C.projetos.slice().reverse().map(p => `<div class="card"><div class="linha entre"><div><div class="negrito">${esc(p.nome)}</div><div class="pequeno texto-2">${fmtNum(p.totalArea, 0)} m² · ${p.materiais.length} material(is) · ${complementosDe(p).length} complemento(s) · ${new Date(p.criado_em).toLocaleDateString('pt-BR')}</div></div><b>${fmtBRL(totalProjeto(p))}</b></div><div class="botoes mt-1"><button class="btn mini azul" onclick="App.calc.abrirProjeto('${p.id}')">Editar</button><button class="btn mini cinza" onclick="App.calc.duplicarProjeto('${p.id}')">Duplicar</button><a class="btn mini cinza" href="${zap(textoProjeto(p))}" target="_blank" rel="noopener">Enviar</a><button class="btn mini contorno vermelho" onclick="App.calc.excluirProjeto('${p.id}')">Excluir</button></div></div>`).join('') : '<p class="pequeno texto-3">Nenhum cálculo salvo ainda.</p>'}
       <button class="btn link bloco" onclick="App.calc.ir('inicio')">‹ Voltar</button>`;
   }
   App.calc.abrirProjeto = (id) => { const p = C.projetos.find(x => x.id === id); if (!p) return; C.rascunho = JSON.parse(JSON.stringify(p)); calcSalvar(); ir('projeto'); };
