@@ -9425,6 +9425,11 @@ syncNav();
         <span class="ini-txt"><span class="ini-nm">Painel de Conteúdo</span><span class="ini-ds">Banners, fornecedores, provas, vídeos e trilha do Mentor</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
+      <button type="button" class="ini-card feat" data-act="direitos" data-direitos="1" style="display:none">
+        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
+        <span class="ini-txt"><span class="ini-nm">Direitos de Acesso</span><span class="ini-ds">O que cada cargo enxerga no app · liberar e limitar painel por painel</span></span>
+        <span class="ini-go" aria-hidden="true">&rarr;</span>
+      </button>
       <button type="button" class="ini-card feat" data-act="cadastro" data-lider="1" data-noanl="1">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-user"/></svg></span>
         <span class="ini-txt"><span class="ini-nm">Cadastro da Equipe</span><span class="ini-ds">Uma pessoa, um código · liberar, arquivar e restaurar</span></span>
@@ -9629,6 +9634,10 @@ body.foco .wrap{padding-bottom:40px}
     /* nov/2026: só a coordenação (o analista não publica) */
     Array.prototype.forEach.call(grid.querySelectorAll('[data-coordonly]'),function(c){
       var s=sessao(); c.style.display = (s&&!ehVend()&&s.escopo==='todos'&&String(s.papel||'').toLowerCase()!=='analista') ? '' : 'none';
+    });
+    Array.prototype.forEach.call(grid.querySelectorAll('[data-direitos]'),function(c){
+      var ok=false; try{ ok = (typeof pode==='function') ? pode('editarEquipe', ehCoordenador()) : false; }catch(e){}
+      c.style.display = (ok && !ehVend()) ? '' : 'none';
     });
     aplicarRegua();
   }
@@ -9943,6 +9952,7 @@ body.foco .wrap{padding-bottom:40px}
     if(act==='avulsas'){ abrirAvulsas(); return; }
     if(act==='uso'){ abrirUso(); return; }
     if(act==='pontos'){ abrirPontos(); return; }
+    if(act==='direitos'){ abrirDireitos(); return; }
     if(act==='cadastro'){ abrirCadastro(); return; }
     if(act==='central'){ abrirCentral(); return; }
     if(act==='conteudo'){ abrirConteudo(); return; }
@@ -9985,6 +9995,101 @@ body.foco .wrap{padding-bottom:40px}
 </script>
 
 <script>
+
+/* ===== DIREITOS DE ACESSO (quem edita equipe) =====================
+   Liga e desliga painel por painel, por cargo. Grava na coluna Painéis da aba
+   PERMISSOES, que guarda só as EXCEÇÕES — "padrão" quer dizer não escrever nada e
+   seguir a regra do app. Para gravar pede o login do Autcom + a senha, como
+   todo o resto do app; quem confere é o servidor, não esta tela. */
+(function(){
+  var PAINEIS=[
+    ['verMetas','Painel de Metas'],['verNiveis','Níveis'],['verPDI','PDI Mensal'],
+    ['verPDISemanal','PDI Semanal'],['verRanking','Ranking ST'],['verProvas','Central de Provas'],
+    ['verMinhasProvas','Minhas Provas'],['verUso','Acessos ao App'],['verCRM','CRM de Vendas'],
+    ['verBonus','Bonificações'],['verSimulador','Simulador de Bônus'],['verProposta','Proposta de Vendedor'],
+    ['verMentor','Mentor'],['verEspecialista','Especialista ST'],
+    ['gerirCadastro','Cadastro da Equipe'],['gerirAcessos','Acesso de usuários'],
+    ['gerirConteudo','Painel de Conteúdo'],['gerirCentral','Central de Atualização']
+  ];
+  function esc(t){ return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  function mapa(txt){ var m={}; String(txt||'').split(/[;,\n]+/).forEach(function(par){
+      var q=par.split(':'); if(q.length<2) return; var k=q[0].trim(); if(!k) return;
+      var v=q[1].trim().toLowerCase();
+      m[k]=(v==='0'||v==='nao'||v==='não'||v==='n'||v==='false'||v==='')?'0':'1'; });
+    return m; }
+  function texto(m){ return Object.keys(m).filter(function(k){ return m[k]==='0'||m[k]==='1'; })
+      .map(function(k){ return k+':'+m[k]; }).join(', '); }
+
+  window.abrirDireitos=function(){
+    var ov=document.createElement('div'); ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true');
+    ov.style.cssText='position:fixed;inset:0;z-index:2147483000;background:rgba(6,10,20,.66);display:flex;align-items:flex-start;justify-content:center;padding:28px 14px;overflow:auto;font-family:"Public Sans",system-ui,sans-serif';
+    var campo='display:block;width:100%;margin-top:5px;padding:9px 11px;border-radius:9px;border:1px solid #cfd6e4;background:#f5f7fb;color:#16233d;font:600 14px inherit';
+    ov.innerHTML='<div style="width:100%;max-width:620px;background:#fff;color:#16233d;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px">'+
+      '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div><b style="font-size:18px">🔒 Direitos de Acesso</b>'+
+      '<div style="font-size:12.5px;color:#5a677f;margin-top:2px">O que cada cargo enxerga no app. <b>Padrão</b> deixa a regra de hoje valer; só o que você mudar vira exceção. Vale no próximo abrir do app de cada pessoa.</div></div>'+
+      '<button type="button" data-dx="x" aria-label="Fechar" style="border:0;background:#eef2f8;border-radius:8px;padding:6px 10px;font-weight:700;cursor:pointer">✕</button></div>'+
+      '<label style="font-size:12px;font-weight:700;color:#5a677f">Cargo<select id="dxCargo" style="'+campo+'"><option>Carregando…</option></select></label>'+
+      '<div id="dxLista" style="display:flex;flex-direction:column;gap:6px;max-height:44vh;overflow:auto"></div>'+
+      '<div id="dxMsg" role="status" style="font-size:12.5px;min-height:16px"></div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+        '<label style="flex:1 1 150px;font-size:12px;font-weight:700;color:#5a677f">Seu login (Autcom)<input id="dxLogin" autocomplete="off" style="'+campo+'"></label>'+
+        '<label style="flex:1 1 120px;font-size:12px;font-weight:700;color:#5a677f">Sua senha<input id="dxPin" type="password" inputmode="numeric" autocomplete="off" style="'+campo+'"></label>'+
+      '</div>'+
+      '<div style="display:flex;gap:8px;justify-content:flex-end">'+
+        '<button type="button" data-dx="x" style="padding:9px 14px;border-radius:9px;border:1px solid #cfd6e4;background:#fff;color:#16233d;font-weight:700;cursor:pointer">Cancelar</button>'+
+        '<button type="button" data-dx="ok" style="padding:9px 16px;border-radius:9px;border:0;background:#1C3F8F;color:#fff;font-weight:700;cursor:pointer">Salvar</button></div></div>';
+    document.body.appendChild(ov);
+    var selC=ov.querySelector('#dxCargo'), lista=ov.querySelector('#dxLista'), msg=ov.querySelector('#dxMsg');
+    var ITENS=[], ATUAL={};
+    function aviso(t,cor){ msg.textContent=t||''; msg.style.color=cor||'#5a677f'; }
+    function fechar(){ ov.remove(); document.removeEventListener('keydown',tecla); }
+    function tecla(e){ if(e.key==='Escape') fechar(); }
+    document.addEventListener('keydown',tecla);
+    function desenhar(){
+      var it=ITENS.filter(function(i){ return i.cargo===selC.value; })[0];
+      ATUAL=mapa(it&&it.paineis);
+      lista.innerHTML=PAINEIS.map(function(p){
+        var v=ATUAL[p[0]]||'';
+        return '<div style="display:flex;align-items:center;gap:8px;justify-content:space-between;border-bottom:1px solid #eef2f8;padding:5px 0">'+
+          '<span style="font-size:13.5px">'+esc(p[1])+'</span>'+
+          '<select data-k="'+p[0]+'" style="padding:5px 8px;border-radius:8px;border:1px solid #cfd6e4;background:#f5f7fb;font:600 12.5px inherit">'+
+          '<option value=""'+(v===''?' selected':'')+'>padrão</option>'+
+          '<option value="1"'+(v==='1'?' selected':'')+'>liberado</option>'+
+          '<option value="0"'+(v==='0'?' selected':'')+'>bloqueado</option></select></div>';
+      }).join('');
+    }
+    selC.onchange=desenhar;
+    fetch(ENVIO_URL+'?acao=permissoes').then(function(r){ return r.json(); }).then(function(res){
+      if(!res||!res.ok) throw new Error((res&&res.erro)||'Não consegui ler a régua.');
+      ITENS=res.itens||[];
+      selC.innerHTML=ITENS.map(function(i){ return '<option>'+esc(i.cargo)+'</option>'; }).join('');
+      desenhar();
+    }).catch(function(e){ aviso(e.message,'#c42a22'); });
+    ov.addEventListener('click',function(e){
+      if(e.target===ov){ fechar(); return; }
+      var b=e.target.closest('[data-dx]'); if(!b) return;
+      if(b.dataset.dx==='x'){ fechar(); return; }
+      var m={};
+      Array.prototype.forEach.call(lista.querySelectorAll('[data-k]'),function(sl){ if(sl.value) m[sl.getAttribute('data-k')]=sl.value; });
+      var login=(ov.querySelector('#dxLogin').value||'').trim(), pin=(ov.querySelector('#dxPin').value||'').trim();
+      if(!login||!pin){ aviso('Informe seu login do Autcom e sua senha.','#c42a22'); return; }
+      b.disabled=true; b.textContent='Salvando…'; aviso('');
+      fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({tipo:'salvarPaineis', login:login, pin:pin, cargo:selC.value, paineis:texto(m)})})
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+          b.disabled=false; b.textContent='Salvar';
+          if(!res||!res.ok) throw new Error((res&&res.erro)||'Não consegui salvar.');
+          ov.querySelector('#dxPin').value='';
+          var it=ITENS.filter(function(i){ return i.cargo===selC.value; })[0]; if(it) it.paineis=res.paineis;
+          aviso('Salvo para '+res.cargo+'. Vale no próximo abrir do app de cada pessoa.','#177a4d');
+          try{ if(window.carregarMinhaRegua) carregarMinhaRegua(); }catch(e2){}
+        })
+        .catch(function(er){ b.disabled=false; b.textContent='Salvar'; aviso(er.message||String(er),'#c42a22'); });
+    });
+  };
+})();
+
 /* ===== "Ver como" (só coordenação): ver o app como Supervisor, Gerente ou Vendedor — só leitura =====
    O servidor gera um crachá de visão (2 horas). PDI, Níveis, Ranking, Mentor e os cards da tela inicial
    passam a mostrar exatamente o recorte daquela pessoa. Agenda, Rotina e Despesas continuam as suas. */
