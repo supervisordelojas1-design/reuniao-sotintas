@@ -2,6 +2,20 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v179",
+      "data": "13/11/2026",
+      "hora": "18:55",
+      "itens": [
+        {
+          "painel": "Direitos de acesso por cargo",
+          "o_que": "A régua da aba PERMISSOES passa a valer de verdade no app. Até agora ela era lida e mostrada, mas nunca aplicada: o login não a trazia para a sessão e toda pergunta de permissão caía no padrão do código. Agora o app busca a régua ao abrir e casa pelo cargo. Nada muda de comportamento hoje — os padrões são os mesmos de antes —, mas a partir daqui editar a planilha passa a surtir efeito.",
+          "para": [
+            "coord"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v178",
       "data": "13/11/2026",
       "hora": "18:35",

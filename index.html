@@ -6871,6 +6871,56 @@ function pode(chave, padrao){
   if(!p || p[chave]===undefined) return padrao;
   return !!p[chave];
 }
+/* nov/2026 — A RÉGUA PASSA A VALER DE VERDADE.
+   Até aqui SESSAO.perm nunca era preenchido: o login não trazia a régua e todo
+   pode() caía no padrão, então a aba PERMISSOES não mudava nada no app.
+   Agora o app busca a régua ao abrir (?acao=permissoes, leitura simples, sem
+   PIN) e casa pelo cargo. Assim uma mudança na planilha vale para todo mundo
+   no próximo abrir do app, sem pedir nada a ninguém.
+
+   O casamento é deliberadamente desconfiado: nome igual primeiro; se não achar,
+   aceita a raiz do cargo SÓ quando ela aponta para uma linha única. Na dúvida
+   não escolhe nada e a sessão fica sem perm — que é cair no padrão, isto é, no
+   comportamento de hoje. Errar para menos é o certo aqui. */
+function permNormal(t){ return String(t==null?'':t).normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+  .toLowerCase().replace(/[^a-z]+/g,' ').trim(); }
+function permRaiz(t){
+  var n=permNormal(t);
+  if(/coorden/.test(n)) return 'coord';
+  if(/supervis/.test(n)) return 'sup';
+  if(/gerente/.test(n)) return 'ger';
+  if(/vendedor/.test(n)) return 'vend';
+  if(/analista/.test(n)) return 'anl';
+  return '';
+}
+function permEscolher(itens, cargo){
+  if(!itens || !itens.length || !cargo) return null;
+  var alvo=permNormal(cargo);
+  var exato=itens.filter(function(i){ return permNormal(i.cargo)===alvo; });
+  if(exato.length===1) return exato[0];
+  if(exato.length>1) return null;                 /* ambíguo: não arrisca */
+  var r=permRaiz(cargo); if(!r) return null;
+  var porRaiz=itens.filter(function(i){ return permRaiz(i.cargo)===r; });
+  return porRaiz.length===1 ? porRaiz[0] : null;  /* só quando é uma só */
+}
+function carregarMinhaRegua(){
+  if(!SESSAO || !SESSAO.papel || !ENVIO_URL) return;
+  fetch(ENVIO_URL+'?acao=permissoes').then(function(r){ return r.json(); })
+    .then(function(res){
+      if(!res || !res.ok) return;
+      var linha=permEscolher(res.itens||[], SESSAO.papel);
+      if(!linha || linha.achou===false) return;   /* sem linha confiável: padrão */
+      var perm={}; Object.keys(linha).forEach(function(k){
+        if(k==='cargo'||k==='escopo'||k==='achou') return;
+        perm[k]=!!linha[k];
+      });
+      SESSAO.perm=perm; SESSAO.permCargo=linha.cargo;
+      try{ localStorage.setItem(LS_SESSAO, JSON.stringify(SESSAO)); }catch(e){}
+      try{ if(window.aplicarEscopo) aplicarEscopo(); }catch(e){}
+      try{ if(window.aplicarGateInicio) aplicarGateInicio(); }catch(e){}
+    })
+    .catch(function(){});
+}
 function podeVerEquipe(){       return pode('verEquipe', ehCoordenador()); }
 function podeVerCumprimento(){  return pode('verCumprimento', !ehGerente()); }
 function podeRegistrarVisita(){ return pode('registrarVisita', !ehGerente()); }
@@ -6998,6 +7048,7 @@ function abrirApp(sessao){
   $('btnUser').innerHTML = ICO('user')+'<span class="ct"> '+esc(sessao.nome.split(' ')[0])+'</span>';
   $('btnUser').title = sessao.nome+' · '+sessao.papel+' · Assistente ST '+VERSAO_APP;
   aplicarEscopo();
+  carregarMinhaRegua();
   $('btnUser').classList.toggle('alerta', !!sessao.pinPadrao);
   /* v61: vendedor usa o app só pelos cards (Mentor, Ranking, Níveis) */
   document.body.classList.toggle('modo-vendedor', ehVendedorSessao(sessao));
@@ -9583,6 +9634,8 @@ body.foco .wrap{padding-bottom:40px}
     ov.classList.remove('aberto'); ov.setAttribute('aria-hidden','true');
     document.body.style.overflow=''; }
   window.abrirInicio=abrirInicio; window.fecharInicio=fecharInicio;
+  /* nov/2026: a régua chega depois do login — quando chegar, os cards se redesenham */
+  window.aplicarGateInicio=aplicarGate;
   /* o perfil de administrador de conteúdo pode chegar depois do login: confere e refaz a tela inicial */
   try{ window.addEventListener('st-perfil',function(){ aplicarGate(); }); setTimeout(function(){ if(window.STDados&&STDados.atualizarPerfil) STDados.atualizarPerfil(); },1500); }catch(e){}
 
