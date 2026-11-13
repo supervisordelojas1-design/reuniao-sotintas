@@ -2,6 +2,20 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v180",
+      "data": "13/11/2026",
+      "hora": "19:05",
+      "itens": [
+        {
+          "painel": "Direitos de acesso · painéis",
+          "o_que": "A aba PERMISSOES ganhou a coluna Painéis, onde se escrevem só as exceções (ex.: \"verMetas:0, gerirCadastro:1\"). Chave que não estiver escrita ali segue a regra de hoje, então a coluna em branco não muda nada. Vale o papel vigente: com o \"Ver como\" aberto, quem manda é o papel simulado.",
+          "para": [
+            "coord"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v179",
       "data": "13/11/2026",
       "hora": "18:55",

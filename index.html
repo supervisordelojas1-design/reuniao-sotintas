@@ -6882,6 +6882,7 @@ function pode(chave, padrao){
    aceita a raiz do cargo SÓ quando ela aponta para uma linha única. Na dúvida
    não escolhe nada e a sessão fica sem perm — que é cair no padrão, isto é, no
    comportamento de hoje. Errar para menos é o certo aqui. */
+var REGUA_PERM=[];   /* todas as linhas da aba PERMISSOES, para resolver o papel vigente */
 function permNormal(t){ return String(t==null?'':t).normalize('NFD').replace(/[\u0300-\u036f]/g,'')
   .toLowerCase().replace(/[^a-z]+/g,' ').trim(); }
 function permRaiz(t){
@@ -6912,15 +6913,42 @@ function carregarMinhaRegua(){
       if(!linha || linha.achou===false) return;   /* sem linha confiável: padrão */
       var perm={}; Object.keys(linha).forEach(function(k){
         if(k==='cargo'||k==='escopo'||k==='achou') return;
-        perm[k]=!!linha[k];
+        /* 'paineis' é TEXTO (a coluna Painéis da planilha), não um sim/não:
+           coagir com !! transformaria qualquer conteúdo em true. */
+        perm[k] = (k==='paineis') ? String(linha[k]==null?'':linha[k]) : !!linha[k];
       });
       SESSAO.perm=perm; SESSAO.permCargo=linha.cargo;
+      REGUA_PERM = res.itens || [];
       try{ localStorage.setItem(LS_SESSAO, JSON.stringify(SESSAO)); }catch(e){}
       try{ if(window.aplicarEscopo) aplicarEscopo(); }catch(e){}
       try{ if(window.aplicarGateInicio) aplicarGateInicio(); }catch(e){}
     })
     .catch(function(){});
 }
+/* A coluna Painéis guarda só as EXCEÇÕES, no formato "verMetas:0, gerirCadastro:1".
+   Chave que não estiver escrita ali segue a regra de hoje — por isso a planilha
+   em branco não muda nada. Vale o papel VIGENTE: com o "Ver como" aberto, quem
+   manda é o papel simulado, não o meu. */
+function permPaineisMapa(txt){
+  var m={}; String(txt||'').split(/[;,\n]+/).forEach(function(par){
+    var q=par.split(':'); if(q.length<2) return;
+    var k=q[0].trim(); if(!k) return;
+    var v=q[1].trim().toLowerCase();
+    m[k]=!(v==='0'||v==='nao'||v==='não'||v==='n'||v==='false'||v==='');
+  });
+  return m;
+}
+function papelVigente(){
+  var s=null; try{ s=(window.STDados&&STDados.sessaoVisao&&STDados.sessaoVisao())||null; }catch(e){}
+  return ((s&&s.papel) || (SESSAO&&SESSAO.papel) || '');
+}
+function podePainel(chave, padrao){
+  var linha=permEscolher(REGUA_PERM, papelVigente());
+  if(!linha) return padrao;
+  var m=permPaineisMapa(linha.paineis);
+  return (chave in m) ? m[chave] : padrao;
+}
+window.podePainel=podePainel;
 function podeVerEquipe(){       return pode('verEquipe', ehCoordenador()); }
 function podeVerCumprimento(){  return pode('verCumprimento', !ehGerente()); }
 function podeRegistrarVisita(){ return pode('registrarVisita', !ehGerente()); }
@@ -9602,6 +9630,26 @@ body.foco .wrap{padding-bottom:40px}
     Array.prototype.forEach.call(grid.querySelectorAll('[data-coordonly]'),function(c){
       var s=sessao(); c.style.display = (s&&!ehVend()&&s.escopo==='todos'&&String(s.papel||'').toLowerCase()!=='analista') ? '' : 'none';
     });
+    aplicarRegua();
+  }
+  /* nov/2026 — A RÉGUA POR ÚLTIMO.
+     As regras acima continuam decidindo tudo; esta passada só deixa a coluna
+     Painéis da aba PERMISSOES corrigir o resultado, para mais ou para menos.
+     O padrão de cada card é o que as regras acabaram de decidir, então planilha
+     em branco = nada muda. */
+  var CHAVE_DO_CARD={ painel:'verMetas', niveis:'verNiveis', pdi:'verPDI', semana:'verPDISemanal',
+    pontos:'verRanking', ranking:'verRanking', provas:'verProvas', avulsas:'verMinhasProvas',
+    uso:'verUso', crm:'verCRM', bonus:'verBonus', simulador:'verSimulador', proposta:'verProposta',
+    mentor:'verMentor', especialista:'verEspecialista', cadastro:'gerirCadastro',
+    acessos:'gerirAcessos', conteudo:'gerirConteudo', central:'gerirCentral' };
+  function aplicarRegua(){
+    if(typeof podePainel!=='function') return;
+    Array.prototype.forEach.call(grid.querySelectorAll('[data-act]'),function(c){
+      var ch=CHAVE_DO_CARD[c.getAttribute('data-act')]; if(!ch) return;
+      var agora = c.style.display!=='none';
+      var vale = podePainel(ch, agora);
+      c.style.display = vale ? '' : 'none';
+    });
   }
   function saudar(){
     var s=sessao(), nome=(s&&s.nome)?String(s.nome).trim().split(' ')[0]:'';
@@ -9707,21 +9755,21 @@ body.foco .wrap{padding-bottom:40px}
     ovD.style.display='flex'; document.body.style.overflow='hidden';
   }
   function abrirCadastro(){
-    if(ehAnl()) return;
+    if(!(typeof podePainel==='function'?podePainel('gerirCadastro',!ehAnl()):!ehAnl())) return;
     if(!ovD||!ifrD) return; titOv('Cadastro da Equipe · Só Tintas');
     var tema=(window.STtema?window.STtema.get():'light');
     ifrD.setAttribute('src','cadastro.html?tema='+tema+'&v='+Date.now());
     ovD.style.display='flex'; document.body.style.overflow='hidden';
   }
   function abrirConteudo(){
-    if(ehAnl()) return;
+    if(!(typeof podePainel==='function'?podePainel('gerirConteudo',!ehAnl()):!ehAnl())) return;
     if(!ovD||!ifrD) return; titOv('Painel de Conteúdo · Só Tintas');
     var tema=(window.STtema?window.STtema.get():'light');
     ifrD.setAttribute('src','conteudo.html?tema='+tema+'&v='+Date.now());
     ovD.style.display='flex'; document.body.style.overflow='hidden';
   }
   function abrirCentral(){
-    if(ehAnl()) return;
+    if(!(typeof podePainel==='function'?podePainel('gerirCentral',!ehAnl()):!ehAnl())) return;
     if(!ovD||!ifrD) return; titOv('Central de Atualização · Só Tintas');
     var tema=(window.STtema?window.STtema.get():'light');
     ifrD.setAttribute('src','atualizar.html?tema='+tema+'&v='+Date.now());
@@ -9849,7 +9897,7 @@ body.foco .wrap{padding-bottom:40px}
     }).catch(function(){});
   }
   function abrirAcessos(){
-    if(ehAnl()) return;
+    if(!(typeof podePainel==='function'?podePainel('gerirAcessos',!ehAnl()):!ehAnl())) return;
     var m=acEl('modalAcessos'); if(!m) return;
     acStatus(''); m.classList.add('show'); acCarregar(false);
   }
