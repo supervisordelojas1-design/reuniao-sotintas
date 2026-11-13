@@ -2,6 +2,21 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v176",
+      "data": "13/11/2026",
+      "hora": "15:28",
+      "itens": [
+        {
+          "painel": "Especialista ST \u00b7 Calculadora de materiais",
+          "o_que": "A obra passou a mostrar, gravar e enviar o Produto final \u2014 o acabamento da obra (a tinta, o esmalte ou o verniz, separado do selador, do fundo e da massa): marca, embalagem, quantidade, dem\u00e3os, superf\u00edcies, dilui\u00e7\u00e3o, secagem e rendimento, como vem do cat\u00e1logo Coral/Eucatex. No resumo do WhatsApp ele aparece embaixo do total, antes da lista de complementos, e em Meus c\u00e1lculos o cart\u00e3o da obra mostra qual \u00e9 o produto final."
+        },
+        {
+          "painel": "CRM \u00b7 Ficha do pintor",
+          "o_que": "Cada obra da ficha do pintor ganhou Produto final (a tinta de acabamento que vai na obra) e a lista de Complementos para marcar o que a obra leva \u2014 rolo, trincha, bandeja, fita crepe, lixa, lona, esp\u00e1tula, extensor, solvente \u2014 mais um campo para outros complementos. Os tr\u00eas aparecem embaixo da obra no card do pintor, junto com a observa\u00e7\u00e3o."
+        }
+      ]
+    },
+    {
       "v": "ast-v175",
       "data": "13/11/2026",
       "hora": "15:14",

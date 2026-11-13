@@ -199,6 +199,25 @@
   }
   App.calc.adicionar = () => { const m = C.rascunho.atual; C.rascunho.materiais.push({ ...m, res: m.res }); C.rascunho.atual = null; calcSalvar(); ir('projeto'); };
   const totalProjeto = (p) => (p.materiais || []).reduce((s, m) => s + ((m.res && m.res.custo) || 0), 0);
+  /* produto final da obra = o acabamento (tinta, esmalte, verniz, textura); selador, fundo, primer e massa são preparação */
+  const PREPARO = ['Massa corrida', 'Massa acrílica', 'Selador', 'Fundo preparador', 'Primer'];
+  function produtoFinalDe(p, fresco) {
+    if (!fresco && p.produto_final) return p.produto_final;
+    const mats = (p.materiais || []).filter(m => m && m.res);
+    if (!mats.length) return null;
+    const acab = mats.filter(m => PREPARO.indexOf(m.tipo) < 0);
+    const m = (acab.length ? acab : mats).reduce((a, b) => (num(b.area) > num(a.area) ? b : a));
+    const cat = m.produto_id ? Assessor.produtoPorId(m.produto_id, App.cont) : null;
+    const emb = m.emb === 'Outro' ? (m.embOutro || 'emb.') : m.emb;
+    const ficha = cat ? Assessor.fichaProduto(cat, App.cont) : [
+      'Tipo: ' + m.tipo, 'Embalagem: ' + emb,
+      num(m.rend) > 0 ? 'Rendimento informado: ' + fmtNum(num(m.rend), 0) + ' m² por demão' : '',
+      'Demãos: ' + m.demaos,
+    ].filter(Boolean).join('\n');
+    return { nome: nomeMaterial(m), marca: m.produto_marca || '', produto_id: m.produto_id || '', emb: emb,
+      comprar: m.res.comprar, demaos: m.demaos, area: num(m.area), custo: m.res.custo,
+      destaque: (cat && cat.destaque) || '', catalogo: !!cat, ficha: ficha };
+  }
   /* complementos da obra: enquanto a obra está em edição recalcula pelos materiais e pela área; obra salva usa a lista que foi gravada */
   function complementosDe(p, fresco) {
     if (!fresco && Array.isArray(p.complementos) && p.complementos.length) return p.complementos;
@@ -212,16 +231,23 @@
       ${p.materiais.length ? p.materiais.map((m, i) => `<div class="linha entre" style="padding:8px 0;border-bottom:1px solid var(--borda)"><div class="cresce"><div class="negrito pequeno">${esc(nomeMaterial(m))} · ${esc(m.emb === 'Outro' ? m.embOutro : m.emb)}</div><div class="mini texto-3">${m.res.comprar} un. · ${m.demaos} demão(s) · ${fmtNum(num(m.area), 0)} m²</div></div><b class="pequeno">${fmtBRL(m.res.custo)}</b><button class="btn mini cinza" style="margin-left:6px" onclick="App.calc.removerMaterial(${i})">✕</button></div>`).join('') : '<p class="pequeno texto-3">Nenhum material ainda.</p>'}
       <div class="linha entre mt-2"><b>TOTAL ESTIMADO</b><b style="font-size:1.2rem;color:var(--vermelho)">${fmtBRL(totalProjeto(p))}</b></div></div>
       <button class="btn bloco contorno" onclick="App.calc.C.rascunho.atual=null;App.calc.ir('material')">＋ Calcular outro material</button>
+      ${(function (f) { return f ? `<div class="card mt-2"><h3>Produto final da obra</h3>
+        <div class="linha entre"><div class="cresce"><div class="negrito">${esc(f.nome)}</div><div class="mini texto-3">${esc(f.emb)} · ${f.comprar} un. · ${f.demaos} demão(s) · ${fmtNum(f.area, 0)} m²</div></div>${f.marca ? `<span class="etiqueta ${marcaCor(f.marca)}">${esc(f.marca)}</span>` : ''}</div>
+        ${f.destaque ? `<p class="pequeno mt-1" style="margin-bottom:0">${esc(f.destaque)}</p>` : ''}
+        <div class="mini texto-3 mt-1">${esc(f.ficha).replace(/\n/g, '<br>')}</div>
+        <div class="ajuda">É o acabamento desta obra. Vai gravado na obra e no resumo que você envia.</div></div>` : ''; })(produtoFinalDe(p, true))}
       <div class="card mt-2"><h3>Não esqueça os complementos</h3>${complementos.map(c => `<div class="linha entre pequeno" style="padding:5px 0;border-bottom:1px solid var(--borda)"><span>${esc(c.item)}<div class="mini texto-3">${esc(c.obs)}</div></span><b>${c.qtd}</b></div>`).join('')}</div>
       <div class="botoes mt-2"><button class="btn verde" onclick="App.calc.salvarProjeto()">💾 Salvar obra</button><a class="btn azul" href="${zap(textoProjeto(p, true))}" target="_blank" rel="noopener">📲 Enviar resumo</a></div>
       <button class="btn link bloco mt-1" onclick="App.calc.ir('inicio')">Voltar ao início</button>`;
   }
   App.calc.removerMaterial = (i) => { C.rascunho.materiais.splice(i, 1); calcSalvar(); App.render(); };
-  App.calc.salvarProjeto = () => { const p = C.rascunho; p.complementos = complementosDe(p, true); const idx = C.projetos.findIndex(x => x.id === p.id); if (idx >= 0) C.projetos[idx] = p; else C.projetos.push(p); C.rascunho = null; calcSalvar(); App.toast('Obra salva em "Meus cálculos" ✔'); ir('projetos'); };
+  App.calc.salvarProjeto = () => { const p = C.rascunho; p.complementos = complementosDe(p, true); p.produto_final = produtoFinalDe(p, true); const idx = C.projetos.findIndex(x => x.id === p.id); if (idx >= 0) C.projetos[idx] = p; else C.projetos.push(p); C.rascunho = null; calcSalvar(); App.toast('Obra salva em "Meus cálculos" ✔'); ir('projetos'); };
   function textoProjeto(p, fresco) {
     const l = [`*LISTA DE MATERIAIS — ${p.nome}*`, `Área: ${fmtNum(p.totalArea)} m²`, ''];
     p.materiais.forEach(m => l.push(`• ${nomeMaterial(m)} ${m.emb === 'Outro' ? m.embOutro : m.emb}: ${m.res.comprar} un. (${m.demaos} demão(s)) — ${fmtBRL(m.res.custo)}`));
     l.push('', `*Total estimado: ${fmtBRL(totalProjeto(p))}*`);
+    const fin = produtoFinalDe(p, fresco);
+    if (fin) { l.push('', `*PRODUTO FINAL — ${fin.nome}*`, `${fin.comprar} × ${fin.emb} · ${fin.demaos} demão(s) · ${fmtNum(fin.area, 0)} m²`); if (fin.destaque) l.push(fin.destaque); l.push(fin.ficha); }
     const comp = complementosDe(p, fresco);
     if (comp.length) { l.push('', '*NÃO ESQUEÇA OS COMPLEMENTOS*'); comp.forEach(c => { l.push(`• ${c.item} — ${c.qtd}`); if (c.obs) l.push(`  _${c.obs}_`); }); }
     l.push('', '_Estimativa gerada no MENTOR ST PRO · Só Tintas. Confira o rendimento na embalagem._');
@@ -230,7 +256,7 @@
   const zap = (t) => 'https://wa.me/?text=' + encodeURIComponent(t);
   function calcProjetos() {
     return `<div class="linha entre mb-1"><h2 style="margin:0">Meus cálculos</h2><button class="btn pequeno" onclick="App.calc.novo()">＋ NOVO</button></div>
-      ${C.projetos.length ? C.projetos.slice().reverse().map(p => `<div class="card"><div class="linha entre"><div><div class="negrito">${esc(p.nome)}</div><div class="pequeno texto-2">${fmtNum(p.totalArea, 0)} m² · ${p.materiais.length} material(is) · ${complementosDe(p).length} complemento(s) · ${new Date(p.criado_em).toLocaleDateString('pt-BR')}</div></div><b>${fmtBRL(totalProjeto(p))}</b></div><div class="botoes mt-1"><button class="btn mini azul" onclick="App.calc.abrirProjeto('${p.id}')">Editar</button><button class="btn mini cinza" onclick="App.calc.duplicarProjeto('${p.id}')">Duplicar</button><a class="btn mini cinza" href="${zap(textoProjeto(p))}" target="_blank" rel="noopener">Enviar</a><button class="btn mini contorno vermelho" onclick="App.calc.excluirProjeto('${p.id}')">Excluir</button></div></div>`).join('') : '<p class="pequeno texto-3">Nenhum cálculo salvo ainda.</p>'}
+      ${C.projetos.length ? C.projetos.slice().reverse().map(p => `<div class="card"><div class="linha entre"><div><div class="negrito">${esc(p.nome)}</div><div class="pequeno texto-2">${fmtNum(p.totalArea, 0)} m² · ${p.materiais.length} material(is) · ${complementosDe(p).length} complemento(s) · ${new Date(p.criado_em).toLocaleDateString('pt-BR')}</div></div><b>${fmtBRL(totalProjeto(p))}</b></div>${(function (f) { return f ? `<div class="mini texto-3">Produto final: ${esc(f.nome)}</div>` : ''; })(produtoFinalDe(p))}<div class="botoes mt-1"><button class="btn mini azul" onclick="App.calc.abrirProjeto('${p.id}')">Editar</button><button class="btn mini cinza" onclick="App.calc.duplicarProjeto('${p.id}')">Duplicar</button><a class="btn mini cinza" href="${zap(textoProjeto(p))}" target="_blank" rel="noopener">Enviar</a><button class="btn mini contorno vermelho" onclick="App.calc.excluirProjeto('${p.id}')">Excluir</button></div></div>`).join('') : '<p class="pequeno texto-3">Nenhum cálculo salvo ainda.</p>'}
       <button class="btn link bloco" onclick="App.calc.ir('inicio')">‹ Voltar</button>`;
   }
   App.calc.abrirProjeto = (id) => { const p = C.projetos.find(x => x.id === id); if (!p) return; C.rascunho = JSON.parse(JSON.stringify(p)); calcSalvar(); ir('projeto'); };

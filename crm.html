@@ -314,7 +314,9 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
     if(o.tipo==='pos'){ if(o.prod) h+='<div class="ult">Levou: '+esc(o.prod)+'</div>'; if(e.st==='novo') h+='<div class="sub"><b>Roteiro:</b> '+esc(ETAPAS[o.etapa][4])+'</div>'; }
     if(o.tipo==='cart'&&o.grupo==='SUB'&&e.st==='novo') h+='<div class="sub">Projeta '+brl(o.proj)+' neste mês: faltam '+brl(o.valor)+' para a média.</div>';
     if(o.tipo==='pin'){ var ob=(o.obras||[]).filter(function(x){return x.status!=='Concluída';});
-      if(ob.length) h+='<div class="ult">'+ob.map(function(x){ return '<b>'+esc(x.status||'Obra')+'</b> · '+esc(x.local||'')+(x.tam?' · '+esc(x.tam):'')+(x.fim?' · até '+esc(dBr(x.fim)):'')+(x.obs?'<div class="sub">'+esc(x.obs)+'</div>':''); }).join('<br>')+'</div>'; }
+      if(ob.length) h+='<div class="ult">'+ob.map(function(x){ return '<b>'+esc(x.status||'Obra')+'</b> · '+esc(x.local||'')+(x.tam?' · '+esc(x.tam):'')+(x.fim?' · até '+esc(dBr(x.fim)):'')+(x.prod?'<div class="sub">Produto final: '+esc(x.prod)+'</div>':'')
+        +(function(l){ return l.length?'<div class="sub">Complementos: '+esc(l.join(', '))+'</div>':''; })((x.comp||[]).concat(x.compOutros?[x.compOutros]:[]))
+        +(x.obs?'<div class="sub">'+esc(x.obs)+'</div>':''); }).join('<br>')+'</div>'; }
     if(ct.cNome&&o.tipo!=='pin') h+='<div class="sub">Comprador: <b>'+esc(ct.cNome)+'</b>'+(ct.cCargo?' · '+esc(ct.cCargo):'')+(ct.cHora?' · melhor horário: '+esc(ct.cHora):'')+(ct.cEmail?' · '+esc(ct.cEmail):'')+'</div>';
     if(u){
       var st=u.status, linha=esc(dBr(u.em))+' · '+esc(u.canal||'')+' · '+esc(u.res||'')+(o.tipo==='pin'&&u.motivo?' · '+esc(u.motivo):'');
@@ -528,6 +530,8 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
 
   /* ───────── ficha do pintor ───────── */
   var OBRA_ST=['Prospecção','Orçada','Comprando','Concluída'];
+  /* mesmos complementos sugeridos pela Calculadora do Especialista ST */
+  var OBRA_COMP=['Rolo + garfo','Trincha / pincel','Bandeja + grade','Fita crepe','Lixa','Lona / papelão','Espátula + desempenadeira','Extensor','Solvente / thinner'];
   function obraHtml(x,i){ x=x||{};
     return '<fieldset class="obra" data-obra="'+esc(x.id||novoId('o'))+'"><legend>Obra '+(i+1)+'</legend><div class="duas">'+
       campo('Endereço ou bairro','oLocal',x.local)+
@@ -535,7 +539,10 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
       campo('Tamanho (m² ou litros)','oTam',x.tam,'text','maxlength="30"')+campo('Previsão de término','oFim',x.fim,'date','')+
       '<label class="campo">Quem compra o material<select name="oCompra">'+['Pintor','Dono da obra'].map(function(t){return '<option'+(t===x.compra?' selected':'')+'>'+t+'</option>';}).join('')+'</select></label>'+
       '<label class="campo">Situação<select name="oStatus">'+OBRA_ST.map(function(t){return '<option'+(t===x.status?' selected':'')+'>'+t+'</option>';}).join('')+'</select></label></div>'+
-      '<label class="campo">Observação da obra<textarea name="oObs" rows="2" maxlength="300" placeholder="Outras informações: contato na obra, etapa atual, produto que vai usar, prazo de pagamento…">'+esc(x.obs||'')+'</textarea></label></fieldset>'; }
+      campo('Produto final (tinta de acabamento)','oProd',x.prod,'text','maxlength="60" placeholder="Ex.: Coral Decora Acetinado branco"')+
+      '<div class="campo" style="margin-top:8px">Complementos que a obra leva'+ops('oComp',OBRA_COMP,x.comp||[],true)+'</div>'+
+      campo('Outros complementos','oCompOutros',x.compOutros,'text','maxlength="120" placeholder="O que mais essa obra pede"')+
+      '<label class="campo">Observação da obra<textarea name="oObs" rows="2" maxlength="300" placeholder="Outras informações: contato na obra, etapa atual, prazo de pagamento…">'+esc(x.obs||'')+'</textarea></label></fieldset>'; }
   function abrirPintor(id){
     var p=id?PIN.filter(function(x){return x.id===id;})[0]:null, d=$('dlg'); p=p||{};
     d.innerHTML='<form class="reg" method="dialog" novalidate>'+
@@ -565,7 +572,8 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
       else if(v('aniv')&&!/^\d{1,2}\/\d{1,2}$/.test(v('aniv'))) er='Aniversário no formato dia/mês, como 05/03.';
       if(er){ el('regErro').textContent=er; return; }
       var obras=[].map.call(el('obras').querySelectorAll('.obra'),function(b){ var q=function(n){ return String(b.querySelector('[name='+n+']').value||'').trim(); };
-        return {id:b.dataset.obra,local:q('oLocal'),tipo:q('oTipo'),tam:q('oTam'),fim:q('oFim'),compra:q('oCompra'),status:q('oStatus'),obs:q('oObs')}; }).filter(function(x){return x.local;});
+        return {id:b.dataset.obra,local:q('oLocal'),tipo:q('oTipo'),tam:q('oTam'),fim:q('oFim'),compra:q('oCompra'),status:q('oStatus'),obs:q('oObs'),prod:q('oProd'),compOutros:q('oCompOutros'),
+          comp:[].filter.call(b.querySelectorAll('[name=oComp]'),function(c){return c.checked;}).map(function(c){return c.value;})}; }).filter(function(x){return x.local;});
       var r={id:p.id||novoId('p'),criado:p.criado||new Date().toISOString(),atual:new Date().toISOString(),por:p.por||S.nome,resp:p.resp||(PERFIL==='vend'?(OFICIAL?nm(OFICIAL):S.nome):S.nome),loja:p.loja||LOJA,
         nome:v('nome'),apelido:v('apelido'),tel:v('tel'),cidade:v('cidade'),espec:[].filter.call(f.querySelectorAll('[name=espec]'),function(c){return c.checked;}).map(function(c){return c.value;}),
         equipe:v('equipe'),marcas:v('marcas'),origem:v('origem'),aniv:v('aniv'),status:f.status.value,programa:f.programa.checked,indic:v('indic'),obs:v('obs'),obras:obras};
