@@ -132,7 +132,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
   function quando(ms){ if(!ms) return 'nunca entrou'; var d=window.STHora?STHora.data(ms):new Date(ms), h=window.STHora?STHora.data():new Date();
     var dias=Math.round((new Date(h.getFullYear(),h.getMonth(),h.getDate())-new Date(d.getFullYear(),d.getMonth(),d.getDate()))/864e5);
     return dias===0?'hoje, '+z(d.getHours())+':'+z(d.getMinutes()):dias===1?'ontem':dias<7?'há '+dias+' dias':z(d.getDate())+'/'+z(d.getMonth()+1); }
-  var CARGO={vend:'Vendedor',ger:'Gerente',sup:'Supervisor',coord:'Coordenação',outro:'Outro'};
+  var CARGO={vend:'Vendedor',ger:'Gerente',sup:'Supervisor',anl:'Analista',coord:'Coordenação',outro:'Outro'};
   var D=null, BUSCA='', FC='', LOJAS={}, ABERTO=null, ERRO_LIB={}, ARQ=null, ERRO_ARQ={};
   function sessao(){ try{ return JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); }catch(e){ return null; } }
   function toast(m){ var t=document.createElement('div'); t.className='tip'; t.style.cssText='left:0;right:0;margin:auto;bottom:18px;top:auto;width:max-content;max-width:calc(100% - 24px)'; t.setAttribute('role','status'); t.textContent=m; document.body.appendChild(t); setTimeout(function(){t.remove();},3200); }
@@ -186,7 +186,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
       (coord()?'<div class="kpi"><span>Nomes sem dono</span><b>'+D.semDono.length+'</b> <small>logins a conferir</small></div>':'')+'</div>';
     if(coord()&&D.semDono.length) h+=blocoSemDono();
     h+='<div class="linha"><input class="busca" id="busca" type="search" placeholder="Buscar por nome, apelido, código ou loja" value="'+esc(BUSCA)+'" style="flex:1 1 240px;margin:0" aria-label="Buscar">'+
-      '<div class="filtros" role="group" aria-label="Filtrar por cargo">'+[['','Todos'],['vend','Vendedores'],['ger','Gerentes'],['sup','Supervisores'],['semacesso','Sem acesso'],['inativo','Arquivados']].map(function(f){return '<button type="button" data-fc="'+f[0]+'" aria-pressed="'+(FC===f[0])+'">'+f[1]+'</button>';}).join('')+'</div></div>';
+      '<div class="filtros" role="group" aria-label="Filtrar por cargo">'+[['','Todos'],['vend','Vendedores'],['ger','Gerentes'],['sup','Supervisores'],['anl','Analistas'],['semacesso','Sem acesso'],['inativo','Arquivados']].map(function(f){return '<button type="button" data-fc="'+f[0]+'" aria-pressed="'+(FC===f[0])+'">'+f[1]+'</button>';}).join('')+'</div></div>';
     h+=lista();
     $('raiz').innerHTML=h;
   }
@@ -200,10 +200,10 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
   }
   function lista(){
     var P=D.pessoas.filter(filtra), g={};
-    P.forEach(function(p){ var k=p.cargo==='sup'||p.cargo==='coord'?'~sup':(p.lojas[0]||'—'); (g[k]=g[k]||[]).push(p); });
+    P.forEach(function(p){ var k=(p.cargo==='sup'||p.cargo==='coord'||p.cargo==='anl')?'~sup':(p.lojas[0]||'—'); (g[k]=g[k]||[]).push(p); });
     var ks=Object.keys(g).sort();
     if(!ks.length) return '<p class="sub">Ninguém encontrado.</p>';
-    var ord={ger:0,vend:1};
+    var ord={ger:0,vend:1,anl:2};
     return ks.map(function(k){ var L=g[k].sort(function(a,b){return (ord[a.cargo]-ord[b.cargo])||(a.nome<b.nome?-1:1);});
       var tit=k==='~sup'?'Supervisão e coordenação':'Loja '+k+' '+esc((LOJAS[k]||'').replace(/^\s*\d+\s*-\s*/,''))+(D.pL&&D.pL[k]!=null?' <span class="sub" style="font-weight:600">· projeção <b style="color:'+corPct(D.pL[k])+'">'+Math.round(D.pL[k]*100)+'%</b></span>':'');
       return '<section class="card"><h2>'+tit+' <span class="sub" style="font-weight:600">· '+L.length+'</span></h2><ul class="lista">'+L.map(item).join('')+'</ul></section>'; }).join('');
@@ -214,7 +214,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
   function corPct(x){ return x>=1?'var(--ok)':x>=.9?'var(--warn)':'var(--bad)'; }
   function item(p){
     var ac=p.cargo==='vend'&&D.liberadosConhecidos?(p.liberado?'<span class="chip s-ativo">✓ com acesso</span>':'<span class="chip s-semacesso">🔒 sem acesso</span>'):'';
-    var h='<li style="display:block"><div class="linha" style="justify-content:space-between"><span><b>'+esc(p.nome)+'</b> <span class="cod">'+esc(p.codigo)+'</span> <span class="sub">'+esc(CARGO[p.cargo]||p.cargo)+(p.cargo!=='vend'&&p.lojas.length?' · lojas '+esc(p.lojas.join(', ')):'')+(p.cargo!=='sup'&&p.supervisor?' · sup. '+esc(p.supervisor):'')+'</span>'+
+    var h='<li style="display:block"><div class="linha" style="justify-content:space-between"><span><b>'+esc(p.nome)+'</b> <span class="cod">'+esc(p.codigo)+'</span> <span class="sub">'+esc(CARGO[p.cargo]||p.cargo)+(p.cargo==='anl'?' · rede Só Tintas':'')+(p.cargo!=='vend'&&p.cargo!=='anl'&&p.lojas.length?' · lojas '+esc(p.lojas.join(', ')):'')+(p.cargo!=='sup'&&p.cargo!=='anl'&&p.supervisor?' · sup. '+esc(p.supervisor):'')+'</span>'+
       (p.travado?' <span class="sub" title="Corrigido pela coordenação">🔒</span>':'')+'</span><span class="linha">'+(function(){ var x=projVend(p); return x==null?'':'<span class="sub">projeção <b style="color:'+corPct(x)+'">'+Math.round(x*100)+'%</b></span>'; })()+ac+'<span class="sub">'+esc(quando(p.ultimo))+'</span>'+
       (podeEditar(p)?'<button class="btnp" type="button" data-ed="'+esc(p.codigo)+'">editar</button>':'')+
       (mkt()&&p.ativo&&p.cargo!=='coord'?'<button class="btnp verde" type="button" data-lib="'+esc(p.codigo)+'" title="Cria o login ou dá um PIN novo">'+(p.cargo==='vend'&&p.liberado===false?'Liberar acesso':'Acesso / novo PIN')+'</button>':'')+

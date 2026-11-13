@@ -13,6 +13,13 @@
             "coord",
             "anl"
           ]
+        },
+        {
+          "painel": "Cadastro da Equipe",
+          "o_que": "Novo cargo Analista na lista de cargos, com filtro próprio. O analista é de rede: aparece junto com supervisão e coordenação, não embaixo de uma loja, e não mostra loja nem supervisor.",
+          "para": [
+            "coord"
+          ]
         }
       ]
     },
