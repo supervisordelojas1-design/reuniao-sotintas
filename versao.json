@@ -2,6 +2,20 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v178",
+      "data": "13/11/2026",
+      "hora": "18:35",
+      "itens": [
+        {
+          "painel": "Ver como (coordenação)",
+          "o_que": "O seletor de nível ganhou a opção Analista, para conferir com os próprios olhos o que esse perfil enxerga: rede inteira, só leitura, sem Cadastro da Equipe, Acesso de usuários, Painel de Conteúdo nem Central de Atualização. Escolha o analista na lista e clique em Ver.",
+          "para": [
+            "coord"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v177",
       "data": "13/11/2026",
       "hora": "18:20",

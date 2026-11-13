@@ -38,9 +38,12 @@
   /* a sessão "como se fosse" a pessoa da visão — os painéis usam isto no lugar da sessão real */
   function sessaoVisao() {
     var s = sessao(), v = visao(); if (!v) return s;
-    var papel = { sup: 'Supervisor', ger: 'Gerente', vend: 'Vendedor' }[v.perfil] || 'Colaborador';
+    var papel = { sup: 'Supervisor', ger: 'Gerente', vend: 'Vendedor', anl: 'Analista' }[v.perfil] || 'Colaborador';
     var lj = (v.lojas || []).map(function (c) { return c + ' - ' + (v.lojaNome || ''); });
-    return { nome: v.nome, papel: papel, escopo: v.perfil === 'ger' ? 'lojas' : 'equipe', vendedor: v.perfil === 'vend', lotacao: lj[0] || '', carteira: v.perfil === 'sup' ? lj : [], gerencia: v.perfil === 'ger' ? lj : [], visao: true };
+    /* nov/2026: o analista é de rede — escopo "todos", como a coordenação, e o papel
+       "Analista" é o que faz o app esconder dele os painéis de administração. */
+    var escopo = v.perfil === 'ger' ? 'lojas' : v.perfil === 'anl' ? 'todos' : 'equipe';
+    return { nome: v.nome, papel: papel, escopo: escopo, vendedor: v.perfil === 'vend', lotacao: lj[0] || '', carteira: v.perfil === 'sup' ? lj : [], gerencia: v.perfil === 'ger' ? lj : [], visao: true };
   }
   function entrarVisao(pf, nome, lojas, rotulo, lojaNome) {
     return chamar('verComo', { pf: pf, n: nome || '', lj: lojas || [] }, true).then(function (r) {
