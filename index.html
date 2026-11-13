@@ -6900,6 +6900,12 @@ function permEscolher(itens, cargo){
   var exato=itens.filter(function(i){ return permNormal(i.cargo)===alvo; });
   if(exato.length===1) return exato[0];
   if(exato.length>1) return null;                 /* ambíguo: não arrisca */
+  /* A raiz só vale para cargo de UMA palavra — "Coordenador", "Supervisor",
+     "Vendedor". Sem isso, "Analista de Suprimentos" cairia na régua do
+     Analista e enxergaria a rede inteira; "Supervisor de TI" viraria
+     supervisor de loja. Cargo composto que ninguém cadastrou cai no padrão,
+     que é o certo: errar para menos. */
+  if(permNormal(cargo).split(' ').length>1) return null;
   var r=permRaiz(cargo); if(!r) return null;
   var porRaiz=itens.filter(function(i){ return permRaiz(i.cargo)===r; });
   return porRaiz.length===1 ? porRaiz[0] : null;  /* só quando é uma só */
