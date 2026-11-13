@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   MENTOR ST PRO — Assessor ST (telas)
+   MENTOR ST PRO — Especialista ST (telas)
    Abas: Calculadora de Materiais · Especificador · Diagnóstico · Cores · Chat IA
    ═══════════════════════════════════════════════════════════════ */
 (function (global) {
@@ -37,7 +37,7 @@
     const abas = [['calc', '🧮 Calculadora'], ['espec', '📐 Especificador'], ['diag', '🩺 Diagnóstico'], ['produtos', '🛒 Produtos'], ['cores', '🎨 Cores'], ['chat', '💬 Chat IA']];
     if (App.views.assessorExtras) for (const [k, l] of App.views.assessorExtras()) abas.push([k, l]);
     const corpo = { calc: telaCalc, espec: telaEspec, diag: telaDiag, cores: telaCores, produtos: telaProdutos, chat: telaChat, ...(App.telasAssessorExtras || {}) }[aba] || telaCalc;
-    return App.cabecalho('Assessor ST', 'Seu consultor técnico de bolso', { cor: 'escuro' }) + `<div class="tela">
+    return App.cabecalho('Especialista ST', 'Seu consultor técnico de bolso', { cor: 'escuro' }) + `<div class="tela">
       <div class="abas">${abas.map(([k, l]) => `<button class="${aba === k ? 'ativa' : ''}" onclick="location.hash='#/assessor/${k}'">${l}</button>`).join('')}</div>
       ${corpo(resto)}</div>`;
   };
@@ -443,9 +443,9 @@
   const SUGESTOES = ['Reboco novo: o que preciso vender?', 'Parede com mofo no banheiro', 'Quantas latas para 60 m² com 2 demãos?', 'Portão de ferro enferrujado', 'Qual tinta Coral para fachada?', 'Produto Eucatex para laje com infiltração', 'Esmalte antigo em porta de madeira', 'Mancha que piora quando chove'];
   function telaChat() {
     App.posRender = () => { const el = $('#chat-fim'); if (el) el.scrollIntoView({ block: 'end' }); };
-    return `<div class="card info pequeno" style="padding:10px 14px">💬 <b>Assessor ST</b> responde com base nos 8 guias técnicos da Só Tintas e no catálogo Coral/Eucatex${DB.mode === 'demo' ? ' (modo demonstração: busca local nos guias; com o Supabase configurado, a IA responde de forma personalizada)' : ''}. Tire dúvidas, peça uma especificação ou ajuda para explicar ao cliente.</div>
+    return `<div class="card info pequeno" style="padding:10px 14px">💬 <b>Especialista ST</b> responde com base nos 8 guias técnicos da Só Tintas e no catálogo Coral/Eucatex${DB.mode === 'demo' ? ' (modo demonstração: busca local nos guias; com o Supabase configurado, a IA responde de forma personalizada)' : ''}. Tire dúvidas, peça uma especificação ou ajuda para explicar ao cliente.</div>
       <div class="sugestoes mb-2">${SUGESTOES.map(s => `<button onclick="App.chat.perguntar('${s.replace(/'/g, '')}')">${s}</button>`).join('')}</div>
-      <div class="chat">${CH.mensagens.length ? CH.mensagens.map(m => `<div class="balao ${m.role === 'user' ? 'eu' : 'bot'}">${m.role === 'user' ? esc(m.content) : formatarBot(m.content)}${m.aviso ? `<div class="mini texto-3 mt-1">${esc(m.aviso)}</div>` : ''}</div>`).join('') : '<div class="balao bot">Olá! Sou o Assessor ST 👋 Me diga a superfície, a condição e o ambiente — ou escolha uma pergunta acima.</div>'}${CH.pensando ? '<div class="balao bot pensando">Consultando os guias…</div>' : ''}<div id="chat-fim"></div></div>
+      <div class="chat">${CH.mensagens.length ? CH.mensagens.map(m => `<div class="balao ${m.role === 'user' ? 'eu' : 'bot'}">${m.role === 'user' ? esc(m.content) : formatarBot(m.content)}${m.aviso ? `<div class="mini texto-3 mt-1">${esc(m.aviso)}</div>` : ''}</div>`).join('') : '<div class="balao bot">Olá! Sou o Especialista ST 👋 Me diga a superfície, a condição e o ambiente — ou escolha uma pergunta acima.</div>'}${CH.pensando ? '<div class="balao bot pensando">Consultando os guias…</div>' : ''}<div id="chat-fim"></div></div>
       <form class="chat-entrada" onsubmit="event.preventDefault();App.chat.perguntar(this.q.value);this.q.value=''"><input name="q" placeholder="Digite sua dúvida técnica…" autocomplete="off"><button type="submit">➤</button></form>`;
   }
   function formatarBot(t) { return esc(t).replace(/\*([^*\n]+)\*/g, '<b>$1</b>').replace(/_([^_\n]+)_/g, '<i>$1</i>').replace(/\n/g, '<br>'); }

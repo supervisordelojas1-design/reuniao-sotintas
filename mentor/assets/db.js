@@ -278,7 +278,7 @@
     async perguntarAssessor(uid, mensagens) {
       const cont = Demo.conteudo();
       const ultima = mensagens[mensagens.length - 1].content;
-      const resposta = global.Assessor ? global.Assessor.responderLocal(ultima, cont) : 'Assessor indisponível.';
+      const resposta = global.Assessor ? global.Assessor.responderLocal(ultima, cont) : 'Especialista ST indisponível.';
       const d = Demo.ler();
       d.chat.push({ id: uuid(), colaborador_id: uid, pergunta: ultima, resposta, criado_em: agora(), origem: 'local' });
       if (d.chat.length > 300) d.chat = d.chat.slice(-300);
@@ -481,9 +481,9 @@
         if (data && data.resposta) return { resposta: data.resposta, origem: 'ia' };
         throw new Error((data && data.erro) || 'Resposta vazia');
       } catch (e) {
-        console.warn('Assessor IA indisponível, usando base local:', e);
+        console.warn('Especialista ST (IA) indisponível, usando base local:', e);
         const ultima = mensagens[mensagens.length - 1].content;
-        const resposta = global.Assessor ? global.Assessor.responderLocal(ultima, DB.conteudo) : 'Assessor indisponível no momento.';
+        const resposta = global.Assessor ? global.Assessor.responderLocal(ultima, DB.conteudo) : 'Especialista ST indisponível no momento.';
         try { await sb.from('chat_assessor').insert({ colaborador_id: uid, pergunta: ultima, resposta, origem: 'local' }); } catch (_) {}
         return { resposta, origem: 'local', aviso: 'A IA não respondeu (função ainda não configurada?). Mostrando a base local.' };
       }

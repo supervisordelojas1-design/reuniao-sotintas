@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   MENTOR ST PRO — Checklists dinâmicos + Painel de Vistorias de Obra (Assessor ST)
+   MENTOR ST PRO — Checklists dinâmicos + Painel de Vistorias de Obra (Especialista ST)
    Motor genérico: lê CONTEUDO.checklists (conteudo-checklists.js), guarda as
    respostas no navegador, calcula o semáforo (A/B/C), gera o texto e envia
    pelo WhatsApp. Ao enviar pela 1ª vez cada checklist, o colaborador ganha ST.

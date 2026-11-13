@@ -140,7 +140,7 @@
       <div class="card"><h3>Trilha módulo a módulo</h3>${det && det.carregando ? '<p class="pequeno texto-3">Carregando…</p>' : det && det.erro ? `<p class="pequeno" style="color:var(--vermelho)">${esc(det.erro)}</p>` : mods}</div>
       <div class="card"><h3>Outros marcos</h3><div class="chips">${[['historia', 'HISTORIA', '📜 História'], ['valores', 'VALORES', '🌈 Valores']].map(([t, i, l]) => `<span class="chip ${feito(t, i) ? 'ativo' : ''}">${l}</span>`).join('')}<span class="chip ${c.disc ? 'ativo' : ''}">🧭 DISC${c.disc ? ' · ' + esc(c.disc) : ''}</span><span class="chip ${c.conquistas ? 'ativo' : ''}">🏅 ${c.conquistas || 0} conquista${c.conquistas === 1 ? '' : 's'}</span><span class="chip">🔥 ${c.streak || 0} dia${c.streak === 1 ? '' : 's'} seguidos</span><span class="chip">📅 cadastro ${fmtData(c.criado_em)}</span></div>
         ${det && det.tentativas && det.tentativas.length ? `<div class="mini texto-3 mt-1">${det.tentativas.length} tentativa(s) de quiz no total.</div>` : ''}</div>
-      ${det && det.chat && det.chat.length ? `<div class="card"><h3>Últimas dúvidas no Assessor</h3>${det.chat.slice(0, 5).map(x => `<div class="pequeno" style="padding:6px 0;border-bottom:1px solid var(--borda)">${esc(x.pergunta)}<div class="mini texto-3">${fmtData(x.criado_em)}</div></div>`).join('')}</div>` : ''}
+      ${det && det.chat && det.chat.length ? `<div class="card"><h3>Últimas dúvidas no Especialista ST</h3>${det.chat.slice(0, 5).map(x => `<div class="pequeno" style="padding:6px 0;border-bottom:1px solid var(--borda)">${esc(x.pergunta)}<div class="mini texto-3">${fmtData(x.criado_em)}</div></div>`).join('')}</div>` : ''}
     </div>`;
   }
 })(window);

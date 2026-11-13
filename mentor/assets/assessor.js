@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   MENTOR ST PRO — Assessor ST
+   MENTOR ST PRO — Especialista ST
    Ferramentas técnicas que funcionam sem IA:
      • Calculadora de tinta
      • Especificador (superfície × condição × sistema)
@@ -296,7 +296,7 @@
   function montarSystemPrompt(cont) {
     const kb = (cont.base_conhecimento || []).map(k => '## ' + k.titulo + '\n' + k.conteudo.trim()).join('\n\n');
     return [
-      'Você é o Assessor ST, o assistente técnico da Só Tintas (rede de lojas de tintas do Rio de Janeiro, que trabalha com as marcas Coral e Eucatex).',
+      'Você é o Especialista ST, o assistente técnico da Só Tintas (rede de lojas de tintas do Rio de Janeiro, que trabalha com as marcas Coral e Eucatex).',
       'Seu público são vendedores e novos colaboradores das lojas. Responda em português do Brasil, de forma prática, curta e segura, como um colega experiente de balcão.',
       'Use a BASE DE CONHECIMENTO abaixo como fonte principal. Quando a pergunta sair dela, use seu conhecimento geral de pintura e construção civil, deixando claro que é uma orientação geral.',
       'Sempre que fizer sentido: 1) pergunte superfície, condição e ambiente antes de indicar produto; 2) lembre de conferir a embalagem/ficha técnica do produto; 3) nunca prometa resultado se a causa do problema (umidade, infiltração, vazamento) não for resolvida.',

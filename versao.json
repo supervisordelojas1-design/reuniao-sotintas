@@ -2,6 +2,17 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v173",
+      "data": "13/11/2026",
+      "hora": "08:00",
+      "itens": [
+        {
+          "painel": "Tela inicial · Especialista ST",
+          "o_que": "O Assessor ST agora se chama Especialista ST e ganhou um card próprio na tela inicial, para todos: abre direto a calculadora de material, o especificador, o diagnóstico, os produtos e o chat técnico. Ele continua também dentro do Mentor ST PRO, no mesmo lugar."
+        }
+      ]
+    },
+    {
       "v": "ast-v172",
       "data": "12/11/2026",
       "hora": "15:10",

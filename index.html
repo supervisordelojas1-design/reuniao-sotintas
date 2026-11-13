@@ -9268,7 +9268,12 @@ syncNav();
       </button>
       <button type="button" class="ini-card feat" data-act="mentor" data-vend="1">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg></span>
-        <span class="ini-txt"><span class="ini-nm">Mentor ST PRO</span><span class="ini-ds">Treinamento, trilha, DISC e assessor técnico</span></span>
+        <span class="ini-txt"><span class="ini-nm">Mentor ST PRO</span><span class="ini-ds">Treinamento, trilha, DISC e Especialista ST</span></span>
+        <span class="ini-go" aria-hidden="true">&rarr;</span>
+      </button>
+      <button type="button" class="ini-card feat" data-act="especialista" data-vend="1">
+        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-bulb"/></svg></span>
+        <span class="ini-txt"><span class="ini-nm">Especialista ST</span><span class="ini-ds">Calculadora, especificador, diagnóstico, produtos e chat técnico</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
       <button type="button" class="ini-card feat" data-act="niveis" data-gate="1" data-vend="1" data-ger="1">
@@ -9691,10 +9696,11 @@ body.foco .wrap{padding-bottom:40px}
   var ovM=document.getElementById('ovMentor'), ifrM=document.getElementById('ifrMentor'),
       xM=document.getElementById('ovMenFechar');
   function fecharMentor(){ if(!ovM) return; ovM.style.display='none'; ifrM.removeAttribute('src'); document.body.style.overflow=''; try{ if(window.abrirInicio) window.abrirInicio(); }catch(e){} }
-  function abrirMentor(){
+  function abrirMentor(rota){
     if(!ovM||!ifrM) return;
     var tema=(window.STtema?window.STtema.get():'light');
-    ifrM.setAttribute('src','mentor/index.html?tema='+tema+'&v='+Date.now());
+    /* rota opcional: abre o Mentor direto numa tela (ex.: '#/assessor' = Especialista ST) */
+    ifrM.setAttribute('src','mentor/index.html?tema='+tema+'&v='+Date.now()+(rota||''));
     ovM.style.display='flex'; document.body.style.overflow='hidden';
   }
   if(xM){ xM.addEventListener('click', fecharMentor); }
@@ -9830,6 +9836,7 @@ body.foco .wrap{padding-bottom:40px}
     if(act==='central'){ abrirCentral(); return; }
     if(act==='conteudo'){ abrirConteudo(); return; }
     if(act==='mentor'){ abrirMentor(); return; }
+    if(act==='especialista'){ abrirMentor('#/assessor'); return; }
     if(act==='acessos'){ abrirAcessos(); return; }
     if(ehVend()) return;      /* vendedor não entra nas operações da supervisão */
     /* modo foco: ao abrir uma operação pelo card, mostra só ela (esconde as abas) */
@@ -10035,6 +10042,7 @@ button[id^="ov"][id$="Fechar"]:hover{transform:translateY(-1px);box-shadow:0 6px
   /* tour do primeiro acesso: um holofote passa pelos cards principais, uma vez por pessoa neste aparelho */
   var TXT={painel:['📊 Painel de Metas','Sua meta, quanto já vendeu, quanto falta e quanto precisa vender por dia.'],
     mentor:['🎓 Mentor ST PRO','Trilha de treinamento, provas e a sua sequência 🔥 de dias estudando.'],
+    especialista:['💡 Especialista ST','Seu consultor técnico de bolso: calcula material, especifica o sistema de pintura, diagnostica problemas e responde dúvidas.'],
     niveis:['🏅 Níveis','Em que nível você está e quanto falta de média para subir.'],
     pdi:['📋 PDI','O plano de desenvolvimento de cada vendedor, com as revisões e o termo em PDF.'],
     pontos:['⭐ Ranking ST','Tudo vira ponto: entrar no app, estudar no Mentor, fazer e responder o PDI. Veja sua posição na rede.'],

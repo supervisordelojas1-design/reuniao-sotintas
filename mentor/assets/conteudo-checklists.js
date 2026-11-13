@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   MENTOR ST PRO — CHECKLISTS DINÂMICOS (Assessor ST → aba Checklists)
+   MENTOR ST PRO — CHECKLISTS DINÂMICOS (Especialista ST → aba Checklists)
    Três ferramentas de vistoria que o vendedor preenche com o cliente
    (ou com o pintor) e envia pelo WhatsApp:
      • pre_pintura   → Checklist de Avaliação Pré-Pintura (módulo m02)

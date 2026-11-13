@@ -163,7 +163,7 @@ window.CONTEUDO = window.CONTEUDO || {};
 <h2>Ficha de avaliação pré-pintura</h2>
 <p>A ficha registra cliente, local, ambiente, superfície, data, condição encontrada (boa / necessita preparação / necessita correções / necessita investigação de outro problema), problemas identificados, preparação definida, observações e registro fotográfico.</p>
 <div class="regra">REGRA FINAL: não comece pela tinta. <b>Comece avaliando a superfície.</b> Avaliar hoje é entregar um trabalho melhor amanhã.</div>
-<div class="dica"><b>Na loja:</b> use o <b>Especificador</b> do Assessor ST para transformar essa avaliação em uma lista de produtos e enviar ao cliente pelo WhatsApp.</div>`);
+<div class="dica"><b>Na loja:</b> use o <b>Especificador</b> do Especialista ST para transformar essa avaliação em uma lista de produtos e enviar ao cliente pelo WhatsApp.</div>`);
 
   /* ══════════════ M03 — TABELA SUPERFÍCIE × PREPARAÇÃO ══════════════ */
   add('m03', 1, 'Como usar a tabela: superfície + condição + sistema', 5, 2, 3, `
@@ -472,7 +472,7 @@ window.CONTEUDO = window.CONTEUDO || {};
 <p>Qual é o substrato? A pintura é nova ou antiga? Existe histórico de infiltração? Interno ou externo? A superfície recebe água ou sol com frequência? Houve preparação da base? Foi usado fundo ou selador? Qual foi a diluição? Quanto tempo entre demãos? O defeito surgiu imediatamente ou depois de semanas? <b>Quanto mais informações, menor a chance de tratar apenas a aparência.</b></p>
 <h2>As 8 categorias do Atlas</h2>
 <p>1. Umidade e infiltração (fichas 1-7) · 2. Falhas de aderência e descolamento (8-14) · 3. Erros no preparo do substrato (15-21) · 4. Problemas de aplicação e diluição (22-30) · 5. Incompatibilidade química e repintura (31-36) · 6. Madeira e superfícies metálicas (37-42) · 7. Contaminação e agentes biológicos (43-46) · 8. Degradação e envelhecimento precoce (47-50).</p>
-<div class="dica">Todas as 50 fichas estão no <b>Diagnóstico</b> do Assessor ST: escolha o sintoma e veja causas, verificações, o que não fazer e o caminho de correção.</div>`);
+<div class="dica">Todas as 50 fichas estão no <b>Diagnóstico</b> do Especialista ST: escolha o sintoma e veja causas, verificações, o que não fazer e o caminho de correção.</div>`);
 
   add('m08', 2, 'Categoria 1 — Umidade e infiltração (fichas 1 a 7)', 7, 3, 9, `
 <p>Problemas causados por entrada de água, umidade ascendente, condensação ou falhas de impermeabilização.</p>
