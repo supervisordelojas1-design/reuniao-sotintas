@@ -2,6 +2,27 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v185",
+      "data": "13/11/2026",
+      "hora": "19:55",
+      "itens": [
+        {
+          "painel": "Ver como · Analista",
+          "o_que": "Corrigido: escolher Analista pedia a loja da visão e não deixava abrir. O analista é de rede, não tem loja — a exigência deixou de valer para ele.",
+          "para": [
+            "coord"
+          ]
+        },
+        {
+          "painel": "Direitos de Acesso",
+          "o_que": "Cada coluna da grade ganhou um \"limpar\", que devolve o cargo inteiro ao padrão de uma vez.",
+          "para": [
+            "coord"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v184",
       "data": "13/11/2026",
       "hora": "19:50",
