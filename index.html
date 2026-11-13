@@ -9301,9 +9301,11 @@ syncNav();
   </div>
   <div id="acLista" style="margin-top:10px"></div>
   <div style="border-top:1px solid var(--line,#e3e8f2);margin-top:12px;padding-top:10px">
-   <b style="font-size:13px">Vendedor que não está na lista (recém-contratado)</b>
+   <b style="font-size:13px" id="acNovoTit">Vendedor que não está na lista (recém-contratado)</b>
    <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:6px">
     <label style="flex:2 1 220px">Nome e sobrenome<input id="acNovoNome" placeholder="como no crachá"></label>
+    <label style="flex:1 1 170px;display:none" id="acNovoCargoWrap">Cargo<select id="acNovoCargo"></select></label>
+    <label style="flex:1 1 130px;display:none" id="acNovoAutWrap">Login Autcom<input id="acNovoAut" placeholder="opcional"></label>
     <button type="button" class="btn btn-primary" id="acNovoBtn" style="align-self:flex-end">Liberar</button>
    </div>
   </div>
@@ -9831,12 +9833,20 @@ body.foco .wrap{padding-bottom:40px}
   })();
 
   // Acesso dos vendedores (v61): gerente/supervisor/coordenação liberam
-  var AC={dados:null};
+  var AC={ ADM:'Administrativo', admin:null, cargos:null,dados:null};
   function acEl(id){ return document.getElementById(id); }
   function acEsc(t){ return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
   function acStatus(t,cor){ var e=acEl('acStatus'); if(e){ e.innerHTML=t||''; e.style.color=cor||''; } }
   function acRender(){
-    var d=AC.dados, box=acEl('acLista'); if(!box||!d) return;
+    var box=acEl('acLista');
+    var ehAdm = acEl('acLoja') && acEl('acLoja').value===AC.ADM;
+    /* o rodapé de cadastro muda de cara conforme o grupo escolhido */
+    var tit=acEl('acNovoTit'), cw=acEl('acNovoCargoWrap'), aw=acEl('acNovoAutWrap');
+    if(tit) tit.textContent = ehAdm ? 'Cadastrar alguém do administrativo' : 'Vendedor que não está na lista (recém-contratado)';
+    if(cw) cw.style.display = ehAdm ? '' : 'none';
+    if(aw) aw.style.display = ehAdm ? '' : 'none';
+    if(ehAdm){ acRenderAdmin(); return; }
+    var d=AC.dados; if(!box||!d) return;
     var loja=acEl('acLoja').value, cod=(String(loja).match(/^\s*(\d+)/)||[])[1]; cod=cod?('00'+cod).slice(-3):'';
     var vs=(d.vendedores||[]).filter(function(v){ return v.cod===cod; }).sort(function(a,b){ return (b.ger?1:0)-(a.ger?1:0); });
     if(!vs.length){ box.innerHTML='<p class="sub">Nenhum vendedor desta loja no Níveis. Use o campo abaixo para liberar pelo nome.</p>'; return; }
@@ -9855,6 +9865,55 @@ body.foco .wrap{padding-bottom:40px}
       var v=vs[+b.getAttribute('data-des')];
       if(!window.confirm('Desativar o acesso de '+v.nome+'?')) return;
       acEnviar({nome:v.nome, loja:loja, acao:'desativar'}); }; });
+  }
+  function acRenderAdmin(){
+    var box=acEl('acLista'); if(!box) return;
+    var L=AC.admin||[];
+    if(!L.length){ box.innerHTML='<p class="sub">Ninguém sem loja na base ainda.</p>'; return; }
+    box.innerHTML='<div class="rolar"><table class="pnl"><tr><th>Pessoa</th><th>Cargo</th><th>Situação</th><th style="min-width:220px">Ação</th></tr>'+
+      L.map(function(v,i){
+        var sit=!v.ativo?'<b style="color:#D32027">desativado</b>'
+               :v.trocarPin?'<b style="color:#B7791F">falta trocar o PIN</b>'
+               :'<b style="color:var(--ok,#177a4d)">com acesso</b>';
+        var acoes='<input data-apin="'+i+'" placeholder="PIN novo" inputmode="numeric" maxlength="6" style="width:90px"> '+
+          '<button type="button" class="btn btn-ghost btn-sm" data-anovo="'+i+'">Novo PIN</button> '+
+          '<button type="button" class="btn btn-ghost btn-sm" data-atog="'+i+'">'+(v.ativo?'Desativar':'Reativar')+'</button>';
+        return '<tr><td><b>'+acEsc(v.nome)+'</b>'+(v.autcom?' <span class="sub">'+acEsc(v.autcom)+'</span>':'')+'</td>'+
+          '<td>'+acEsc(v.cargo||'—')+'</td><td>'+sit+'</td><td>'+acoes+'</td></tr>';
+      }).join('')+'</table></div>'+
+      '<p class="hint" style="margin-top:6px">Quem não tem loja: coordenação, supervisão, analista, marketing e afins. Quem é de loja aparece escolhendo a filial.</p>';
+    Array.prototype.forEach.call(box.querySelectorAll('[data-anovo]'),function(b){ b.onclick=function(){
+      var v=L[+b.getAttribute('data-anovo')], pin=(box.querySelector('[data-apin="'+b.getAttribute('data-anovo')+'"]')||{}).value||'';
+      acEnviarAdmin({acao:'novoPin', nome:v.nome, pinNovo:pin.trim()}); }; });
+    Array.prototype.forEach.call(box.querySelectorAll('[data-atog]'),function(b){ b.onclick=function(){
+      var v=L[+b.getAttribute('data-atog')];
+      if(v.ativo && !window.confirm('Desativar o acesso de '+v.nome+'?')) return;
+      acEnviarAdmin({acao:v.ativo?'desativar':'reativar', nome:v.nome}); }; });
+  }
+  function acCargosAdmin(){
+    var sel=acEl('acNovoCargo'); if(!sel||AC.cargos) return;
+    fetch(ENVIO_URL+'?acao=permissoes').then(function(r){ return r.json(); }).then(function(res){
+      if(!res||!res.ok) return;
+      AC.cargos=(res.itens||[]).map(function(i){ return i.cargo; });
+      sel.innerHTML='<option value="">escolha…</option>'+AC.cargos.map(function(c){ return '<option>'+acEsc(c)+'</option>'; }).join('');
+    }).catch(function(){});
+  }
+  function acEnviarAdmin(o){
+    var s=sessao(); if(!s) return;
+    var meu=(acEl('acMeuPin').value||'').trim();
+    if(!/^\d{4,6}$/.test(meu)){ acStatus('Digite <b>o seu PIN</b> no campo "Seu PIN (confirma)".','#D32027'); acEl('acMeuPin').focus(); return; }
+    acStatus('Gravando…','');
+    fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({tipo:'liberarAdmin', login:s.nome, pin:meu,
+        acao:o.acao, nome:o.nome, cargo:o.cargo||'', pinNovo:o.pinNovo||'', autcom:o.autcom||''})})
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        if(!res||!res.ok) throw new Error((res&&res.erro)||'Não consegui gravar.');
+        acStatus('Feito: <b>'+acEsc(res.nome)+'</b>'+(res.criado?' cadastrado com o PIN inicial.':'.'),'#177a4d');
+        acEl('acNovoNome').value=''; if(acEl('acNovoAut')) acEl('acNovoAut').value='';
+        acCarregar(true);
+      })
+      .catch(function(e){ acStatus(acEsc(e.message||String(e)),'#D32027'); });
   }
   function acEnviar(o){
     var s=sessao(); if(!s) return;
@@ -9886,6 +9945,19 @@ body.foco .wrap{padding-bottom:40px}
         if(!d.sugestoesDoNiveis) acSugestoesMentor(d);
         acEl('acLoja').innerHTML=d.lojas.map(function(l){ return '<option'+(l===antes?' selected':'')+'>'+acEsc(l)+'</option>'; }).join('');
         acRender();
+        /* nov/2026: quem não é de loja (coordenação, supervisão, analista,
+           marketing...) não cabia nesta tela, que monta a lista por filial.
+           O grupo Administrativo vem de funções próprias no servidor. */
+        fetch(ENVIO_URL+'?acao=acessosAdmin&eu='+encodeURIComponent(s.nome)).then(function(r){ return r.json(); })
+          .then(function(a){
+            if(!a||!a.ok||!a.pode) return;
+            AC.admin=a.pessoas||[];
+            if(!acEl('acLoja').querySelector('[value="'+AC.ADM+'"]')){
+              var op=document.createElement('option'); op.value=AC.ADM; op.textContent=AC.ADM;
+              acEl('acLoja').appendChild(op);
+            }
+            if(antes===AC.ADM){ acEl('acLoja').value=AC.ADM; acRender(); }
+          }).catch(function(){});
       })
       .catch(function(){ acEl('acLista').innerHTML='<p class="sub">Sem conexão.</p>'; });
   }
@@ -9908,16 +9980,23 @@ body.foco .wrap{padding-bottom:40px}
   function abrirAcessos(){
     if(!(typeof podePainel==='function'?podePainel('gerirAcessos',!ehAnl()):!ehAnl())) return;
     var m=acEl('modalAcessos'); if(!m) return;
-    acStatus(''); m.classList.add('show'); acCarregar(false);
+    acStatus(''); m.classList.add('show'); acCarregar(false); acCargosAdmin();
   }
   (function(){
     var f=acEl('acFechar'); if(f) f.onclick=function(){ acEl('modalAcessos').classList.remove('show'); acEl('acMeuPin').value=''; };
     var l=acEl('acLoja'); if(l) l.onchange=acRender;
     var nb=acEl('acNovoBtn'); if(nb) nb.onclick=function(){
       var nome=(acEl('acNovoNome').value||'').trim();
-      if(nome.split(/\s+/).length<2){ acStatus('Use nome e sobrenome do vendedor.','#D32027'); return; }
+      if(nome.split(/\s+/).length<2){ acStatus('Use nome e sobrenome.','#D32027'); return; }
       var pin=window.prompt('PIN inicial para '+nome+' (4 a 6 dígitos). Ele troca no primeiro acesso.','');
       if(pin==null) return;
+      if(acEl('acLoja').value===AC.ADM){
+        var cargo=(acEl('acNovoCargo')||{}).value||'';
+        if(!cargo){ acStatus('Escolha o cargo.','#D32027'); return; }
+        acEnviarAdmin({acao:'novo', nome:nome, cargo:cargo, pinNovo:String(pin).trim(),
+                       autcom:((acEl('acNovoAut')||{}).value||'').trim()});
+        return;
+      }
       acEnviar({nome:nome, loja:acEl('acLoja').value, pin:String(pin).trim(), acao:'liberar'});
     };
   })();
