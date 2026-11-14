@@ -2,6 +2,20 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v189",
+      "data": "13/11/2026",
+      "hora": "21:20",
+      "itens": [
+        {
+          "painel": "Direitos de Acesso",
+          "o_que": "A grade mostrava \"–\" no que está em padrão e não respondia o que importa: o que cada cargo enxerga de fato. Agora a célula em padrão mostra o resultado da regra do app — ✓ liberado ou ✗ bloqueado, em tom fraco e borda tracejada — e as exceções que você definiu aparecem em cheio. O padrão é calculado a partir dos próprios cards da tela inicial, então card novo entra na conta sozinho.",
+          "para": [
+            "coord"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v188",
       "data": "13/11/2026",
       "hora": "21:10",

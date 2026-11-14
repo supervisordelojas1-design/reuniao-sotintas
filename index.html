@@ -10100,19 +10100,63 @@ body.foco .wrap{padding-bottom:40px}
    login do Autcom + senha — quem confere é o servidor. */
 (function(){
   var PAINEIS=[
-    ['verMetas','Painel de Metas'],['verNiveis','Níveis'],['verPDI','PDI Mensal'],
-    ['verPDISemanal','PDI Semanal'],['verRanking','Ranking ST'],['verProvas','Central de Provas'],
-    ['verMinhasProvas','Minhas Provas'],['verUso','Acessos ao App'],['verCRM','CRM de Vendas'],
-    ['verBonus','Bonificações'],['verSimulador','Simulador de Bônus'],['verProposta','Proposta de Vendedor'],
-    ['verMentor','Mentor'],['verEspecialista','Especialista ST'],
-    ['gerirCadastro','Cadastro da Equipe'],['gerirAcessos','Acesso de usuários'],
-    ['gerirConteudo','Painel de Conteúdo'],['gerirCentral','Central de Atualização']
+    ['verMetas','Painel de Metas','painel'],['verNiveis','Níveis','niveis'],['verPDI','PDI Mensal','pdi'],
+    ['verPDISemanal','PDI Semanal','semana'],['verRanking','Ranking ST','pontos'],
+    ['verProvas','Central de Provas','provas'],['verMinhasProvas','Minhas Provas','avulsas'],
+    ['verUso','Acessos ao App','uso'],['verCRM','CRM de Vendas','crm'],
+    ['verBonus','Bonificações','bonus'],['verSimulador','Simulador de Bônus','simulador'],
+    ['verProposta','Proposta de Vendedor','proposta'],['verMentor','Mentor','mentor'],
+    ['verEspecialista','Especialista ST','especialista'],
+    ['gerirCadastro','Cadastro da Equipe','cadastro'],['gerirAcessos','Acesso de usuários','acessos'],
+    ['gerirConteudo','Painel de Conteúdo','conteudo'],['gerirCentral','Central de Atualização','central']
   ];
   var CICLO={'':'1','1':'0','0':''};
-  var VISUAL={ '':['–','#8a95a8','#f1f4f9','padrão'],
-               '1':['✓','#0f6b40','#dcf3e6','liberado'],
-               '0':['✗','#b3261e','#fbe3e1','bloqueado'] };
+  var VISUAL={ '1':['✓','#0f6b40','#dcf3e6','liberado por você'],
+               '0':['✗','#b3261e','#fbe3e1','bloqueado por você'] };
+  /* Em padrão a célula mostra o que a REGRA DO APP dá hoje, em tom fraco e com
+     borda tracejada: sem isso a grade só dizia "–" e não respondia a pergunta
+     que importa, que é o que cada cargo enxerga de fato. */
+  var HERDADO={ 'true':['✓','#6f9e86','#f2f8f5','liberado pela regra'],
+                'false':['✗','#c4928d','#fdf5f4','bloqueado pela regra'] };
   function esc(t){ return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  /* O padrão de cada cargo sai dos ATRIBUTOS REAIS dos cards da tela inicial,
+     não de uma cópia das regras: card novo entra na conta sozinho e a grade
+     não envelhece junto com o código. */
+  function familia(cargo){
+    var n=String(cargo||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    if(/coorden/.test(n)) return 'coord';
+    if(/supervis/.test(n)) return 'sup';
+    if(/gerente/.test(n)) return 'ger';
+    if(/vendedor|operador|caixa|assistente/.test(n)) return 'vend';
+    if(/analista/.test(n)) return 'anl';
+    if(/marketing/.test(n)) return 'mkt';
+    return 'outro';
+  }
+  function padraoPara(linha){
+    var fam=familia(linha&&linha.cargo), escopo=(linha&&linha.escopo)||'proprio';
+    var vend = fam==='vend';
+    var ger  = fam==='ger' || escopo==='lojas';
+    var anl  = fam==='anl';
+    var mkt  = fam==='mkt';
+    var ver  = fam==='coord' || fam==='sup' || anl;
+    var lider= escopo==='todos' || escopo==='lojas' || fam==='coord' || fam==='sup' || ger || anl;
+    var todos= escopo==='todos';
+    var pf   = vend?'vend':ger?'ger':fam==='sup'?'sup':anl?'anl':fam==='coord'?'coord':'outro';
+    var out={};
+    Array.prototype.forEach.call(document.querySelectorAll('#ovInicio .ini-card[data-act]'),function(c){
+      var a=c.getAttribute('data-act'), v;
+      if(c.hasAttribute('data-gate'))           v = ver || (vend&&c.hasAttribute('data-vend')) || (ger&&c.hasAttribute('data-ger'));
+      else if(c.hasAttribute('data-lider'))     v = lider && !(anl && c.hasAttribute('data-noanl'));
+      else if(c.hasAttribute('data-conteudo'))  v = mkt || (todos && !anl);
+      else if(c.hasAttribute('data-coordonly')) v = todos && !anl && !vend;
+      else if(c.hasAttribute('data-direitos'))  v = !!(linha && linha.editarEquipe);
+      else if(c.hasAttribute('data-crm'))       v = ['vend','ger','sup','anl','coord'].indexOf(pf)>=0;
+      else if(c.hasAttribute('data-avulsas'))   v = ['vend','ger','sup'].indexOf(pf)>=0;
+      else v = true;   /* Operação: agenda, rotina, despesas — todo mundo */
+      out[a]=!!v;
+    });
+    return out;
+  }
   /* Encurta só o que não distingue cargo. NÃO tirar "de Loja": existem
      "Gerente" e "Gerente de Loja" como cargos diferentes, e juntá-los num
      rótulo só faria a grade mentir sobre qual coluna é qual. */
@@ -10130,7 +10174,11 @@ body.foco .wrap{padding-bottom:40px}
     var campo='display:block;width:100%;margin-top:4px;padding:9px 11px;border-radius:9px;border:1px solid #cfd6e4;background:#fff;color:#16233d;font:600 14px inherit';
     ov.innerHTML='<div style="width:100%;max-width:980px;background:#fff;color:#16233d;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px">'+
       '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div><b style="font-size:18px">🔒 Direitos de Acesso</b>'+
-      '<div style="font-size:12.5px;color:#5a677f;margin-top:2px">Toque na célula para alternar: <b>–</b> padrão (vale a regra de hoje) · <b style="color:#0f6b40">✓</b> liberado · <b style="color:#b3261e">✗</b> bloqueado. Vale no próximo abrir do app de cada pessoa.</div></div>'+
+      '<div style="font-size:12.5px;color:#5a677f;margin-top:2px">O que cada cargo enxerga hoje. '+
+      '<span style="border:1px dashed #6f9e86;color:#6f9e86;border-radius:5px;padding:0 4px">✓</span> liberado e '+
+      '<span style="border:1px dashed #c4928d;color:#c4928d;border-radius:5px;padding:0 4px">✗</span> bloqueado <b>pela regra do app</b>; '+
+      '<b style="color:#0f6b40">✓</b> e <b style="color:#b3261e">✗</b> em cheio são <b>exceções que você definiu</b>. '+
+      'Toque para alternar entre os três. Vale no próximo abrir do app de cada pessoa.</div></div>'+
       '<button type="button" data-dx="x" aria-label="Fechar" style="border:0;background:#eef2f8;border-radius:8px;padding:6px 10px;font-weight:700;cursor:pointer;color:#16233d">✕</button></div>'+
       '<div id="dxGrade" style="overflow:auto;max-height:52vh;border:1px solid #e6ebf3;border-radius:10px"><p style="padding:14px;margin:0;color:#5a677f;font-size:13px">Carregando a régua…</p></div>'+
       '<div id="dxMsg" role="status" style="font-size:12.5px;min-height:16px;color:#5a677f"></div>'+
@@ -10143,7 +10191,7 @@ body.foco .wrap{padding-bottom:40px}
         '<button type="button" data-dx="ok" style="padding:9px 16px;border-radius:9px;border:0;background:#1C3F8F;color:#fff;font-weight:700;cursor:pointer">Salvar alterações</button></div></div>';
     document.body.appendChild(ov);
     var grade=ov.querySelector('#dxGrade'), msg=ov.querySelector('#dxMsg');
-    var ITENS=[], ORIG={}, ATUAL={};
+    var ITENS=[], ORIG={}, ATUAL={}, PADRAO={};
     /* O aviso vivia entre a grade e os campos de login e, em tela estreita,
        ficava fora da vista: quem salvava não via se tinha dado certo. Agora
        além da linha no modal sobe uma faixa flutuante por cima de tudo. */
@@ -10169,10 +10217,16 @@ body.foco .wrap{padding-bottom:40px}
     document.addEventListener('keydown',tecla);
 
     function pintar(b){
-      var v=ATUAL[b.dataset.cargo][b.dataset.k]||'', V=VISUAL[v];
+      var v=ATUAL[b.dataset.cargo][b.dataset.k]||'', V, dica;
+      if(v){ V=VISUAL[v]; dica=V[3]; b.style.fontWeight='800'; b.style.border='0'; }
+      else {
+        var pad=(PADRAO[b.dataset.cargo]||{})[b.dataset.act];
+        V=HERDADO[String(!!pad)]; dica='padrão · '+V[3];
+        b.style.fontWeight='600'; b.style.border='1px dashed '+V[1];
+      }
       b.textContent=V[0]; b.style.color=V[1]; b.style.background=V[2];
-      b.setAttribute('aria-label', b.dataset.painel+' para '+b.dataset.cargo+': '+V[3]);
-      b.title=V[3];
+      b.setAttribute('aria-label', b.dataset.painel+' para '+b.dataset.cargo+': '+dica);
+      b.title=dica;
     }
     function desenhar(){
       var th='padding:7px 8px;font:700 11.5px inherit;color:#5a677f;text-align:center;white-space:nowrap;background:#f7f9fc;position:sticky;top:0;z-index:2';
@@ -10187,7 +10241,7 @@ body.foco .wrap{padding-bottom:40px}
         h+='<tr><td style="padding:5px 8px;font:600 12.5px inherit;color:#16233d;white-space:nowrap;position:sticky;left:0;background:'+fundo+';border-top:1px solid #eef2f8">'+esc(p[1])+'</td>'+
           ITENS.map(function(i){
             return '<td style="padding:3px;text-align:center;background:'+fundo+';border-top:1px solid #eef2f8">'+
-              '<button type="button" data-cel="1" data-k="'+p[0]+'" data-cargo="'+esc(i.cargo)+'" data-painel="'+esc(p[1])+'" '+
+              '<button type="button" data-cel="1" data-k="'+p[0]+'" data-act="'+p[2]+'" data-cargo="'+esc(i.cargo)+'" data-painel="'+esc(p[1])+'" '+
               'style="width:34px;height:28px;border:0;border-radius:7px;font:800 14px inherit;cursor:pointer"></button></td>';
           }).join('')+'</tr>';
       });
@@ -10210,7 +10264,8 @@ body.foco .wrap{padding-bottom:40px}
     fetch(ENVIO_URL+'?acao=permissoes').then(function(r){ return r.json(); }).then(function(res){
       if(!res||!res.ok) throw new Error((res&&res.erro)||'Não consegui ler a régua.');
       ITENS=res.itens||[];
-      ITENS.forEach(function(i){ ORIG[i.cargo]=texto(mapa(i.paineis)); ATUAL[i.cargo]=mapa(i.paineis); });
+      ITENS.forEach(function(i){ ORIG[i.cargo]=texto(mapa(i.paineis)); ATUAL[i.cargo]=mapa(i.paineis);
+        PADRAO[i.cargo]=padraoPara(i); });
       desenhar();
     }).catch(function(e){ grade.innerHTML='<p style="padding:14px;margin:0;color:#b3261e;font-size:13px">'+esc(e.message)+'</p>'; aviso(esc(e.message),'erro'); });
 
