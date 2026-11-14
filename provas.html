@@ -413,7 +413,7 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
       /* Atalho de cobrança: junta num só lugar todo mundo que ainda não fez —
          prova aberta, PDI travado e prazo perdido. As placas de baixo continuam
          separando o motivo; esta responde "quem eu preciso cobrar". */
-      ((cBase.liberado+cBase.aguardando+cBase.perdeu)?placa('faltam',cBase.liberado+cBase.aguardando+cBase.perdeu,'Ainda não fez','todos os pendentes juntos'):'')+
+      ((((cBase.liberado?1:0)+(cBase.aguardando?1:0)+(cBase.perdeu?1:0))>1)?placa('faltam',cBase.liberado+cBase.aguardando+cBase.perdeu,'Ainda não fez','todos os pendentes juntos'):'')+
       (SEM===S.atual?placa('liberado',cBase.liberado,'Prova aberta','falta o '+T.aval+' responder')+placa('aguardando',cBase.aguardando,T.Cond+' não fez o PDI','a prova nem abriu'):'')+
       (cBase.perdeu||SEM!==S.atual?placa('perdeu',cBase.perdeu,'Perderam o prazo','não fizeram a tempo'):'')+
       (sem?placa('sempdi',sem,'Sem PDI gerado','conferir o cadastro'):'')+'</section>';
