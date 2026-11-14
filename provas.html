@@ -825,6 +825,11 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
       D.G.concat(D.SP).filter(function(r){return r.sit!=='respondido'&&r.sit!=='sem_pdi';}).forEach(function(r){ addFX(r,'Prova da semana',rotSit(r.sit,r.tipo),passoSit(r.sit,r.tipo)); });
       D.T.filter(function(r){return r.sit==='nao_iniciou'||r.sit==='refazer';}).forEach(function(r){ addFX(r,'Trilha Mentor',MT_ROT[r.sit],r.sit==='nao_iniciou'?'Abrir a trilha e fazer o primeiro módulo':'Refazer o módulo que travou'); });
       D.AVL.forEach(function(x){ x.L.filter(function(r){return r.sit==='pendente'||r.sit==='perdeu';}).forEach(function(r){ addFX(r,'Avulsa: '+x.P.titulo,AV_ROT[r.sit],r.sit==='pendente'?('Responder até '+pzAv(x.P.prazo)):'Prazo vencido: reabrir ou justificar'); }); });
+      /* A mesma pessoa pode cair aqui duas vezes (semana e trilha) e o cargo vem
+         de fontes diferentes — "Vendedor" numa linha, "Vendedor(a)" na outra.
+         Um cargo por pessoa: vale o do cadastro, que é o oficial. */
+      var CG={}; FX.forEach(function(x){ var k=norm(x.nome); if(x.cargo&&(!CG[k]||x.cargo.length>CG[k].length)) CG[k]=x.cargo; });
+      FX.forEach(function(x){ x.cargo=CG[norm(x.nome)]||x.cargo; });
       FX.sort(function(a,b){ return (a.loja<b.loja?-1:a.loja>b.loja?1:0)||(norm(a.nome)<norm(b.nome)?-1:1)||(a.o<b.o?-1:a.o>b.o?1:0); });
       var qlj={}, qpe={}; FX.forEach(function(x){ if(x.loja) qlj[x.loja]=1; qpe[(x.loja||'')+'|'+norm(x.nome)]=1; });
       b('<h3>Quem ainda não fez</h3><p class="r-p">'+(FX.length
