@@ -10146,7 +10146,9 @@ body.foco .wrap{padding-bottom:40px}
     Array.prototype.forEach.call(document.querySelectorAll('#ovInicio .ini-card[data-act]'),function(c){
       var a=c.getAttribute('data-act'), v;
       if(c.hasAttribute('data-gate'))           v = ver || (vend&&c.hasAttribute('data-vend')) || (ger&&c.hasAttribute('data-ger'));
-      else if(c.hasAttribute('data-lider'))     v = lider && !(anl && c.hasAttribute('data-noanl'));
+      /* o administrador de conteúdo não é "líder", mas entra no Cadastro da
+         Equipe — exceção que existe no gate real e precisa existir aqui */
+      else if(c.hasAttribute('data-lider'))     v = (lider || (mkt && a==='cadastro')) && !(anl && c.hasAttribute('data-noanl'));
       else if(c.hasAttribute('data-conteudo'))  v = mkt || (todos && !anl);
       else if(c.hasAttribute('data-coordonly')) v = todos && !anl && !vend;
       else if(c.hasAttribute('data-direitos'))  v = !!(linha && linha.editarEquipe);
@@ -10181,6 +10183,7 @@ body.foco .wrap{padding-bottom:40px}
       'Toque para alternar entre os três. Vale no próximo abrir do app de cada pessoa.</div></div>'+
       '<button type="button" data-dx="x" aria-label="Fechar" style="border:0;background:#eef2f8;border-radius:8px;padding:6px 10px;font-weight:700;cursor:pointer;color:#16233d">✕</button></div>'+
       '<div id="dxGrade" style="overflow:auto;max-height:52vh;border:1px solid #e6ebf3;border-radius:10px"><p style="padding:14px;margin:0;color:#5a677f;font-size:13px">Carregando a régua…</p></div>'+
+      '<div style="font-size:11.5px;color:#8a95a8">O perfil de administrador de conteúdo (Marketing) é dado por <b>nome</b>, em Painel de Conteúdo → Quem administra — não pelo cargo. A coluna Marketing aqui mostra o que o cargo dá.</div>'+
       '<div id="dxMsg" role="status" style="font-size:12.5px;min-height:16px;color:#5a677f"></div>'+
       '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
         '<label style="flex:1 1 170px;font-size:12px;font-weight:700;color:#5a677f">SEU LOGIN (AUTCOM)<input id="dxLogin" autocomplete="off" style="'+campo+'"></label>'+
