@@ -10397,7 +10397,10 @@ body.foco .wrap{padding-bottom:40px}
     function montarPessoa(cargo){
       var f=vcFamilia(cargo);
       if(!PESSOAS){ alvo.innerHTML='<p style="font-size:12.5px;color:#5a677f;margin:0">Buscando o cadastro…</p>';
-        STDados.chamar('pessoas').then(function(j){
+        /* crachá REAL (3º parâmetro): com uma visão já aberta, o crachá
+           simulado não pode ler o cadastro — e não deve mesmo. É o mesmo que
+           o montarVend faz para buscar os vendedores. */
+        STDados.chamar('pessoas',{},true).then(function(j){
           PESSOAS=((j&&j.ok&&j.pessoas)||[]).filter(function(x){ return x.ativo; });
           if(pf.value===cargo) montarPessoa(cargo);
         }).catch(function(e){ PESSOAS=[]; msg.textContent=e.message; if(pf.value===cargo) montarPessoa(cargo); });
