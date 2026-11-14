@@ -10386,17 +10386,25 @@ body.foco .wrap{padding-bottom:40px}
       var vs=VENDS.filter(function(x){ return x.id===lj.value; });
       box.innerHTML='<label style="font-size:12px;font-weight:700;color:#5a677f">Vendedor<select id="vcVend" style="'+campo+'">'+(vs.length?vs.map(function(x){ return '<option'+(v&&v.nome===x.nome?' selected':'')+'>'+esc(x.nome)+'</option>'; }).join(''):'<option value="">Nenhum vendedor desta loja na base</option>')+'</select></label>';
     }
-    function montarAnl(){
-      if(!ANLS){ alvo.innerHTML='<p style="font-size:12.5px;color:#5a677f;margin:0">Buscando os analistas…</p>';
+    /* Para cargo que não é de loja nem de carteira, a visão precisa de uma
+       pessoa só para dar nome ao crachá — a lista vem do Cadastro da Equipe.
+       Sem ninguém naquele cargo, abre com o nome do cargo mesmo: dá para
+       conferir o que ele enxerga antes de existir gente nele. */
+    function montarPessoa(cargo){
+      var f=vcFamilia(cargo);
+      if(!PESSOAS){ alvo.innerHTML='<p style="font-size:12.5px;color:#5a677f;margin:0">Buscando o cadastro…</p>';
         STDados.chamar('pessoas').then(function(j){
-          ANLS=((j&&j.ok&&j.pessoas)||[]).filter(function(x){ return x.ativo && x.cargo==='anl'; });
-          if(pf.value==='anl') montarAnl();
-        }).catch(function(e){ ANLS=[]; msg.textContent=e.message; if(pf.value==='anl') montarAnl(); });
+          PESSOAS=((j&&j.ok&&j.pessoas)||[]).filter(function(x){ return x.ativo; });
+          if(pf.value===cargo) montarPessoa(cargo);
+        }).catch(function(e){ PESSOAS=[]; msg.textContent=e.message; if(pf.value===cargo) montarPessoa(cargo); });
         return; }
-      if(!ANLS.length){ alvo.innerHTML='<p style="font-size:12.5px;color:#5a677f;margin:0">Nenhum analista ativo no Cadastro da Equipe.</p>'; return; }
-      alvo.innerHTML='<label style="font-size:12px;font-weight:700;color:#5a677f">Analista<select id="vcAnl" style="'+campo+'">'+
-        ANLS.map(function(x){ return '<option'+(v&&v.nome===x.nome?' selected':'')+'>'+esc(x.nome)+'</option>'; }).join('')+
-        '</select></label><p style="font-size:12.5px;color:#5a677f;margin:8px 0 0">Rede inteira, só leitura. Sem Cadastro da Equipe, Acesso de usuários, Painel de Conteúdo nem Central de Atualização.</p>';
+      var lista=PESSOAS.filter(function(x){ return vcFamilia(x.cargo)===f; });
+      if(!lista.length){
+        alvo.innerHTML='<p style="font-size:12.5px;color:#5a677f;margin:0">Ninguém cadastrado em <b>'+esc(cargo)+'</b> ainda — a visão abre com o nome do cargo, para você conferir o que ele enxerga.</p>';
+        return; }
+      alvo.innerHTML='<label style="font-size:12px;font-weight:700;color:#5a677f">Pessoa<select id="vcPessoa" style="'+campo+'">'+
+        lista.map(function(x){ return '<option'+(v&&v.nome===x.nome?' selected':'')+'>'+esc(x.nome)+'</option>'; }).join('')+
+        '</select></label><p style="font-size:12.5px;color:#5a677f;margin:8px 0 0">'+esc(cargo)+' · só leitura.</p>';
     }
     function desenhar(){
       msg.textContent='';
