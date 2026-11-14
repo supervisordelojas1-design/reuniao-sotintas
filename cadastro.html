@@ -441,7 +441,11 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
       var esperado=icCargoDaMeta(x.meta);
       if(!esperado){ R.semCargo++; return; }
       var tx=rhTok(x.nome);
-      var c=P.filter(function(v){ return !usados[v.codigo]&&[v.nome].concat(v.apelidos||[]).some(function(nm){ var t=rhTok(nm); return t.length>=2&&t.every(function(a){ return tx.indexOf(a)>=0; }); }); });
+      /* Muita gente está cadastrada só com o primeiro nome (Wanderson, Amanda,
+         Elias). Exigir dois tokens jogava todos eles em "fora do cadastro".
+         Um token basta, porque logo abaixo só aceito quando o candidato é
+         único — ambiguidade continua não casando. */
+      var c=P.filter(function(v){ return !usados[v.codigo]&&[v.nome].concat(v.apelidos||[]).some(function(nm){ var t=rhTok(nm); return t.length>=1&&t.every(function(a){ return tx.indexOf(a)>=0; }); }); });
       var p=c.length===1?c[0]:null;
       if(!p){ R.fora.push({nome:x.nome,loja:x.loja,meta:x.meta,cargo:esperado}); return; }
       usados[p.codigo]=1;
