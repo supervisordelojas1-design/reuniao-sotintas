@@ -2,6 +2,20 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v203",
+      "data": "14/11/2026",
+      "hora": "00:34",
+      "itens": [
+        {
+          "painel": "Cadastro da Equipe",
+          "o_que": "Novo botão “Conferir com o Indicadores”, irmão do “Comparar com relatório do RH”. A meta da planilha diz o cargo — 1,00 gerente, 2,00 assistente comercial, 3,00 auxiliar, acima disso vendedor — e a tela aponta três coisas: quem está com cargo diferente do que a meta indica, quem está na planilha e não está no cadastro, e quem está no cadastro sem meta na planilha (que pode ser recém-contratado). Nada muda até você confirmar item a item.",
+          "para": [
+            "coord"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v202",
       "data": "14/11/2026",
       "hora": "00:28",
@@ -204,20 +218,6 @@
         {
           "painel": "Direitos de Acesso",
           "o_que": "Cada coluna da grade ganhou um \"limpar\", que devolve o cargo inteiro ao padrão de uma vez.",
-          "para": [
-            "coord"
-          ]
-        }
-      ]
-    },
-    {
-      "v": "ast-v184",
-      "data": "13/11/2026",
-      "hora": "19:50",
-      "itens": [
-        {
-          "painel": "Direitos de Acesso",
-          "o_que": "O aviso de salvamento ficava entre a grade e os campos de login e, em tela estreita, saía da área visível — dava a impressão de que nada tinha acontecido. Agora sobe uma faixa flutuante por cima de tudo, verde quando salva e vermelha quando recusa, e o botão confirma com \"✓ Salvo\".",
           "para": [
             "coord"
           ]

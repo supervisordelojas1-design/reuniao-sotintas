@@ -220,7 +220,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
     $('sub').textContent=rot+' · '+nAt+' pessoas ativas';
     var h='';
     if(mkt()) h+='<div class="linha"><button class="btnp azul" type="button" data-novo="1">＋ Nova pessoa</button><span class="sub">Inclua quem entrou, libere o acesso com um PIN inicial e arquive quem saiu. A coordenação fica de fora.</span></div>';
-    if(coord()) h+='<div class="linha"><button class="btnp azul" type="button" data-novo="1">＋ Nova pessoa</button><button class="btnp" type="button" data-sinc="1">↻ Atualizar das bases</button><button class="btnp" type="button" data-rh="1">📋 Comparar com relatório do RH</button><input type="file" id="rhArq" accept=".xlsx,.xls" hidden><span class="sub">As bases (vendas, equipe e logins) entram sozinhas de hora em hora. O que você corrige aqui fica travado.</span></div>';
+    if(coord()) h+='<div class="linha"><button class="btnp azul" type="button" data-novo="1">＋ Nova pessoa</button><button class="btnp" type="button" data-sinc="1">↻ Atualizar das bases</button><button class="btnp" type="button" data-rh="1">📋 Comparar com relatório do RH</button><input type="file" id="rhArq" accept=".xlsx,.xls" hidden><button class="btnp" type="button" data-ic="1">📊 Conferir com o Indicadores</button><input type="file" id="icArq" accept=".xlsx,.xls" hidden><span class="sub">As bases (vendas, equipe e logins) entram sozinhas de hora em hora. O que você corrige aqui fica travado.</span></div>';
     /* placar */
     var vend=P.filter(function(p){return p.ativo&&p.cargo==='vend';}), sAc=vend.filter(function(p){return p.liberado===false;}).length;
     h+='<div class="kpis"><div class="kpi"><span>Vendedores</span><b>'+vend.length+'</b></div><div class="kpi"><span>Gerentes</span><b>'+P.filter(function(p){return p.ativo&&p.cargo==='ger';}).length+'</b></div>'+
@@ -386,6 +386,96 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
     h+='<p class="ruim" id="rhErro" role="alert"></p><div class="linha" style="justify-content:flex-end"><button class="btnp" type="button" data-rhx="1">Fechar</button></div></div>';
     $('modal').innerHTML=h; $('modal').hidden=false;
   }
+  /* ── Conferir com o Indicadores ──────────────────────────────────────────
+     Regra do Bruno (14/11/2026): a planilha traz todos os colaboradores de
+     loja, e a meta diz o cargo — gerente entra com R$ 1,00, assistente
+     comercial com R$ 2,00, auxiliar com R$ 3,00, e vendedor com a meta real
+     dele. Duas ausências são legítimas e não são erro: recém-contratado ainda
+     sem meta, e quem não terá meta por ter outro cargo (coordenação,
+     supervisão, analista, marketing), que nem sai nesta planilha. */
+  var IC=null;
+  var IC_META={1:'ger',2:'asc',3:'aux'};
+  function icNum(v){
+    if(typeof v==='number') return v;
+    var t=String(v==null?'':v).replace(/[^\d,.-]/g,'').trim(); if(!t) return null;
+    if(t.indexOf(',')>=0) t=t.replace(/\./g,'').replace(',','.');
+    var n=Number(t); return isFinite(n)?n:null;
+  }
+  function icCargoDaMeta(m){ if(m==null) return ''; var r=Math.round(m*100)/100; return IC_META[r]||(r>3?'vend':''); }
+  function icLer(arq){
+    return rhLib().then(function(){ return arq.arrayBuffer(); }).then(function(b){
+      var wb=XLSX.read(b,{type:'array'});
+      var lin=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true,defval:''});
+      var iH=-1, cNome=-1, cMeta=-1;
+      lin.some(function(r,i){
+        var h=r.map(rhNorm);
+        var m=-1; h.forEach(function(x,j){ if(m<0 && /META/.test(x) && !/CNPJ|EUCATEX|RESTANTE|ALC|%/.test(x)) m=j; });
+        var nm=-1; h.forEach(function(x,j){ if(nm<0 && /VENDEDOR|NOME|FUNCIONARIO|COLABORADOR/.test(x)) nm=j; });
+        if(m>=0&&nm>=0){ iH=i; cNome=nm; cMeta=m; return true; }
+        return false;
+      });
+      /* layout do export do Power BI: filial na 1ª coluna (mesclada) e o nome
+         na 2ª, sem cabeçalho reconhecível — a 2ª coluna vira o nome */
+      if(iH<0){
+        lin.some(function(r,i){ var h=r.map(rhNorm); var m=-1;
+          h.forEach(function(x,j){ if(m<0 && /META/.test(x) && !/CNPJ|EUCATEX|RESTANTE|ALC|%/.test(x)) m=j; });
+          if(m>=0){ iH=i; cMeta=m; cNome=1; return true; } return false; });
+      }
+      if(iH<0) throw new Error('Não achei a coluna de meta nesta planilha. Use o export "Indicadores por vendedor".');
+      var filial='', R=[];
+      lin.slice(iH+1).forEach(function(r){
+        var c0=String(r[0]==null?'':r[0]).trim(); if(c0) filial=c0;
+        var nome=String(r[cNome]==null?'':r[cNome]).trim();
+        if(!nome||/^total$/i.test(nome)||/^filtros aplicados/i.test(nome)) return;
+        R.push({nome:nome, loja:(String(filial).match(/(\d{1,4})/)||[])[1]?('00'+(String(filial).match(/(\d{1,4})/)||[])[1]).slice(-3):'', meta:icNum(r[cMeta])});
+      });
+      if(!R.length) throw new Error('Li a planilha, mas não encontrei linhas de pessoas abaixo do cabeçalho.');
+      return R;
+    });
+  }
+  function icComparar(linhas){
+    var DE_LOJA={vend:1,ger:1,asc:1,aux:1};
+    var P=D.pessoas.filter(function(p){ return p.ativo&&DE_LOJA[p.cargo]; }), usados={};
+    var R={divergente:[],fora:[],semMeta:[],iguais:0,semCargo:0, lidas:linhas.length};
+    linhas.forEach(function(x){
+      var esperado=icCargoDaMeta(x.meta);
+      if(!esperado){ R.semCargo++; return; }
+      var tx=rhTok(x.nome);
+      var c=P.filter(function(v){ return !usados[v.codigo]&&[v.nome].concat(v.apelidos||[]).some(function(nm){ var t=rhTok(nm); return t.length>=2&&t.every(function(a){ return tx.indexOf(a)>=0; }); }); });
+      var p=c.length===1?c[0]:null;
+      if(!p){ R.fora.push({nome:x.nome,loja:x.loja,meta:x.meta,cargo:esperado}); return; }
+      usados[p.codigo]=1;
+      if(p.cargo!==esperado) R.divergente.push({codigo:p.codigo,nome:p.nome,de:p.cargo,para:esperado,meta:x.meta,loja:x.loja});
+      else R.iguais++;
+    });
+    P.forEach(function(p){ if(!usados[p.codigo]) R.semMeta.push({codigo:p.codigo,nome:p.nome,cargo:p.cargo,loja:p.lojas.join(', ')}); });
+    return R;
+  }
+  function icTela(){
+    var R=IC, li=function(t,b){ return '<li><span>'+t+'</span><span class="linha">'+b+'</span></li>'; };
+    var nm=function(c){ return CARGO[c]||c; };
+    var h='<div class="caixa" role="dialog" aria-modal="true" aria-labelledby="icTit"><h2 id="icTit">Conferência com o Indicadores</h2>'+
+      '<p class="sub">'+R.lidas+' linhas lidas · '+R.iguais+' com o cargo certo'+(R.semCargo?' · '+R.semCargo+' sem meta na planilha':'')+'. A meta diz o cargo: 1,00 gerente · 2,00 assistente · 3,00 auxiliar · acima disso, vendedor. Nada muda até você confirmar.</p>';
+    h+='<h3>Cargo diferente da meta ('+R.divergente.length+')</h3><ul class="lista">'+(R.divergente.length?R.divergente.map(function(x,i){ return li('<b>'+esc(x.nome)+'</b> <span class="sub">'+esc(x.codigo)+' · app: '+esc(nm(x.de))+' · planilha: '+esc(nm(x.para))+' (meta '+(x.meta!=null?String(x.meta).replace('.',','):'—')+')</span>','<button class="btnp azul" type="button" data-iccar="'+i+'">Usar o cargo da planilha</button>'); }).join(''):'<li><span class="sub">Nenhum. Todo mundo que está na planilha tem no app o cargo que a meta indica.</span></li>')+'</ul>';
+    h+='<h3>Na planilha, fora do cadastro ('+R.fora.length+')</h3><ul class="lista">'+(R.fora.length?R.fora.map(function(x,i){ return li('<b>'+esc(x.nome)+'</b> <span class="sub">'+esc(nm(x.cargo))+' · meta '+(x.meta!=null?String(x.meta).replace('.',','):'—')+'</span>','<input id="icL'+i+'" value="'+esc(x.loja||'')+'" placeholder="loja" aria-label="Código da loja" style="width:64px"><button class="btnp azul" type="button" data-icnovo="'+i+'">Incluir</button>'); }).join(''):'<li><span class="sub">Nenhum.</span></li>')+'</ul>';
+    h+='<h3>No cadastro, sem meta na planilha ('+R.semMeta.length+')</h3><p class="sub" style="margin:2px 0 6px">Pode ser recém-contratado que ainda não entrou na planilha. Confira antes de mexer.</p><ul class="lista">'+(R.semMeta.length?R.semMeta.map(function(x){ return li('<b>'+esc(x.nome)+'</b> <span class="sub">'+esc(x.codigo)+' · '+esc(nm(x.cargo))+' · loja '+esc(x.loja||'—')+'</span>',''); }).join(''):'<li><span class="sub">Nenhum.</span></li>')+'</ul>';
+    h+='<p class="ruim" id="icErro" role="alert"></p><div class="linha" style="justify-content:flex-end"><button class="btnp" type="button" data-icx="1">Fechar</button></div></div>';
+    $('modal').innerHTML=h; $('modal').hidden=false;
+  }
+  function icAcao(b){
+    if(b.dataset.icx){ $('modal').hidden=true; IC=null; carregar(); return true; }
+    if(b.dataset.iccar!=null){ var x=IC.divergente[+b.dataset.iccar], p=D.pessoas.filter(function(z){ return z.codigo===x.codigo; })[0]; if(!p) return true; b.disabled=true;
+      STDados.chamar('pessoaSalvar',{codigo:p.codigo,nome:p.nome,cargo:x.para,lojas:p.lojas,supervisor:p.supervisor,ativo:p.ativo,apelidos:p.apelidos})
+        .then(function(r){ if(!r||!r.ok) throw new Error((r&&r.erro)||'Não salvou.'); b.textContent='✓ Cargo ajustado'; })
+        .catch(function(e){ b.disabled=false; $('icErro').textContent=e.message||'Não gravou.'; }); return true; }
+    if(b.dataset.icnovo!=null){ var y=IC.fora[+b.dataset.icnovo], l=$('icL'+b.dataset.icnovo).value.trim();
+      if(!/^\d{3}$/.test(l)){ $('icErro').textContent='Informe o código da loja de '+y.nome+' (3 dígitos).'; return true; }
+      b.disabled=true;
+      STDados.chamar('pessoaSalvar',{codigo:'',nome:rhNomeBonito(y.nome),cargo:y.cargo,lojas:[l],supervisor:'',ativo:true,apelidos:[]})
+        .then(function(r){ if(!r||!r.ok) throw new Error((r&&r.erro)||'Não salvou.'); b.textContent='✓ Incluído'; })
+        .catch(function(e){ b.disabled=false; $('icErro').textContent=e.message||'Não gravou.'; }); return true; }
+    return false;
+  }
   function rhFalha(b,e){ b.disabled=false; $('rhErro').textContent=e.message||'Não gravou.'; }
   function rhFeito(b,txt){ b.textContent=txt; b.disabled=true; }
   function rhAcao(b){
@@ -398,11 +488,16 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
       STDados.chamar('pessoaSalvar',{codigo:p.codigo,nome:p.nome,cargo:p.cargo,lojas:[q.para],supervisor:p.supervisor,ativo:p.ativo,apelidos:p.apelidos}).then(function(r){ if(!r||!r.ok) throw new Error((r&&r.erro)||'Não salvou.'); rhFeito(b,'✓ Loja ajustada'); }).catch(function(e){ rhFalha(b,e); }); return true; }
     return false;
   }
+  document.addEventListener('change',function(e){ if(e.target.id!=='icArq'||!e.target.files[0]) return; var ai=e.target.files[0]; e.target.value='';
+    toast('Lendo a planilha…');
+    icLer(ai).then(function(l){ IC=icComparar(l); icTela(); }).catch(function(x){ toast(x.message||'Não consegui ler a planilha.'); }); });
   document.addEventListener('change',function(e){ if(e.target.id!=='rhArq'||!e.target.files[0]) return; var a=e.target.files[0]; e.target.value=''; rhLer(a).then(function(l){ RH=rhComparar(l); rhTela(); }).catch(function(x){ toast(x.message||'Não consegui ler a planilha.'); }); });
 
   document.addEventListener('click',function(e){
     var b=e.target.closest('button'); if(!b) return;
     if(b.dataset.rh){ $('rhArq').click(); return; }
+    if(b.dataset.ic){ $('icArq').click(); return; }
+    if(icAcao(b)) return;
     if(rhAcao(b)) return;
     if(b.dataset.fc!=null){ FC=b.dataset.fc; montar(); return; }
     if(b.dataset.ed){ abrirEdicao(b.dataset.ed); return; }
