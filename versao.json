@@ -2,6 +2,20 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v201",
+      "data": "14/11/2026",
+      "hora": "00:18",
+      "itens": [
+        {
+          "painel": "Ver como",
+          "o_que": "A lista de pessoas vinha só da base de Níveis, que conhece quem já vendeu — então recém-contratado não aparecia até a primeira venda. Agora o Cadastro da Equipe entra junto. E a lista passa a ser do cargo escolhido: pedindo Auxiliar de Loja aparecem os auxiliares daquela loja, não os vendedores.",
+          "para": [
+            "coord"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v200",
       "data": "14/11/2026",
       "hora": "00:12",
@@ -197,20 +211,6 @@
         {
           "painel": "Direitos de Acesso",
           "o_que": "O aviso de salvamento ficava entre a grade e os campos de login e, em tela estreita, saía da área visível — dava a impressão de que nada tinha acontecido. Agora sobe uma faixa flutuante por cima de tudo, verde quando salva e vermelha quando recusa, e o botão confirma com \"✓ Salvo\".",
-          "para": [
-            "coord"
-          ]
-        }
-      ]
-    },
-    {
-      "v": "ast-v183",
-      "data": "13/11/2026",
-      "hora": "19:45",
-      "itens": [
-        {
-          "painel": "Direitos de Acesso",
-          "o_que": "Painel novo na Gestão, para quem edita equipe: uma grade Cargo × Acesso, com os 9 cargos nas colunas e os 18 painéis nas linhas. Toque na célula alterna entre – padrão (vale a regra de hoje), ✓ liberado e ✗ bloqueado. Salva de uma vez todos os cargos que você mexeu, pedindo o login do Autcom e a senha — quem confere é o servidor. A coordenação não consegue tirar de si os painéis de administração.",
           "para": [
             "coord"
           ]

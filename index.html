@@ -10402,13 +10402,37 @@ body.foco .wrap{padding-bottom:40px}
     function tecla(e){ if(e.key==='Escape') fechar(); }
     document.addEventListener('keydown',tecla);
     function selLojas(id){ return '<label style="font-size:12px;font-weight:700;color:#5a677f">Loja<select id="'+id+'" style="'+campo+'">'+lojasRede().map(function(l){ return '<option value="'+l[0]+'" data-n="'+esc(l[1])+'"'+(v&&v.lojas&&v.lojas[0]===l[0]?' selected':'')+'>'+l[0]+' · '+esc(l[1])+'</option>'; }).join('')+'</select></label>'; }
+    function vcCod3(x){ var m=String(x==null?'':x).match(/(\d{1,4})/); return m?('00'+m[1]).slice(-3):''; }
+    /* O cargo exato dentro da família de vendas — a lista de gente tem de ser
+       a do cargo escolhido, não "todo mundo que vende". */
+    function vcCargoCod(cargo){
+      var t=String(cargo||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+      if(t==='aux'||/auxiliar/.test(t)) return 'aux';
+      if(t==='asc'||/assistente|operador|caixa/.test(t)) return 'asc';
+      if(t==='vend'||/vendedor/.test(t)) return 'vend';
+      return '';
+    }
     function montarVend(){
       var lj=ov.querySelector('#vcLoja'), box=ov.querySelector('#vcVendBox'); if(!lj||!box) return;
-      if(!VENDS){ box.innerHTML='<p style="font-size:12.5px;color:#5a677f;margin:6px 0 0">Buscando os vendedores…</p>';
-        STDados.chamar('niveis',{},true).then(function(j){ VENDS=(j&&j.ok&&j.data&&j.data.VENDS)||[]; if(!VENDS.length) msg.textContent='Não encontrei vendedores na base de Níveis.'; desenhar(); }).catch(function(e){ VENDS=[]; msg.textContent=e.message; desenhar(); });
+      var cod=vcCargoCod(pf.value);
+      /* A base de Níveis só conhece quem já vendeu. Quem acabou de ser
+         cadastrado não está lá — por isso o cadastro entra junto, senão o
+         recém-contratado some desta lista até a primeira venda. */
+      if(!VENDS||!PESSOAS){ box.innerHTML='<p style="font-size:12.5px;color:#5a677f;margin:6px 0 0">Buscando a equipe…</p>';
+        if(!VENDS) STDados.chamar('niveis',{},true).then(function(j){ VENDS=(j&&j.ok&&j.data&&j.data.VENDS)||[]; desenhar(); }).catch(function(e){ VENDS=[]; msg.textContent=e.message; desenhar(); });
+        if(!PESSOAS) STDados.chamar('pessoas',{},true).then(function(j){ PESSOAS=((j&&j.ok&&j.pessoas)||[]).filter(function(x){ return x.ativo; }); desenhar(); }).catch(function(){ PESSOAS=[]; desenhar(); });
         return; }
-      var vs=VENDS.filter(function(x){ return x.id===lj.value; });
-      box.innerHTML='<label style="font-size:12px;font-weight:700;color:#5a677f">Vendedor<select id="vcVend" style="'+campo+'">'+(vs.length?vs.map(function(x){ return '<option'+(v&&v.nome===x.nome?' selected':'')+'>'+esc(x.nome)+'</option>'; }).join(''):'<option value="">Nenhum vendedor desta loja na base</option>')+'</select></label>';
+      var alvo=vcCod3(lj.value), nomes=[], vistos={};
+      var por=function(nome){ var k=String(nome||'').trim().toLowerCase(); if(!k||vistos[k]) return; vistos[k]=1; nomes.push(String(nome).trim()); };
+      if(cod==='vend') VENDS.forEach(function(x){ if(x.id===lj.value) por(x.nome); });
+      PESSOAS.forEach(function(p){
+        if(cod&&p.cargo!==cod) return;
+        if(!cod&&!(p.cargo==='vend'||p.cargo==='asc'||p.cargo==='aux')) return;
+        if(!(p.lojas||[]).some(function(l){ return vcCod3(l)===alvo; })) return;
+        por(p.nome);
+      });
+      var rot=cod==='aux'?'Auxiliar':cod==='asc'?'Assistente':'Vendedor';
+      box.innerHTML='<label style="font-size:12px;font-weight:700;color:#5a677f">'+rot+'<select id="vcVend" style="'+campo+'">'+(nomes.length?nomes.map(function(nm){ return '<option'+(v&&v.nome===nm?' selected':'')+'>'+esc(nm)+'</option>'; }).join(''):'<option value="">Ninguém nesta loja neste cargo</option>')+'</select></label>';
     }
     /* Para cargo que não é de loja nem de carteira, a visão precisa de uma
        pessoa só para dar nome ao crachá — a lista vem do Cadastro da Equipe.
