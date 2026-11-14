@@ -331,7 +331,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
     if(!/^\d{4,6}$/.test(pin)){ ERRO_LIB[codigo]='O PIN inicial tem de 4 a 6 dígitos.'; montar(); return; }
     if(!/^\d{4,6}$/.test(meu)){ ERRO_LIB[codigo]='Digite o seu PIN para confirmar.'; montar(); return; }
     var loja=LOJAS[p.lojas[0]]; if(!loja){ ERRO_LIB[codigo]='Não achei a loja '+p.lojas[0]+' no seu escopo do app.'; montar(); return; }
-    fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({tipo:'liberarVendedor',eu:s.nome,pinEu:meu,nome:p.nome,loja:loja,pin:pin,acao:'liberar',autcom:(/^V([A-Z]?\d{2,3})$/.exec(p.codigo)||[])[1]||''})})
+    fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({tipo:'liberarVendedor',eu:s.nome,pinEu:meu,nome:p.nome,loja:loja,pin:pin,acao:'liberar',cargo:CARGO[p.cargo]||'',autcom:autcomDe(p)})})
       .then(function(r){return r.json();}).then(function(r){
         if(!r||!r.ok) throw new Error((r&&r.erro)||'Não consegui gravar.');
         ABERTO=null; toast('✓ '+(r.nome||p.nome)+' liberado. Passe o nome e o PIN '+pin+' para ele.'); carregar();

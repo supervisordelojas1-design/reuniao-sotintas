@@ -9858,8 +9858,12 @@ body.foco .wrap{padding-bottom:40px}
     /* o rodapé de cadastro muda de cara conforme o grupo escolhido */
     var tit=acEl('acNovoTit'), cw=acEl('acNovoCargoWrap'), aw=acEl('acNovoAutWrap');
     if(tit) tit.textContent = ehAdm ? 'Cadastrar alguém do administrativo' : 'Vendedor que não está na lista (recém-contratado)';
-    if(cw) cw.style.display = ehAdm ? '' : 'none';
-    if(aw) aw.style.display = ehAdm ? '' : 'none';
+    /* Cargo e Login Autcom valem nos dois grupos: no administrativo escolhendo
+       entre todos os cargos, na loja só entre os de loja. O Autcom é o que casa
+       a pessoa com os relatórios de Indicadores. */
+    if(cw) cw.style.display = '';
+    if(aw) aw.style.display = '';
+    acCargosAdmin(ehAdm);
     if(ehAdm){ acRenderAdmin(); return; }
     var d=AC.dados; if(!box||!d) return;
     var loja=acEl('acLoja').value, cod=(String(loja).match(/^\s*(\d+)/)||[])[1]; cod=cod?('00'+cod).slice(-3):'';
@@ -9905,12 +9909,21 @@ body.foco .wrap{padding-bottom:40px}
       if(v.ativo && !window.confirm('Desativar o acesso de '+v.nome+'?')) return;
       acEnviarAdmin({acao:v.ativo?'desativar':'reativar', nome:v.nome}); }; });
   }
-  function acCargosAdmin(){
-    var sel=acEl('acNovoCargo'); if(!sel||AC.cargos) return;
+  var AC_DE_LOJA=/vendedor|gerente|assistente\s+comercial|auxiliar|operador.*caixa|caixa/i;
+  function acPintarCargos(ehAdm){
+    var sel=acEl('acNovoCargo'); if(!sel||!AC.cargos) return;
+    var L=AC.cargos.filter(function(c){ return ehAdm ? !AC_DE_LOJA.test(c) : AC_DE_LOJA.test(c); });
+    var atual=sel.value;
+    sel.innerHTML='<option value="">escolha…</option>'+L.map(function(c){ return '<option>'+acEsc(c)+'</option>'; }).join('');
+    if(atual&&L.indexOf(atual)>=0) sel.value=atual;
+  }
+  function acCargosAdmin(ehAdm){
+    var sel=acEl('acNovoCargo'); if(!sel) return;
+    if(AC.cargos){ acPintarCargos(ehAdm); return; }
     fetch(ENVIO_URL+'?acao=permissoes').then(function(r){ return r.json(); }).then(function(res){
       if(!res||!res.ok) return;
       AC.cargos=(res.itens||[]).map(function(i){ return i.cargo; });
-      sel.innerHTML='<option value="">escolha…</option>'+AC.cargos.map(function(c){ return '<option>'+acEsc(c)+'</option>'; }).join('');
+      acPintarCargos(ehAdm);
     }).catch(function(){});
   }
   function acEnviarAdmin(o){
@@ -9937,13 +9950,13 @@ body.foco .wrap{padding-bottom:40px}
     if(o.acao!=='desativar' && !/^\d{4,6}$/.test(o.pin||'')){ acStatus('O PIN novo tem de 4 a 6 dígitos.','#D32027'); return; }
     acStatus('Gravando…','');
     fetch(ENVIO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({tipo:'liberarVendedor', eu:s.nome, pinEu:meu, nome:o.nome, loja:o.loja, pin:o.pin||'', acao:o.acao})})
+      body:JSON.stringify({tipo:'liberarVendedor', eu:s.nome, pinEu:meu, nome:o.nome, loja:o.loja, pin:o.pin||'', acao:o.acao, cargo:o.cargo||'', autcom:o.autcom||''})})
       .then(function(r){ return r.json(); })
       .then(function(res){
         if(!res||!res.ok){ acStatus('✕ '+acEsc((res&&res.erro)||'Não consegui gravar.'),'#D32027'); return; }
         acStatus(o.acao==='desativar' ? '✓ Acesso de '+acEsc(res.nome)+' desativado.'
           : '✓ '+acEsc(res.nome)+' liberado. Passe para ele: entrar no Assistente ST com o nome <b>'+acEsc(res.nome)+'</b> e o PIN <b>'+acEsc(o.pin)+'</b> — no primeiro acesso o app pede para trocar.','var(--ok,#177a4d)');
-        acEl('acNovoNome').value=''; acCarregar(true);
+        acEl('acNovoNome').value=''; if(acEl('acNovoAut')) acEl('acNovoAut').value=''; acCarregar(true);
       })
       .catch(function(){ acStatus('Sem conexão — nada foi gravado.','#D32027'); });
   }
@@ -10012,7 +10025,10 @@ body.foco .wrap{padding-bottom:40px}
                        autcom:((acEl('acNovoAut')||{}).value||'').trim()});
         return;
       }
-      acEnviar({nome:nome, loja:acEl('acLoja').value, pin:String(pin).trim(), acao:'liberar'});
+      var cargoLoja=(acEl('acNovoCargo')||{}).value||'';
+      if(!cargoLoja){ acStatus('Escolha o cargo.','#D32027'); return; }
+      acEnviar({nome:nome, loja:acEl('acLoja').value, pin:String(pin).trim(), acao:'liberar',
+                cargo:cargoLoja, autcom:((acEl('acNovoAut')||{}).value||'').trim()});
     };
   })();
 
