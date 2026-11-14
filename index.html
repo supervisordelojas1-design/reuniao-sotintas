@@ -10607,7 +10607,25 @@ button[id^="ov"][id$="Fechar"]:hover{transform:translateY(-1px);box-shadow:0 6px
     proposta:['💼 Proposta','Monte a proposta para um candidato a vendedor.'],
     acessos:['🔑 Acesso de usuários','Libere, troque o PIN ou bloqueie o acesso da sua equipe ao app.'],
     ranking:['🏆 Ranking','A premiação do ano. No celular, arraste para o lado para trocar Lojas e Vendedores.'],
-    despesas:['🧾 Despesas','Lance a despesa com a foto do comprovante; o recibo sai em PDF com o seu nome.']};
+    despesas:['🧾 Despesas','Lance a despesa com a foto do comprovante; o recibo sai em PDF com o seu nome.'],
+    /* nov/2026: o tour mostra os 6 primeiros cards que a pessoa enxerga, então a
+       ordem daqui decide o que cada cargo vê. Os de baixo entraram depois e
+       atendem quem não enxerga os de cima — auxiliar e assistente, por exemplo,
+       começavam o tour com três passos só. */
+    avulsas:['📝 Minhas Provas','As provas lançadas para você responder, cada uma com o seu prazo.'],
+    provas:['📊 Central de Provas','Provas da semana e Trilha Mentor: quem fez, quem está pendente e as notas. Dá para tirar a lista de quem ainda não fez.'],
+    crm:['📇 CRM de Vendas','Orçamentos, carteira, pós-venda e pintores — cada contato fica registrado.'],
+    bonus:['💰 Bonificações','Quanto vale cada nível e o que falta para o próximo.'],
+    simulador:['🧮 Simulador de Bônus','Preencha os seus números e veja quanto já garantiu e o que ainda paga no mês.'],
+    agenda:['🗓️ Agenda','Os seus compromissos da semana, reuniões e visitas.'],
+    agendar:['➕ Agendar','Marque uma reunião, uma visita ou uma tarefa em poucos toques.'],
+    agora:['▶️ Reunião','Conduza a reunião pelo roteiro e saia dela com a ata pronta.'],
+    rotina:['🚗 Rotina','As pendências da sua carteira e o que a equipe está devendo.'],
+    cadastro:['👥 Cadastro da Equipe','Uma pessoa, um código. Inclua quem entrou, corrija a loja e arquive quem saiu.'],
+    direitos:['🔓 Direitos de Acesso','A régua de cada cargo: libere ou bloqueie painel por painel, e o app obedece na hora.'],
+    conteudo:['🎬 Painel de Conteúdo','Banners, fornecedores, provas, vídeos e a trilha do Mentor.'],
+    central:['🔄 Central de Atualização','Todas as bases num lugar só: o que está em dia e o que falta publicar.'],
+    uso:['📈 Acessos ao App','Quem está entrando, quem sumiu e quem nunca entrou.']};
   function tour(){
     var s=null; try{ s=JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); }catch(e){}
     if(!s||!s.nome||(window.STDados&&STDados.visao&&STDados.visao())) return;
