@@ -2,13 +2,20 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
-      "v": "ast-v201",
+      "v": "ast-v202",
       "data": "14/11/2026",
-      "hora": "00:18",
+      "hora": "00:28",
       "itens": [
         {
           "painel": "Ver como",
           "o_que": "A lista de pessoas vinha só da base de Níveis, que conhece quem já vendeu — então recém-contratado não aparecia até a primeira venda. Agora o Cadastro da Equipe entra junto. E a lista passa a ser do cargo escolhido: pedindo Auxiliar de Loja aparecem os auxiliares daquela loja, não os vendedores.",
+          "para": [
+            "coord"
+          ]
+        },
+        {
+          "painel": "Ver como",
+          "o_que": "Abrindo o painel logo depois de carregar o app, a lista de Nível vinha com os cinco cargos de reserva e ficava assim — cargo novo sumia só porque o clique foi rápido. Agora a reserva é provisória: a planilha é buscada na hora e a lista se refaz sozinha.",
           "para": [
             "coord"
           ]

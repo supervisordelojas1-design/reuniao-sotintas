@@ -10360,6 +10360,21 @@ body.foco .wrap{padding-bottom:40px}
     if(/marketing/.test(n)) return 'mkt';
     return 'outro';
   }
+  /* A régua chega por fetch. Abrindo o painel antes dela, a lista reserva
+     entrava e ficava — cargo novo sumia só porque o clique foi rápido. Agora a
+     reserva é provisória: a planilha é buscada na hora e a lista se refaz. */
+  function nivelRefazer(){
+    if(REGUA_PERM && REGUA_PERM.length) return;
+    try{
+      fetch(ENVIO_URL+'?acao=permissoes').then(function(r){ return r.json(); }).then(function(res){
+        if(!res||!res.ok||!res.itens||!res.itens.length) return;
+        REGUA_PERM=res.itens;
+        var sel=document.getElementById('vcPf'); if(!sel) return;
+        var antes=sel.value; sel.innerHTML=opcoesNivel();
+        if(antes&&[].some.call(sel.options,function(o){return o.value===antes;})) sel.value=antes;
+      }).catch(function(){});
+    }catch(e){}
+  }
   function opcoesNivel(){
     var h='<option value="coord">Coordenação (a minha visão)</option>';
     /* se a régua ainda não chegou, não deixa a lista vazia */
@@ -10398,6 +10413,7 @@ body.foco .wrap{padding-bottom:40px}
     document.body.appendChild(ov);
     var pf=ov.querySelector('#vcPf'), alvo=ov.querySelector('#vcAlvo'), msg=ov.querySelector('#vcMsg');
     if(v) pf.value=v.perfil;
+    nivelRefazer();
     function fechar(){ ov.remove(); document.removeEventListener('keydown',tecla); bt.focus(); }
     function tecla(e){ if(e.key==='Escape') fechar(); }
     document.addEventListener('keydown',tecla);
