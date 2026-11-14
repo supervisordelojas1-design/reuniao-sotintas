@@ -9644,7 +9644,16 @@ body.foco .wrap{padding-bottom:40px}
       var s=sessao(); c.style.display = (s&&!ehVend()&&s.escopo==='todos'&&String(s.papel||'').toLowerCase()!=='analista') ? '' : 'none';
     });
     Array.prototype.forEach.call(grid.querySelectorAll('[data-direitos]'),function(c){
-      var ok=false; try{ ok = (typeof pode==='function') ? pode('editarEquipe', ehCoordenador()) : false; }catch(e){}
+      /* Pelo papel VIGENTE, não pela sessão real: com o "Ver como" aberto,
+         ler SESSAO.perm devolvia o direito de quem está logado e o card
+         aparecia na simulação de gerente e de supervisor. Para quem entra de
+         verdade já estava certo — mas o "Ver como" existe justamente para
+         mostrar a verdade, então não pode mentir num card. */
+      var ok=false;
+      try{
+        var linha = permEscolher(REGUA_PERM, papelVigente());
+        ok = linha ? !!linha.editarEquipe : ehCoordenador();
+      }catch(e){ ok=false; }
       c.style.display = (ok && !ehVend()) ? '' : 'none';
     });
     aplicarRegua();
