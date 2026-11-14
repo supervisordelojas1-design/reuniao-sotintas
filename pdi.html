@@ -402,6 +402,20 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
       c: `${P} sabe de cabeça quantos baldes faltam na semana e oferece Eucatex antes do cliente perguntar o preço, sem esperar o gerente cobrar.`,
       e: `${EU.texto}.`,
       an: 'Bonus Eucatex e penalti: nao tem meio gol. 99% da meta paga o mesmo que zero — R$ 50 que ficam na mesa.' });
+    /* Rotina fixa da rede (nov/2026, decisão do Bruno): entram no plano de todo
+       vendedor, por fora do corte das 3 ações, porque não são diagnóstico — são
+       o jeito de trabalhar. Quando o CRM começar a mandar número para cá, dá
+       para torná-las condicionais e só aparecerem para quem não está fazendo. */
+    A.push({ k: 'crm', peso: 98, t: 'Uso diário do CRM',
+      a: `Registrar no CRM, no mesmo dia, todo contato que virou conversa: orçamento aberto, retorno combinado, pós-venda e visita de pintor. Fechar o dia sem nenhum contato solto na memória ou no papel.`,
+      c: `${P} abre o CRM no começo do dia para ver os retornos combinados e, antes de ir embora, não deixa atendimento do dia sem registro. Na reunião, responde "o que ficou para amanhã" lendo a própria lista, e não de cabeça.`,
+      e: `Rotina fixa da rede: vale para todo vendedor, independente do número do mês.`,
+      an: 'É o caderno do garçom: quem anota o pedido na hora não erra a mesa. Quem confia na memória entrega o prato errado justo no sábado cheio.' });
+    A.push({ k: 'pint', peso: 97, t: 'Cadastrar 5 pintores por semana',
+      a: `Cadastrar 5 pintores novos por semana no CRM, cada um com os dados da obra: endereço, etapa em que a obra está, metragem aproximada e quando entra a pintura. Pintor sem obra preenchida não conta.`,
+      c: `Toda segunda, ${P} mostra ao gerente os 5 pintores da semana anterior com a obra preenchida e já aponta qual deles tem obra entrando na pintura nos próximos 15 dias.`,
+      e: `Meta fixa: 5 por semana, cerca de 20 no mês.`,
+      an: 'Quem decide a marca na obra é o pintor, não o dono. Cadastrar pintor sem os dados da obra é guardar o telefone do juiz sem saber que dia é o jogo.' });
     if (v.tier === 'P4' || A.length === 0) A.push({ k: 'mult', peso: 0, t: 'Multiplicador da loja',
       a: `Tornar ${P} padrinho de um vendedor P1 ou P2 da mesma loja ou região: 2 atendimentos por semana em dupla, mostrando como faz o que dá certo.`,
       c: `${P} explica o próprio método (abordagem, kit, identificação) sem precisar do gerente, e o afilhado melhora pelo menos 1 indicador em 30 dias.`,
@@ -411,8 +425,10 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
   }
   /* o corte do plano: no maximo 3 acoes (2 para quem ja esta bem) e, por fora, a de Eucatex */
   function topDe(AA, v) {
-    const euc = AA.filter(a => a.k === 'euc'), resto = AA.filter(a => a.k !== 'euc');
-    return resto.slice(0, (['P1', 'P2', 'PI'].includes(v.tier)) ? 3 : 2).concat(euc);
+    const FIXAS = ['euc', 'crm', 'pint'];   /* rotina da rede: não disputam as 3 vagas do diagnóstico */
+    const fixas = FIXAS.map(k => AA.filter(a => a.k === k)).reduce((a, b) => a.concat(b), []);
+    const resto = AA.filter(a => FIXAS.indexOf(a.k) < 0);
+    return resto.slice(0, (['P1', 'P2', 'PI'].includes(v.tier)) ? 3 : 2).concat(fixas);
   }
   function metasDe(v) {
     const M = [], res = v.a3 == null ? v.pj : v.a3;

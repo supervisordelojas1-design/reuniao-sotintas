@@ -2,6 +2,22 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v209",
+      "data": "14/11/2026",
+      "hora": "02:08",
+      "itens": [
+        {
+          "painel": "PDI Mensal",
+          "o_que": "Duas rotinas fixas da rede entram no plano de todo vendedor, por fora do corte das 3 ações: **Uso diário do CRM** (registrar no mesmo dia todo contato que virou conversa) e **Cadastrar 5 pintores por semana** com os dados da obra — endereço, etapa, metragem e quando entra a pintura. Cada uma com o comportamento que o gerente observa e a analogia, como as demais. As ações do diagnóstico continuam as mesmas: ninguém perdeu lugar.",
+          "para": [
+            "coord",
+            "sup",
+            "ger"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v208",
       "data": "14/11/2026",
       "hora": "01:52",
@@ -213,20 +229,6 @@
         {
           "painel": "Ver como · Direitos de Acesso",
           "o_que": "No \"Ver como\", o card Direitos de Acesso aparecia na simulação de gerente e de supervisor, porque o gate lia a sessão de quem está logado e não o papel simulado. Quem entra de verdade nunca viu o card — mas o \"Ver como\" existe para mostrar a verdade, então passou a usar o papel vigente.",
-          "para": [
-            "coord"
-          ]
-        }
-      ]
-    },
-    {
-      "v": "ast-v187",
-      "data": "13/11/2026",
-      "hora": "21:00",
-      "itens": [
-        {
-          "painel": "Direitos de acesso · casamento de cargo",
-          "o_que": "A régua aceitava a raiz do cargo para qualquer grafia, então um cargo composto que não existe na aba PERMISSOES caía na linha parecida: \"Analista de Suprimentos\" pegava a régua do Analista e enxergaria a rede inteira. Agora a raiz só vale para cargo de uma palavra; cargo composto desconhecido cai no padrão.",
           "para": [
             "coord"
           ]
