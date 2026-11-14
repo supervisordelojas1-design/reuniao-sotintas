@@ -472,7 +472,15 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
          Elias). Exigir dois tokens jogava todos eles em "fora do cadastro".
          Um token basta, porque logo abaixo só aceito quando o candidato é
          único — ambiguidade continua não casando. */
-      var c=P.filter(function(v){ return !usados[v.codigo]&&[v.nome].concat(v.apelidos||[]).some(function(nm){ var t=rhTok(nm); return t.length>=1&&t.every(function(a){ return tx.indexOf(a)>=0; }); }); });
+      /* Casar por nome é frágil: "Paula" (gerente da 024) chegou a casar com
+         "ANA PAULA LEMOS" (assistente da 038), e a tela ofereceu rebaixar a
+         gerente. Então, sem login, a loja TEM de bater — é o que separa dois
+         homônimos em lojas diferentes. */
+      var c=P.filter(function(v){
+        if(usados[v.codigo]) return false;
+        if(x.loja&&(v.lojas||[]).length&&v.lojas.indexOf(x.loja)<0) return false;
+        return [v.nome].concat(v.apelidos||[]).some(function(nm){ var t=rhTok(nm); return t.length>=1&&t.every(function(a){ return tx.indexOf(a)>=0; }); });
+      });
       var p=c.length===1?c[0]:null;
       if(!p){ R.fora.push({nome:x.nome,loja:x.loja,meta:x.meta,cargo:esperado,login:x.login}); return; }
       usados[p.codigo]=1;
