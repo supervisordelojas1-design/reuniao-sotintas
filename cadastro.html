@@ -402,6 +402,20 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
     var n=Number(t); return isFinite(n)?n:null;
   }
   function icCargoDaMeta(m){ if(m==null) return ''; var r=Math.round(m*100)/100; return IC_META[r]||(r>3?'vend':''); }
+  /* A coluna "Vendedor" vem como "456 - MONIQUE MORAES", e o número é o login
+     do Autcom — confirmado pelo Bruno em 14/11. Depois do nome ainda podem vir
+     o nível e a cor da faixa ("- N5 - VERMELHA", "N2 PRETA", "- 3"), que não
+     são parte do nome e atrapalhariam qualquer comparação. */
+  function icPartes(txt){
+    var t=String(txt==null?'':txt).replace(/[\r\n]+/g,' ').replace(/\s+/g,' ').trim();
+    var m=/^([A-Za-z]?\d{2,3})\s*[-–]\s*(.+)$/.exec(t);
+    var login=m?m[1].toUpperCase():'', nome=m?m[2]:t;
+    nome=nome.replace(/\s*[-–]?\s*\bN\s*\d\b.*$/i,'')
+             .replace(/\s*[-–]\s*(PRETA?|DOURADA?|VERMELHA?|VERDE|AZUL|PRATA|BRONZE)\b.*$/i,'')
+             .replace(/\s*[-–]\s*\d+\s*$/,'')
+             .replace(/[\s-]+$/,'').trim();
+    return {login:login, nome:nome};
+  }
   function icLer(arq){
     return rhLib().then(function(){ return arq.arrayBuffer(); }).then(function(b){
       var wb=XLSX.read(b,{type:'array'});
@@ -427,7 +441,9 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
         var c0=String(r[0]==null?'':r[0]).trim(); if(c0) filial=c0;
         var nome=String(r[cNome]==null?'':r[cNome]).trim();
         if(!nome||/^total$/i.test(nome)||/^filtros aplicados/i.test(nome)) return;
-        R.push({nome:nome, loja:(String(filial).match(/(\d{1,4})/)||[])[1]?('00'+(String(filial).match(/(\d{1,4})/)||[])[1]).slice(-3):'', meta:icNum(r[cMeta])});
+        var mm=(String(filial).match(/(\d{1,4})/)||[])[1];
+        var pl=icPartes(nome);
+        R.push({login:pl.login, nome:pl.nome, bruto:nome, loja:mm?('00'+mm).slice(-3):'', meta:icNum(r[cMeta])});
       });
       if(!R.length) throw new Error('Li a planilha, mas não encontrei linhas de pessoas abaixo do cabeçalho.');
       return R;
@@ -437,19 +453,30 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
     var DE_LOJA={vend:1,ger:1,asc:1,aux:1};
     var P=D.pessoas.filter(function(p){ return p.ativo&&DE_LOJA[p.cargo]; }), usados={};
     var R={divergente:[],fora:[],semMeta:[],iguais:0,semCargo:0, lidas:linhas.length};
+    /* O código do vendedor guarda o login (V136 = login 136), então casar por
+       login é exato. Gerente tem código sequencial (G001) e cai no nome —
+       por isso o nome ainda vale, mas só como reserva. */
+    var porLogin={}; P.forEach(function(v){ var m=/^V([A-Z]?\d{2,3})$/i.exec(String(v.codigo||'')); if(m) porLogin[m[1].toUpperCase()]=v; });
     linhas.forEach(function(x){
       var esperado=icCargoDaMeta(x.meta);
       if(!esperado){ R.semCargo++; return; }
       var tx=rhTok(x.nome);
+      var pL=x.login?porLogin[x.login]:null;
+      if(pL&&!usados[pL.codigo]){
+        usados[pL.codigo]=1;
+        if(pL.cargo!==esperado) R.divergente.push({codigo:pL.codigo,nome:pL.nome,de:pL.cargo,para:esperado,meta:x.meta,loja:x.loja,login:x.login,por:'login'});
+        else R.iguais++;
+        return;
+      }
       /* Muita gente está cadastrada só com o primeiro nome (Wanderson, Amanda,
          Elias). Exigir dois tokens jogava todos eles em "fora do cadastro".
          Um token basta, porque logo abaixo só aceito quando o candidato é
          único — ambiguidade continua não casando. */
       var c=P.filter(function(v){ return !usados[v.codigo]&&[v.nome].concat(v.apelidos||[]).some(function(nm){ var t=rhTok(nm); return t.length>=1&&t.every(function(a){ return tx.indexOf(a)>=0; }); }); });
       var p=c.length===1?c[0]:null;
-      if(!p){ R.fora.push({nome:x.nome,loja:x.loja,meta:x.meta,cargo:esperado}); return; }
+      if(!p){ R.fora.push({nome:x.nome,loja:x.loja,meta:x.meta,cargo:esperado,login:x.login}); return; }
       usados[p.codigo]=1;
-      if(p.cargo!==esperado) R.divergente.push({codigo:p.codigo,nome:p.nome,de:p.cargo,para:esperado,meta:x.meta,loja:x.loja});
+      if(p.cargo!==esperado) R.divergente.push({codigo:p.codigo,nome:p.nome,de:p.cargo,para:esperado,meta:x.meta,loja:x.loja,login:x.login,por:'nome'});
       else R.iguais++;
     });
     P.forEach(function(p){ if(!usados[p.codigo]) R.semMeta.push({codigo:p.codigo,nome:p.nome,cargo:p.cargo,loja:p.lojas.join(', ')}); });
@@ -460,8 +487,8 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
     var nm=function(c){ return CARGO[c]||c; };
     var h='<div class="caixa" role="dialog" aria-modal="true" aria-labelledby="icTit"><h2 id="icTit">Conferência com o Indicadores</h2>'+
       '<p class="sub">'+R.lidas+' linhas lidas · '+R.iguais+' com o cargo certo'+(R.semCargo?' · '+R.semCargo+' sem meta na planilha':'')+'. A meta diz o cargo: 1,00 gerente · 2,00 assistente · 3,00 auxiliar · acima disso, vendedor. Nada muda até você confirmar.</p>';
-    h+='<h3>Cargo diferente da meta ('+R.divergente.length+')</h3><ul class="lista">'+(R.divergente.length?R.divergente.map(function(x,i){ return li('<b>'+esc(x.nome)+'</b> <span class="sub">'+esc(x.codigo)+' · app: '+esc(nm(x.de))+' · planilha: '+esc(nm(x.para))+' (meta '+(x.meta!=null?String(x.meta).replace('.',','):'—')+')</span>','<button class="btnp azul" type="button" data-iccar="'+i+'">Usar o cargo da planilha</button>'); }).join(''):'<li><span class="sub">Nenhum. Todo mundo que está na planilha tem no app o cargo que a meta indica.</span></li>')+'</ul>';
-    h+='<h3>Na planilha, fora do cadastro ('+R.fora.length+')</h3><ul class="lista">'+(R.fora.length?R.fora.map(function(x,i){ return li('<b>'+esc(x.nome)+'</b> <span class="sub">'+esc(nm(x.cargo))+' · meta '+(x.meta!=null?String(x.meta).replace('.',','):'—')+'</span>','<input id="icL'+i+'" value="'+esc(x.loja||'')+'" placeholder="loja" aria-label="Código da loja" style="width:64px"><button class="btnp azul" type="button" data-icnovo="'+i+'">Incluir</button>'); }).join(''):'<li><span class="sub">Nenhum.</span></li>')+'</ul>';
+    h+='<h3>Cargo diferente da meta ('+R.divergente.length+')</h3><ul class="lista">'+(R.divergente.length?R.divergente.map(function(x,i){ return li('<b>'+esc(x.nome)+'</b> <span class="sub">'+esc(x.codigo)+(x.login?' · login '+esc(x.login):'')+' · app: '+esc(nm(x.de))+' · planilha: '+esc(nm(x.para))+' (meta '+(x.meta!=null?String(x.meta).replace('.',','):'—')+')'+(x.por==='nome'?' · casou pelo nome':'')+'</span>','<button class="btnp azul" type="button" data-iccar="'+i+'">Usar o cargo da planilha</button>'); }).join(''):'<li><span class="sub">Nenhum. Todo mundo que está na planilha tem no app o cargo que a meta indica.</span></li>')+'</ul>';
+    h+='<h3>Na planilha, fora do cadastro ('+R.fora.length+')</h3><ul class="lista">'+(R.fora.length?R.fora.map(function(x,i){ return li('<b>'+esc(x.nome)+'</b> <span class="sub">'+(x.login?'login '+esc(x.login)+' · ':'')+esc(nm(x.cargo))+' · meta '+(x.meta!=null?String(x.meta).replace('.',','):'—')+'</span>','<input id="icL'+i+'" value="'+esc(x.loja||'')+'" placeholder="loja" aria-label="Código da loja" style="width:64px"><button class="btnp azul" type="button" data-icnovo="'+i+'">Incluir</button>'); }).join(''):'<li><span class="sub">Nenhum.</span></li>')+'</ul>';
     h+='<h3>No cadastro, sem meta na planilha ('+R.semMeta.length+')</h3><p class="sub" style="margin:2px 0 6px">Pode ser recém-contratado que ainda não entrou na planilha. Confira antes de mexer.</p><ul class="lista">'+(R.semMeta.length?R.semMeta.map(function(x){ return li('<b>'+esc(x.nome)+'</b> <span class="sub">'+esc(x.codigo)+' · '+esc(nm(x.cargo))+' · loja '+esc(x.loja||'—')+'</span>',''); }).join(''):'<li><span class="sub">Nenhum.</span></li>')+'</ul>';
     h+='<p class="ruim" id="icErro" role="alert"></p><div class="linha" style="justify-content:flex-end"><button class="btnp" type="button" data-icx="1">Fechar</button></div></div>';
     $('modal').innerHTML=h; $('modal').hidden=false;
@@ -475,7 +502,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
     if(b.dataset.icnovo!=null){ var y=IC.fora[+b.dataset.icnovo], l=$('icL'+b.dataset.icnovo).value.trim();
       if(!/^\d{3}$/.test(l)){ $('icErro').textContent='Informe o código da loja de '+y.nome+' (3 dígitos).'; return true; }
       b.disabled=true;
-      STDados.chamar('pessoaSalvar',{codigo:'',nome:rhNomeBonito(y.nome),cargo:y.cargo,lojas:[l],supervisor:'',ativo:true,apelidos:[]})
+      STDados.chamar('pessoaSalvar',{codigo:'',nome:rhNomeBonito(y.nome),cargo:y.cargo,lojas:[l],supervisor:'',ativo:true,apelidos:[],autcom:y.login||''})
         .then(function(r){ if(!r||!r.ok) throw new Error((r&&r.erro)||'Não salvou.'); b.textContent='✓ Incluído'; })
         .catch(function(e){ b.disabled=false; $('icErro').textContent=e.message||'Não gravou.'; }); return true; }
     return false;

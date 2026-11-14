@@ -2,13 +2,20 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
-      "v": "ast-v204",
+      "v": "ast-v205",
       "data": "14/11/2026",
-      "hora": "00:42",
+      "hora": "00:46",
       "itens": [
         {
           "painel": "Cadastro da Equipe",
           "o_que": "Novo botão “Conferir com o Indicadores”, irmão do “Comparar com relatório do RH”. A meta da planilha diz o cargo — 1,00 gerente, 2,00 assistente comercial, 3,00 auxiliar, acima disso vendedor — e a tela aponta três coisas: quem está com cargo diferente do que a meta indica, quem está na planilha e não está no cadastro, e quem está no cadastro sem meta na planilha (que pode ser recém-contratado). Nada muda até você confirmar item a item.",
+          "para": [
+            "coord"
+          ]
+        },
+        {
+          "painel": "Cadastro da Equipe",
+          "o_que": "A conferência passa a casar pelo **login do Autcom**, que vem na própria coluna Vendedor da planilha (“136 - PATRICK MARINHEIRO”). Nome virou reserva, para gerente, que tem código sequencial. O nível e a cor da faixa que vêm grudados no nome (“- N5 - VERMELHA”) são descartados antes de comparar.",
           "para": [
             "coord"
           ]
