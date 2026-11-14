@@ -55,7 +55,7 @@ h2{font-family:var(--f-display);font-size:18px;margin:0}
 .placa b{display:block;font-family:var(--f-display);font-size:30px;line-height:1.05}
 .placa span{display:block;font-weight:700;font-size:13px}
 .placa small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
-.p-respondido{border-left-color:var(--ok)}.p-liberado{border-left-color:var(--warn)}.p-aguardando{border-left-color:var(--bad)}.p-perdeu{border-left-color:var(--bad)}.p-sempdi{border-left-color:var(--neutro)}
+.p-faltam{border-left-color:var(--bad)}.p-respondido{border-left-color:var(--ok)}.p-liberado{border-left-color:var(--warn)}.p-aguardando{border-left-color:var(--bad)}.p-perdeu{border-left-color:var(--bad)}.p-sempdi{border-left-color:var(--neutro)}
 
 /* barras */
 .barra{display:flex;height:12px;border-radius:999px;overflow:hidden;background:var(--surface2)}
@@ -410,6 +410,10 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
        '<div><p class="frase">'+frase(cBase,n)+'</p><div class="hero-l">'+(pz.t?'<span class="prazo'+(pz.q?' quente':'')+'" id="contagem">'+esc(pz.t)+'</span>':'')+(podePrazo()&&TIPO==='vend'&&n?'<button type="button" class="ajustar" data-abrirprazo="1">Ajustar prazo</button>':'')+compara+'</div></div></section>';
     h+='<section class="placas" aria-label="Filtrar por situação">'+
       placa('respondido',cBase.respondido,'Fizeram a prova',med!=null?'média '+virg(med):'sem notas ainda')+
+      /* Atalho de cobrança: junta num só lugar todo mundo que ainda não fez —
+         prova aberta, PDI travado e prazo perdido. As placas de baixo continuam
+         separando o motivo; esta responde "quem eu preciso cobrar". */
+      ((cBase.liberado+cBase.aguardando+cBase.perdeu)?placa('faltam',cBase.liberado+cBase.aguardando+cBase.perdeu,'Ainda não fez','todos os pendentes juntos'):'')+
       (SEM===S.atual?placa('liberado',cBase.liberado,'Prova aberta','falta o '+T.aval+' responder')+placa('aguardando',cBase.aguardando,T.Cond+' não fez o PDI','a prova nem abriu'):'')+
       (cBase.perdeu||SEM!==S.atual?placa('perdeu',cBase.perdeu,'Perderam o prazo','não fizeram a tempo'):'')+
       (sem?placa('sempdi',sem,'Sem PDI gerado','conferir o cadastro'):'')+'</section>';
@@ -458,7 +462,7 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
     if(TIPO==='hist'){ listaHist(); return; }
     var bl=$('limpar'); if(bl) bl.hidden=!(F.g||F.sup||F.loja||F.q||F.nota!=null);
     var T=TIPOS[TIPO], q=norm(F.q), L=TUDO_ATUAL.filter(function(r){
-      return (F.g?GRUPO[r.sit]===F.g:(q||r.sit!=='sem_pdi'))&&(!F.sup||r.sup===F.sup)&&(!F.loja||r.loja===F.loja)&&(F.nota==null||(notaDe(r)!=null&&Math.round(notaDe(r))===F.nota))&&(!q||norm(r.nome+' '+r.loja+' '+r.lojaNome).indexOf(q)>=0);
+      return (F.g?(F.g==='faltam'?(r.sit!=='respondido'&&r.sit!=='sem_pdi'):GRUPO[r.sit]===F.g):(q||r.sit!=='sem_pdi'))&&(!F.sup||r.sup===F.sup)&&(!F.loja||r.loja===F.loja)&&(F.nota==null||(notaDe(r)!=null&&Math.round(notaDe(r))===F.nota))&&(!q||norm(r.nome+' '+r.loja+' '+r.lojaNome).indexOf(q)>=0);
     });
     var d=SORT.d, cmp={
       sit:function(a,b){return (ORDEM[a.sit]-ORDEM[b.sit])*d||(a.loja<b.loja?-1:1)||0;},
@@ -812,6 +816,23 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
       if(alta.length||baixa.length) b('<h3>Destaques da semana</h3><div class="r-duo"><div><b class="ok">Quadro de honra (nota 9 ou mais)</b><p>'+(alta.map(function(r){return esc(r.nome)+' ('+r.loja+') '+r.aval.nota+'/'+r.aval.total;}).join(' · ')||'ninguém ainda')+'</p></div><div><b class="bd">Para reforçar (abaixo de 6)</b><p>'+(baixa.map(function(r){return esc(r.nome)+' ('+r.loja+') '+r.aval.nota+'/'+r.aval.total;}).join(' · ')||'ninguém')+'</p></div></div>');
       if(op.nominal) t('Todos os vendedores',['Vendedor','Loja','Situação','Nota','App'],D.V.slice().sort(function(a,b){return (a.loja<b.loja?-1:a.loja>b.loja?1:0)||(norm(a.nome)<norm(b.nome)?-1:1);}).map(function(r){ var n2=notaDe(r); return [{v:r.nome,b:1},r.loja,rotSit(r.sit,'vend'),n2!=null?{v:r.aval.nota+'/'+r.aval.total,c:n2>=8?'ok':n2>=6?'wn':'bd'}:'—',r.app?r.app.t:'—']; }));
     }
+    /* Quem ainda não fez: um corte só, por loja, juntando prova da semana,
+       Trilha Mentor e avulsas. Serve sozinho — dá para desmarcar todo o resto
+       e sair só com a lista de cobrança. */
+    if(op.faltam){
+      var FX=[], addFX=function(r,oq,sit,passo){ FX.push({loja:r.loja||'',nome:r.nome,cargo:r.cargo||(TIPOS[r.tipo]?TIPOS[r.tipo].Aval:''),o:oq,s:sit,p:passo}); };
+      D.V.filter(function(r){return r.sit!=='respondido'&&r.sit!=='sem_pdi';}).forEach(function(r){ addFX(r,'Prova da semana',rotSit(r.sit,'vend'),passoSit(r.sit,'vend')); });
+      D.G.concat(D.SP).filter(function(r){return r.sit!=='respondido'&&r.sit!=='sem_pdi';}).forEach(function(r){ addFX(r,'Prova da semana',rotSit(r.sit,r.tipo),passoSit(r.sit,r.tipo)); });
+      D.T.filter(function(r){return r.sit==='nao_iniciou'||r.sit==='refazer';}).forEach(function(r){ addFX(r,'Trilha Mentor',MT_ROT[r.sit],r.sit==='nao_iniciou'?'Abrir a trilha e fazer o primeiro módulo':'Refazer o módulo que travou'); });
+      D.AVL.forEach(function(x){ x.L.filter(function(r){return r.sit==='pendente'||r.sit==='perdeu';}).forEach(function(r){ addFX(r,'Avulsa: '+x.P.titulo,AV_ROT[r.sit],r.sit==='pendente'?('Responder até '+pzAv(x.P.prazo)):'Prazo vencido: reabrir ou justificar'); }); });
+      FX.sort(function(a,b){ return (a.loja<b.loja?-1:a.loja>b.loja?1:0)||(norm(a.nome)<norm(b.nome)?-1:1)||(a.o<b.o?-1:a.o>b.o?1:0); });
+      var qlj={}, qpe={}; FX.forEach(function(x){ if(x.loja) qlj[x.loja]=1; qpe[(x.loja||'')+'|'+norm(x.nome)]=1; });
+      b('<h3>Quem ainda não fez</h3><p class="r-p">'+(FX.length
+        ? FX.length+(FX.length===1?' pendência aberta':' pendências abertas')+' · '+Object.keys(qpe).length+(Object.keys(qpe).length===1?' pessoa':' pessoas')+(Object.keys(qlj).length?' · '+Object.keys(qlj).length+(Object.keys(qlj).length===1?' loja':' lojas'):'')+'. Na ordem das lojas, pronta para cobrar.'
+        : 'Nenhuma pendência aberta neste escopo: prova da semana, Trilha Mentor e avulsas, todo mundo em dia.')+'</p>');
+      if(FX.length) t('Quem ainda não fez ('+FX.length+')',['Loja','Pessoa','Cargo','O que falta','Situação','Próximo passo'],
+        FX.map(function(x){ return [x.loja||'—',{v:x.nome,b:1},x.cargo||'—',x.o,{v:x.s,c:'bd'},x.p]; }));
+    }
     if(op.trilha&&D.T.length){ var c2=ctMT(D.T), ini=D.T.filter(function(r){return r.sit!=='nao_iniciou';});
       b('<h3>Trilha Mentor</h3><p class="r-p">'+c2.aprovado+(c2.aprovado===1?' aprovado':' aprovados')+' na avaliação final · '+c2.andamento+' em andamento · '+c2.refazer+' precisam refazer · '+c2.nao_iniciou+(c2.nao_iniciou===1?' não iniciou':' não iniciaram')+' (de '+D.T.length+').</p>');
       if(ini.length) t('Trilha Mentor módulo a módulo (entre os '+ini.length+' que iniciaram)',['Módulo','Aprovados','Média','Travados'],MT.mods.map(function(m,ix){ var ok2=0,tr=0,s=0,q=0; ini.forEach(function(r){ var x=r.mods[ix]; if(x.ok) ok2++; if(x.falhou&&!x.ok) tr++; if(x.nota!=null){s+=x.nota;q++;} }); return [{v:(ix+1)+'. '+m.titulo,b:1},ok2+' de '+ini.length,q?virg(s/q):'—',tr||'—']; }));
@@ -880,7 +901,7 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
     var ck=function(k,t,on){ return '<label class="opc"><input type="checkbox" data-ro="'+k+'"'+(on?' checked':'')+'> '+t+'</label>'; };
     abrirDlg('Relatório de Provas','PDF para salvar ou enviar pelo WhatsApp',
       '<div class="campo"><label for="rEsc">Abrangência</label><select id="rEsc">'+EE.map(function(e,i){return '<option value="'+i+'"'+(i===sel?' selected':'')+'>'+esc(e.t)+'</option>';}).join('')+'</select></div>'+
-      '<fieldset class="campo"><legend>O que entra</legend>'+ck('cons','Leitura do consultor (dos números às ações)',1)+ck('sem','Provas da semana: situação, pendências e destaques',1)+ck('trilha','Trilha Mentor',1)+ck('avulsas','Provas avulsas',1)+ck('hist','Histórico e acerto por tema',1)+ck('tema','Acerto por tema detalhado (por grupo e quem mais erra)',1)+ck('nominal','Lista nominal completa (todas as pessoas)',0)+'</fieldset>'+
+      '<fieldset class="campo"><legend>O que entra</legend>'+ck('cons','Leitura do consultor (dos números às ações)',1)+ck('sem','Provas da semana: situação, pendências e destaques',1)+ck('trilha','Trilha Mentor',1)+ck('avulsas','Provas avulsas',1)+ck('hist','Histórico e acerto por tema',1)+ck('tema','Acerto por tema detalhado (por grupo e quem mais erra)',1)+ck('faltam','Quem ainda não fez (lista para cobrança)',0)+ck('nominal','Lista nominal completa (todas as pessoas)',0)+'</fieldset>'+
       '<p class="sub" id="rSt" role="status" style="margin:0"></p><div class="m-pe"><button type="button" class="btn2" data-rtexto="1">Texto para WhatsApp</button><button type="button" class="btn2" data-rbaixar="1">Salvar PDF</button><button type="button" class="btn" data-rzap="1">Enviar PDF</button></div><div id="rPrev" class="r-prev"></div>');
     RDOC=null; window.__REL=EE; }
   function rOpcoes(){ var o={gerFicha:true}; Array.prototype.forEach.call(document.querySelectorAll('[data-ro]'),function(c){ o[c.dataset.ro]=c.checked; }); return o; }
