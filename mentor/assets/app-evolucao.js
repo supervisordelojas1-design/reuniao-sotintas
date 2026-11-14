@@ -72,6 +72,13 @@
   /* ───────────────────────── tela: minha evolução (ou de um vendedor da equipe) ───────────────────────── */
   App.views.evolucao = ([id]) => {
     const r = dados(); const c = cfg();
+    /* Esconder o card não basta: dá para chegar aqui pelo endereço. A trava é
+       só para a própria evolução — líder vendo a evolução de alguém da equipe
+       (com id) continua passando, e líder é gerente ou supervisor. */
+    if (!id && App.veEvolucao && !App.veEvolucao()) {
+      return App.cabecalho('Minha evolução', 'Níveis de venda', { voltar: '#/perfil', cor: 'azul' }) +
+        '<div class="tela"><div class="card"><p class="pequeno texto-3" style="margin:0">A curva de níveis V1→V5 é a carreira de vendedor. Seu cargo não entra nessa régua, então não há nível a acompanhar aqui. Suas conquistas e o seu perfil DISC continuam no seu perfil.</p></div></div>';
+    }
     if (!r) return App.cabecalho('Minha evolução', 'Níveis de venda', { voltar: '#/perfil', cor: 'azul' }) + '<div class="tela"><div class="card"><p class="pequeno texto-3" style="margin:0">A base de níveis ainda não foi carregada.</p></div></div>';
     let v = null, deEquipe = false;
     if (id) { v = r.vendedores.find(x => String(x.id) === String(id)) || null; deEquipe = true; if (!v || !(U.ehLider(App.user) && lojaNoEscopo(v.loja_id))) return App.cabecalho('Evolução', '', { voltar: '#/equipe', cor: 'azul' }) + '<div class="tela"><div class="card erro"><p class="pequeno" style="margin:0">Este vendedor não está no seu escopo.</p></div></div>'; }

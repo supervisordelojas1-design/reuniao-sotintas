@@ -2,6 +2,22 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v207",
+      "data": "14/11/2026",
+      "hora": "01:12",
+      "itens": [
+        {
+          "painel": "Mentor ST PRO",
+          "o_que": "“Minha evolução” sai da tela de auxiliar e assistente comercial. A curva V1→V5 e os ganhos por nível são a carreira do vendedor; quem não entra nessa régua não tem nível a acompanhar ali. Conquistas e perfil DISC continuam normais. O gerente e o supervisor seguem vendo a evolução de cada vendedor da equipe.",
+          "para": [
+            "coord",
+            "sup",
+            "ger"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v206",
       "data": "14/11/2026",
       "hora": "01:02",
@@ -211,27 +227,6 @@
         {
           "painel": "Acesso de usuários · Administrativo",
           "o_que": "Quem não é de loja — coordenação, supervisão, analista, marketing — não cabia nesta tela, que monta a lista por filial, e só dava para mexer pela planilha. Agora existe o grupo Administrativo na lista de lojas: mostra essas pessoas com o cargo e a situação, dá Novo PIN, desativa e reativa, e cadastra gente nova escolhendo o cargo e, se quiser, o login do Autcom.",
-          "para": [
-            "coord"
-          ]
-        }
-      ]
-    },
-    {
-      "v": "ast-v185",
-      "data": "13/11/2026",
-      "hora": "19:55",
-      "itens": [
-        {
-          "painel": "Ver como · Analista",
-          "o_que": "Corrigido: escolher Analista pedia a loja da visão e não deixava abrir. O analista é de rede, não tem loja — a exigência deixou de valer para ele.",
-          "para": [
-            "coord"
-          ]
-        },
-        {
-          "painel": "Direitos de Acesso",
-          "o_que": "Cada coluna da grade ganhou um \"limpar\", que devolve o cargo inteiro ao padrão de uma vez.",
           "para": [
             "coord"
           ]
