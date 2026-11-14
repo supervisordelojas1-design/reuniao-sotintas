@@ -38,18 +38,21 @@
   /* a sessão "como se fosse" a pessoa da visão — os painéis usam isto no lugar da sessão real */
   function sessaoVisao() {
     var s = sessao(), v = visao(); if (!v) return s;
-    var papel = { sup: 'Supervisor', ger: 'Gerente', vend: 'Vendedor', anl: 'Analista' }[v.perfil] || 'Colaborador';
+    /* o cargo escolhido manda no papel; o mapa por perfil é só a reserva */
+    var papel = v.cargo || { sup: 'Supervisor', ger: 'Gerente', vend: 'Vendedor', anl: 'Analista' }[v.perfil] || 'Colaborador';
     var lj = (v.lojas || []).map(function (c) { return c + ' - ' + (v.lojaNome || ''); });
     /* nov/2026: o analista é de rede — escopo "todos", como a coordenação, e o papel
        "Analista" é o que faz o app esconder dele os painéis de administração. */
     var escopo = v.perfil === 'ger' ? 'lojas' : v.perfil === 'anl' ? 'todos' : 'equipe';
     return { nome: v.nome, papel: papel, escopo: escopo, vendedor: v.perfil === 'vend', lotacao: lj[0] || '', carteira: v.perfil === 'sup' ? lj : [], gerencia: v.perfil === 'ger' ? lj : [], visao: true };
   }
-  function entrarVisao(pf, nome, lojas, rotulo, lojaNome) {
+  function entrarVisao(pf, nome, lojas, rotulo, lojaNome, cargo) {
     return chamar('verComo', { pf: pf, n: nome || '', lj: lojas || [] }, true).then(function (r) {
       if (!r || !r.ok) throw new Error((r && r.erro) || 'Não consegui abrir a visão.');
       var s = sessao();
-      try { localStorage.setItem(LS_VISAO, JSON.stringify({ tk: r.tk, ex: r.ex, perfil: r.perfil, lojas: r.lojas, nome: r.nome, rotulo: rotulo || r.nome, lojaNome: lojaNome || '', dono: s && s.nome })); } catch (e) {}
+      /* cargo: o nome exato da linha da aba PERMISSOES. É ele que a régua usa
+         para achar os direitos certos — o perfil do crachá é só a família. */
+      try { localStorage.setItem(LS_VISAO, JSON.stringify({ tk: r.tk, ex: r.ex, perfil: r.perfil, lojas: r.lojas, nome: r.nome, rotulo: rotulo || r.nome, lojaNome: lojaNome || '', cargo: cargo || '', dono: s && s.nome })); } catch (e) {}
       return r;
     });
   }

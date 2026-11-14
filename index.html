@@ -10317,13 +10317,42 @@ body.foco .wrap{padding-bottom:40px}
   function code3(s){ var m=String(s||'').match(/\d+/); return m?('00'+Number(m[0])).slice(-3):''; }
   function sync(){
     bt.hidden=!STDados.ehCoordReal();
-    var v=STDados.visao(); document.getElementById('verComoTx').textContent = v ? ('Visão: '+({sup:'Supervisor',ger:'Gerente',vend:'Vendedor',anl:'Analista'}[v.perfil]||'')) : 'Ver como'; bt.title = v ? ('Vendo como '+(v.rotulo||v.nome)+' — toque para trocar ou sair') : 'Ver o app como outro nível';
+    var v=STDados.visao(); document.getElementById('verComoTx').textContent = v ? ('Visão: '+(v.cargo || {sup:'Supervisor',ger:'Gerente',vend:'Vendedor',anl:'Analista'}[v.perfil] || '')) : 'Ver como'; bt.title = v ? ('Vendo como '+(v.rotulo||v.nome)+' — toque para trocar ou sair') : 'Ver o app como outro nível';
   }
   sync(); setInterval(sync,2000);
   window.verComoAviso=function(t){ var a=document.getElementById('verComoMsgFlut'); if(!a){ a=document.createElement('div'); a.id='verComoMsgFlut'; a.setAttribute('role','status'); a.style.cssText='position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:2147483001;max-width:min(520px,calc(100% - 24px));background:#1d2433;color:#fff;padding:12px 16px;border-radius:12px;font:600 13px "Public Sans",system-ui,sans-serif;box-shadow:0 8px 26px rgba(0,0,0,.35)'; document.body.appendChild(a); } a.textContent=t; clearTimeout(a._t); a._t=setTimeout(function(){ a.remove(); },6000); };
 
   var VENDS=null;   /* vendedores da rede (Níveis, crachá real da coordenação) */
-  var ANLS=null;    /* nov/2026: analistas ativos do Cadastro da Equipe */
+  var PESSOAS=null; /* cadastro, para escolher quem representa o cargo */
+  /* nov/2026 — a lista de níveis sai dos CARGOS da aba PERMISSOES, não de uma
+     lista fixa: cargo novo aparece aqui sozinho, sem mexer em código. */
+  function vcFamilia(cargo){
+    var n=String(cargo||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    if(/coorden/.test(n)) return 'coord';
+    if(/supervis/.test(n)) return 'sup';
+    if(/gerente/.test(n)) return 'ger';
+    if(/vendedor|operador|caixa|assistente/.test(n)) return 'vend';
+    if(/analista/.test(n)) return 'anl';
+    if(/marketing/.test(n)) return 'mkt';
+    return 'outro';
+  }
+  function opcoesNivel(){
+    var h='<option value="coord">Coordenação (a minha visão)</option>';
+    /* se a régua ainda não chegou, não deixa a lista vazia */
+    if(!REGUA_PERM || !REGUA_PERM.length){
+      return h+'<option value="Supervisor de Loja">Supervisor de Loja</option>'+
+               '<option value="Gerente">Gerente</option>'+
+               '<option value="Vendedor(a)">Vendedor(a)</option>'+
+               '<option value="Analista">Analista</option>';
+    }
+    var vistos={coord:1};
+    (REGUA_PERM||[]).forEach(function(i){
+      var f=vcFamilia(i.cargo); if(f==='coord'||vistos[i.cargo]) return;
+      vistos[i.cargo]=1;
+      h+='<option value="'+esc(i.cargo)+'" data-fam="'+f+'">'+esc(i.cargo)+'</option>';
+    });
+    return h;
+  }
   function lojasRede(){
     var m={}; try{ Object.keys(EQUIPE||{}).forEach(function(n){ (EQUIPE[n].lojas||[]).forEach(function(l){ var c=code3(l); if(c) m[c]=String(l).replace(/^\s*\d+\s*-\s*/,''); }); }); }catch(e){}
     (VENDS||[]).forEach(function(v){ if(!m[v.id]) m[v.id]=v.loja||''; });
@@ -10338,7 +10367,7 @@ body.foco .wrap{padding-bottom:40px}
     var campo='display:block;width:100%;margin-top:5px;padding:10px 11px;border-radius:9px;border:1px solid #cfd6e4;background:#f5f7fb;color:#16233d;font:600 14px inherit';
     ov.innerHTML='<div style="width:100%;max-width:420px;background:#fff;color:#16233d;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px">'+
       '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div><b id="vcTit" style="font-size:18px">👁 Ver como</b><div style="font-size:12.5px;color:#5a677f;margin-top:2px">Veja o app exatamente como outro nível vê. Só leitura: nada é gravado enquanto a visão estiver aberta. Vale por 2 horas.</div></div><button type="button" data-vc="x" aria-label="Fechar" style="border:0;background:#eef2f8;border-radius:8px;padding:6px 10px;font-weight:700;cursor:pointer">✕</button></div>'+
-      '<label style="font-size:12px;font-weight:700;color:#5a677f">Nível<select id="vcPf" style="'+campo+'"><option value="coord">Coordenação (a minha visão)</option><option value="sup">Supervisão</option><option value="ger">Gerente de loja</option><option value="vend">Vendedor</option><option value="anl">Analista (rede inteira)</option></select></label>'+
+      '<label style="font-size:12px;font-weight:700;color:#5a677f">Nível<select id="vcPf" style="'+campo+'">'+opcoesNivel()+'</select></label>'+
       '<div id="vcAlvo"></div><div id="vcMsg" role="status" style="font-size:12.5px;color:#c42a22;min-height:16px"></div>'+
       '<div style="display:flex;gap:8px;justify-content:flex-end">'+(v?'<button type="button" data-vc="sair" style="padding:9px 14px;border-radius:9px;border:1px solid #cfd6e4;background:#fff;color:#16233d;font-weight:700;cursor:pointer">Sair da visão</button>':'')+
       '<button type="button" data-vc="ok" style="padding:9px 16px;border-radius:9px;border:0;background:#1C3F8F;color:#fff;font-weight:700;cursor:pointer">Ver</button></div></div>';
@@ -10371,12 +10400,12 @@ body.foco .wrap{padding-bottom:40px}
     }
     function desenhar(){
       msg.textContent='';
-      var p=pf.value;
-      if(p==='coord') alvo.innerHTML='<p style="font-size:12.5px;color:#5a677f;margin:0">Volta para a sua visão normal, com a rede inteira.</p>';
-      else if(p==='sup') alvo.innerHTML='<label style="font-size:12px;font-weight:700;color:#5a677f">Supervisor<select id="vcSup" style="'+campo+'">'+supervisores().map(function(n){ return '<option'+(v&&v.nome===n?' selected':'')+'>'+esc(n)+'</option>'; }).join('')+'</select></label>';
-      else if(p==='anl') montarAnl();
-      else if(p==='ger') alvo.innerHTML=selLojas('vcLoja');
-      else { alvo.innerHTML=selLojas('vcLoja')+'<div id="vcVendBox" style="margin-top:10px"></div>'; ov.querySelector('#vcLoja').onchange=montarVend; montarVend(); }
+      var p=pf.value, f=(p==='coord')?'coord':vcFamilia(p);
+      if(f==='coord') alvo.innerHTML='<p style="font-size:12.5px;color:#5a677f;margin:0">Volta para a sua visão normal, com a rede inteira.</p>';
+      else if(f==='sup') alvo.innerHTML='<label style="font-size:12px;font-weight:700;color:#5a677f">Supervisor<select id="vcSup" style="'+campo+'">'+supervisores().map(function(n){ return '<option'+(v&&v.nome===n?' selected':'')+'>'+esc(n)+'</option>'; }).join('')+'</select></label>';
+      else if(f==='ger') alvo.innerHTML=selLojas('vcLoja');
+      else if(f==='vend'){ alvo.innerHTML=selLojas('vcLoja')+'<div id="vcVendBox" style="margin-top:10px"></div>'; ov.querySelector('#vcLoja').onchange=montarVend; montarVend(); }
+      else montarPessoa(p);
     }
     pf.onchange=desenhar; desenhar(); pf.focus();
     ov.addEventListener('click',function(e){
@@ -10384,15 +10413,19 @@ body.foco .wrap{padding-bottom:40px}
       var b=e.target.closest('[data-vc]'); if(!b) return;
       if(b.dataset.vc==='x'){ fechar(); return; }
       if(b.dataset.vc==='sair' || (b.dataset.vc==='ok' && pf.value==='coord')){ STDados.sairVisao(); location.reload(); return; }
-      var p=pf.value, nome='', lojas=[], rot='', ln='';
-      if(p==='anl'){ nome=(ov.querySelector('#vcAnl')||{}).value||''; if(!nome){ msg.textContent='Escolha o analista.'; return; } lojas=[]; rot='Analista · '+nome; }
-      else if(p==='sup'){ nome=(ov.querySelector('#vcSup')||{}).value||''; try{ lojas=(EQUIPE[nome].lojas||[]).map(code3).filter(Boolean); }catch(er){} rot='Supervisor '+nome; }
-      else { var sl=ov.querySelector('#vcLoja'); var c=sl&&sl.value; ln=sl&&sl.selectedOptions[0]?sl.selectedOptions[0].getAttribute('data-n'):''; lojas=c?[c]:[];
-        if(p==='ger'){ rot='Gerente · loja '+c+(ln?' '+ln:''); }
-        else { nome=(ov.querySelector('#vcVend')||{}).value||''; if(!nome){ msg.textContent='Escolha o vendedor.'; return; } rot='Vendedor · '+nome+' ('+c+')'; } }
-      if(!nome && p==='sup'){ msg.textContent='Escolha o supervisor.'; return; }
+      /* p é o CARGO escolhido; a família decide o que o servidor recebe como
+         perfil e o cargo vai junto, para a régua achar a linha certa. */
+      var p=pf.value, f=vcFamilia(p), nome='', lojas=[], rot='', ln='';
+      if(f==='sup'){ nome=(ov.querySelector('#vcSup')||{}).value||''; if(!nome){ msg.textContent='Escolha o supervisor.'; return; }
+        try{ lojas=(EQUIPE[nome].lojas||[]).map(code3).filter(Boolean); }catch(er){} rot=p+' · '+nome; }
+      else if(f==='ger'){ var sg=ov.querySelector('#vcLoja'); var cg=sg&&sg.value; ln=sg&&sg.selectedOptions[0]?sg.selectedOptions[0].getAttribute('data-n'):'';
+        lojas=cg?[cg]:[]; rot=p+' · loja '+cg+(ln?' '+ln:''); }
+      else if(f==='vend'){ var sv=ov.querySelector('#vcLoja'); var cv=sv&&sv.value; ln=sv&&sv.selectedOptions[0]?sv.selectedOptions[0].getAttribute('data-n'):'';
+        lojas=cv?[cv]:[]; nome=(ov.querySelector('#vcVend')||{}).value||'';
+        if(!nome){ msg.textContent='Escolha a pessoa.'; return; } rot=p+' · '+nome+' ('+cv+')'; }
+      else { nome=((ov.querySelector('#vcPessoa')||{}).value||'').trim() || p; lojas=[]; rot=p+(nome!==p?' · '+nome:''); }
       b.disabled=true; b.textContent='Abrindo…';
-      STDados.entrarVisao(p,nome,lojas,rot,ln).then(function(){ location.reload(); })
+      STDados.entrarVisao(f,nome,lojas,rot,ln,p).then(function(){ location.reload(); })
         .catch(function(er){ b.disabled=false; b.textContent='Ver'; msg.textContent=er.message||String(er); });
     });
   }

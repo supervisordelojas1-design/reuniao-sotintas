@@ -2,6 +2,20 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v191",
+      "data": "13/11/2026",
+      "hora": "21:50",
+      "itens": [
+        {
+          "painel": "Ver como",
+          "o_que": "A lista de níveis era fixa (cinco opções) e ficava para trás a cada cargo novo. Agora ela vem dos próprios cargos da aba PERMISSOES: cargo que você cadastrar aparece aqui sozinho, sem mexer em código. Marketing e Assistente Comercial de Loja já entraram. O cargo escolhido vai junto no crachá, então a régua acha a linha certa e a visão mostra exatamente o que aquele cargo enxerga.",
+          "para": [
+            "coord"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v190",
       "data": "13/11/2026",
       "hora": "21:25",
