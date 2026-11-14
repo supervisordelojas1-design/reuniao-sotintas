@@ -10327,7 +10327,11 @@ body.foco .wrap{padding-bottom:40px}
   /* nov/2026 — a lista de níveis sai dos CARGOS da aba PERMISSOES, não de uma
      lista fixa: cargo novo aparece aqui sozinho, sem mexer em código. */
   function vcFamilia(cargo){
-    var n=String(cargo||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    var n=String(cargo||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+    /* a aba PERMISSOES guarda o nome por extenso ("Analista"), o Cadastro da
+       Equipe guarda o código curto ("anl") — os dois chegam aqui */
+    var curto={coord:'coord', sup:'sup', ger:'ger', vend:'vend', anl:'anl', mkt:'mkt', outro:'outro'};
+    if(curto[n]) return curto[n];
     if(/coorden/.test(n)) return 'coord';
     if(/supervis/.test(n)) return 'sup';
     if(/gerente/.test(n)) return 'ger';
