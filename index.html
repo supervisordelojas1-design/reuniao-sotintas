@@ -1252,6 +1252,11 @@ html[data-tema="escuro"] .dpq, html[data-theme="dark"] .dpq{border-color:#5a4a1c
     <div id="viewAgenda" class="hidden">
       <h1 id="agTitulo">Agenda</h1>
       <p class="sub" id="agSub"></p>
+      <!-- As rotinas automáticas não são compromisso: ninguém conduz, não têm
+           roteiro nem ata, e a diária se repete todo dia. Lançá-las como evento
+           encheria a agenda de linha repetida, então ficam num quadro à parte,
+           que só mostra quando cada uma roda de novo. -->
+      <div id="agRotinas" class="hidden"></div>
 
       <!-- a primeira pergunta do dia é "quando", não "de quem". O 📅 pesquisa
            uma data: escolheu, o Dia/Semana/Mês passam a contar a partir dela.
@@ -2779,6 +2784,61 @@ function renderHoje(){
   ligarBotoesAgenda();
 }
 
+/* ── Rotinas automáticas ────────────────────────────────────────────────
+   São as automações que atualizam o app sozinhas. Não entram como
+   compromisso: não têm condutor, roteiro nem ata, e a diária se repetiria
+   todo dia na lista. Aqui é só leitura — quando cada uma roda de novo. */
+var AG_ROTINAS = [
+  { t:'Exportação do Solcast + Meta do dia', q:'dia', h:[7,0],
+    d:'Puxa INDICADORES, META e as carteiras, publica no Painel e manda a meta do dia aos 30 gerentes antes das 8h.',
+    obs:'Os e-mails só saem de segunda a sábado, fora de feriado; em domingo e feriado ela atualiza o Painel e pula o envio.' },
+  { t:'Resumo das lojas por e-mail', q:'seg', h:[7,30],
+    d:'O resumo da semana que vai para a supervisão.' },
+  { t:'PDI semanal dos gerentes', q:'seg', h:[12,15],
+    d:'Gera os 3 compromissos e as 10 questões de cada uma das 30 lojas.' },
+  { t:'Base mensal dos gestores', q:'mes1', h:[6,0],
+    d:'Fecha o mês anterior e publica a base que o PDI dos gestores lê.' },
+  { t:'Atualização do PDI Comercial', q:'mes1', h:[8,40],
+    d:'Recalcula as faixas P1–P4 dos vendedores com o mês fechado.' }
+];
+function agProxima(r){
+  var d = new Date(), a = new Date(d.getFullYear(), d.getMonth(), d.getDate(), r.h[0], r.h[1], 0, 0);
+  if (r.q === 'dia') { if (a <= d) a.setDate(a.getDate() + 1); return a; }
+  if (r.q === 'seg') { var p = (8 - a.getDay()) % 7; if (p === 0 && a <= d) p = 7; a.setDate(a.getDate() + p); return a; }
+  /* dia 1º: se hoje é dia 1 e a hora já passou, vai para o mês que vem */
+  var m = new Date(d.getFullYear(), d.getMonth(), 1, r.h[0], r.h[1], 0, 0);
+  if (m <= d) m = new Date(d.getFullYear(), d.getMonth() + 1, 1, r.h[0], r.h[1], 0, 0);
+  return m;
+}
+function agQuando(dt){
+  var hoje = new Date(), d0 = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+  var dias = Math.round((new Date(dt.getFullYear(), dt.getMonth(), dt.getDate()) - d0) / 86400000);
+  var hh = ('0'+dt.getHours()).slice(-2)+':'+('0'+dt.getMinutes()).slice(-2);
+  if (dias === 0) return 'hoje às ' + hh;
+  if (dias === 1) return 'amanhã às ' + hh;
+  if (dias < 7) return ['domingo','segunda','terça','quarta','quinta','sexta','sábado'][dt.getDay()] + ' às ' + hh;
+  return ('0'+dt.getDate()).slice(-2)+'/'+('0'+(dt.getMonth()+1)).slice(-2)+' às '+hh;
+}
+function agRotinas(){
+  var box = document.getElementById('agRotinas'); if(!box) return;
+  /* são as automações da coordenação: quem não as controla não precisa vê-las */
+  var coord = false;
+  try { var s = STDados && STDados.sessao ? STDados.sessao() : null; coord = !!(s && s.perfil === 'coord'); }
+  catch(e){ try { var j = JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); coord = !!(j && j.perfil === 'coord'); } catch(x){} }
+  if(!coord){ box.className = 'hidden'; box.innerHTML = ''; return; }
+  var L = AG_ROTINAS.map(function(r){ return { r:r, dt:agProxima(r) }; }).sort(function(a,b){ return a.dt - b.dt; });
+  box.className = 'card';
+  box.style.cssText = 'margin:10px 0 14px;padding:12px 14px';
+  box.innerHTML = '<div style="font-weight:700;margin-bottom:2px">⚙️ Rotinas automáticas</div>'+
+    '<div class="sub" style="margin:0 0 8px">Rodam sozinhas e atualizam o app. Não é compromisso — nada para você conduzir.</div>'+
+    L.map(function(x){
+      return '<div style="display:flex;gap:10px;align-items:baseline;padding:7px 0;border-top:1px solid var(--line,#e6eaf2)">'+
+        '<span style="white-space:nowrap;font-weight:700;font-size:12.5px;min-width:112px">'+esc(agQuando(x.dt))+'</span>'+
+        '<span><b>'+esc(x.r.t)+'</b><div class="sub" style="margin:2px 0 0">'+esc(x.r.d)+
+        (x.r.obs ? '<br><span style="opacity:.85">'+esc(x.r.obs)+'</span>' : '')+'</div></span></div>';
+    }).join('');
+}
+
 /* Resumo dos compromissos do dia — mostrado na barra da tela inicial. */
 function resumoHoje(){
   var box=document.getElementById('iniHoje'); if(!box) return;
@@ -3109,6 +3169,7 @@ function carregarAgendaUnificada(silencioso){
   if($('agDataHoje')) $('agDataHoje').classList.toggle('hidden', !pesquisou);
   /* o ícone acende quando há uma data pesquisada — é o "sel" da pesquisa */
   if($('agBtnData')) $('agBtnData').className = pesquisou ? 'sel' : '';
+  agRotinas();
   $('agSub').textContent = AG_PER==='hoje'
     ? (pesquisou ? 'Reuniões, visitas e tarefas de '+dataBr(agRef())+'.' : 'Reuniões, visitas e tarefas de hoje.')
     : (AG_PER==='semana'

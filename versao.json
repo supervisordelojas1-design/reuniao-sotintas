@@ -2,6 +2,20 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v210",
+      "data": "14/11/2026",
+      "hora": "02:22",
+      "itens": [
+        {
+          "painel": "Agenda",
+          "o_que": "Quadro “⚙️ Rotinas automáticas” no topo da agenda da coordenação, com as cinco automações e quando cada uma roda de novo: exportação do Solcast + meta do dia (todo dia 7h), resumo das lojas (segunda 7h30), PDI semanal dos gerentes (segunda 12h15), base mensal dos gestores e PDI Comercial (dia 1º, 6h e 8h40). Não entram como compromisso porque não têm condutor, roteiro nem ata — e a diária encheria a lista de linha repetida.",
+          "para": [
+            "coord"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v209",
       "data": "14/11/2026",
       "hora": "02:08",
@@ -215,20 +229,6 @@
         {
           "painel": "Direitos de Acesso",
           "o_que": "A grade mostrava \"–\" no que está em padrão e não respondia o que importa: o que cada cargo enxerga de fato. Agora a célula em padrão mostra o resultado da regra do app — ✓ liberado ou ✗ bloqueado, em tom fraco e borda tracejada — e as exceções que você definiu aparecem em cheio. O padrão é calculado a partir dos próprios cards da tela inicial, então card novo entra na conta sozinho. A coluna Marketing considera que o administrador de conteúdo entra no Cadastro da Equipe, e um rodapé lembra que esse perfil é dado por nome, não pelo cargo.",
-          "para": [
-            "coord"
-          ]
-        }
-      ]
-    },
-    {
-      "v": "ast-v188",
-      "data": "13/11/2026",
-      "hora": "21:10",
-      "itens": [
-        {
-          "painel": "Ver como · Direitos de Acesso",
-          "o_que": "No \"Ver como\", o card Direitos de Acesso aparecia na simulação de gerente e de supervisor, porque o gate lia a sessão de quem está logado e não o papel simulado. Quem entra de verdade nunca viu o card — mas o \"Ver como\" existe para mostrar a verdade, então passou a usar o papel vigente.",
           "para": [
             "coord"
           ]
