@@ -2,6 +2,39 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v198",
+      "data": "13/11/2026",
+      "hora": "23:52",
+      "itens": [
+        {
+          "painel": "Cadastro da Equipe",
+          "o_que": "A lista de Cargo era fixa no código e ficava para trás a cada cargo novo. Agora vem da aba PERMISSOES: cargo que você criar lá aparece aqui sozinho. Entraram Marketing, Assistente Comercial de Loja e o novo Auxiliar de Loja. Se a planilha não responder, fica a lista antiga — nunca oferece mais cargo do que já oferecia.",
+          "para": [
+            "coord",
+            "mkt"
+          ]
+        },
+        {
+          "painel": "Cadastro da Equipe",
+          "o_que": "Campo Login Autcom em Nova pessoa e na edição. É ele que casa a pessoa com os relatórios de Indicadores: vendedor novo nasce com o código V+login. Em branco, nada muda.",
+          "para": [
+            "coord",
+            "mkt"
+          ]
+        },
+        {
+          "painel": "Cadastro da Equipe",
+          "o_que": "Assistente Comercial e Auxiliar são cargos próprios, mas vivem a vida de vendedor: aparecem sob a loja, contam para o botão Liberar acesso e o supervisor e o gerente podem arquivá-los, igual ao vendedor.",
+          "para": [
+            "coord",
+            "sup",
+            "ger",
+            "mkt"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v197",
       "data": "13/11/2026",
       "hora": "22:34",
@@ -166,20 +199,6 @@
         {
           "painel": "Direitos de acesso por cargo",
           "o_que": "A régua da aba PERMISSOES passa a valer de verdade no app. Até agora ela era lida e mostrada, mas nunca aplicada: o login não a trazia para a sessão e toda pergunta de permissão caía no padrão do código. Agora o app busca a régua ao abrir e casa pelo cargo. Nada muda de comportamento hoje — os padrões são os mesmos de antes —, mas a partir daqui editar a planilha passa a surtir efeito.",
-          "para": [
-            "coord"
-          ]
-        }
-      ]
-    },
-    {
-      "v": "ast-v178",
-      "data": "13/11/2026",
-      "hora": "18:35",
-      "itens": [
-        {
-          "painel": "Ver como (coordenação)",
-          "o_que": "O seletor de nível ganhou a opção Analista, para conferir com os próprios olhos o que esse perfil enxerga: rede inteira, só leitura, sem Cadastro da Equipe, Acesso de usuários, Painel de Conteúdo nem Central de Atualização. Escolha o analista na lista e clique em Ver.",
           "para": [
             "coord"
           ]
