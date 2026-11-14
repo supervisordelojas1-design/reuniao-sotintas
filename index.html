@@ -10346,12 +10346,16 @@ body.foco .wrap{padding-bottom:40px}
     var n=String(cargo||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
     /* a aba PERMISSOES guarda o nome por extenso ("Analista"), o Cadastro da
        Equipe guarda o código curto ("anl") — os dois chegam aqui */
-    var curto={coord:'coord', sup:'sup', ger:'ger', vend:'vend', anl:'anl', mkt:'mkt', outro:'outro'};
+    var curto={coord:'coord', sup:'sup', ger:'ger', vend:'vend', anl:'anl', mkt:'mkt',
+               asc:'vend', aux:'vend', outro:'outro'};
     if(curto[n]) return curto[n];
     if(/coorden/.test(n)) return 'coord';
     if(/supervis/.test(n)) return 'sup';
     if(/gerente/.test(n)) return 'ger';
-    if(/vendedor|operador|caixa|assistente/.test(n)) return 'vend';
+    /* Assistente Comercial e Auxiliar vivem a vida de vendedor: loja, escopo
+       próprio, mesma cara de tela. Sem isso caem no "outro", que é o genérico e
+       mostra cards de operação que o vendedor não vê. */
+    if(/vendedor|operador|caixa|assistente|auxiliar/.test(n)) return 'vend';
     if(/analista/.test(n)) return 'anl';
     if(/marketing/.test(n)) return 'mkt';
     return 'outro';
