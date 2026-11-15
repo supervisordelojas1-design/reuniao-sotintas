@@ -1,86 +1,127 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark" style="color-scheme:dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Escala & Folgas · Só Tintas</title>
 <meta name="robots" content="noindex, nofollow">
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--navy:#14285a;--red:#d8232a;--bg:#f3f5fa;--card:#fff;--line:#dfe4ef;--txt:#1c2333;--mut:#667089;--ok:#1e9e5a;--warn:#e0a100;--bad:#d8232a}
-*{box-sizing:border-box}
-body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--txt);font-size:15px}
-header{background:var(--navy);color:#fff;padding:14px 18px;border-bottom:4px solid var(--red)}
-header h1{margin:0;font-size:19px}
-header p{margin:3px 0 0;font-size:12.5px;opacity:.85}
-.proto{background:#fff6d6;border-bottom:1px solid #ecd98a;color:#6b5400;font-size:12.5px;padding:7px 18px}
-.bar{display:flex;flex-wrap:wrap;gap:10px;padding:12px 18px;background:#fff;border-bottom:1px solid var(--line)}
-.bar label{font-size:11.5px;color:var(--mut);display:flex;flex-direction:column;gap:3px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+:root{
+  --bg:#0f1522; --surface:#1a2336; --surface2:#222d44; --ink:#eef2fb; --muted:#9aa5bb; --line:#2c3850;
+  --accent:#ff3b47; --navy:#4f7cf0; --ok:#3fbf7f; --bad:#ff6b6b; --warn:#ffab5e;
+  --okbg:#12301f; --badbg:#3a1a20; --warnbg:#3a2717; --navybg:#1e2b4d;
+  --thbg:#222d44; --thfg:#eef2fb; --thseg:#2c3850; --folga:#c8323c;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Public Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --red:var(--accent); --card:var(--surface); --txt:var(--ink); --mut:var(--muted);
+  color-scheme:dark;
+}
+html[data-theme="light"]{
+  --bg:#f5f7fb; --surface:#ffffff; --surface2:#eef2f8; --ink:#16233d; --muted:#5a677f; --line:#e4e9f3;
+  --accent:#b91c1c; --navy:#1C3F8F; --ok:#178048; --bad:#c42a22; --warn:#b35600;
+  --okbg:#e1f3e8; --badbg:#fdeceb; --warnbg:#ffefdd; --navybg:#e7edf9;
+  --thbg:#1C3F8F; --thfg:#ffffff; --thseg:#16327a; --folga:#b91c1c;
+  color-scheme:light;
+}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+.pg{max-width:1180px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-right,0px)) 70px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
+.topbar{height:8px;background:var(--accent);border-radius:0 0 6px 6px;margin:-20px 0 4px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(24px,4vw,32px);line-height:1.05;margin:4px 0 0;color:var(--accent)}
+.sub{color:var(--muted);font-size:13px}
+.proto{background:var(--warnbg);border-radius:10px;color:var(--ink);font-size:13px;padding:8px 12px}
+.bar{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.bar label,.fl{font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:4px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;min-width:0}
 select,button{font:inherit}
-select{padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--txt);min-width:150px}
-nav{display:flex;gap:4px;padding:10px 18px 0;overflow-x:auto}
-nav button{border:0;background:transparent;padding:9px 14px;border-radius:9px 9px 0 0;color:var(--mut);font-weight:600;cursor:pointer;white-space:nowrap}
-nav button.on{background:var(--card);color:var(--navy);box-shadow:inset 0 3px 0 var(--red)}
-main{padding:0 18px 40px}
-.panel{background:var(--card);border-radius:0 12px 12px 12px;padding:16px;border:1px solid var(--line)}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
-.kpi{border:1px solid var(--line);border-radius:10px;padding:10px 12px;border-left:5px solid var(--navy)}
-.kpi b{display:block;font-size:20px;color:var(--navy)}
-.kpi span{font-size:12px;color:var(--mut)}
+select{min-height:40px;width:100%;background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:0 10px;font:600 13.5px var(--f-body);max-width:100%;text-transform:none;letter-spacing:0}
+select:disabled{opacity:.6}
+.fl select{width:auto;min-width:150px}
+nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+nav button{flex:none;min-height:40px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 14px;font:700 13px var(--f-body);cursor:pointer;white-space:nowrap}
+nav button.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+main{padding:0}
+.panel{background:var(--surface);border-radius:14px;padding:14px;border:1px solid var(--line)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:14px}
+.kpi{background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;border-left:5px solid var(--navy)}
+.kpi b{display:block;font-size:20px;color:var(--ink);font-variant-numeric:tabular-nums}
+.kpi span{font-size:11.5px;color:var(--muted)}
 .kpi.ok{border-left-color:var(--ok)}.kpi.bad{border-left-color:var(--bad)}.kpi.warn{border-left-color:var(--warn)}
-.wrap{overflow-x:auto}
+.wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
 table{border-collapse:collapse;width:100%;min-width:760px}
 th,td{border:1px solid var(--line);padding:7px 6px;text-align:center;font-size:13px}
-th{background:var(--navy);color:#fff;font-weight:600}
-th.seg{background:#0c1a3d}
+.wrap tr>:first-child{border-left:0}.wrap tr>:last-child{border-right:0}.wrap tr:first-child>*{border-top:0}.wrap tr:last-child>*{border-bottom:0}
+th{background:var(--thbg);color:var(--thfg);font-weight:700}
+th.seg{background:var(--thseg)}
 td.nome{text-align:left;white-space:nowrap}
-td.nome small{display:block;color:var(--mut);font-size:11.5px}
-td.t{background:#eaf1ff;cursor:default}
+td.nome small{display:block;color:var(--muted);font-size:11.5px}
+td.t{background:var(--navybg);cursor:default}
 td.edit{cursor:pointer}
 td.edit:hover{outline:2px solid var(--navy);outline-offset:-2px}
-td.f{background:var(--red);color:#fff;font-weight:700}
-td.segc{background:#e3e7f1}
-td.h{font-weight:700;color:var(--navy);white-space:nowrap}
-.tag{display:inline-block;font-size:10.5px;padding:1px 6px;border-radius:20px;background:#ffe9b0;color:#6b5400;font-weight:700;margin-left:4px}
-.alert{border-radius:9px;padding:9px 12px;margin-top:8px;font-size:13.5px}
-.alert.bad{background:#fde8e9;color:#8f1218;border:1px solid #f4b9bc}
-.alert.warn{background:#fff6d6;color:#6b5400;border:1px solid #ecd98a}
-.alert.ok{background:#e4f6ec;color:#12643a;border:1px solid #a9dfc0}
-.btn{background:var(--navy);color:#fff;border:0;border-radius:9px;padding:9px 14px;font-weight:600;cursor:pointer}
-.btn.alt{background:#fff;color:var(--navy);border:1px solid var(--navy)}
+td.f{background:var(--folga);color:#fff;font-weight:700}
+td.segc{background:var(--surface2)}
+td.h{font-weight:700;color:var(--ink);white-space:nowrap;font-variant-numeric:tabular-nums}
+.tag{display:inline-block;font-size:10.5px;padding:1px 6px;border-radius:20px;background:var(--warnbg);color:var(--warn);font-weight:700;margin-left:4px}
+.alert{border-radius:10px;padding:8px 12px;margin-top:8px;font-size:13px}
+.alert.bad{background:var(--badbg);color:var(--bad)}
+.alert.warn{background:var(--warnbg);color:var(--warn)}
+.alert.ok{background:var(--okbg);color:var(--ok)}
+.btn{min-height:44px;background:var(--accent);color:#fff;border:1px solid var(--accent);border-radius:10px;padding:9px 14px;font:700 14px var(--f-body);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.alt{background:var(--surface);color:var(--ink);border-color:var(--line)}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
-.legend{font-size:12px;color:var(--mut);display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}
+.legend{font-size:12px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}
 .sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:4px}
 .lojas{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:14px}
 .loja{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:center}
 .dot{width:14px;height:14px;border-radius:50%;flex:none}
-.loja small{display:block;color:var(--mut);font-size:11.5px}
-h3{margin:16px 0 8px;color:var(--navy);font-size:15px}
-.note{font-size:12.5px;color:var(--mut);margin:6px 0 0}
-#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#1c2333;color:#fff;padding:10px 16px;border-radius:10px;font-size:13.5px;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%}
+.loja small{display:block;color:var(--muted);font-size:11.5px}
+h3{font-family:var(--f-display);margin:16px 0 8px;color:var(--ink);font-size:17px}
+.note{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:13.5px;font-weight:600;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;z-index:9}
 #toast.on{opacity:1}
-tr.cob td{background:#f7f9fd;font-size:12.5px}tr.cob th{background:#2a3f7a}
+tr.cob td{background:var(--surface2);font-size:12.5px}tr.cob th{background:var(--thseg)}
 .chip{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;font-size:10.5px;font-weight:700;color:#1c2333;text-align:center}
-.fl{font-size:11.5px;color:var(--mut);display:flex;flex-direction:column;gap:3px;font-weight:600;text-transform:uppercase}
-.ori{border:1px solid #cfdcf2;background:#f4f8ff;border-radius:11px;padding:12px 14px;margin:0 0 14px}.orih{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-bottom:8px}.orih b{color:var(--navy);font-size:15px}.orih span{color:var(--mut);font-size:12.5px;flex:1}
-.orii{background:#fff;border:1px solid var(--line);border-left:5px solid var(--ok);border-radius:9px;padding:8px 11px;margin-top:7px}.orii.mud{border-left-color:var(--warn);background:#fffaf0}.orii p{margin:4px 0 0;font-size:13px;color:#3a4256}
-.st{font-size:11.5px;font-weight:700;margin-left:10px}.st.ok{color:#12643a}.st.no{color:#8a5a00}.orif{margin:9px 0 0;font-size:13px;color:#3a4256}
-.trava{background:#eef3fb;border-bottom:1px solid #cfdcf2;color:#14285a;font-size:12.5px;padding:7px 18px}
-.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:12px}.fbox{border:1px solid var(--line);border-radius:11px;padding:12px 14px}
+.ori{border:1px solid var(--line);background:var(--surface2);border-radius:12px;padding:12px 14px;margin:0 0 14px}.orih{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-bottom:8px}.orih b{font-family:var(--f-display);color:var(--ink);font-size:16px}.orih span{color:var(--muted);font-size:12.5px;flex:1}
+.orii{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--ok);border-radius:10px;padding:8px 11px;margin-top:7px}.orii.mud{border-left-color:var(--warn);background:var(--warnbg)}.orii p{margin:4px 0 0;font-size:13px;color:var(--ink)}
+.st{font-size:11.5px;font-weight:700;margin-left:10px}.st.ok{color:var(--ok)}.st.no{color:var(--warn)}.orif{margin:9px 0 0;font-size:13px;color:var(--ink)}
+.trava{background:var(--navybg);border-radius:10px;color:var(--ink);font-size:13px;padding:8px 12px}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:12px}.fbox{border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .seg{display:flex;height:22px;border-radius:6px;overflow:hidden;gap:2px}.seg i{display:block;min-width:4px}
-.fleg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;margin-top:10px;color:#3a4256}.fleg i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
-.mbar{display:flex;align-items:flex-end;gap:6px;height:128px}.mbar div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;font-size:11px;color:var(--mut)}.mbar i{display:block;width:100%;max-width:34px;background:#2a78d6;border-radius:4px 4px 0 0;min-height:2px}.mbar b{font-size:12px;color:var(--txt)}.mbar span{text-align:center;line-height:1.15;margin-top:3px}
+.fleg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;margin-top:10px;color:var(--ink)}.fleg i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.mbar{display:flex;align-items:flex-end;gap:6px;height:128px}.mbar div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;font-size:11px;color:var(--muted)}.mbar i{display:block;width:100%;max-width:34px;background:var(--navy);border-radius:4px 4px 0 0;min-height:2px}.mbar b{font-size:12px;color:var(--ink)}.mbar span{text-align:center;line-height:1.15;margin-top:3px}
 .hrow{display:grid;grid-template-columns:190px 1fr 110px;gap:10px;align-items:center;font-size:12.5px;padding:3px 0}.hrow div{display:flex;gap:2px}.hrow i{display:block;height:12px;border-radius:3px}.hrow span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tl{height:8px;background:#e8ebf3;border-radius:5px;overflow:hidden}.tl i{display:block;height:100%}
-.fst{display:inline-flex;align-items:center;gap:5px;border:1px solid;border-radius:20px;padding:2px 9px;font-size:11.5px;font-weight:600;white-space:nowrap;color:#1c2333}.fst i{width:8px;height:8px;border-radius:50%}
-.btn.mini{padding:4px 9px;font-size:11.5px;border-radius:7px}.box2{background:#f4f8ff;border:1px solid #cfdcf2;border-radius:10px;padding:10px 14px;margin-top:14px;font-size:13px}.box2 ul{margin:6px 0 0;padding-left:18px}
-td select{min-width:0;padding:4px 5px;font-size:12.5px}
+.tl{height:8px;background:var(--surface2);border-radius:5px;overflow:hidden}.tl i{display:block;height:100%}
+.fst{display:inline-flex;align-items:center;gap:5px;border:1px solid;border-radius:20px;padding:2px 9px;font-size:11.5px;font-weight:600;white-space:nowrap;color:var(--ink)}.fst i{width:8px;height:8px;border-radius:50%}
+.btn.mini{min-height:30px;padding:4px 9px;font-size:11.5px;border-radius:8px}.box2{background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-top:14px;font-size:13px}.box2 ul{margin:6px 0 0;padding-left:18px}
+td select{min-width:0;min-height:32px;padding:0 5px;font-size:12.5px;width:auto}
+@media(max-width:520px){.bar{grid-template-columns:1fr 1fr}.btn{padding:9px 10px;font-size:13px}.hrow{grid-template-columns:110px 1fr 80px}}
 </style>
 </head>
 <body>
+<div class="pg">
+<div class="topbar"></div>
 <header>
-  <h1>Escala &amp; Folgas</h1>
-  <p id="sub"></p>
+  <div><div class="eyebrow">Só Tintas · Escala 5x2</div><h1>Escala &amp; Folgas</h1><div class="sub" id="sub">Carregando…</div></div>
+  <button type="button" class="btn alt" id="btnTema"><span id="temaIc">🌙</span> <span id="temaTx">Escuro</span></button>
 </header>
+<script>
+(function(){
+  function qp(n){try{return new URLSearchParams(location.search).get(n);}catch(e){return null;}}
+  function ls(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+  var p=(qp('tema')||'').toLowerCase(), t=(p==='claro'||p==='light')?'light':(p==='escuro'||p==='dark')?'dark':null;
+  if(!t){ var s=(ls('st_tema')||'').toLowerCase(); t=(s==='light'||s==='claro')?'light':'dark'; }
+  window.__setTema=function(tema){ document.documentElement.setAttribute('data-theme',tema); document.documentElement.style.colorScheme=tema;
+    var ic=document.getElementById('temaIc'), tx=document.getElementById('temaTx'); if(ic) ic.textContent=tema==='light'?'☀️':'🌙'; if(tx) tx.textContent=tema==='light'?'Claro':'Escuro';
+    try{localStorage.setItem('st_tema',tema);}catch(e){} try{ if(window.parent&&window.parent!==window) window.parent.postMessage({st_tema:tema},'*'); }catch(e){} };
+  window.__setTema(t);
+  window.addEventListener('message',function(ev){ var d=ev&&ev.data; if(d&&(d.st_tema==='light'||d.st_tema==='dark')) window.__setTema(d.st_tema); });
+  document.getElementById('btnTema').onclick=function(){ window.__setTema(document.documentElement.getAttribute('data-theme')==='light'?'dark':'light'); };
+})();
+</script>
 <div class="proto" id="info">Carregando…</div>
 
 <div class="bar">
@@ -90,7 +131,7 @@ td select{min-width:0;padding:4px 5px;font-size:12.5px}
   <label>Trava de folga na segunda
     <select id="seg"><option value="1">Sim</option><option value="0">Não</option></select>
   </label>
-  <label>Ver como (simulação)
+  <label id="lbPerfil">Ver como (simulação)
     <select id="perfil">
       <option value="vendedor">Vendedor</option>
       <option value="gerente" selected>Gerente</option>
@@ -149,6 +190,7 @@ td select{min-width:0;padding:4px 5px;font-size:12.5px}
 <div id="trava" class="trava">🔒 Seleções travadas. Por enquanto só a coordenação altera horário, sábado, trava de segunda e critérios. Gerente e supervisor acompanham e ajustam as folgas.</div>
 <nav id="tabs"></nav>
 <main><div class="panel" id="view"></div></main>
+</div>
 <div id="toast"></div>
 
 <script src="st-dados.js?v=93"></script>
@@ -190,7 +232,8 @@ const $=id=>document.getElementById(id);
 const nome=id=>P.find(p=>p.id===id).nome;
 const hm=m=>Math.floor(m/60)+'h'+String(m%60).padStart(2,'0');
 function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2600)}
-const podeEditar=()=>S.perfil==='gerente'||S.perfil==='coord';
+let RO=false,PFREAL='coord';
+const podeEditar=()=>!RO&&(S.perfil==='gerente'||S.perfil==='supervisor'||S.perfil==='coord');
 
 function filaPerf(){return P.filter(p=>p.pct!==null).sort((a,b)=>b.pct-a.pct||b.sem-a.sem)}
 function filaRod(){return P.filter(p=>p.pct===null).sort((a,b)=>b.sem-a.sem)}
@@ -332,7 +375,7 @@ function vSemana(){
     const i=P.indexOf(p);
     h+='<tr><td class="nome"><b>'+p.nome+'</b>'+(p.id===TOP?'<span class="tag">TOP</span>':'')+'<small>'+p.cargo+'</small></td>';
     DIAS.forEach(([d])=>{
-      const o=PL[p.id][d],f=!o,t=lab(o)+(o&&o.x===1?'<br><span class="tag">+1h cobre as pontas</span>':o&&o.x===-1?'<br><span class="tag" style="background:#d6f0e0;color:#12643a">−1h compensa</span>':o&&o.x===2?'<br><span class="tag">almoço de 2h</span>':'');
+      const o=PL[p.id][d],f=!o,t=lab(o)+(o&&o.x===1?'<br><span class="tag">+1h cobre as pontas</span>':o&&o.x===-1?'<br><span class="tag" style="background:var(--okbg);color:var(--ok)">−1h compensa</span>':o&&o.x===2?'<br><span class="tag">almoço de 2h</span>':'');
       h+='<td class="'+(f?'f':d==='seg'&&S.segLock?'segc':'t')+(podeEditar()?' edit':'')+'" onclick="setFolga(\''+p.id+'\',\''+d+'\')">'+t+'</td>';
     });
     h+='<td>'+(podeEditar()
@@ -349,7 +392,7 @@ function vSemana(){
      +lin('Abre',c=>'<td>'+nm(c.abre)+'<br><small>'+c.ini+'</small></td>')
      +lin('Fecha',c=>'<td>'+nm(c.fecha)+'<br><small>'+c.fim+'</small></td>');
   }
-  h+='</table></div><div class="legend"><span><i class="sw" style="background:var(--red)"></i>Folga</span><span><i class="sw" style="background:#eaf1ff;border:1px solid var(--line)"></i>Trabalho</span><span><i class="sw" style="background:#e3e7f1"></i>Segunda (folga bloqueada)</span><span>Domingo: loja fechada</span></div>';
+  h+='</table></div><div class="legend"><span><i class="sw" style="background:var(--red)"></i>Folga</span><span><i class="sw" style="background:var(--navybg);border:1px solid var(--line)"></i>Trabalho</span><span><i class="sw" style="background:var(--surface2)"></i>Segunda (folga bloqueada)</span><span>Domingo: loja fechada</span></div>';
   if(S.perfil!=='vendedor'){
     const atual=S.sab;
     h+='<h3>Comparar horários de sábado</h3><div class="wrap"><table><tr><th style="text-align:left">Opção</th><th>Sábado</th><th>Abrem juntos</th><th>Fecham juntos</th><th>Horas por pessoa</th><th>Loja aberta no sábado</th><th>Avisos na semana</th></tr>';
@@ -398,14 +441,14 @@ function render(){
   setDias();$('sub').textContent=loja().c+' '+loja().n+' · Semana de '+dm(semIni(S.sem))+' a '+dm(new Date(semIni(S.sem).getTime()+5*D1))+' · Escala 5x2 · 40h semanais';
   $('tabs').innerHTML=TABS.map(([k,l])=>'<button class="'+(S.tab===k?'on':'')+'" onclick="S.tab=\''+k+'\';render()">'+l+'</button>').join('');
   $('view').innerHTML={semana:vSemana,fila:vFila,feriados:vFeriados,banco:vBanco,geral:vGeral,ferias:()=>'<h3 style="margin-top:0">Férias — em preparação</h3><p>Esta área vai avisar quem está com férias vencendo, por loja, região e rede. Falta entrar o arquivo do RH com as datas de admissão.</p>'}[S.tab]();
-  const co=S.perfil==='coord';['seg','hor','sab','aperto','crit','vagas','equipe'].forEach(k=>$(k).disabled=!co);$('modo').disabled=!co||!curto();$('trava').style.display=co?'none':'block';
+  const co=S.perfil==='coord'&&!RO;['seg','hor','sab','aperto','crit','vagas','equipe'].forEach(k=>$(k).disabled=!co);$('modo').disabled=!co||!curto();$('trava').style.display=co?'none':'block';
 }
 $('equipe').onchange=e=>{S.equipe=e.target.value;montaEquipe();sugerir();render()};
-const HOR={'8-18':'8h às 18h','9-18':'9h às 18h','8-19':'8h às 19h','9-19':'9h às 19h'};
+const HOR={'8-18':'8h às 18h','9-18':'9h às 18h'}; // o fechamento é sempre às 18h (decisão do Bruno, 15/11/2026)
 const R$=v=>'R$ '+Number(v).toLocaleString('pt-BR');
 const pc=v=>String(v).replace('.',',')+'%';
 function recOf(l){
-  let hor=l.recSem.includes('9h–19h')?'9-19':l.recSem.includes('19h')?'8-19':l.recSem.includes('9h')?'9-18':'8-18';
+  let hor=/(^|[^1])9h/.test(l.recSem)?'9-18':'8-18';
   if(hor==='9-18'&&l.sab==='c')hor='8-18'; // abrir às 9h deixaria o sábado curto em 36h: a loja não libera hora
   return {seg:l.seg<=2,hor,sab:l.sab==='i'?(l.recSab.startsWith('Fechar')?'integral17':'integral'):'curto9'};
 }
@@ -417,10 +460,9 @@ function motivos(l){
   const cedo='A primeira hora traz só '+pc(l.sh8)+' do faturamento do dia ('+String(l.at8).replace('.',',')+' atendimento por hora).';
   const tarde=(l.sh17>=15?'A última hora concentra '+pc(l.sh17)+' do faturamento do dia.':'A última hora traz '+pc(l.sh17)+' do dia.')+(l.ap18>=300?' Ainda são faturados '+R$(l.ap18)+' por dia depois das 18h.':'');
   const piloto=' É uma hipótese para piloto: a venda depois das 18h não mostra quem encontrou a loja fechada.';
-  m.hor=r.hor==='8-18'&&l.recSem.includes('abrir')?cedo+' Mesmo assim a loja fica em 8h às 18h: abrindo às 9h, quem trabalha no sábado curto fecharia a semana em 36h, e a regra é ninguém dever hora e a loja não liberar hora a mais.'
+  m.hor=r.hor==='8-18'&&/(^|[^1])9h/.test(l.recSem)?cedo+' Mesmo assim a loja fica em 8h às 18h: abrindo às 9h, quem trabalha no sábado curto fecharia a semana em 36h, e a regra é ninguém dever hora e a loja não liberar hora a mais.'
     :r.hor==='8-18'?'A primeira hora traz '+pc(l.sh8)+' do faturamento do dia e a última '+pc(l.sh17)+'. Nenhuma é fraca o bastante para cortar, e depois das 18h a loja fatura '+R$(l.ap18)+' por dia.'
-    :r.hor==='9-18'?cedo+' Abrindo às 9h, a jornada de 8h cobre a loja inteira e todos abrem e fecham juntos.'+(l.sab==='c'?' Atenção: quem trabalha no sábado curto fica com 36h na semana.':'')
-    :r.hor==='8-19'?tarde+piloto:cedo+' '+tarde+piloto;
+    :cedo+' Abrindo às 9h, a jornada de 8h cobre a loja inteira e todos abrem e fecham juntos.'+(l.sab==='c'?' Atenção: quem trabalha no sábado curto fica com 36h na semana.':'');
   m.sab=r.sab==='curto9'?(l.sv12>l.sv8*1.1?'Das 12h às 13h a loja vende '+R$(l.sv12)+' por sábado, contra '+R$(l.sv8)+' das 8h às 9h. Com 9h–13h o turno é único e todos trabalham juntos.':'A primeira e a última hora do sábado vendem quase o mesmo ('+R$(l.sv8)+' e '+R$(l.sv12)+'). Fica 9h–13h para seguir o padrão da rede.')
     :r.sab==='integral17'?'Das 17h às 18h a loja vende só '+R$(l.sv17)+' por sábado. Fechando às 17h o turno é único de 8h, com todos da abertura ao fechamento.'
     :'Das 17h às 18h a loja ainda vende '+R$(l.sv17)+' por sábado, acima de R$ 500. Vale manter até as 18h.';
@@ -536,7 +578,7 @@ function vGeral(){
   let reg=null;
   lin.forEach(r=>{
     if(niv!=='loja'&&r.l.reg!==reg){reg=r.l.reg;h+='<tr class="cob"><th colspan="7" style="text-align:left">Região '+reg+'</th></tr>'}
-    h+='<tr><td class="nome"><b>'+r.l.c+'</b> '+r.l.n+'<small>'+r.P.filter(ok).length+' pessoas'+(r.i===S.loja?' · loja aberta na grade':'')+'</small></td>'+dias.map(d=>'<td style="text-align:left">'+(r.P.filter(p=>ok(p)&&r.f[p.id]===d).map(p=>'<span class="chip" style="background:'+CGC[p.cargo]+'" title="'+p.cargo+'">'+CGL[p.cargo]+'</span> '+p.nome.split(' ')[0]).join('<br>')||'<span style="color:#aab">—</span>')+'</td>').join('')+'</tr>';
+    h+='<tr><td class="nome"><b>'+r.l.c+'</b> '+r.l.n+'<small>'+r.P.filter(ok).length+' pessoas'+(r.i===S.loja?' · loja aberta na grade':'')+'</small></td>'+dias.map(d=>'<td style="text-align:left">'+(r.P.filter(p=>ok(p)&&r.f[p.id]===d).map(p=>'<span class="chip" style="background:'+CGC[p.cargo]+'" title="'+p.cargo+'">'+CGL[p.cargo]+'</span> '+p.nome.split(' ')[0]).join('<br>')||'<span style="color:var(--muted)">—</span>')+'</td>').join('')+'</tr>';
   });
   h+='</table></div><p class="note">A escala de cada loja é a sugerida pelas regras e pelo movimento dela. Ajustes feitos à mão valem só para a loja aberta na grade.</p>';
   return h;
@@ -552,7 +594,7 @@ function salvarSemana(){
   STDados.chamar('escalaSalvar',{loja:loja().c,sem:semKey(S.sem),folga,alm},true).then(r=>{if(!r||!r.ok)throw new Error((r&&r.erro)||'O servidor não confirmou.');SALVOS[k]={folga,alm,por:r.por,em:r.em};S.salvo=SALVOS[k];render();toast('Escala salva.')}).catch(e=>toast('Não salvou: '+e.message));
 }
 function salvarCfg(){
-  if(S.perfil!=='coord'||!REAL)return;const cfg={sab:S.sab,seg:S.segLock,hor:S.ini+'-'+S.fim,modo:S.modo,aperto:S.aperto,crit:S.crit,vagas:S.vagas};CFG[loja().c]=cfg;
+  if(S.perfil!=='coord'||!REAL||RO||PFREAL!=='coord')return;const cfg={sab:S.sab,seg:S.segLock,hor:S.ini+'-'+S.fim,modo:S.modo,aperto:S.aperto,crit:S.crit,vagas:S.vagas};CFG[loja().c]=cfg;
   STDados.chamar('escalaCfg',{loja:loja().c,cfg},true).then(r=>{if(!r||!r.ok)throw new Error((r&&r.erro)||'O servidor não confirmou.')}).catch(e=>toast('A seleção não foi gravada: '+e.message));
 }
 function trocaLoja(i){S.loja=i;aplicaRec(loja());aplicaCfg();montaEquipe();opcoes();['modo','aperto','crit'].forEach(k=>$(k).value=S[k]);$('vagas').value=S.vagas;carregaSemana();render()}
@@ -572,8 +614,12 @@ function boot(d){
   LOJAS.forEach(l=>l.reg=Object.keys(REG).find(k=>REG[k].includes(l.c))||'Sem região');
   $('loja').innerHTML=LOJAS.map((l,i)=>'<option value="'+i+'">'+l.c+' · '+l.n+'</option>').join('');
   $('sem').innerHTML=[0,1,2,3,4,5].map(k=>'<option value="'+k+'">'+dm(semIni(k))+' a '+dm(new Date(semIni(k).getTime()+5*D1))+(k===0?' (semana atual)':'')+'</option>').join('');
-  $('info').innerHTML='Liberado só para a coordenação. '+BASE+(d.baseEm?' Base enviada em '+d.baseEm+'.':'')+' <label style="text-decoration:underline;cursor:pointer;margin-left:8px">Atualizar base<input type="file" accept=".json" style="display:none" onchange="enviarBase(this)"></label>';
-  S.perfil='coord';$('perfil').value='coord';REAL=true;trocaLoja(0);
+  PFREAL=d.pf||'coord';RO=!!d.leitura;const eCo=PFREAL==='coord'&&!RO;
+  const lib=(d.perfis||[]).map(p=>({sup:'supervisores',ger:'gerentes',anl:'análise'}[p])).filter(Boolean);
+  $('info').innerHTML=eCo?(lib.length?'Liberado para a coordenação e para '+lib.join(', ')+' (Direitos de Acesso). ':'Liberado só para a coordenação. ')+BASE+(d.baseEm?' Base enviada em '+d.baseEm+'.':'')+' <label style="text-decoration:underline;cursor:pointer;margin-left:8px">Atualizar base<input type="file" accept=".json" style="display:none" onchange="enviarBase(this)"></label>':BASE+(RO?' Acesso só de leitura.':'');
+  S.perfil={coord:'coord',anl:'coord',sup:'supervisor',ger:'gerente'}[PFREAL]||'gerente';$('perfil').value=S.perfil;$('lbPerfil').style.display=eCo?'':'none';
+  if(!REG[S.reg])S.reg=Object.keys(REG)[0]||S.reg;if(S.perfil==='supervisor')S.nivel='reg';
+  REAL=true;trocaLoja(0);
 }
 function enviarBase(inp){
   const f=inp.files&&inp.files[0];if(!f)return;const rd=new FileReader();

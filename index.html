@@ -9491,7 +9491,7 @@ syncNav();
       </button>
       <button type="button" class="ini-card feat" data-act="escala" data-coordonly="1">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-chart"/></svg></span>
-        <span class="ini-txt"><span class="ini-nm">Escala &amp; Folgas</span><span class="ini-ds">Escala 5x2 por loja · folgas, sábado e cobertura · só coordenação por enquanto</span></span>
+        <span class="ini-txt"><span class="ini-nm">Escala &amp; Folgas</span><span class="ini-ds">Escala 5x2 por loja · folgas, sábado e quem cobre a loja</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
       <button type="button" class="ini-card feat" data-act="conteudo" data-conteudo="1">
@@ -9733,7 +9733,7 @@ body.foco .wrap{padding-bottom:40px}
     pontos:'verRanking', ranking:'verRanking', provas:'verProvas', avulsas:'verMinhasProvas',
     uso:'verUso', crm:'verCRM', bonus:'verBonus', simulador:'verSimulador', proposta:'verProposta',
     mentor:'verMentor', especialista:'verEspecialista', cadastro:'gerirCadastro',
-    acessos:'gerirAcessos', conteudo:'gerirConteudo', central:'gerirCentral' };
+    acessos:'gerirAcessos', conteudo:'gerirConteudo', central:'gerirCentral', escala:'verEscala' };
   function aplicarRegua(){
     if(typeof podePainel!=='function') return;
     Array.prototype.forEach.call(grid.querySelectorAll('[data-act]'),function(c){
@@ -9862,9 +9862,12 @@ body.foco .wrap{padding-bottom:40px}
   }
   /* Escala & Folgas (nov/2026): por enquanto só a coordenação; os dados vêm do Servidor de Dados */
   function abrirEscala(){
-    if(typeof ehAnl==='function'&&ehAnl()) return;
+    /* ouve a régua (Direitos de Acesso): o padrão é só a coordenação */
+    var s=sessao(), padrao=!!(s&&!ehVend()&&s.escopo==='todos'&&String(s.papel||'').toLowerCase()!=='analista');
+    if(!(typeof podePainel==='function'?podePainel('verEscala',padrao):padrao)) return;
     if(!ovD||!ifrD) return; titOv('Escala & Folgas · Só Tintas');
-    ifrD.setAttribute('src','escala.html?v='+Date.now());
+    var tema=(window.STtema?window.STtema.get():'light');
+    ifrD.setAttribute('src','escala.html?tema='+tema+'&v='+Date.now());
     ovD.style.display='flex'; document.body.style.overflow='hidden';
   }
   function abrirCentral(){
@@ -10193,7 +10196,7 @@ body.foco .wrap{padding-bottom:40px}
     ['verMetas','Painel de Metas','painel'],['verNiveis','Níveis','niveis'],['verPDI','PDI Mensal','pdi'],
     ['verPDISemanal','PDI Semanal','semana'],['verRanking','Ranking ST','pontos'],
     ['verProvas','Central de Provas','provas'],['verMinhasProvas','Minhas Provas','avulsas'],
-    ['verUso','Acessos ao App','uso'],['verCRM','CRM de Vendas','crm'],
+    ['verUso','Acessos ao App','uso'],['verCRM','CRM de Vendas','crm'],['verEscala','Escala & Folgas','escala'],
     ['verBonus','Bonificações','bonus'],['verSimulador','Simulador de Bônus','simulador'],
     ['verProposta','Proposta de Vendedor','proposta'],['verMentor','Mentor','mentor'],
     ['verEspecialista','Especialista ST','especialista'],
@@ -10393,6 +10396,15 @@ body.foco .wrap{padding-bottom:40px}
         if(falhas.length) t+='<b style="color:#b3261e">Não salvou:</b> '+falhas.join(' · ');
         aviso(t||'Nada a salvar.', falhas.length?'erro':'ok');
         try{ if(window.carregarMinhaRegua) carregarMinhaRegua(); }catch(e2){}
+        /* Escala & Folgas: o servidor de dados também precisa saber quem foi liberado, senão o card
+           abriria e os dados seriam recusados. Vai a lista de perfis com a Escala liberada (✓). */
+        try{ if(feitos.length&&window.STDados){
+          var pfs=[]; ITENS.forEach(function(i){ var f=familia(i.cargo);
+            if(mapa(ORIG[i.cargo]).verEscala==='1'&&['sup','ger','anl'].indexOf(f)>=0&&pfs.indexOf(f)<0) pfs.push(f); });
+          STDados.chamar('escalaPerfis',{pfs:pfs},true).then(function(r){
+            if(!r||!r.ok) aviso(t+' <b style="color:#b3261e">A Escala não recebeu a liberação:</b> '+esc((r&&r.erro)||'o servidor não confirmou')+'.','erro');
+          }).catch(function(er){ aviso(t+' <b style="color:#b3261e">A Escala não recebeu a liberação:</b> '+esc(er.message||String(er))+'.','erro'); });
+        } }catch(e3){}
       });
     });
   };

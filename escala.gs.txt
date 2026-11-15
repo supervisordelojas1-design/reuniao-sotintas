@@ -12,8 +12,14 @@
    escalaSalvar  grava a escala de uma loja numa semana (aba ESCALA)
    escalaCfg     grava as seleções de uma loja (aba ESCALA_CFG)
    escalaBase    recebe a base do mês (aba ESCALA_BASE), enviada pela tela
+   escalaPerfis  grava quais perfis, além da coordenação, podem abrir a Escala
 
-   QUEM VÊ: por enquanto só a coordenação (decisão do Bruno, 15/11/2026).
+   QUEM VÊ: a coordenação sempre, e tudo. Os demais só quando a coordenação
+   liberar o painel em Direitos de Acesso (o app manda a lista para cá em
+   escalaPerfis). Liberado, o recorte vem do crachá: supervisor vê as lojas da
+   carteira, gerente a(s) loja(s) dele, análise vê tudo sem alterar. Supervisor
+   e gerente salvam a escala da semana das lojas deles; seleções e base são só
+   da coordenação. Vendedor não entra: a tela mostra o % da meta dos colegas.
    Os dados ficam na planilha do servidor, e não na página nem neste arquivo,
    porque o repositório do app é público.
    ========================================================================== */
@@ -21,15 +27,23 @@ var ESC_ABA = 'ESCALA', ESC_ABA_CFG = 'ESCALA_CFG', ESC_ABA_BASE = 'ESCALA_BASE'
 
 function escalaAcao_(d, quem) {
   try {
-    var nome = '', pf = '', leitura = false;
-    if (quem && typeof quem === 'object') { nome = quem.nome || quem.n || ''; pf = String(quem.perfil || quem.pf || ''); leitura = !!quem.vc; }
+    var nome = '', pf = '', leitura = false, lj = [];
+    if (quem && typeof quem === 'object') { nome = quem.nome || quem.n || ''; pf = String(quem.perfil || quem.pf || ''); leitura = !!quem.vc; lj = quem.lojas || quem.lj || []; }
     if (!nome) return escResp_({ ok: false, erro: 'Crachá inválido.', cracha: true });
-    if (pf !== 'coord') return escResp_({ ok: false, erro: 'A Escala ainda está liberada só para a coordenação.' });
-    if (d.acao === 'escalaListar') return escResp_(escListar_());
+    var coord = pf === 'coord';
+    if (!coord && escPerfis_().indexOf(pf) < 0) return escResp_({ ok: false, erro: 'A Escala ainda não está liberada para o seu perfil.' });
+    if (pf === 'anl') leitura = true;
+    var minhas = (coord || pf === 'anl') ? null : (lj instanceof Array ? lj : [lj]).map(escLoja_);
+    if (d.acao === 'escalaListar') { var r = escListar_(minhas); r.pf = pf; r.leitura = leitura; if (coord) r.perfis = escPerfis_(); return escResp_(r); }
     if (leitura) return escResp_({ ok: false, erro: 'Este acesso é só de leitura.' });
-    if (d.acao === 'escalaSalvar') return escResp_(escSalvar_(d, nome));
+    if (d.acao === 'escalaSalvar') {
+      if (minhas && minhas.indexOf(escLoja_(d.loja)) < 0) return escResp_({ ok: false, erro: 'Esta loja não é sua.' });
+      return escResp_(escSalvar_(d, nome));
+    }
+    if (!coord) return escResp_({ ok: false, erro: 'Só a coordenação altera isto.' });
     if (d.acao === 'escalaCfg') return escResp_(escCfg_(d, nome));
     if (d.acao === 'escalaBase') return escResp_(escBase_(d, nome));
+    if (d.acao === 'escalaPerfis') return escResp_(escPerfisGrava_(d, nome));
     return escResp_({ ok: false, erro: 'Ação da Escala desconhecida.' });
   } catch (err) {
     return escResp_({ ok: false, erro: String(err) });
@@ -42,7 +56,21 @@ function escAba_(nome, cab) {
   ab.getRange(1, 1, 1, cab.length).setValues([cab]).setFontWeight('bold');
   return ab;
 }
-function escLoja_(c) { return ('00' + String(c == null ? '' : c).replace(/\D/g, '')).slice(-3); }
+function escLoja_(c) { var m = String(c == null ? '' : c).match(/\d+/); return ('00' + (m ? Number(m[0]) : '')).slice(-3); }
+/* perfis liberados além da coordenação: linha "_perfis" da aba ESCALA_CFG */
+var ESC_PF_OK = ['sup', 'ger', 'anl'];
+function escPerfis_() {
+  var g = SpreadsheetApp.getActive().getSheetByName(ESC_ABA_CFG), out = [];
+  if (g && g.getLastRow() > 1) g.getRange(2, 1, g.getLastRow() - 1, 2).getValues().forEach(function (l) {
+    if (String(l[0]) === '_perfis') { try { out = (JSON.parse(l[1]).pfs || []).filter(function (p) { return ESC_PF_OK.indexOf(p) >= 0; }); } catch (e) {} }
+  });
+  return out;
+}
+function escPerfisGrava_(d, nome) {
+  var pfs = (d.pfs instanceof Array ? d.pfs : []).map(String).filter(function (p, i, a) { return ESC_PF_OK.indexOf(p) >= 0 && a.indexOf(p) === i; });
+  escGrava_(ESC_ABA_CFG, ['LOJA', 'CFG', 'POR', 'QUANDO'], ['_perfis'], ['_perfis', JSON.stringify({ pfs: pfs }), nome, escAgora_()]);
+  return { ok: true, pfs: pfs };
+}
 function escAgora_() { return Utilities.formatDate(new Date(), 'America/Sao_Paulo', 'dd/MM/yyyy HH:mm'); }
 function escLerBase_() {
   var ab = SpreadsheetApp.getActive().getSheetByName(ESC_ABA_BASE);
@@ -50,7 +78,7 @@ function escLerBase_() {
   var txt = ab.getRange(2, 1, ab.getLastRow() - 1, 1).getValues().map(function (l) { return String(l[0]); }).join('');
   try { return JSON.parse(txt); } catch (e) { return null; }
 }
-function escListar_() {
+function escListar_(minhas) {
   var ss = SpreadsheetApp.getActive(), salvos = {}, cfg = {}, b = escLerBase_();
   if (!b) return { ok: true, semBase: true, lojas: [], equipes: {}, reg: {}, salvos: {}, cfg: {} };
   var a = ss.getSheetByName(ESC_ABA);
@@ -59,9 +87,20 @@ function escListar_() {
   });
   var g = ss.getSheetByName(ESC_ABA_CFG);
   if (g && g.getLastRow() > 1) g.getRange(2, 1, g.getLastRow() - 1, 2).getValues().forEach(function (l) {
+    if (String(l[0]) === '_perfis') return;
     try { cfg[String(l[0])] = JSON.parse(l[1]); } catch (e) {}
   });
-  return { ok: true, lojas: b.lojas || [], equipes: b.equipes || {}, reg: b.reg || {}, base: b.base || '', baseEm: b.em || '', salvos: salvos, cfg: cfg };
+  var lojas = b.lojas || [], equipes = b.equipes || {}, reg = b.reg || {};
+  if (minhas) {
+    var tem = function (c) { return minhas.indexOf(String(c)) >= 0; }, e2 = {}, s2 = {}, c2 = {}, r2 = {};
+    lojas = lojas.filter(function (l) { return tem(l.c); });
+    Object.keys(equipes).forEach(function (k) { if (tem(k)) e2[k] = equipes[k]; });
+    Object.keys(salvos).forEach(function (k) { if (tem(k.split('|')[0])) s2[k] = salvos[k]; });
+    Object.keys(cfg).forEach(function (k) { if (tem(k)) c2[k] = cfg[k]; });
+    Object.keys(reg).forEach(function (k) { var x = (reg[k] || []).filter(tem); if (x.length) r2[k] = x; });
+    equipes = e2; salvos = s2; cfg = c2; reg = r2;
+  }
+  return { ok: true, lojas: lojas, equipes: equipes, reg: reg, base: b.base || '', baseEm: minhas ? '' : (b.em || ''), salvos: salvos, cfg: cfg };
 }
 function escGrava_(aba, cab, chave, linha) {
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
