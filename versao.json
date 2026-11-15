@@ -2,6 +2,20 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v217",
+      "data": "15/11/2026",
+      "hora": "21:15",
+      "itens": [
+        {
+          "painel": "Escala & Folgas",
+          "o_que": "Regra nova de almoço, no mesmo raciocínio das folgas: o gerente não almoça junto com o assistente nem com vendedor de alta performance (o TOP e quem bateu 100% da meta no mês fechado). A escala já distribui os horários assim e avisa em vermelho se alguém mudar à mão.",
+          "para": [
+            "coord"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v216",
       "data": "15/11/2026",
       "hora": "21:00",

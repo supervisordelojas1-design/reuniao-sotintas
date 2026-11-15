@@ -228,6 +228,17 @@ const TODOS=[
 const EQ4=['g','a','v1','v2'];
 let P=TODOS.filter(p=>EQ4.includes(p.id));
 const TOP='v1'; // vendedor de maior performance
+/* alta performance: o vendedor TOP e todo vendedor que bateu 100% da meta no mês fechado */
+const alta=p=>p.cargo==='Vendedor'&&(p.id===TOP||(p.pct!==null&&p.pct>=100));
+/* almoço: o gerente não sai junto com o assistente nem com vendedor de alta performance */
+function almJuntos(){if(S.alm.g===undefined||!P.some(p=>p.id==='g'))return [];return P.filter(p=>p.id!=='g'&&(p.id==='a'||alta(p))&&S.alm[p.id]===S.alm.g)}
+function montaAlmoco(){
+  S.alm={};const n=[0,0,0],poe=(p,k)=>{S.alm[p.id]=k;n[k]++};
+  P.filter(p=>p.id==='g').forEach(p=>poe(p,0));
+  P.filter(p=>p.id==='a').forEach(p=>poe(p,1));
+  P.filter(p=>p.id!=='a'&&alta(p)).forEach(p=>poe(p,n[2]<=n[1]?2:1));
+  P.filter(p=>S.alm[p.id]===undefined).forEach(p=>poe(p,n.indexOf(Math.min(...n))));
+}
 const SLOTS=['12h–13h','13h–14h','14h–15h'];
 const TABS=[['semana','Grade da semana'],['fila','Fila do sábado'],['geral','Rede e regiões'],['ferias','Férias'],['banco','Banco de horas']];
 const S={fer:{},ini:8,fim:18,equipe:'real',nivel:'rede',reg:'Bruno',cargoF:'todos',loja:0,segLock:true,min2:false,aperto:'comp',crit:'fila',sem:0,perfil:'gerente',sab:'curto',modo:'B',vagas:1,tab:'semana',folga:{},alm:{g:1,a:2,v1:0,v2:1,v3:2,x:0}};
@@ -297,7 +308,7 @@ function ajustaAlmoco(){
     let ok=false;
     for(const p of pr){const antes=S.alm[p.id];
       for(let k=0;k<3&&!ok;k++){if(k===antes)continue;S.alm[p.id]=k;
-        if(S.alm.g!==undefined&&S.alm.g===S.alm.a||vazios().length>=v.length)S.alm[p.id]=antes;else ok=true}
+        if(almJuntos().length||vazios().length>=v.length)S.alm[p.id]=antes;else ok=true}
       if(ok)break}
     if(!ok)return;
   }
@@ -376,7 +387,7 @@ function alertas(){
   if(S.folga[primeiro.id]!=='sab')
     warn.push(S.crit==='rod'?'É a vez de '+primeiro.nome+' no rodízio do sábado e a folga não está com '+'essa pessoa'+'.':primeiro.nome+' é o 1º da fila do sábado e não está com a folga.');
   vazios().forEach(([d,h])=>bad.push((d==='sab'?'No sábado':'Na '+DNOME[d])+', das '+h+'h às '+(h+1)+'h, a loja fica sem ninguém: todos os presentes estão em almoço. Troque o horário de almoço de uma pessoa.'));
-  if(S.alm.g===S.alm.a)bad.push('Gerente e assistente estão no mesmo horário de almoço ('+SLOTS[S.alm.g]+').');
+  almJuntos().forEach(p=>bad.push((p.id==='a'?'Gerente e assistente':'Gerente e '+p.nome+' (vendedor de alta performance)')+' estão no mesmo horário de almoço ('+SLOTS[S.alm.g]+').'));
   for(let s=0;s<3;s++){const n=P.filter(p=>S.alm[p.id]===s).length;if(n>Math.max(3,Math.ceil(P.length/3)))warn.push('Mais de 3 pessoas almoçando às '+SLOTS[s]+'.')}
   return {bad,warn};
 }
@@ -425,7 +436,7 @@ function vSemana(){
      +lin('Abre',c=>'<td>'+nm(c.abre)+'<br><small>'+c.ini+'</small></td>')
      +lin('Fecha',c=>'<td>'+nm(c.fecha)+'<br><small>'+c.fim+'</small></td>');
   }
-  h+='</table></div><div class="legend"><span><i class="sw" style="background:var(--red)"></i>Folga</span><span><i class="sw" style="background:var(--navybg);border:1px solid var(--line)"></i>Trabalho</span><span><i class="sw" style="background:var(--surface2)"></i>Segunda (folga bloqueada)</span><span><i class="sw" style="background:var(--forte)"></i>Dia de maior movimento da loja (segunda a sexta)</span><span>Domingo: loja fechada</span></div>';
+  h+='</table></div><div class="legend"><span><i class="sw" style="background:var(--red)"></i>Folga</span><span><i class="sw" style="background:var(--navybg);border:1px solid var(--line)"></i>Trabalho</span><span><i class="sw" style="background:var(--surface2)"></i>Segunda (folga bloqueada)</span><span><i class="sw" style="background:var(--forte)"></i>Dia de maior movimento da loja (segunda a sexta)</span><span>Domingo: loja fechada</span></div><p class="note">Almoço: o gerente não sai junto com o assistente nem com vendedor de alta performance (o TOP e quem bateu 100% da meta no mês fechado), e a loja nunca fica sem ninguém.</p>';
   if(S.perfil!=='vendedor'){
     bad.forEach(a=>h+='<div class="alert bad">⛔ '+a+'</div>');
     warn.forEach(a=>h+='<div class="alert warn">⚠️ '+a+'</div>');
@@ -571,7 +582,7 @@ function vFerias(){
   return h;
 }
 function equipeDe(i){const e=S.equipe==='real'&&EQUIPES[LOJAS[i].c];return e&&e.length?e:TODOS.filter(p=>S.equipe==='6'||EQ4.includes(p.id))}
-function montaEquipe(){P=equipeDe(S.loja);S.semEquipe=S.equipe==='real'&&!(EQUIPES[loja().c]||[]).length;S.alm={};let k=0;P.forEach(p=>{S.alm[p.id]=p.id==='g'?0:p.id==='a'?1:(k++%3)})}
+function montaEquipe(){P=equipeDe(S.loja);S.semEquipe=S.equipe==='real'&&!(EQUIPES[loja().c]||[]).length;montaAlmoco()}
 function escalaLoja(i){
   if(i===S.loja)return {P,f:S.folga};
   const bk=[S.loja,S.sab,S.segLock,S.min2,P,S.ini,S.fim],l=LOJAS[i];
