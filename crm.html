@@ -81,6 +81,9 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
 .barra{height:10px;background:var(--surface2);border-radius:10px;overflow:hidden}.barra i{display:block;height:100%;background:var(--bad)}
 .marca{display:flex;align-items:center;gap:8px;min-height:40px;font-weight:600}.marca input{width:20px;height:20px;accent-color:var(--navy)}
 .obra{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px}.obra legend{padding:0 6px}
+.indic{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px}
+.indic .iMsg{min-height:16px;margin-top:5px;font-weight:600}
+.indic .tirar{color:var(--muted);font-size:12px}
 @media(max-width:420px){.kpi b{font-size:15px}.btn{padding:9px 8px;font-size:13px}}
 </style></head><body>
 <div class="wrap">
@@ -166,6 +169,32 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
               [45,54,'45 dias','Recompra','Obra terminada? Pergunte da próxima etapa (fachada, muro, portões) e peça indicação.'],
               [180,189,'6 meses','Manutenção','Seis meses da pintura: ofereça retoque, limpeza e proteção. Lembre das campanhas do mês.']];
   var ESPEC=['Residencial','Predial / condomínio','Textura / grafiato','Epóxi / piso','Madeira'];
+
+  /* ───────── base de clientes (código Autcom + nome, dos arquivos já carregados) ─────────
+     Os arquivos do Painel trazem o cliente como "CÓDIGO-NOME": orçamentos, carteira CNPJ e
+     pós-venda CPF. Guardamos esse cruzamento aqui para o autopreenchimento das indicações. */
+  var CLI={}, CLIL=[], IND_MAX=10;
+  var ckey=function(c){ return String(c||'').replace(/\D/g,'').replace(/^0+/,''); };
+  function addCli(bruto,loja){
+    var t=String(bruto||'').replace(/\s*-?\s*VEND\.?:.*$/i,'').trim(); if(!t) return;
+    var m=/^(\d{2,10})\s*-\s*(.+)$/.exec(t), cod=m?ckey(m[1]):'', nome=(m?m[2]:t).trim();
+    if(nome.length<2) return;
+    var k=cod||('N:'+NK(nome)), x=CLI[k];
+    if(!x){ x=CLI[k]={cod:cod,nome:nome,nk:NK(nome),lojas:[]}; CLIL.push(x); }
+    if(loja&&x.lojas.indexOf(loja)<0) x.lojas.push(loja);
+  }
+  function achaCod(c){ c=ckey(c); return c?(CLI[c]||null):null; }
+  function achaNome(t){ var k=NK(t); if(k.length<2) return null; for(var i=0;i<CLIL.length;i++){ if(CLIL[i].nk===k) return CLIL[i]; } return null; }
+  function sugereCli(t){ var k=NK(t), r=[]; if(k.length<2) return r; for(var i=0;i<CLIL.length&&r.length<12;i++){ if(CLIL[i].nk.indexOf(k)>=0) r.push(CLIL[i]); } return r; }
+  function naBase(x){ return (x&&x.cod&&achaCod(x.cod))||(x&&x.nome&&achaNome(x.nome))||null; }
+  function pendDe(p){ return indicsDe(p).filter(function(x){ return x.nome&&!naBase(x); }); }
+  /* fichas antigas guardavam as indicações como texto solto: viram lista na primeira abertura */
+  function indicsDe(p){
+    if(p&&p.indics&&p.indics.length) return p.indics;
+    return String((p&&p.indic)||'').split(/\s*[;,]\s*/).filter(Boolean).map(function(t){
+      var m=/^(\d{2,10})\s*-\s*(.+)$/.exec(t.trim());
+      return m?{cod:ckey(m[1]),nome:m[2].trim()}:{cod:'',nome:t.trim()}; });
+  }
   var ABAS=[['orc','Orçamentos'],['cart','Carteira'],['pos','Pós-venda'],['pin','Pintores'],['ger','Loja']];
 
   var C=null, S=null, PERFIL='', LIDER=false, LOJAS=[], LOJA='', OFICIAL='';
@@ -185,7 +214,8 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
   function orcsDe(O){
     var base=meioDia(), l=[];
     Object.keys(O).forEach(function(cod){ (O[cod]||[]).forEach(function(r){
-      if(!r||!r[6]) return; var d=dataOrc(r[2]);
+      if(!r) return; addCli(r[3],code3(cod));
+      if(!r[6]) return; var d=dataOrc(r[2]);
       l.push({tipo:'orc',loja:code3(cod),vend:nm(r[0]),doc:String(r[6]),cli:String(r[3]||'').replace(/^\d+-/,'').trim(),tel:String(r[4]||''),valor:Number(r[5])||0,dias:d?Math.max(0,Math.round((base-d)/864e5)):null});
     }); });
     return l;
@@ -196,6 +226,7 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
     Object.keys(K).forEach(function(cod){ var box=K[cod]||{}, n=box.n||1, loja=code3(cod);
       (box.c||[]).forEach(function(c){
         var pv=String(c[0]||'').split(/ - VEND\.?:\s*/i), nome=pv[0].replace(/^\d+-/,'').trim(), media=Number(c[1])||0, ativos=Number(c[2])||0, proj=Number(c[3])||0;
+        addCli(pv[0],loja);
         var g=proj<=0?(media>0?'POS':''):(proj<media*0.7?'SUB':''); if(!g||!nome) return;
         var doc='C:'+loja+':'+NK(nome); if(visto[doc]) return; visto[doc]=1;
         l.push({tipo:'cart',loja:loja,vend:pv.length>1?nm(pv[1]):'',doc:doc,cli:nome,tel:'',grupo:g,rec:g==='POS'&&ativos>=5,media:media,ativos:ativos,meses:n,proj:proj,valor:g==='POS'?media:media-proj});
@@ -219,6 +250,7 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
   function posDe(linhas){
     var base=meioDia(), l=[];
     (linhas||[]).forEach(function(r){
+      addCli(r.cli,code3(r.loja));
       var d=dataOrc(r.data); if(!d) return; var dias=Math.round((base-d)/864e5), e=-1;
       ETAPAS.forEach(function(E,i){ if(dias>=E[0]&&dias<=E[1]) e=i; }); if(e<0) return;
       var loja=code3(r.loja), ck=loja+':'+NK(r.cli);
@@ -297,6 +329,7 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
       return f==='feitos'&&!aberto;
     }
     if(o.tipo==='pos'){ if(f==='feitos') return e.st!=='novo'; return e.st==='novo'&&f==='e'+o.etapa; }
+    if(f==='pend') return pendDe(o).length>0;
     if(f==='todos') return true;
     if(f==='s30'){ var d=e.u?diasDesde(e.u.em):null; return d==null||d>30; }
     return e.st===f;
@@ -317,6 +350,10 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
       if(ob.length) h+='<div class="ult">'+ob.map(function(x){ return '<b>'+esc(x.status||'Obra')+'</b> · '+esc(x.local||'')+(x.tam?' · '+esc(x.tam):'')+(x.fim?' · até '+esc(dBr(x.fim)):'')+(x.prod?'<div class="sub">Produto final: '+esc(x.prod)+'</div>':'')
         +(function(l){ return l.length?'<div class="sub">Complementos: '+esc(l.join(', '))+'</div>':''; })((x.comp||[]).concat(x.compOutros?[x.compOutros]:[]))
         +(x.obs?'<div class="sub">'+esc(x.obs)+'</div>':''); }).join('<br>')+'</div>'; }
+    if(o.tipo==='pin'){ var ind=indicsDe(o), pd=pendDe(o);
+      if(ind.length) h+='<div class="sub">Indicou: '+ind.map(function(x){ var b=naBase(x);
+        return esc((x.cod||(b&&b.cod)?((x.cod||b.cod)+' · '):'')+(x.nome||''))+(b?' <span style="color:var(--ok)">✓</span>':' <span style="color:var(--warn)">sem cadastro</span>'); }).join(' &nbsp;·&nbsp; ')+'</div>';
+      if(pd.length) h+='<div class="sub alerta">'+pd.length+' indicaç'+(pd.length===1?'ão ainda sem cadastro no Autcom':'ões ainda sem cadastro no Autcom')+'. Abra o cadastro para a venda entrar no nome do pintor.</div>'; }
     if(ct.cNome&&o.tipo!=='pin') h+='<div class="sub">Comprador: <b>'+esc(ct.cNome)+'</b>'+(ct.cCargo?' · '+esc(ct.cCargo):'')+(ct.cHora?' · melhor horário: '+esc(ct.cHora):'')+(ct.cEmail?' · '+esc(ct.cEmail):'')+'</div>';
     if(u){
       var st=u.status, linha=esc(dBr(u.em))+' · '+esc(u.canal||'')+' · '+esc(u.res||'')+(o.tipo==='pin'&&u.motivo?' · '+esc(u.motivo):'');
@@ -364,7 +401,7 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
       sub=L.length+' pintor'+(L.length===1?'':'es')+' cadastrado'+(L.length===1?'':'s');
       h+=(LER?'':'<button type="button" class="btn forte" id="novoPin">+ Cadastrar pintor</button>')+
          '<div class="kpis">'+kpi('Pintores',L.length)+kpi('Ativos',n('ativo'))+kpi('Obras',obras)+kpi('Sem contato',n('s30'),n('s30'))+'</div>';
-      F=[['todos','Todos'],['hoje','Ligar hoje'],['s30','Sem contato há 30 dias'],['potencial','Potenciais'],['ativo','Ativos'],['inativo','Inativos']];
+      F=[['todos','Todos'],['hoje','Ligar hoje'],['pend','Indicação sem cadastro'],['s30','Sem contato há 30 dias'],['potencial','Potenciais'],['ativo','Ativos'],['inativo','Inativos']];
       vazio=['Nenhum pintor cadastrado','Cadastre os pintores que atendem imobiliárias, condomínios e obras da região para acompanhar as obras e as ligações.'];
     }
     var f=FIL[TAB];
@@ -418,6 +455,8 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
     if(tres.length){ tem++; h+='<div class="agir a"><span><b>'+tres.length+'</b> cliente'+(tres.length===1?'':'s')+' com 3 “não atendeu” seguidos: '+esc(tres.slice(0,3).map(function(o){return o.cli;}).join('; '))+'</span></div>'; }
     if(cart.length){ tem++; h+=item('a','<span><b>'+cart.length+'</b> cliente'+(cart.length===1?' recorrente sumido':'s recorrentes sumidos')+' sem contato ('+mil(cart.reduce(function(s,o){return s+o.valor;},0))+' por mês)</span>','cart','rec'); }
     if(pin30.length){ tem++; h+=item('a','<span><b>'+pin30.length+'</b> pintor'+(pin30.length===1?'':'es')+' sem contato há mais de 30 dias</span>','pin','s30'); }
+    var pend=[]; D.pin.filter(daLoja).forEach(function(p){ pendDe(p).forEach(function(x){ pend.push(x.nome); }); });
+    if(pend.length){ tem++; h+=item('a','<span><b>'+pend.length+'</b> cliente'+(pend.length===1?' indicado':'s indicados')+' por pintor sem cadastro no Autcom: '+esc(pend.slice(0,3).join('; '))+(pend.length>3?'…':'')+'</span>','pin','pend'); }
     val.forEach(function(o){ tem++; h+='<div class="agir v"><span><b>'+esc(o.cli)+'</b> marcado “Fechado” por '+esc(nm(o.e.u.por))+' · '+brl(o.valor)+' · Nº '+esc(o.doc)+'<br>Confira no Autcom se faturou.</span>'+(LER?'':'<button type="button" class="btn" data-validar="'+esc(o.doc)+'">Validar</button>')+'</div>'; });
     if(!tem) h+='<p class="sub" style="margin:0">Nada pendente agora.</p>';
     h+='</section>';
@@ -543,8 +582,15 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
       '<div class="campo" style="margin-top:8px">Complementos que a obra leva'+ops('oComp',OBRA_COMP,x.comp||[],true)+'</div>'+
       campo('Outros complementos','oCompOutros',x.compOutros,'text','maxlength="120" placeholder="O que mais essa obra pede"')+
       '<label class="campo">Observação da obra<textarea name="oObs" rows="2" maxlength="300" placeholder="Outras informações: contato na obra, etapa atual, prazo de pagamento…">'+esc(x.obs||'')+'</textarea></label></fieldset>'; }
+  function indicHtml(x){ x=x||{};
+    return '<div class="indic"><div class="duas">'+
+      '<label class="campo">Código Autcom<input type="text" name="iCod" value="'+esc(x.cod||'')+'" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="Ex.: 10482"></label>'+
+      '<label class="campo">Nome do cliente<input type="text" name="iNome" value="'+esc(x.nome||'')+'" autocomplete="off" maxlength="80" list="cliLista" placeholder="Comece a digitar o nome"></label>'+
+      '</div><div class="sub iMsg" role="status"></div>'+
+      '<button type="button" class="mais tirar">Tirar este cliente</button></div>'; }
   function abrirPintor(id){
     var p=id?PIN.filter(function(x){return x.id===id;})[0]:null, d=$('dlg'); p=p||{};
+    var ind=indicsDe(p); if(!ind.length) ind=[{}];
     d.innerHTML='<form class="reg" method="dialog" novalidate>'+
       '<h2 id="dlgTit" style="margin:0">'+(p.id?'Ficha do pintor':'Cadastrar pintor')+'</h2>'+
       '<div class="duas">'+campo('Nome','nome',p.nome,'text','maxlength="60" required')+campo('Apelido','apelido',p.apelido,'text','maxlength="30"')+
@@ -555,19 +601,60 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
         campo('Aniversário (dia/mês)','aniv',p.aniv,'text','maxlength="5" placeholder="dd/mm" inputmode="numeric"')+'</div>'+
       '<fieldset><legend>Situação</legend>'+ops('status',[['potencial','Potencial'],['ativo','Ativo (comprou nos últimos 60 dias)'],['inativo','Inativo']],p.status||'potencial')+'</fieldset>'+
       '<label class="marca"><input type="checkbox" name="programa"'+(p.programa?' checked':'')+'> Já está no programa Pintor Cadastrado</label>'+
-      campo('Clientes que ele indicou (opcional)','indic',p.indic,'text','maxlength="200"')+
+      '<fieldset><legend>Clientes que ele indicou (opcional)</legend>'+
+        '<div class="sub" style="margin:-2px 0 4px">Digite o código Autcom que o nome vem sozinho — ou digite o nome e o código aparece, quando o cliente já está nos arquivos carregados no app.</div>'+
+        '<div id="indics">'+ind.map(indicHtml).join('')+'</div><datalist id="cliLista"></datalist>'+
+        '<button type="button" class="btn" id="maisIndic">+ Cliente indicado</button></fieldset>'+
       '<label class="campo">Observações<textarea name="obs" rows="2" maxlength="300">'+esc(p.obs||'')+'</textarea></label>'+
       '<div id="obras">'+(p.obras||[]).map(obraHtml).join('')+'</div>'+
       '<button type="button" class="btn" id="maisObra">+ Obra</button>'+
       '<div class="erro" id="regErro" role="alert"></div>'+
       '<div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="btn" id="regCanc">Cancelar</button><button type="submit" class="btn forte" id="regOk">Salvar</button></div></form>';
     var f=d.querySelector('form'), el=function(i){ return d.querySelector('#'+i); };
+    function casar(b,quem){
+      var ci=b.querySelector('[name=iCod]'), ni=b.querySelector('[name=iNome]'), ms=b.querySelector('.iMsg'), c=null;
+      if(quem==='cod'){
+        var lim=ci.value.replace(/\D/g,''); if(lim!==ci.value) ci.value=lim;
+        c=achaCod(lim);
+        if(c&&(!ni.value.trim()||ni.dataset.base==='1')){ ni.value=c.nome; ni.dataset.base='1'; }
+      } else {
+        ni.dataset.base='';
+        d.querySelector('#cliLista').innerHTML=sugereCli(ni.value).map(function(x){
+          return '<option value="'+esc(x.nome)+'">'+esc(x.cod?'Autcom '+x.cod:'sem código nos arquivos')+'</option>'; }).join('');
+        c=achaNome(ni.value);
+        if(c&&c.cod&&!ckey(ci.value)) ci.value=c.cod;
+        if(!c) c=achaCod(ci.value);
+      }
+      var cod=ckey(ci.value);
+      if(c&&(!cod||ckey(c.cod)===cod||!c.cod)) ms.innerHTML='<span style="color:var(--ok)">✓ '+esc(c.nome)+(c.lojas.length?' · compra na loja '+esc(c.lojas.join(', ')):'')+'</span>';
+      else if(cod) ms.innerHTML='<span style="color:var(--warn)">Código '+esc(cod)+' não está nos arquivos do app. Confira ou escreva o nome à mão.</span>';
+      else if(ni.value.trim().length>=3) ms.innerHTML='<span style="color:var(--warn)">Ainda sem cadastro no Autcom. Entra na lista de pendentes para o gerente abrir o cadastro.</span>';
+      else ms.textContent='';
+    }
+    el('indics').addEventListener('input',function(ev){
+      var b=ev.target.parentNode&&ev.target.parentNode.parentNode&&ev.target.parentNode.parentNode.parentNode;
+      if(!b||b.className!=='indic') return; casar(b,ev.target.name==='iCod'?'cod':'nome'); });
+    el('indics').addEventListener('click',function(ev){
+      if(!/\btirar\b/.test(ev.target.className||'')) return;
+      var b=ev.target.parentNode, n=el('indics');
+      if(n.children.length>1) b.remove();
+      else { b.querySelector('[name=iCod]').value=''; b.querySelector('[name=iNome]').value=''; b.querySelector('.iMsg').textContent=''; } });
+    el('maisIndic').onclick=function(){ var n=el('indics');
+      if(n.children.length>=IND_MAX) return toast('Até '+IND_MAX+' clientes indicados por ficha.');
+      n.insertAdjacentHTML('beforeend',indicHtml(null)); n.lastElementChild.querySelector('input').focus(); };
+    [].forEach.call(el('indics').querySelectorAll('.indic'),function(b){
+      if(ckey(b.querySelector('[name=iCod]').value)) casar(b,'cod'); else if(b.querySelector('[name=iNome]').value.trim()) casar(b,'nome'); });
     el('maisObra').onclick=function(){ el('obras').insertAdjacentHTML('beforeend',obraHtml(null,el('obras').children.length)); var n=el('obras').lastElementChild; n.querySelector('input').focus(); };
     el('regCanc').onclick=function(){ d.close(); };
     f.onsubmit=function(ev){
       ev.preventDefault();
       var v=function(n){ return String(f[n].value||'').trim(); }, er='';
+      var indics=[].map.call(el('indics').querySelectorAll('.indic'),function(b){
+        var cod=ckey(b.querySelector('[name=iCod]').value), nome=String(b.querySelector('[name=iNome]').value||'').trim(), c=cod?achaCod(cod):achaNome(nome);
+        if(!nome&&c) nome=c.nome; if(!cod&&c&&c.cod) cod=c.cod;
+        return {cod:cod,nome:nome,base:c?1:0}; }).filter(function(x){ return x.cod||x.nome; });
       if(!v('nome')) er='Informe o nome do pintor.';
+      else if(indics.some(function(x){return x.cod&&!x.nome;})) er='Informe o nome do cliente indicado: esse código não está nos arquivos do app.';
       else if(v('tel')&&!telLimpo(v('tel'))) er='Confira o WhatsApp: DDD + número.';
       else if(v('aniv')&&!/^\d{1,2}\/\d{1,2}$/.test(v('aniv'))) er='Aniversário no formato dia/mês, como 05/03.';
       if(er){ el('regErro').textContent=er; return; }
@@ -576,7 +663,8 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
           comp:[].filter.call(b.querySelectorAll('[name=oComp]'),function(c){return c.checked;}).map(function(c){return c.value;})}; }).filter(function(x){return x.local;});
       var r={id:p.id||novoId('p'),criado:p.criado||new Date().toISOString(),atual:new Date().toISOString(),por:p.por||S.nome,resp:p.resp||(PERFIL==='vend'?(OFICIAL?nm(OFICIAL):S.nome):S.nome),loja:p.loja||LOJA,
         nome:v('nome'),apelido:v('apelido'),tel:v('tel'),cidade:v('cidade'),espec:[].filter.call(f.querySelectorAll('[name=espec]'),function(c){return c.checked;}).map(function(c){return c.value;}),
-        equipe:v('equipe'),marcas:v('marcas'),origem:v('origem'),aniv:v('aniv'),status:f.status.value,programa:f.programa.checked,indic:v('indic'),obs:v('obs'),obras:obras};
+        equipe:v('equipe'),marcas:v('marcas'),origem:v('origem'),aniv:v('aniv'),status:f.status.value,programa:f.programa.checked,indics:indics,
+        indic:indics.map(function(x){return (x.cod?x.cod+' - ':'')+x.nome;}).join('; '),obs:v('obs'),obras:obras};
       var loc=lerLocal('pin').filter(function(x){return x.id!==r.id;}); loc.push(r); gravarLocal('pin',loc); PIN=juntar(PIN,[r],'atual');
       el('regOk').disabled=true; el('regOk').textContent='Salvando…';
       STDados.chamar('crmPintorSalvar',{pintores:[r]},true).then(function(j){

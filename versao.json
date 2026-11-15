@@ -2,6 +2,24 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v211",
+      "data": "15/11/2026",
+      "hora": "15:55",
+      "itens": [
+        {
+          "painel": "CRM de Vendas",
+          "o_que": "Na ficha do pintor, os clientes que ele indicou agora entram um a um com código Autcom e nome, no lugar do campo de texto solto. Digite o código e o nome vem sozinho; digite o nome e o código aparece, quando o cliente já está nos arquivos carregados no app (orçamentos, carteira CNPJ e pós-venda). Quem ainda não tem cadastro no Autcom fica marcado como pendente: aparece no cartão do pintor, no filtro “Indicação sem cadastro” e na lista “Para você agir” do gerente — e sai sozinho da lista assim que o cliente entrar nos arquivos. As fichas antigas viram lista na primeira abertura, sem perder nada.",
+          "para": [
+            "coord",
+            "anl",
+            "sup",
+            "ger",
+            "vend"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v210",
       "data": "14/11/2026",
       "hora": "02:22",
