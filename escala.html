@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Escala & Folgas · Só Tintas</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+:root{--navy:#14285a;--red:#d8232a;--bg:#f3f5fa;--card:#fff;--line:#dfe4ef;--txt:#1c2333;--mut:#667089;--ok:#1e9e5a;--warn:#e0a100;--bad:#d8232a}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--txt);font-size:15px}
+header{background:var(--navy);color:#fff;padding:14px 18px;border-bottom:4px solid var(--red)}
+header h1{margin:0;font-size:19px}
+header p{margin:3px 0 0;font-size:12.5px;opacity:.85}
+.proto{background:#fff6d6;border-bottom:1px solid #ecd98a;color:#6b5400;font-size:12.5px;padding:7px 18px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;padding:12px 18px;background:#fff;border-bottom:1px solid var(--line)}
+.bar label{font-size:11.5px;color:var(--mut);display:flex;flex-direction:column;gap:3px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+select,button{font:inherit}
+select{padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--txt);min-width:150px}
+nav{display:flex;gap:4px;padding:10px 18px 0;overflow-x:auto}
+nav button{border:0;background:transparent;padding:9px 14px;border-radius:9px 9px 0 0;color:var(--mut);font-weight:600;cursor:pointer;white-space:nowrap}
+nav button.on{background:var(--card);color:var(--navy);box-shadow:inset 0 3px 0 var(--red)}
+main{padding:0 18px 40px}
+.panel{background:var(--card);border-radius:0 12px 12px 12px;padding:16px;border:1px solid var(--line)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.kpi{border:1px solid var(--line);border-radius:10px;padding:10px 12px;border-left:5px solid var(--navy)}
+.kpi b{display:block;font-size:20px;color:var(--navy)}
+.kpi span{font-size:12px;color:var(--mut)}
+.kpi.ok{border-left-color:var(--ok)}.kpi.bad{border-left-color:var(--bad)}.kpi.warn{border-left-color:var(--warn)}
+.wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:760px}
+th,td{border:1px solid var(--line);padding:7px 6px;text-align:center;font-size:13px}
+th{background:var(--navy);color:#fff;font-weight:600}
+th.seg{background:#0c1a3d}
+td.nome{text-align:left;white-space:nowrap}
+td.nome small{display:block;color:var(--mut);font-size:11.5px}
+td.t{background:#eaf1ff;cursor:default}
+td.edit{cursor:pointer}
+td.edit:hover{outline:2px solid var(--navy);outline-offset:-2px}
+td.f{background:var(--red);color:#fff;font-weight:700}
+td.segc{background:#e3e7f1}
+td.h{font-weight:700;color:var(--navy);white-space:nowrap}
+.tag{display:inline-block;font-size:10.5px;padding:1px 6px;border-radius:20px;background:#ffe9b0;color:#6b5400;font-weight:700;margin-left:4px}
+.alert{border-radius:9px;padding:9px 12px;margin-top:8px;font-size:13.5px}
+.alert.bad{background:#fde8e9;color:#8f1218;border:1px solid #f4b9bc}
+.alert.warn{background:#fff6d6;color:#6b5400;border:1px solid #ecd98a}
+.alert.ok{background:#e4f6ec;color:#12643a;border:1px solid #a9dfc0}
+.btn{background:var(--navy);color:#fff;border:0;border-radius:9px;padding:9px 14px;font-weight:600;cursor:pointer}
+.btn.alt{background:#fff;color:var(--navy);border:1px solid var(--navy)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.legend{font-size:12px;color:var(--mut);display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:4px}
+.lojas{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:14px}
+.loja{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:center}
+.dot{width:14px;height:14px;border-radius:50%;flex:none}
+.loja small{display:block;color:var(--mut);font-size:11.5px}
+h3{margin:16px 0 8px;color:var(--navy);font-size:15px}
+.note{font-size:12.5px;color:var(--mut);margin:6px 0 0}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#1c2333;color:#fff;padding:10px 16px;border-radius:10px;font-size:13.5px;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%}
+#toast.on{opacity:1}
+tr.cob td{background:#f7f9fd;font-size:12.5px}tr.cob th{background:#2a3f7a}
+.chip{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;font-size:10.5px;font-weight:700;color:#1c2333;text-align:center}
+.fl{font-size:11.5px;color:var(--mut);display:flex;flex-direction:column;gap:3px;font-weight:600;text-transform:uppercase}
+.ori{border:1px solid #cfdcf2;background:#f4f8ff;border-radius:11px;padding:12px 14px;margin:0 0 14px}.orih{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-bottom:8px}.orih b{color:var(--navy);font-size:15px}.orih span{color:var(--mut);font-size:12.5px;flex:1}
+.orii{background:#fff;border:1px solid var(--line);border-left:5px solid var(--ok);border-radius:9px;padding:8px 11px;margin-top:7px}.orii.mud{border-left-color:var(--warn);background:#fffaf0}.orii p{margin:4px 0 0;font-size:13px;color:#3a4256}
+.st{font-size:11.5px;font-weight:700;margin-left:10px}.st.ok{color:#12643a}.st.no{color:#8a5a00}.orif{margin:9px 0 0;font-size:13px;color:#3a4256}
+.trava{background:#eef3fb;border-bottom:1px solid #cfdcf2;color:#14285a;font-size:12.5px;padding:7px 18px}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:12px}.fbox{border:1px solid var(--line);border-radius:11px;padding:12px 14px}
+.seg{display:flex;height:22px;border-radius:6px;overflow:hidden;gap:2px}.seg i{display:block;min-width:4px}
+.fleg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;margin-top:10px;color:#3a4256}.fleg i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.mbar{display:flex;align-items:flex-end;gap:6px;height:128px}.mbar div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;font-size:11px;color:var(--mut)}.mbar i{display:block;width:100%;max-width:34px;background:#2a78d6;border-radius:4px 4px 0 0;min-height:2px}.mbar b{font-size:12px;color:var(--txt)}.mbar span{text-align:center;line-height:1.15;margin-top:3px}
+.hrow{display:grid;grid-template-columns:190px 1fr 110px;gap:10px;align-items:center;font-size:12.5px;padding:3px 0}.hrow div{display:flex;gap:2px}.hrow i{display:block;height:12px;border-radius:3px}.hrow span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl{height:8px;background:#e8ebf3;border-radius:5px;overflow:hidden}.tl i{display:block;height:100%}
+.fst{display:inline-flex;align-items:center;gap:5px;border:1px solid;border-radius:20px;padding:2px 9px;font-size:11.5px;font-weight:600;white-space:nowrap;color:#1c2333}.fst i{width:8px;height:8px;border-radius:50%}
+.btn.mini{padding:4px 9px;font-size:11.5px;border-radius:7px}.box2{background:#f4f8ff;border:1px solid #cfdcf2;border-radius:10px;padding:10px 14px;margin-top:14px;font-size:13px}.box2 ul{margin:6px 0 0;padding-left:18px}
+td select{min-width:0;padding:4px 5px;font-size:12.5px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Escala &amp; Folgas</h1>
+  <p id="sub"></p>
+</header>
+<div class="proto" id="info">Carregando…</div>
+
+<div class="bar">
+  <label>Loja
+    <select id="loja"></select>
+  </label>
+  <label>Trava de folga na segunda
+    <select id="seg"><option value="1">Sim</option><option value="0">Não</option></select>
+  </label>
+  <label>Ver como (simulação)
+    <select id="perfil">
+      <option value="vendedor">Vendedor</option>
+      <option value="gerente" selected>Gerente</option>
+      <option value="supervisor">Supervisor</option>
+      <option value="coord">Coordenação</option>
+    </select>
+  </label>
+  <label style="display:none">Equipe da loja
+    <select id="equipe">
+      <option value="real" selected>Equipe real (INDICADORES de 06/11)</option>
+      <option value="4">Exemplo com 4 pessoas</option>
+      <option value="6">Exemplo com 6 pessoas</option>
+    </select>
+  </label>
+  <label>Horário na semana
+    <select id="hor"></select>
+  </label>
+  <label>Sábado da loja
+    <select id="sab">
+      <option value="curto" selected>Curto atual (8h às 13h)</option>
+      <option value="curto9">Curto 9h às 13h (turno único)</option>
+      <option value="curto12">Curto reduzido (8h às 12h)</option>
+      <option value="integral">Integral atual (8h às 18h)</option>
+      <option value="integral17">Integral reduzido (8h às 17h)</option>
+    </select>
+  </label>
+  <label>Quem trabalha sábado curto
+    <select id="modo">
+      <option value="B" selected>B · Dia cheio 8h–18h (40h)</option>
+      <option value="A">A · Sem acordo, dia de 8h (36h)</option>
+    </select>
+  </label>
+  <label>Dia com ponta descoberta
+    <select id="aperto">
+      <option value="comp" selected>Compensar na semana (9h + 7h)</option>
+      <option value="alm">Almoço de 2h (sem compensar)</option>
+      <option value="nada">Só equilibrar e avisar</option>
+    </select>
+  </label>
+  <label>Critério do sábado
+    <select id="crit">
+      <option value="fila" selected>Fila por performance</option>
+      <option value="rod">Rodízio mensal: gerente × vendedor TOP</option>
+    </select>
+  </label>
+  <label>Semana
+    <select id="sem">
+      
+    </select>
+  </label>
+  <label>Vagas de folga no sábado
+    <select id="vagas"><option value="1" selected>1 pessoa</option><option value="2">2 pessoas</option></select>
+  </label>
+</div>
+
+<div id="trava" class="trava">🔒 Seleções travadas. Por enquanto só a coordenação altera horário, sábado, trava de segunda e critérios. Gerente e supervisor acompanham e ajustam as folgas.</div>
+<nav id="tabs"></nav>
+<main><div class="panel" id="view"></div></main>
+<div id="toast"></div>
+
+<script src="st-dados.js?v=93"></script>
+<script>
+let DIAS=[];
+const DIA7=6048e5,D1=864e5;
+const SEG0=(()=>{const d=new Date();d.setHours(12,0,0,0);if(d.getDay()===0)d.setDate(d.getDate()+1);return new Date(d.getTime()-((d.getDay()+6)%7)*D1)})();
+const semIni=k=>new Date(SEG0.getTime()+k*DIA7),dm=d=>String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
+const semKey=k=>{const d=semIni(k);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const par=k=>Math.round(semIni(k).getTime()/DIA7)%2;
+function setDias(){const b=semIni(S.sem);DIAS=[['seg','Seg'],['ter','Ter'],['qua','Qua'],['qui','Qui'],['sex','Sex'],['sab','Sáb']].map(([d,l],i)=>[d,l+' '+new Date(b.getTime()+i*D1).getDate()])}
+const daVez=k=>P.find(p=>p.id===(par(k)?'g':TOP))||P.find(p=>p.id===TOP)||P[0];
+const vagasEf=()=>P.length<=4?1:S.vagas;
+const EU=()=>(P.find(p=>p.id==='v2')||P.find(p=>p.id==='v1')||P[0]).id;
+const NOME_DIA={seg:'segunda',ter:'terça',qua:'quarta',qui:'quinta',sex:'sexta',sab:'sábado'};
+// sem = semanas desde a última folga de sábado (rodízio)
+let LOJAS=[];
+const loja=()=>LOJAS[S.loja];
+const DNOME={seg:'segunda',ter:'terça',qua:'quarta',qui:'quinta',sex:'sexta'};
+let EQUIPES={},REG={},SALVOS={},CFG={},BASE='';
+const TODOS=[
+ {id:'g', nome:'Carla',  cargo:'Gerente',    pct:97,  sem:6, obs:'% da loja'},
+ {id:'a', nome:'Paulo',  cargo:'Assistente', pct:null,sem:5},
+ {id:'v1',nome:'Marina', cargo:'Vendedor',  pct:112, sem:4},
+ {id:'v2',nome:'Diego',  cargo:'Vendedor',   pct:98,  sem:7},
+ {id:'v3',nome:'Renata', cargo:'Vendedor',  pct:91,  sem:8},
+ {id:'x', nome:'João',   cargo:'Auxiliar',   pct:null,sem:9}
+];
+const EQ4=['g','a','v1','v2'];
+let P=TODOS.filter(p=>EQ4.includes(p.id));
+const TOP='v1'; // vendedor de maior performance
+const SLOTS=['12h–13h','13h–14h','14h–15h'];
+const TABS=[['semana','Grade da semana'],['fila','Fila do sábado'],['geral','Rede e regiões'],['ferias','Férias'],['banco','Banco de horas']];
+const S={fer:{},ini:8,fim:18,equipe:'real',nivel:'rede',reg:'Bruno',cargoF:'todos',loja:0,segLock:true,min2:false,aperto:'comp',crit:'fila',sem:0,perfil:'gerente',sab:'curto',modo:'B',vagas:1,tab:'semana',folga:{},alm:{g:1,a:2,v1:0,v2:1,v3:2,x:0}};
+
+const SAB={curto:['Curto atual','8h às 13h','13h'],curto9:['Curto 9h–13h','9h às 13h','13h'],curto12:['Curto reduzido','8h às 12h','12h'],integral:['Integral atual','8h às 18h','18h'],integral17:['Integral reduzido','8h às 17h','17h']};
+const curto=()=>S.sab.startsWith('curto');
+const $=id=>document.getElementById(id);
+const nome=id=>P.find(p=>p.id===id).nome;
+const hm=m=>Math.floor(m/60)+'h'+String(m%60).padStart(2,'0');
+function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2600)}
+const podeEditar=()=>S.perfil==='gerente'||S.perfil==='coord';
+
+function filaPerf(){return P.filter(p=>p.pct!==null).sort((a,b)=>b.pct-a.pct||b.sem-a.sem)}
+function filaRod(){return P.filter(p=>p.pct===null).sort((a,b)=>b.sem-a.sem)}
+
+function conflito(f){ // regras de dupla
+  const r=[],g=f.g,top=f[TOP];
+  P.forEach(p=>{const d=f[p.id];if(!d)return;
+    if(p.cargo==='Gerente'&&d==='seg')r.push('O gerente ('+p.nome+') está de folga na segunda.');
+    if(p.cargo==='Vendedor'&&g&&d===g)r.push((p.id===TOP?'O vendedor de maior performance (':'O vendedor (')+p.nome+') está de folga junto com o gerente ('+NOME_DIA[d]+').');
+    if(p.cargo==='Assistente'&&g&&d===g)r.push('Gerente e assistente ('+p.nome+') estão de folga no mesmo dia ('+NOME_DIA[d]+').');
+    if(p.cargo==='Auxiliar'&&g&&d===g)r.push('O auxiliar ('+p.nome+') está de folga junto com o gerente ('+NOME_DIA[d]+').');
+    if(p.cargo==='Auxiliar'&&top&&d===top)r.push('O auxiliar ('+p.nome+') está de folga junto com o vendedor de maior performance ('+NOME_DIA[d]+').');
+  });
+  return r;
+}
+function calc(k){
+  const f={};
+  const cand=S.crit==='rod'?[daVez(k),...filaPerf()]:[...filaPerf()]; const rod=[...filaRod()];
+  let vagas=vagasEf();
+  for(const p of cand){ if(vagas<1)break; f[p.id]='sab'; if(conflito(f).length){delete f[p.id];continue} vagas--; break }
+  if(vagasEf()===2){ for(const p of rod){ f[p.id]='sab'; if(conflito(f).length){delete f[p.id];continue} break } }
+  const PRI={Gerente:0,Assistente:1,Auxiliar:2,Vendedor:3};const ordem=[...P].sort((x,y)=>PRI[x.cargo]-PRI[y.cargo]).map(p=>p.id);
+  for(const id of ordem){
+    if(f[id])continue;
+    let best=null,bn=99;
+    for(const d of loja().dias.filter(d=>d!=='seg'||!S.segLock)){
+      f[id]=d; const ok=!conflito(f).length; delete f[id];
+      if(!ok)continue;
+      const n=Object.values(f).filter(x=>x===d).length;
+      if(n<bn){bn=n;best=d}
+    }
+    f[id]=best||loja().dias.find(d=>d!=='seg'||!S.segLock);
+  }
+  return f;
+}
+function sugerir(){S.folga=calc(S.sem)}
+const lab=o=>o?o.a+'h–'+o.b+'h':'FOLGA';
+const mins=o=>o?(o.b-o.a-o.l)*60:0;
+function plano(f){
+  const WD=['seg','ter','qua','qui','sex'],T={};P.forEach(p=>T[p.id]={});
+  const fimSab=parseInt(SAB[S.sab][2]),pres=d=>P.filter(p=>f[p.id]!==d),ini=S.ini,fim=S.fim;
+  P.forEach(p=>{if(f[p.id]==='sab')T[p.id].sab=null});
+  const ps=pres('sab');let sabEdge=false;
+  if(curto())ps.forEach((p,i)=>T[p.id].sab=S.sab==='curto9'?{a:9,b:13,l:0}:fimSab===12||i%2===0?{a:8,b:12,l:0}:{a:9,b:13,l:0});
+  else if(fimSab===17)ps.forEach(p=>T[p.id].sab={a:8,b:17,l:1});
+  else sabEdge=true;
+  const diaCheio=p=>curto()&&S.modo==='B'&&f[p.id]!=='sab'; // quem trabalha sábado curto faz 9h nos dias de semana
+  const modo=curto()&&S.aperto==='comp'?'nada':S.aperto==='comp'&&P.length<=3?'alm':S.aperto;
+  const owed={},longs={},N={},M=S.min2?2:1;P.forEach(p=>{owed[p.id]=0;longs[p.id]=0});
+  const dias=WD.map(d=>[d,ini,fim]);if(sabEdge)dias.push(['sab',8,18]);
+  dias.forEach(([d,i0,f0],di)=>{
+    const pr=pres(d),Wd=f0-i0,flex=[];N[d]=pr.length;
+    P.forEach(p=>{if(f[p.id]===d)T[p.id][d]=null});
+    pr.forEach(p=>{const L=Math.min(d!=='sab'&&diaCheio(p)?9:8,Wd-1);if(L+1>=Wd)T[p.id][d]={a:i0,b:f0,l:Wd-L};else flex.push([p,L])});
+    const kf=Math.floor(flex.length/2);
+    flex.forEach(([p,L],i)=>{const naFraca=((i+di)%flex.length)<kf,abre=loja().fraca==='a'?naFraca:!naFraca;T[p.id][d]=abre?{a:i0,b:i0+L+1,l:1}:{a:f0-L-1,b:f0,l:1}});
+    if(modo==='nada'||Wd!==10)return;
+    for(let g=0;g<3;g++){
+      const ab=pr.filter(p=>T[p.id][d].a===i0).length,fe=pr.filter(p=>T[p.id][d].b===f0).length;
+      if(ab>=M&&fe>=M)break;
+      const c=pr.filter(p=>{const o=T[p.id][d];return !o.x&&o.b-o.a===9&&(ab<M?o.a!==i0:o.b!==f0)}).sort((x,y)=>longs[x.id]-longs[y.id]);
+      if(!c.length)break;
+      const q=c[0];longs[q.id]++;
+      if(modo==='comp'){T[q.id][d]={a:i0,b:f0,l:1,x:1};owed[q.id]++}else T[q.id][d]={a:i0,b:f0,l:2,x:2};
+    }
+  });
+  if(modo==='comp'){
+    const pref=['sex','qui','qua','ter','sab','seg'].filter(d=>dias.some(x=>x[0]===d)),sh={};
+    [...P].sort((x,y)=>(y.id==='g')-(x.id==='g')).forEach(p=>{
+      while(owed[p.id]>0){
+        const d=pref.find(d=>{const o=T[p.id][d];return N[d]>=4&&o&&!o.x&&o.b-o.a===9&&(sh[d]||0)<2&&!(d==='seg'&&p.id==='g')});
+        if(!d)break;
+        const o=T[p.id][d],i0=d==='sab'?8:ini;T[p.id][d]=o.a===i0?{a:o.a,b:o.b-1,l:1,x:-1}:{a:o.a+1,b:o.b,l:1,x:-1};
+        sh[d]=(sh[d]||0)+1;owed[p.id]--;
+      }
+    });
+  }
+  T._owed=owed;return T;
+}
+function minutos(id,f=S.folga){const T=plano(f);return ['seg','ter','qua','qui','sex','sab'].reduce((s,d)=>s+mins(T[id][d]),0)}
+function turno(p,i,d,f=S.folga){return lab(plano(f)[p.id][d])}
+function cobre(d,f=S.folga){
+  const T=plano(f),fn=d==='sab'?parseInt(SAB[S.sab][2]):S.fim,an=d==='sab'?(S.sab==='curto9'?9:8):S.ini;
+  const pres=P.map(p=>({p,o:T[p.id][d]})).filter(x=>x.o).map(x=>({p:x.p,o:x.o,t:lab(x.o)}));
+  const g=pres.find(o=>o.p.id==='g');
+  const resp=g?g.p:(pres.find(o=>o.p.id===TOP)||pres.find(o=>o.p.id==='a')||pres[0]).p;
+  return {pres,resp,subst:!g,fim:fn+'h',ini:an+'h',abre:pres.filter(x=>x.o.a===an),fecha:pres.filter(x=>x.o.b===fn)};
+}
+function alertas(){
+  const bad=conflito(S.folga), warn=[];
+  for(const [d] of DIAS){
+    if(d==='seg')continue;
+    const fora=P.filter(p=>S.folga[p.id]===d);
+    const vend=P.filter(p=>p.cargo.startsWith('Vend')&&S.folga[p.id]!==d).length;
+    if(vend<1){const nv=P.filter(p=>p.cargo.startsWith('Vend')).length;(nv<=1?warn:bad).push(nv<=1?'Loja com 1 vendedor: na '+NOME_DIA[d]+' o balcão fica sem vendedor.':'Nenhum vendedor escalado na '+NOME_DIA[d]+'.')}
+    if(d!=='sab'&&fora.length>Math.max(2,Math.ceil(P.length/4)))warn.push('Mais de 2 pessoas de folga na '+NOME_DIA[d]+'.');
+  }
+  for(const [d] of DIAS){
+    const c=cobre(d),min=d==='sab'&&curto()?1:(S.min2?2:1);
+    if(c.abre.length<min)warn.push('Abertura da '+NOME_DIA[d]+' com '+c.abre.length+' pessoa(s) às '+c.ini+'.');
+    if(c.fecha.length<min)warn.push('Fechamento da '+NOME_DIA[d]+' com '+c.fecha.length+' pessoa(s) às '+c.fim+'.');
+  }
+  P.forEach(p=>{const mm=minutos(p.id);if(mm<2400)warn.push(p.nome+' fecha a semana em '+hm(mm)+': a loja está liberando '+hm(2400-mm)+'.');if(mm>2400)bad.push(p.nome+' passa de 40h na semana ('+hm(mm)+').')});
+  const ow=plano(S.folga)._owed;if(ow)P.forEach(p=>{if(ow[p.id]>0)warn.push(p.nome+' fica com +'+ow[p.id]+'h sem dia para compensar nesta semana.')});
+  const nsab=P.filter(p=>S.folga[p.id]==='sab').length;
+  if(nsab>vagasEf())warn.push('Folgas no sábado ('+nsab+') acima das vagas da loja ('+vagasEf()+').');
+  const primeiro=S.crit==='rod'?daVez(S.sem):filaPerf()[0];
+  if(S.folga[primeiro.id]!=='sab')
+    warn.push(S.crit==='rod'?'É a vez de '+primeiro.nome+' no rodízio do sábado e a folga não está com '+'essa pessoa'+'.':primeiro.nome+' é o 1º da fila do sábado e não está com a folga.');
+  if(S.alm.g===S.alm.a)bad.push('Gerente e assistente estão no mesmo horário de almoço ('+SLOTS[S.alm.g]+').');
+  for(let s=0;s<3;s++){const n=P.filter(p=>S.alm[p.id]===s).length;if(n>Math.max(3,Math.ceil(P.length/3)))warn.push('Mais de 3 pessoas almoçando às '+SLOTS[s]+'.')}
+  return {bad,warn};
+}
+function setFolga(id,d){
+  if(!podeEditar())return toast('Este perfil só visualiza a escala.');
+  if(d==='seg'&&S.segLock)return toast('Nesta loja a segunda está travada: não tem folga.');
+  S.folga[id]=d; render();
+}
+
+function vSemana(){
+  const {bad,warn}=alertas();
+  const PL=plano(S.folga);
+  const lista=S.perfil==='vendedor'?P.filter(p=>p.id===EU()):P;
+  const total=P.reduce((s,p)=>s+minutos(p.id),0);
+  let h='';
+  if(S.perfil!=='vendedor'){
+    h+='<div class="cards">'
+     +'<div class="kpi"><b>'+P.length+'</b><span>pessoas na escala</span></div>'
+     +'<div class="kpi"><b>'+hm(total)+'</b><span>horas escaladas na semana</span></div>'
+     +'<div class="kpi '+(bad.length?'bad':'ok')+'"><b>'+bad.length+'</b><span>regras quebradas</span></div>'
+     +'<div class="kpi '+(warn.length?'warn':'ok')+'"><b>'+warn.length+'</b><span>avisos</span></div></div>';
+  }
+  if(S.perfil!=='vendedor')h+=orientacao();
+  if(S.semEquipe)h+='<div class="alert warn" style="margin:0 0 12px">Esta loja não aparece no INDICADORES de 06/11: usando uma equipe de exemplo.</div>';
+  else if(S.equipe==='real'&&!P.some(p=>p.id==='g'))h+='<div class="alert warn" style="margin:0 0 12px">Gerente não identificado no INDICADORES desta loja. As travas ligadas ao gerente ficam sem efeito até ele ser incluído.</div>';
+  if(podeEditar())h+='<div class="row"><button class="btn" onclick="salvarSemana()">Salvar escala da semana</button><button class="btn alt" onclick="sugerir();S.salvo=null;render();toast(\'Escala sugerida pelas regras e pela fila do sábado.\')">Sugerir escala automática</button><span class="note">'+(S.salvo?'Salva por '+(S.salvo.por||'—')+(S.salvo.em?' em '+S.salvo.em:'')+'.':'Sugestão automática, ainda não salva.')+'</span><span class="note">Ou toque em um dia para mover a folga da pessoa.</span></div>';
+  h+='<div class="wrap"><table><tr><th style="text-align:left">Pessoa</th>'+DIAS.map(([d,l])=>'<th class="'+(d==='seg'&&S.segLock?'seg':'')+'">'+l+(d==='seg'&&S.segLock?'<br><small>sem folga</small>':'')+'</th>').join('')+'<th>Almoço</th><th>Horas</th></tr>';
+  lista.forEach(p=>{
+    const i=P.indexOf(p);
+    h+='<tr><td class="nome"><b>'+p.nome+'</b>'+(p.id===TOP?'<span class="tag">TOP</span>':'')+'<small>'+p.cargo+'</small></td>';
+    DIAS.forEach(([d])=>{
+      const o=PL[p.id][d],f=!o,t=lab(o)+(o&&o.x===1?'<br><span class="tag">+1h cobre as pontas</span>':o&&o.x===-1?'<br><span class="tag" style="background:#d6f0e0;color:#12643a">−1h compensa</span>':o&&o.x===2?'<br><span class="tag">almoço de 2h</span>':'');
+      h+='<td class="'+(f?'f':d==='seg'&&S.segLock?'segc':'t')+(podeEditar()?' edit':'')+'" onclick="setFolga(\''+p.id+'\',\''+d+'\')">'+t+'</td>';
+    });
+    h+='<td>'+(podeEditar()
+      ?'<select onchange="S.alm[\''+p.id+'\']=+this.value;render()">'+SLOTS.map((s,k)=>'<option value="'+k+'"'+(S.alm[p.id]===k?' selected':'')+'>'+s+'</option>').join('')+'</select>'
+      :SLOTS[S.alm[p.id]])+'</td>';
+    h+='<td class="h">'+hm(minutos(p.id))+'</td></tr>';
+  });
+  if(S.perfil!=='vendedor'){
+    const C=DIAS.map(([d])=>cobre(d)),nm=a=>a.map(o=>o.p.nome).join(', ')||'—';
+    const lin=(t,fn)=>'<tr class="cob"><td class="nome"><b>'+t+'</b></td>'+C.map(fn).join('')+'<td></td><td></td></tr>';
+    h+='<tr class="cob"><th colspan="'+(DIAS.length+3)+'" style="text-align:left">Quem cobre a loja</th></tr>'
+     +lin('Responsável',c=>'<td><b>'+c.resp.nome+'</b>'+(c.subst?'<br><span class="tag">substitui a gerente</span>':'')+'</td>')
+     +lin('Na loja',c=>'<td>'+c.pres.length+' de '+P.length+'</td>')
+     +lin('Abre',c=>'<td>'+nm(c.abre)+'<br><small>'+c.ini+'</small></td>')
+     +lin('Fecha',c=>'<td>'+nm(c.fecha)+'<br><small>'+c.fim+'</small></td>');
+  }
+  h+='</table></div><div class="legend"><span><i class="sw" style="background:var(--red)"></i>Folga</span><span><i class="sw" style="background:#eaf1ff;border:1px solid var(--line)"></i>Trabalho</span><span><i class="sw" style="background:#e3e7f1"></i>Segunda (folga bloqueada)</span><span>Domingo: loja fechada</span></div>';
+  if(S.perfil!=='vendedor'){
+    const atual=S.sab;
+    h+='<h3>Comparar horários de sábado</h3><div class="wrap"><table><tr><th style="text-align:left">Opção</th><th>Sábado</th><th>Abrem juntos</th><th>Fecham juntos</th><th>Horas por pessoa</th><th>Loja aberta no sábado</th><th>Avisos na semana</th></tr>';
+    for(const k in SAB){
+      S.sab=k;const c=cobre('sab'),a=alertas(),hs=[...new Set(P.map(q=>hm(minutos(q.id))))].join(' / ');
+      h+='<tr'+(k===atual?' style="outline:2px solid var(--red);outline-offset:-2px"':'')+'><td class="nome"><b>'+SAB[k][0]+'</b>'+(k===atual?'<small>selecionado</small>':'')+'</td><td>'+SAB[k][1]+'</td><td>'+c.abre.length+' de '+c.pres.length+'</td><td>'+c.fecha.length+' de '+c.pres.length+'</td><td>'+hs+'</td><td>'+(parseInt(SAB[k][2])-(k==='curto9'?9:8))+'h</td><td>'+(a.bad.length+a.warn.length)+'</td></tr>';
+    }
+    S.sab=atual;
+    h+='</table></div>';
+    bad.forEach(a=>h+='<div class="alert bad">⛔ '+a+'</div>');
+    warn.forEach(a=>h+='<div class="alert warn">⚠️ '+a+'</div>');
+    if(!bad.length&&!warn.length)h+='<div class="alert ok">✅ Escala dentro de todas as regras.</div>';
+  }else{
+    h+='<div class="alert ok">Sua folga desta semana: <b>'+NOME_DIA[S.folga[EU()]]+'</b> · Almoço: <b>'+SLOTS[S.alm[EU()]]+'</b> · Total: <b>'+hm(minutos(EU()))+'</b></div>';
+  }
+  return h;
+}
+function vFila(){
+  const linha=(p,i,ex)=>'<tr><td>'+(i+1)+'º</td><td class="nome"><b>'+p.nome+'</b><small>'+p.cargo+'</small></td><td>'+ex+'</td><td>'+(p.sem?'há '+p.sem+' semanas':'sem registro')+'</td><td>'+(S.folga[p.id]==='sab'?'<b style="color:var(--red)">Folga neste sábado</b>':'Trabalha')+'</td></tr>';
+  let h='<h3 style="margin-top:0">Próximos sábados — quem folga e quem cobre a loja</h3><p class="note">'+(S.crit==='rod'?'Rodízio mensal: a folga alterna entre o gerente e o vendedor de maior performance do mês anterior fechado.':'Fila por performance: a folga vai para o 1º da fila, respeitando as travas.')+'</p><div class="wrap"><table><tr><th>Sábado</th><th style="text-align:left">Folga</th><th style="text-align:left">Quem cobre a loja</th><th>Responsável</th></tr>';
+  for(let k=0;k<4;k++){
+    const f=calc(k),c=cobre('sab',f),fol=P.filter(q=>f[q.id]==='sab').map(q=>q.nome+' <small style="display:inline">('+q.cargo+')</small>').join('<br>');
+    h+='<tr'+(k===S.sem?' style="outline:2px solid var(--red);outline-offset:-2px"':'')+'><td>'+dm(new Date(semIni(k).getTime()+5*D1))+'</td><td class="nome"><b>'+fol+'</b></td><td class="nome">'+c.pres.map(o=>o.p.nome+' <small style="display:inline">'+o.t+'</small>').join(' · ')+'</td><td><b>'+c.resp.nome+'</b>'+(c.subst?'<br><span class="tag">substitui a gerente</span>':'')+'</td></tr>';
+  }
+  h+='</table></div>';
+  if(S.crit==='rod')h+='<div class="alert warn">Neste critério, os demais vendedores, o assistente e o auxiliar só folgam no sábado se a loja liberar a 2ª vaga.</div>';
+  h+='<h3>Fila por performance — gerente e vendedores</h3>';
+  h+='<p class="note">Ordem: % da meta do mês anterior fechado (aqui, outubro/2026), que vale para a escala do mês seguinte inteiro. Empate: quem está há mais tempo sem folgar no sábado.</p><div class="wrap"><table><tr><th>Posição</th><th style="text-align:left">Pessoa</th><th>% da meta (out/2026)</th><th>Último sábado de folga</th><th>Esta semana</th></tr>';
+  filaPerf().forEach((p,i)=>h+=linha(p,i,p.pct+'%'+(p.obs?' <small>('+p.obs+')</small>':'')));
+  h+='</table></div><h3>Fila por rodízio — assistente e auxiliar</h3><p class="note">Sem meta individual: vale só o rodízio. Entra quando a loja tem 2 vagas de folga no sábado.</p><div class="wrap"><table><tr><th>Posição</th><th style="text-align:left">Pessoa</th><th>Critério</th><th>Último sábado de folga</th><th>Esta semana</th></tr>';
+  filaRod().forEach((p,i)=>h+=linha(p,i,'Rodízio'));
+  h+='</table></div><div class="alert warn">Travas que valem mesmo para o 1º da fila: gerente não folga na segunda, nem com o assistente, nem com nenhum vendedor; auxiliar não folga com o gerente nem com o vendedor TOP. Se travar, a vaga passa para o próximo.</div>';
+  return h;
+}
+function vFeriados(){
+  const F=[['20/11/2026','Sex','Consciência Negra','Nacional','Fechada'],['25/12/2026','Sex','Natal','Nacional','Fechada'],['01/01/2027','Sex','Confraternização Universal','Nacional','Fechada'],['09/02/2027','Ter','Carnaval','Ponto facultativo','A definir'],['23/04/2027','Sex','São Jorge','Estadual RJ','Fechada'],['—','—','Aniversário da cidade','Municipal (por loja)','A cadastrar']];
+  let h='<h3 style="margin-top:0">Calendário da loja</h3><p class="note">Datas de exemplo. No painel real, cada loja herda os feriados nacionais e estaduais e recebe os municipais da própria cidade.</p><div class="wrap"><table><tr><th>Data</th><th>Dia</th><th style="text-align:left">Feriado</th><th>Tipo</th><th>Loja</th></tr>';
+  F.forEach(f=>h+='<tr><td>'+f[0]+'</td><td>'+f[1]+'</td><td class="nome">'+f[2]+'</td><td>'+f[3]+'</td><td>'+f[4]+'</td></tr>');
+  h+='</table></div><div class="alert ok">Semana com feriado: o dia entra na grade como "Feriado" e a meta de horas da semana cai na mesma proporção, sem gerar débito.</div>';
+  return h;
+}
+function vBanco(){
+  return '<h3 style="margin-top:0">Banco de horas — 2ª fase</h3><p>Reservado. Nesta fase o painel cobre escala, folgas e feriados.</p><div class="cards"><div class="kpi"><b>Saldo</b><span>por pessoa, com extrato</span></div><div class="kpi"><b>Créditos</b><span>hora além da escala</span></div><div class="kpi"><b>Débitos</b><span>saída antecipada, falta</span></div><div class="kpi warn"><b>Avisos</b><span>saldo alto ou a vencer</span></div></div><p class="note">Pela opção escolhida para o sábado curto, a escala em si nunca gera débito.</p>';
+}
+function render(){
+  setDias();$('sub').textContent=loja().c+' '+loja().n+' · Semana de '+dm(semIni(S.sem))+' a '+dm(new Date(semIni(S.sem).getTime()+5*D1))+' · Escala 5x2 · 40h semanais';
+  $('tabs').innerHTML=TABS.map(([k,l])=>'<button class="'+(S.tab===k?'on':'')+'" onclick="S.tab=\''+k+'\';render()">'+l+'</button>').join('');
+  $('view').innerHTML={semana:vSemana,fila:vFila,feriados:vFeriados,banco:vBanco,geral:vGeral,ferias:()=>'<h3 style="margin-top:0">Férias — em preparação</h3><p>Esta área vai avisar quem está com férias vencendo, por loja, região e rede. Falta entrar o arquivo do RH com as datas de admissão.</p>'}[S.tab]();
+  const co=S.perfil==='coord';['seg','hor','sab','aperto','crit','vagas','equipe'].forEach(k=>$(k).disabled=!co);$('modo').disabled=!co||!curto();$('trava').style.display=co?'none':'block';
+}
+$('equipe').onchange=e=>{S.equipe=e.target.value;montaEquipe();sugerir();render()};
+const HOR={'8-18':'8h às 18h','9-18':'9h às 18h','8-19':'8h às 19h','9-19':'9h às 19h'};
+const R$=v=>'R$ '+Number(v).toLocaleString('pt-BR');
+const pc=v=>String(v).replace('.',',')+'%';
+function recOf(l){
+  let hor=l.recSem.includes('9h–19h')?'9-19':l.recSem.includes('19h')?'8-19':l.recSem.includes('9h')?'9-18':'8-18';
+  if(hor==='9-18'&&l.sab==='c')hor='8-18'; // abrir às 9h deixaria o sábado curto em 36h: a loja não libera hora
+  return {seg:l.seg<=2,hor,sab:l.sab==='i'?(l.recSab.startsWith('Fechar')?'integral17':'integral'):'curto9'};
+}
+function aplicaRec(l){const r=recOf(l);S.sab=r.sab;S.segLock=r.seg;S.min2=!!l.duas;[S.ini,S.fim]=r.hor.split('-').map(Number)}
+function motivos(l){
+  const r=recOf(l),m={};
+  m.seg=r.seg?'A segunda é o '+l.seg+'º dia mais forte da loja ('+l.idx[0]+'% da média). Folga na segunda tira gente do dia de maior venda.'
+    :'A segunda é o '+l.seg+'º dia mais forte da loja ('+l.idx[0]+'% da média), então a equipe pode folgar nela. O gerente continua sem folga na segunda.';
+  const cedo='A primeira hora traz só '+pc(l.sh8)+' do faturamento do dia ('+String(l.at8).replace('.',',')+' atendimento por hora).';
+  const tarde=(l.sh17>=15?'A última hora concentra '+pc(l.sh17)+' do faturamento do dia.':'A última hora traz '+pc(l.sh17)+' do dia.')+(l.ap18>=300?' Ainda são faturados '+R$(l.ap18)+' por dia depois das 18h.':'');
+  const piloto=' É uma hipótese para piloto: a venda depois das 18h não mostra quem encontrou a loja fechada.';
+  m.hor=r.hor==='8-18'&&l.recSem.includes('abrir')?cedo+' Mesmo assim a loja fica em 8h às 18h: abrindo às 9h, quem trabalha no sábado curto fecharia a semana em 36h, e a regra é ninguém dever hora e a loja não liberar hora a mais.'
+    :r.hor==='8-18'?'A primeira hora traz '+pc(l.sh8)+' do faturamento do dia e a última '+pc(l.sh17)+'. Nenhuma é fraca o bastante para cortar, e depois das 18h a loja fatura '+R$(l.ap18)+' por dia.'
+    :r.hor==='9-18'?cedo+' Abrindo às 9h, a jornada de 8h cobre a loja inteira e todos abrem e fecham juntos.'+(l.sab==='c'?' Atenção: quem trabalha no sábado curto fica com 36h na semana.':'')
+    :r.hor==='8-19'?tarde+piloto:cedo+' '+tarde+piloto;
+  m.sab=r.sab==='curto9'?(l.sv12>l.sv8*1.1?'Das 12h às 13h a loja vende '+R$(l.sv12)+' por sábado, contra '+R$(l.sv8)+' das 8h às 9h. Com 9h–13h o turno é único e todos trabalham juntos.':'A primeira e a última hora do sábado vendem quase o mesmo ('+R$(l.sv8)+' e '+R$(l.sv12)+'). Fica 9h–13h para seguir o padrão da rede.')
+    :r.sab==='integral17'?'Das 17h às 18h a loja vende só '+R$(l.sv17)+' por sábado. Fechando às 17h o turno é único de 8h, com todos da abertura ao fechamento.'
+    :'Das 17h às 18h a loja ainda vende '+R$(l.sv17)+' por sábado, acima de R$ 500. Vale manter até as 18h.';
+  return m;
+}
+function orientacao(){
+  const l=loja(),r=recOf(l),m=motivos(l);
+  const it=[['Trava de folga na segunda',r.seg?'Sim':'Não',S.segLock?'Sim':'Não',m.seg],
+            ['Horário na semana',HOR[r.hor],HOR[S.ini+'-'+S.fim],m.hor],
+            ['Sábado da loja',SAB[r.sab][1],SAB[S.sab][1],m.sab]];
+  const mud=it.filter(x=>x[1]!==x[2]).length;
+  let h='<div class="ori"><div class="orih"><b>Orientação para '+l.n+'</b><span>Pré-seleção feita pelo movimento da loja de janeiro a novembro/2026</span>'+(mud?'<button class="btn alt" onclick="trocaLoja(S.loja)">Voltar ao recomendado</button>':'')+'</div>';
+  it.forEach(x=>{const ok=x[1]===x[2];h+='<div class="orii '+(ok?'':'mud')+'"><div><b>'+x[0]+': '+x[1]+'</b>'+(ok?'<span class="st ok">✔ seguindo o recomendado</span>':'<span class="st no">⚠ alterado para '+x[2]+'</span>')+'</div><p>'+(ok?'':'Antes de mudar, veja o porquê da escolha. ')+x[3]+'</p></div>'});
+  h+='<p class="orif">Folga: melhor dia <b>'+DNOME[l.dias[0]]+'</b>, depois <b>'+DNOME[l.dias[1]]+'</b> · Ponta mais fraca: <b>'+(l.fraca==='a'?'abertura':'fechamento')+'</b>'+(l.duas?', com 2 pessoas nas duas pontas':', onde 1 pessoa basta')+'</p></div>';
+  return h;
+}
+function opcoes(){
+  const r=recOf(loja()),st=' ★ recomendado';
+  $('seg').innerHTML=[['1','Sim'],['0','Não']].map(([v,t])=>'<option value="'+v+'">'+t+((v==='1')===r.seg?st:'')+'</option>').join('');
+  $('hor').innerHTML=Object.keys(HOR).map(k=>'<option value="'+k+'">'+HOR[k]+(k===r.hor?st:'')+'</option>').join('');
+  $('sab').innerHTML=Object.keys(SAB).map(k=>'<option value="'+k+'">'+SAB[k][0]+' ('+SAB[k][1]+')'+(k===r.sab?st:'')+'</option>').join('');
+  $('seg').value=S.segLock?'1':'0';$('hor').value=S.ini+'-'+S.fim;$('sab').value=S.sab;
+}
+/* ───────── FÉRIAS ───────── */
+const HOJE=new Date(2026,10,15),DIA=864e5;
+const fd=d=>String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
+const addAnos=(d,n)=>new Date(d.getFullYear()+n,d.getMonth(),d.getDate());
+const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+function admDe(p,c){ // datas de exemplo, fixas por pessoa, até chegar o arquivo do RH
+  let h=7;for(const ch of c+p.nome)h=(h*31+ch.charCodeAt(0))%100003;
+  return new Date(HOJE-(70+h%2100)*DIA);
+}
+const FST={venc:['Prazo estourado','#d03b3b','✖'],r30:['Sair em até 30 dias','#ec835a','!'],r60:['Sair em 31 a 60 dias','#fab219','▲'],r90:['Sair em 61 a 90 dias','#f3d27a','●'],ok:['No prazo','#0ca30c','✔'],aq:['Em aquisição','#c9c7bf','○'],feito:['Programada','#2a78d6','✓']};
+function feriasDe(p,l){
+  const adm=admDe(p,l.c),k=l.c+'|'+p.id,anos=Math.floor((HOJE-adm)/DIA/365.25);
+  const r={p,l,k,adm,anos,meses:Math.floor((HOJE-adm)/DIA/30.44)};
+  if(addAnos(adm,1)>HOJE){r.st='aq';r.direito=addAnos(adm,1);r.dias=Math.round((r.direito-HOJE)/DIA);r.ord=5000+r.dias;return r}
+  let n=1;while(addAnos(adm,n+1)<=HOJE)n++;
+  r.aqIni=addAnos(adm,n-1);r.aqFim=addAnos(adm,n);r.limite=addAnos(adm,n+1);r.sair=new Date(r.limite-30*DIA);
+  r.dias=Math.round((r.sair-HOJE)/DIA);r.pct=Math.min(100,Math.max(0,Math.round(100*(HOJE-r.aqFim)/(r.limite-r.aqFim))));
+  r.st=S.fer[k]?'feito':r.dias<0?'venc':r.dias<=30?'r30':r.dias<=60?'r60':r.dias<=90?'r90':'ok';r.ord=S.fer[k]?9000:r.dias;return r;
+}
+function vFerias(){
+  let niv=S.nivel;if(S.perfil==='gerente'||S.perfil==='vendedor')niv='loja';else if(S.perfil==='supervisor'&&niv==='rede')niv='reg';
+  const idx=LOJAS.map((l,i)=>i).filter(i=>niv==='rede'||(niv==='reg'&&LOJAS[i].reg===S.reg)||(niv==='loja'&&i===S.loja));
+  let L=[];idx.forEach(i=>equipeDe(i).forEach(p=>{if(S.cargoF==='todos'||p.cargo===S.cargoF)L.push(feriasDe(p,LOJAS[i]))}));
+  if(S.perfil==='vendedor')L=L.filter(r=>r.p.id===EU());
+  L.sort((a,b)=>a.ord-b.ord);
+  const n=k=>L.filter(r=>r.st===k).length,op=(v,t,sel)=>'<option value="'+v+'"'+(sel?' selected':'')+'>'+t+'</option>';
+  let h='<div class="alert warn" style="margin:0 0 12px"><b>Datas de admissão de exemplo.</b> As pessoas são reais, mas as datas abaixo são fictícias até entrar o arquivo do RH. Não use estes prazos para decidir nada.</div>';
+  if(S.perfil!=='vendedor'){
+    h+='<div class="row">';
+    if(S.perfil!=='gerente')h+='<label class="fl">Nível<select onchange="S.nivel=this.value;render()">'+(S.perfil==='coord'?op('rede','Rede',niv==='rede'):'')+op('reg','Região (supervisor)',niv==='reg')+op('loja','Loja selecionada',niv==='loja')+'</select></label>';
+    if(niv==='reg')h+='<label class="fl">Supervisor<select onchange="S.reg=this.value;render()">'+Object.keys(REG).map(k=>op(k,k,S.reg===k)).join('')+'</select></label>';
+    h+='<label class="fl">Cargo<select onchange="S.cargoF=this.value;render()">'+op('todos','Todos',S.cargoF==='todos')+CG.map(c=>op(c,c,S.cargoF===c)).join('')+'</select></label></div>';
+  }
+  h+='<div class="cards"><div class="kpi"><b>'+L.length+'</b><span>pessoas no recorte</span></div><div class="kpi bad"><b>'+(n('venc')+n('r30'))+'</b><span>precisam sair em até 30 dias</span></div><div class="kpi warn"><b>'+(n('r60')+n('r90'))+'</b><span>precisam sair em 31 a 90 dias</span></div><div class="kpi ok"><b>'+n('ok')+'</b><span>no prazo, com folga</span></div><div class="kpi"><b>'+n('aq')+'</b><span>ainda em aquisição</span></div></div>';
+  if(L.length>1){
+    // situação
+    const tot=L.length;
+    h+='<div class="fgrid"><div class="fbox"><h3 style="margin-top:0">Situação das férias</h3><div class="seg">'+Object.keys(FST).filter(k=>n(k)).map(k=>'<i style="flex:'+n(k)+';background:'+FST[k][1]+'" title="'+FST[k][0]+': '+n(k)+' ('+Math.round(100*n(k)/tot)+'%)"></i>').join('')+'</div><div class="fleg">'+Object.keys(FST).filter(k=>n(k)).map(k=>'<span><i style="background:'+FST[k][1]+'"></i>'+FST[k][2]+' '+FST[k][0]+' <b>'+n(k)+'</b></span>').join('')+'</div></div>';
+    // próximos 12 meses
+    const ms=[];for(let m=0;m<12;m++){const d=new Date(HOJE.getFullYear(),HOJE.getMonth()+m,1);ms.push({d,c:L.filter(r=>r.sair&&r.st!=='feito'&&r.sair.getFullYear()===d.getFullYear()&&r.sair.getMonth()===d.getMonth()).length})}
+    const mx=Math.max(1,...ms.map(x=>x.c));
+    h+='<div class="fbox"><h3 style="margin-top:0">Quantas pessoas precisam sair de férias em cada mês</h3><div class="mbar">'+ms.map(x=>'<div title="'+MES[x.d.getMonth()]+'/'+x.d.getFullYear()+': '+x.c+' pessoa(s)"><b>'+(x.c||'')+'</b><i style="height:'+Math.round(70*x.c/mx)+'px"></i><span>'+MES[x.d.getMonth()]+'<br>'+String(x.d.getFullYear()).slice(2)+'</span></div>').join('')+'</div></div></div>';
+    // por loja ou região
+    if(niv!=='loja'){
+      const g={};L.forEach(r=>{const k=niv==='rede'?r.l.reg:r.l.c+' '+r.l.n;g[k]=g[k]||{u:0,m:0,t:0};g[k].t++;if(r.st==='venc'||r.st==='r30')g[k].u++;else if(r.st==='r60'||r.st==='r90')g[k].m++});
+      const ks=Object.keys(g).sort((a,b)=>(g[b].u*100+g[b].m)-(g[a].u*100+g[a].m)),mg=Math.max(1,...ks.map(k=>g[k].u+g[k].m));
+      h+='<div class="fbox" style="margin-top:12px"><h3 style="margin-top:0">Onde estão os prazos mais próximos, por '+(niv==='rede'?'região':'loja')+'</h3><div class="fleg" style="margin:0 0 6px"><span><i style="background:#ec835a"></i>até 30 dias</span><span><i style="background:#fab219"></i>31 a 90 dias</span></div>'+ks.map(k=>'<div class="hrow"><span>'+k+'</span><div><i style="width:'+(100*g[k].u/mg)+'%;background:#ec835a" title="até 30 dias: '+g[k].u+'"></i><i style="width:'+(100*g[k].m/mg)+'%;background:#fab219" title="31 a 90 dias: '+g[k].m+'"></i></div><b>'+g[k].u+' · '+g[k].m+' <small>de '+g[k].t+'</small></b></div>').join('')+'</div>';
+    }
+  }
+  h+='<h3>Pessoas, da mais urgente para a menos</h3><div class="wrap"><table><tr><th style="text-align:left">Pessoa</th><th style="text-align:left">Loja</th><th>Admissão</th><th>Tempo de casa</th><th>Período aquisitivo</th><th style="min-width:170px">Prazo para tirar</th><th>Sair até</th><th>Situação</th>'+(podeEditar()?'<th></th>':'')+'</tr>';
+  L.slice(0,60).forEach(r=>{const f=FST[r.st],casa=r.anos>=1?r.anos+(r.anos>1?' anos':' ano'):r.meses+' meses';
+    h+='<tr><td class="nome"><span class="chip" style="background:'+CGC[r.p.cargo]+'">'+CGL[r.p.cargo]+'</span> <b>'+r.p.nome+'</b></td><td class="nome">'+r.l.c+' '+r.l.n+'</td><td>'+fd(r.adm)+'</td><td>'+casa+'</td>';
+    if(r.st==='aq')h+='<td colspan="2">Completa 1 ano em '+fd(r.direito)+'</td><td>—</td>';
+    else h+='<td>'+fd(r.aqIni)+' a '+fd(r.aqFim)+'</td><td><div class="tl" title="'+r.pct+'% do prazo já passou. Limite legal: '+fd(r.limite)+'"><i style="width:'+r.pct+'%;background:'+f[1]+'"></i></div><small>'+r.pct+'% do prazo usado</small></td><td><b>'+fd(r.sair)+'</b><br><small>'+(r.dias<0?'há '+(-r.dias)+' dias':'em '+r.dias+' dias')+'</small></td>';
+    h+='<td><span class="fst" style="border-color:'+f[1]+'"><i style="background:'+f[1]+'"></i>'+f[2]+' '+f[0]+'</span></td>'+(podeEditar()?'<td>'+(r.st==='aq'?'':'<button class="btn alt mini" onclick="S.fer[\''+r.k+'\']=!S.fer[\''+r.k+'\'];render()">'+(r.st==='feito'?'Desfazer':'Marcar programada')+'</button>')+'</td>':'')+'</tr>'});
+  h+='</table></div>'+(L.length>60?'<p class="note">Mostrando as 60 mais urgentes de '+L.length+'. Use os filtros para ver as demais.</p>':'');
+  h+='<div class="box2"><b>Como o prazo é calculado</b><ul><li>A cada 12 meses de casa a pessoa completa um período aquisitivo e ganha direito a férias.</li><li>A empresa tem os 12 meses seguintes para conceder. Passou disso, a férias é paga em dobro.</li><li>"Sair até" é o limite menos 30 dias, para as férias inteiras caberem dentro do prazo.</li><li>O painel só sabe a data de admissão. Quem já tirou ou já tem férias marcadas precisa ser marcado como "programada".</li><li>Regra geral da CLT, a confirmar com o RH e a convenção de cada cidade.</li></ul></div>';
+  return h;
+}
+function equipeDe(i){const e=S.equipe==='real'&&EQUIPES[LOJAS[i].c];return e&&e.length?e:TODOS.filter(p=>S.equipe==='6'||EQ4.includes(p.id))}
+function montaEquipe(){P=equipeDe(S.loja);S.semEquipe=S.equipe==='real'&&!(EQUIPES[loja().c]||[]).length;S.alm={};let k=0;P.forEach(p=>{S.alm[p.id]=p.id==='g'?0:p.id==='a'?1:(k++%3)})}
+function escalaLoja(i){
+  if(i===S.loja)return {P,f:S.folga};
+  const bk=[S.loja,S.sab,S.segLock,S.min2,P,S.ini,S.fim],l=LOJAS[i];
+  S.loja=i;aplicaRec(l);P=equipeDe(i);
+  const r={P,f:calc(S.sem)};
+  [S.loja,S.sab,S.segLock,S.min2,P,S.ini,S.fim]=bk;return r;
+}
+const CG=['Gerente','Assistente','Vendedor','Auxiliar'],CGC={Gerente:'#cde2fb',Assistente:'#fbd9cb',Vendedor:'#c9efe0',Auxiliar:'#fbe7b8'},CGL={Gerente:'G',Assistente:'A',Vendedor:'V',Auxiliar:'X'};
+function vGeral(){
+  if(S.perfil==='vendedor')return '<p>Esta visão é para gerente, supervisor e coordenação.</p>';
+  let niv=S.nivel;if(S.perfil==='gerente')niv='loja';else if(S.perfil==='supervisor'&&niv==='rede')niv='reg';
+  const idx=LOJAS.map((l,i)=>i).filter(i=>niv==='rede'||(niv==='reg'&&LOJAS[i].reg===S.reg)||(niv==='loja'&&i===S.loja));
+  const RK=i=>Object.keys(REG).indexOf(LOJAS[i].reg);idx.sort((a,b)=>RK(a)-RK(b)||a-b);
+  const dias=DIAS.map(d=>d[0]),lin=idx.map(i=>Object.assign({l:LOJAS[i],i},escalaLoja(i)));
+  const ok=p=>S.cargoF==='todos'||p.cargo===S.cargoF;
+  const ct={};CG.forEach(c=>ct[c]=dias.map(()=>0));let tp=0;
+  lin.forEach(r=>r.P.forEach(p=>{if(!ok(p))return;tp++;const k=dias.indexOf(r.f[p.id]);if(k>=0)ct[p.cargo][k]++}));
+  const tot=dias.map((d,k)=>CG.reduce((s,c)=>s+ct[c][k],0)),mk=tot.indexOf(Math.max(...tot));
+  const op=(v,t,sel)=>'<option value="'+v+'"'+(sel?' selected':'')+'>'+t+'</option>';
+  let h='<div class="row">';
+  if(S.perfil!=='gerente')h+='<label class="fl">Nível<select onchange="S.nivel=this.value;render()">'+(S.perfil==='coord'?op('rede','Rede',niv==='rede'):'')+op('reg','Região (supervisor)',niv==='reg')+op('loja','Loja selecionada',niv==='loja')+'</select></label>';
+  if(niv==='reg')h+='<label class="fl">Supervisor<select onchange="S.reg=this.value;render()">'+Object.keys(REG).map(k=>op(k,k+' ('+REG[k].length+' lojas)',S.reg===k)).join('')+'</select></label>';
+  h+='<label class="fl">Cargo<select onchange="S.cargoF=this.value;render()">'+op('todos','Todos',S.cargoF==='todos')+CG.map(c=>op(c,c,S.cargoF===c)).join('')+'</select></label></div>';
+  h+='<div class="cards"><div class="kpi"><b>'+lin.length+'</b><span>'+(lin.length===1?'loja':'lojas')+' no recorte</span></div><div class="kpi"><b>'+tp+'</b><span>pessoas'+(S.cargoF==='todos'?'':' ('+S.cargoF.toLowerCase()+')')+'</span></div><div class="kpi warn"><b>'+DIAS[mk][1]+'</b><span>dia com mais folgas ('+tot[mk]+')</span></div><div class="kpi"><b>'+tot[5]+'</b><span>folgas no sábado</span></div></div>';
+  h+='<h3 style="margin-top:0">Folgas por cargo e dia</h3><div class="wrap"><table><tr><th style="text-align:left">Cargo</th>'+DIAS.map(d=>'<th>'+d[1]+'</th>').join('')+'<th>Pessoas</th></tr>';
+  CG.filter(c=>S.cargoF==='todos'||c===S.cargoF).forEach(c=>{const n=lin.reduce((s,r)=>s+r.P.filter(p=>p.cargo===c).length,0);h+='<tr><td class="nome"><span class="chip" style="background:'+CGC[c]+'">'+CGL[c]+'</span> <b>'+c+'</b></td>'+ct[c].map(v=>'<td>'+(v||'—')+'</td>').join('')+'<td class="h">'+n+'</td></tr>'});
+  h+='<tr><td class="nome"><b>Total</b></td>'+tot.map(v=>'<td class="h">'+v+'</td>').join('')+'<td class="h">'+tp+'</td></tr></table></div>';
+  h+='<h3>Quem folga em cada dia</h3><div class="legend" style="margin:0 0 8px">'+CG.map(c=>'<span><span class="chip" style="background:'+CGC[c]+'">'+CGL[c]+'</span> '+c+'</span>').join('')+'</div><div class="wrap"><table><tr><th style="text-align:left">Loja</th>'+DIAS.map(d=>'<th>'+d[1]+'</th>').join('')+'</tr>';
+  let reg=null;
+  lin.forEach(r=>{
+    if(niv!=='loja'&&r.l.reg!==reg){reg=r.l.reg;h+='<tr class="cob"><th colspan="7" style="text-align:left">Região '+reg+'</th></tr>'}
+    h+='<tr><td class="nome"><b>'+r.l.c+'</b> '+r.l.n+'<small>'+r.P.filter(ok).length+' pessoas'+(r.i===S.loja?' · loja aberta na grade':'')+'</small></td>'+dias.map(d=>'<td style="text-align:left">'+(r.P.filter(p=>ok(p)&&r.f[p.id]===d).map(p=>'<span class="chip" style="background:'+CGC[p.cargo]+'" title="'+p.cargo+'">'+CGL[p.cargo]+'</span> '+p.nome.split(' ')[0]).join('<br>')||'<span style="color:#aab">—</span>')+'</td>').join('')+'</tr>';
+  });
+  h+='</table></div><p class="note">A escala de cada loja é a sugerida pelas regras e pelo movimento dela. Ajustes feitos à mão valem só para a loja aberta na grade.</p>';
+  return h;
+}
+function aplicaCfg(){const c=CFG[loja().c];if(!c)return;if(c.sab&&SAB[c.sab])S.sab=c.sab;if(typeof c.seg==='boolean')S.segLock=c.seg;if(c.hor&&HOR[c.hor])[S.ini,S.fim]=c.hor.split('-').map(Number);['modo','aperto','crit'].forEach(k=>{if(c[k])S[k]=c[k]});if(c.vagas)S.vagas=+c.vagas}
+function carregaSemana(){const sv=SALVOS[loja().c+'|'+semKey(S.sem)];S.salvo=null;
+  if(sv&&sv.folga){const f={},a={};let okk=true;P.forEach(p=>{if(sv.folga[p.nome])f[p.id]=sv.folga[p.nome];else okk=false;if(sv.alm&&sv.alm[p.nome]!=null)a[p.id]=+sv.alm[p.nome]});
+    if(okk){S.folga=f;Object.assign(S.alm,a);S.salvo=sv;return}}
+  sugerir();}
+function salvarSemana(){
+  const folga={},alm={};P.forEach(p=>{folga[p.nome]=S.folga[p.id];alm[p.nome]=S.alm[p.id]});const k=loja().c+'|'+semKey(S.sem);
+  toast('Salvando…');
+  STDados.chamar('escalaSalvar',{loja:loja().c,sem:semKey(S.sem),folga,alm},true).then(r=>{if(!r||!r.ok)throw new Error((r&&r.erro)||'O servidor não confirmou.');SALVOS[k]={folga,alm,por:r.por,em:r.em};S.salvo=SALVOS[k];render();toast('Escala salva.')}).catch(e=>toast('Não salvou: '+e.message));
+}
+function salvarCfg(){
+  if(S.perfil!=='coord'||!REAL)return;const cfg={sab:S.sab,seg:S.segLock,hor:S.ini+'-'+S.fim,modo:S.modo,aperto:S.aperto,crit:S.crit,vagas:S.vagas};CFG[loja().c]=cfg;
+  STDados.chamar('escalaCfg',{loja:loja().c,cfg},true).then(r=>{if(!r||!r.ok)throw new Error((r&&r.erro)||'O servidor não confirmou.')}).catch(e=>toast('A seleção não foi gravada: '+e.message));
+}
+function trocaLoja(i){S.loja=i;aplicaRec(loja());aplicaCfg();montaEquipe();opcoes();['modo','aperto','crit'].forEach(k=>$(k).value=S[k]);$('vagas').value=S.vagas;carregaSemana();render()}
+$('hor').onchange=e=>{[S.ini,S.fim]=e.target.value.split('-').map(Number);salvarCfg();render()};
+$('loja').onchange=e=>trocaLoja(+e.target.value);
+$('seg').onchange=e=>{S.segLock=e.target.value==='1';salvarCfg();sugerir();S.salvo=null;render()};
+$('aperto').onchange=e=>{S.aperto=e.target.value;salvarCfg();render()};
+$('crit').onchange=e=>{S.crit=e.target.value;salvarCfg();sugerir();S.salvo=null;render()};
+$('sem').onchange=e=>{S.sem=+e.target.value;carregaSemana();render()};
+$('perfil').onchange=e=>{S.perfil=e.target.value;render()};
+$('sab').onchange=e=>{S.sab=e.target.value;salvarCfg();render()};
+$('modo').onchange=e=>{S.modo=e.target.value;salvarCfg();render()};
+$('vagas').onchange=e=>{S.vagas=+e.target.value;salvarCfg();sugerir();S.salvo=null;render()};
+let REAL=false;
+function boot(d){
+  LOJAS=d.lojas;EQUIPES=d.equipes;REG=d.reg;SALVOS=d.salvos||{};CFG=d.cfg||{};BASE=d.base||'';
+  LOJAS.forEach(l=>l.reg=Object.keys(REG).find(k=>REG[k].includes(l.c))||'Sem região');
+  $('loja').innerHTML=LOJAS.map((l,i)=>'<option value="'+i+'">'+l.c+' · '+l.n+'</option>').join('');
+  $('sem').innerHTML=[0,1,2,3,4,5].map(k=>'<option value="'+k+'">'+dm(semIni(k))+' a '+dm(new Date(semIni(k).getTime()+5*D1))+(k===0?' (semana atual)':'')+'</option>').join('');
+  $('info').innerHTML='Liberado só para a coordenação. '+BASE+(d.baseEm?' Base enviada em '+d.baseEm+'.':'')+' <label style="text-decoration:underline;cursor:pointer;margin-left:8px">Atualizar base<input type="file" accept=".json" style="display:none" onchange="enviarBase(this)"></label>';
+  S.perfil='coord';$('perfil').value='coord';REAL=true;trocaLoja(0);
+}
+function enviarBase(inp){
+  const f=inp.files&&inp.files[0];if(!f)return;const rd=new FileReader();
+  rd.onload=()=>{let b;try{b=JSON.parse(rd.result)}catch(e){return falhaMsg('O arquivo não é uma base válida.')}
+    $('info').textContent='Enviando a base…';
+    STDados.chamar('escalaBase',{base:b},true).then(r=>{if(!r||!r.ok)throw new Error((r&&r.erro)||'o servidor não confirmou.');return STDados.chamar('escalaListar',{},true)}).then(r=>{if(!r||!r.ok||r.semBase)throw new Error('a base não voltou do servidor.');boot(r);toast('Base atualizada.')}).catch(e=>falhaMsg('Não consegui enviar a base: '+(e&&e.message||e)))};
+  rd.readAsText(f);
+}
+const BTN_BASE='<label class="btn alt" style="display:inline-block;margin-top:10px;cursor:pointer">Enviar a base do mês<input type="file" accept=".json" style="display:none" onchange="enviarBase(this)"></label>';
+function falhaMsg(m){$('info').textContent=m}
+function falha(m){$('info').textContent=m;$('view').innerHTML='<p style="margin:0">'+m+'</p>'}
+if(window.STDados)STDados.cracha().then(()=>STDados.chamar('escalaListar',{},true)).then(r=>{if(!r||!r.ok)throw new Error((r&&r.erro)||'o servidor ainda não tem a Escala.');if(r.semBase){$('info').textContent='Falta a base do mês.';$('view').innerHTML='<p style="margin:0">A Escala está pronta, mas o servidor ainda não tem a base do mês (lojas, equipes e % da meta).</p>'+BTN_BASE;return}boot(r)}).catch(e=>falha('Não consegui abrir a Escala: '+(e&&e.message||e)));
+else falha('Abra a Escala por dentro do Só Tintas App.');
+</script>
+</body>
+</html>

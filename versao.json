@@ -2,6 +2,20 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v212",
+      "data": "15/11/2026",
+      "hora": "19:25",
+      "itens": [
+        {
+          "painel": "Escala & Folgas",
+          "o_que": "Painel novo, por enquanto só para a coordenação: a escala 5x2 de cada loja, com folgas, fila do sábado, quem cobre a loja, horário de almoço e a visão por cargo, loja, região e rede. Cada loja abre com o horário e as travas indicados pelo movimento dela, e a tela explica o porquê de cada escolha. Dá para salvar a escala da semana. Férias e banco de horas ainda estão em preparação.",
+          "para": [
+            "coord"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v211",
       "data": "15/11/2026",
       "hora": "15:55",

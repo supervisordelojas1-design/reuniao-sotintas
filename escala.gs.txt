@@ -1,0 +1,103 @@
+/* ============================================================================
+   ESCALA & FOLGAS — servidor (escala 5x2, folgas e cobertura das lojas)
+   Só Tintas App · novembro/2026 (app sw ast-v212, tela escala.html)
+
+   Para o SERVIDOR DE DADOS ST (projeto "Servidor PDI"), no padrão do CRM.
+   No Código.gs, dentro do doPost, logo abaixo da linha do CRM:
+
+      if (/^escala/.test(d.acao || '')) return escalaAcao_(d, c);
+
+   AÇÕES
+   escalaListar  devolve a base (lojas, equipes, regiões), as escalas salvas e as seleções
+   escalaSalvar  grava a escala de uma loja numa semana (aba ESCALA)
+   escalaCfg     grava as seleções de uma loja (aba ESCALA_CFG)
+   escalaBase    recebe a base do mês (aba ESCALA_BASE), enviada pela tela
+
+   QUEM VÊ: por enquanto só a coordenação (decisão do Bruno, 15/11/2026).
+   Os dados ficam na planilha do servidor, e não na página nem neste arquivo,
+   porque o repositório do app é público.
+   ========================================================================== */
+var ESC_ABA = 'ESCALA', ESC_ABA_CFG = 'ESCALA_CFG', ESC_ABA_BASE = 'ESCALA_BASE';
+
+function escalaAcao_(d, quem) {
+  try {
+    var nome = '', pf = '', leitura = false;
+    if (quem && typeof quem === 'object') { nome = quem.nome || quem.n || ''; pf = String(quem.perfil || quem.pf || ''); leitura = !!quem.vc; }
+    if (!nome) return escResp_({ ok: false, erro: 'Crachá inválido.', cracha: true });
+    if (pf !== 'coord') return escResp_({ ok: false, erro: 'A Escala ainda está liberada só para a coordenação.' });
+    if (d.acao === 'escalaListar') return escResp_(escListar_());
+    if (leitura) return escResp_({ ok: false, erro: 'Este acesso é só de leitura.' });
+    if (d.acao === 'escalaSalvar') return escResp_(escSalvar_(d, nome));
+    if (d.acao === 'escalaCfg') return escResp_(escCfg_(d, nome));
+    if (d.acao === 'escalaBase') return escResp_(escBase_(d, nome));
+    return escResp_({ ok: false, erro: 'Ação da Escala desconhecida.' });
+  } catch (err) {
+    return escResp_({ ok: false, erro: String(err) });
+  }
+}
+function escResp_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+function escAba_(nome, cab) {
+  var ss = SpreadsheetApp.getActive(), ab = ss.getSheetByName(nome);
+  if (!ab) { ab = ss.insertSheet(nome); ab.setFrozenRows(1); ab.getRange(1, 1, ab.getMaxRows(), Math.max(cab.length, ab.getMaxColumns())).setNumberFormat('@'); }
+  ab.getRange(1, 1, 1, cab.length).setValues([cab]).setFontWeight('bold');
+  return ab;
+}
+function escLoja_(c) { return ('00' + String(c == null ? '' : c).replace(/\D/g, '')).slice(-3); }
+function escAgora_() { return Utilities.formatDate(new Date(), 'America/Sao_Paulo', 'dd/MM/yyyy HH:mm'); }
+function escLerBase_() {
+  var ab = SpreadsheetApp.getActive().getSheetByName(ESC_ABA_BASE);
+  if (!ab || ab.getLastRow() < 2) return null;
+  var txt = ab.getRange(2, 1, ab.getLastRow() - 1, 1).getValues().map(function (l) { return String(l[0]); }).join('');
+  try { return JSON.parse(txt); } catch (e) { return null; }
+}
+function escListar_() {
+  var ss = SpreadsheetApp.getActive(), salvos = {}, cfg = {}, b = escLerBase_();
+  if (!b) return { ok: true, semBase: true, lojas: [], equipes: {}, reg: {}, salvos: {}, cfg: {} };
+  var a = ss.getSheetByName(ESC_ABA);
+  if (a && a.getLastRow() > 1) a.getRange(2, 1, a.getLastRow() - 1, 5).getValues().forEach(function (l) {
+    try { var o = JSON.parse(l[2]); o.por = String(l[3]); o.em = String(l[4]); salvos[String(l[0]) + '|' + String(l[1])] = o; } catch (e) {}
+  });
+  var g = ss.getSheetByName(ESC_ABA_CFG);
+  if (g && g.getLastRow() > 1) g.getRange(2, 1, g.getLastRow() - 1, 2).getValues().forEach(function (l) {
+    try { cfg[String(l[0])] = JSON.parse(l[1]); } catch (e) {}
+  });
+  return { ok: true, lojas: b.lojas || [], equipes: b.equipes || {}, reg: b.reg || {}, base: b.base || '', baseEm: b.em || '', salvos: salvos, cfg: cfg };
+}
+function escGrava_(aba, cab, chave, linha) {
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var ab = escAba_(aba, cab), n = ab.getLastRow(), k = chave.length, achou = 0;
+    if (n > 1) { var v = ab.getRange(2, 1, n - 1, k).getValues(); for (var i = 0; i < v.length && !achou; i++) { var ig = true; for (var j = 0; j < k; j++) if (String(v[i][j]) !== chave[j]) ig = false; if (ig) achou = i + 2; } }
+    ab.getRange(achou || n + 1, 1, 1, linha.length).setValues([linha]);
+  } finally { lock.releaseLock(); }
+}
+function escSalvar_(d, nome) {
+  var loja = escLoja_(d.loja), sem = String(d.sem || '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(sem)) return { ok: false, erro: 'Semana inválida.' };
+  var dados = JSON.stringify({ folga: d.folga || {}, alm: d.alm || {} });
+  if (dados.length > 6000) return { ok: false, erro: 'Escala grande demais.' };
+  var em = escAgora_();
+  escGrava_(ESC_ABA, ['LOJA', 'SEMANA', 'DADOS', 'POR', 'QUANDO'], [loja, sem], [loja, sem, dados, nome, em]);
+  return { ok: true, por: nome, em: em };
+}
+function escCfg_(d, nome) {
+  var loja = escLoja_(d.loja), dados = JSON.stringify(d.cfg || {});
+  if (dados.length > 1000) return { ok: false, erro: 'Seleção inválida.' };
+  escGrava_(ESC_ABA_CFG, ['LOJA', 'CFG', 'POR', 'QUANDO'], [loja], [loja, dados, nome, escAgora_()]);
+  return { ok: true };
+}
+function escBase_(d, nome) {
+  var b = d.base;
+  if (!b || !b.lojas || !b.lojas.length || !b.equipes) return { ok: false, erro: 'Base vazia ou fora do formato.' };
+  b.em = escAgora_() + ' por ' + nome;
+  var txt = JSON.stringify(b), partes = [];
+  if (txt.length > 900000) return { ok: false, erro: 'Base grande demais.' };
+  for (var i = 0; i < txt.length; i += 40000) partes.push([txt.slice(i, i + 40000)]);
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var ab = escAba_(ESC_ABA_BASE, ['BASE (não editar à mão)']);
+    if (ab.getLastRow() > 1) ab.getRange(2, 1, ab.getLastRow() - 1, 1).clearContent();
+    ab.getRange(2, 1, partes.length, 1).setValues(partes);
+  } finally { lock.releaseLock(); }
+  return { ok: true, lojas: b.lojas.length, pessoas: Object.keys(b.equipes).reduce(function (s, k) { return s + b.equipes[k].length; }, 0), em: b.em };
+}

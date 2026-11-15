@@ -9489,6 +9489,11 @@ syncNav();
         <span class="ini-txt"><span class="ini-nm">Central de Atualização</span><span class="ini-ds">Todas as bases num lugar só · o que está em dia e o que falta</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
+      <button type="button" class="ini-card feat" data-act="escala" data-coordonly="1">
+        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-chart"/></svg></span>
+        <span class="ini-txt"><span class="ini-nm">Escala &amp; Folgas</span><span class="ini-ds">Escala 5x2 por loja · folgas, sábado e cobertura · só coordenação por enquanto</span></span>
+        <span class="ini-go" aria-hidden="true">&rarr;</span>
+      </button>
       <button type="button" class="ini-card feat" data-act="conteudo" data-conteudo="1">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg></span>
         <span class="ini-txt"><span class="ini-nm">Painel de Conteúdo</span><span class="ini-ds">Banners, fornecedores, provas, vídeos e trilha do Mentor</span></span>
@@ -9855,6 +9860,13 @@ body.foco .wrap{padding-bottom:40px}
     ifrD.setAttribute('src','conteudo.html?tema='+tema+'&v='+Date.now());
     ovD.style.display='flex'; document.body.style.overflow='hidden';
   }
+  /* Escala & Folgas (nov/2026): por enquanto só a coordenação; os dados vêm do Servidor de Dados */
+  function abrirEscala(){
+    if(typeof ehAnl==='function'&&ehAnl()) return;
+    if(!ovD||!ifrD) return; titOv('Escala & Folgas · Só Tintas');
+    ifrD.setAttribute('src','escala.html?v='+Date.now());
+    ovD.style.display='flex'; document.body.style.overflow='hidden';
+  }
   function abrirCentral(){
     if(!(typeof podePainel==='function'?podePainel('gerirCentral',!ehAnl()):!ehAnl())) return;
     if(!ovD||!ifrD) return; titOv('Central de Atualização · Só Tintas');
@@ -10126,6 +10138,7 @@ body.foco .wrap{padding-bottom:40px}
     if(act==='direitos'){ abrirDireitos(); return; }
     if(act==='cadastro'){ abrirCadastro(); return; }
     if(act==='central'){ abrirCentral(); return; }
+    if(act==='escala'){ abrirEscala(); return; }
     if(act==='conteudo'){ abrirConteudo(); return; }
     if(act==='mentor'){ abrirMentor(); return; }
     if(act==='especialista'){ abrirMentor('#/assessor'); return; }
