@@ -34,6 +34,7 @@ header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-be
 .eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
 h1{font-family:var(--f-display);font-weight:800;font-size:clamp(24px,4vw,32px);line-height:1.05;margin:4px 0 0;color:var(--accent)}
 .sub{color:var(--muted);font-size:13px}
+.proto:empty{display:none}
 .proto{background:var(--warnbg);border-radius:10px;color:var(--ink);font-size:13px;padding:8px 12px}
 .bar{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:14px}
 .bar label,.fl{font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:4px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;min-width:0}
@@ -131,7 +132,7 @@ td select{min-width:0;min-height:32px;padding:0 5px;font-size:12.5px;width:auto}
   <label>Trava de folga na segunda
     <select id="seg"><option value="1">Sim</option><option value="0">Não</option></select>
   </label>
-  <label id="lbPerfil">Ver como (simulação)
+  <label id="lbPerfil" style="display:none">Ver como (simulação)
     <select id="perfil">
       <option value="vendedor">Vendedor</option>
       <option value="gerente" selected>Gerente</option>
@@ -190,6 +191,7 @@ td select{min-width:0;min-height:32px;padding:0 5px;font-size:12.5px;width:auto}
 <div id="trava" class="trava">🔒 Seleções travadas. Por enquanto só a coordenação altera horário, sábado, trava de segunda e critérios. Gerente e supervisor acompanham e ajustam as folgas.</div>
 <nav id="tabs"></nav>
 <main><div class="panel" id="view"></div></main>
+<p class="note" id="rodape" style="margin:0"></p>
 </div>
 <div id="toast"></div>
 
@@ -269,7 +271,33 @@ function calc(k){
   }
   return f;
 }
-function sugerir(){S.folga=calc(S.sem)}
+function sugerir(){S.folga=calc(S.sem);ajustaAlmoco()}
+/* Almoço: a loja nunca fica sem ninguém. vazios() lista dia e hora em que todos os presentes estão em almoço. */
+const SLOTH=[12,13,14];
+function vazios(f=S.folga){
+  const T=plano(f),out=[];
+  ['seg','ter','qua','qui','sex','sab'].forEach(d=>{
+    const pr=P.filter(p=>T[p.id][d]);if(!pr.some(p=>T[p.id][d].l>0))return;
+    for(let h=12;h<16;h++){
+      const aberta=pr.some(p=>h>=T[p.id][d].a&&h<T[p.id][d].b);if(!aberta)continue;
+      const na=pr.filter(p=>{const o=T[p.id][d];if(h<o.a||h>=o.b)return false;const st=SLOTH[S.alm[p.id]];return !(o.l>0&&h>=st&&h<st+o.l)}).length;
+      if(!na)out.push([d,h]);
+    }
+  });
+  return out;
+}
+function ajustaAlmoco(){
+  for(let g=0;g<12;g++){
+    const v=vazios();if(!v.length)return;
+    const T=plano(S.folga),d=v[0][0],pr=P.filter(p=>T[p.id][d]).sort((x,y)=>(x.id==='g')-(y.id==='g'));
+    let ok=false;
+    for(const p of pr){const antes=S.alm[p.id];
+      for(let k=0;k<3&&!ok;k++){if(k===antes)continue;S.alm[p.id]=k;
+        if(S.alm.g!==undefined&&S.alm.g===S.alm.a||vazios().length>=v.length)S.alm[p.id]=antes;else ok=true}
+      if(ok)break}
+    if(!ok)return;
+  }
+}
 const lab=o=>o?o.a+'h–'+o.b+'h':'FOLGA';
 const mins=o=>o?(o.b-o.a-o.l)*60:0;
 function plano(f){
@@ -343,6 +371,7 @@ function alertas(){
   const primeiro=S.crit==='rod'?daVez(S.sem):filaPerf()[0];
   if(S.folga[primeiro.id]!=='sab')
     warn.push(S.crit==='rod'?'É a vez de '+primeiro.nome+' no rodízio do sábado e a folga não está com '+'essa pessoa'+'.':primeiro.nome+' é o 1º da fila do sábado e não está com a folga.');
+  vazios().forEach(([d,h])=>bad.push((d==='sab'?'No sábado':'Na '+DNOME[d])+', das '+h+'h às '+(h+1)+'h, a loja fica sem ninguém: todos os presentes estão em almoço. Troque o horário de almoço de uma pessoa.'));
   if(S.alm.g===S.alm.a)bad.push('Gerente e assistente estão no mesmo horário de almoço ('+SLOTS[S.alm.g]+').');
   for(let s=0;s<3;s++){const n=P.filter(p=>S.alm[p.id]===s).length;if(n>Math.max(3,Math.ceil(P.length/3)))warn.push('Mais de 3 pessoas almoçando às '+SLOTS[s]+'.')}
   return {bad,warn};
@@ -394,14 +423,6 @@ function vSemana(){
   }
   h+='</table></div><div class="legend"><span><i class="sw" style="background:var(--red)"></i>Folga</span><span><i class="sw" style="background:var(--navybg);border:1px solid var(--line)"></i>Trabalho</span><span><i class="sw" style="background:var(--surface2)"></i>Segunda (folga bloqueada)</span><span>Domingo: loja fechada</span></div>';
   if(S.perfil!=='vendedor'){
-    const atual=S.sab;
-    h+='<h3>Comparar horários de sábado</h3><div class="wrap"><table><tr><th style="text-align:left">Opção</th><th>Sábado</th><th>Abrem juntos</th><th>Fecham juntos</th><th>Horas por pessoa</th><th>Loja aberta no sábado</th><th>Avisos na semana</th></tr>';
-    for(const k in SAB){
-      S.sab=k;const c=cobre('sab'),a=alertas(),hs=[...new Set(P.map(q=>hm(minutos(q.id))))].join(' / ');
-      h+='<tr'+(k===atual?' style="outline:2px solid var(--red);outline-offset:-2px"':'')+'><td class="nome"><b>'+SAB[k][0]+'</b>'+(k===atual?'<small>selecionado</small>':'')+'</td><td>'+SAB[k][1]+'</td><td>'+c.abre.length+' de '+c.pres.length+'</td><td>'+c.fecha.length+' de '+c.pres.length+'</td><td>'+hs+'</td><td>'+(parseInt(SAB[k][2])-(k==='curto9'?9:8))+'h</td><td>'+(a.bad.length+a.warn.length)+'</td></tr>';
-    }
-    S.sab=atual;
-    h+='</table></div>';
     bad.forEach(a=>h+='<div class="alert bad">⛔ '+a+'</div>');
     warn.forEach(a=>h+='<div class="alert warn">⚠️ '+a+'</div>');
     if(!bad.length&&!warn.length)h+='<div class="alert ok">✅ Escala dentro de todas as regras.</div>';
@@ -616,8 +637,9 @@ function boot(d){
   $('sem').innerHTML=[0,1,2,3,4,5].map(k=>'<option value="'+k+'">'+dm(semIni(k))+' a '+dm(new Date(semIni(k).getTime()+5*D1))+(k===0?' (semana atual)':'')+'</option>').join('');
   PFREAL=d.pf||'coord';RO=!!d.leitura;const eCo=PFREAL==='coord'&&!RO;
   const lib=(d.perfis||[]).map(p=>({sup:'supervisores',ger:'gerentes',anl:'análise'}[p])).filter(Boolean);
-  $('info').innerHTML=eCo?(lib.length?'Liberado para a coordenação e para '+lib.join(', ')+' (Direitos de Acesso). ':'Liberado só para a coordenação. ')+BASE+(d.baseEm?' Base enviada em '+d.baseEm+'.':'')+' <label style="text-decoration:underline;cursor:pointer;margin-left:8px">Atualizar base<input type="file" accept=".json" style="display:none" onchange="enviarBase(this)"></label>':BASE+(RO?' Acesso só de leitura.':'');
-  S.perfil={coord:'coord',anl:'coord',sup:'supervisor',ger:'gerente'}[PFREAL]||'gerente';$('perfil').value=S.perfil;$('lbPerfil').style.display=eCo?'':'none';
+  $('info').innerHTML='';
+  $('rodape').innerHTML=eCo?BASE+(d.baseEm?' Base enviada em '+d.baseEm+'.':'')+' <label style="text-decoration:underline;cursor:pointer;margin-left:6px">Atualizar base<input type="file" accept=".json" style="display:none" onchange="enviarBase(this)"></label>':'';
+  S.perfil={coord:'coord',anl:'coord',sup:'supervisor',ger:'gerente'}[PFREAL]||'gerente';$('perfil').value=S.perfil;
   if(!REG[S.reg])S.reg=Object.keys(REG)[0]||S.reg;if(S.perfil==='supervisor')S.nivel='reg';
   REAL=true;trocaLoja(0);
 }
