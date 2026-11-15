@@ -13,7 +13,7 @@
   --bg:#0f1522; --surface:#1a2336; --surface2:#222d44; --ink:#eef2fb; --muted:#9aa5bb; --line:#2c3850;
   --accent:#ff3b47; --navy:#4f7cf0; --ok:#3fbf7f; --bad:#ff6b6b; --warn:#ffab5e;
   --okbg:#12301f; --badbg:#3a1a20; --warnbg:#3a2717; --navybg:#1e2b4d;
-  --thbg:#222d44; --thfg:#eef2fb; --thseg:#2c3850; --folga:#c8323c;
+  --thbg:#222d44; --thfg:#eef2fb; --thseg:#2c3850; --folga:#c8323c; --forte:#b8651b;
   --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
   --f-body:"Public Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
   --red:var(--accent); --card:var(--surface); --txt:var(--ink); --mut:var(--muted);
@@ -23,7 +23,7 @@ html[data-theme="light"]{
   --bg:#f5f7fb; --surface:#ffffff; --surface2:#eef2f8; --ink:#16233d; --muted:#5a677f; --line:#e4e9f3;
   --accent:#b91c1c; --navy:#1C3F8F; --ok:#178048; --bad:#c42a22; --warn:#b35600;
   --okbg:#e1f3e8; --badbg:#fdeceb; --warnbg:#ffefdd; --navybg:#e7edf9;
-  --thbg:#1C3F8F; --thfg:#ffffff; --thseg:#16327a; --folga:#b91c1c;
+  --thbg:#1C3F8F; --thfg:#ffffff; --thseg:#16327a; --folga:#b91c1c; --forte:#b35600;
   color-scheme:light;
 }
 *{box-sizing:border-box}[hidden]{display:none!important}
@@ -58,6 +58,8 @@ th,td{border:1px solid var(--line);padding:7px 6px;text-align:center;font-size:1
 .wrap tr>:first-child{border-left:0}.wrap tr>:last-child{border-right:0}.wrap tr:first-child>*{border-top:0}.wrap tr:last-child>*{border-bottom:0}
 th{background:var(--thbg);color:var(--thfg);font-weight:700}
 th.seg{background:var(--thseg)}
+th.forte{background:var(--forte);color:#fff}th small{font-weight:600;font-size:10.5px}
+td.fortec{box-shadow:inset 0 3px 0 var(--forte)}td .fx{display:block;color:var(--warn);font-weight:700;font-size:10.5px;margin-bottom:2px}
 td.nome{text-align:left;white-space:nowrap}
 td.nome small{display:block;color:var(--muted);font-size:11.5px}
 td.t{background:var(--navybg);cursor:default}
@@ -198,6 +200,8 @@ td select{min-width:0;min-height:32px;padding:0 5px;font-size:12.5px;width:auto}
 <script src="st-dados.js?v=93"></script>
 <script>
 let DIAS=[];
+/* dia de semana de maior movimento da loja: maior índice de faturamento entre segunda e sexta */
+const forte=l=>{const W=['seg','ter','qua','qui','sex'];let k=0;(l.idx||[]).forEach((v,i)=>{if(v>l.idx[k])k=i});return l.idx&&l.idx.length?[W[k],l.idx[k]]:['',0]};
 const DIA7=6048e5,D1=864e5;
 const SEG0=(()=>{const d=new Date();d.setHours(12,0,0,0);if(d.getDay()===0)d.setDate(d.getDate()+1);return new Date(d.getTime()-((d.getDay()+6)%7)*D1)})();
 const semIni=k=>new Date(SEG0.getTime()+k*DIA7),dm=d=>String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
@@ -399,7 +403,7 @@ function vSemana(){
   if(S.semEquipe)h+='<div class="alert warn" style="margin:0 0 12px">Esta loja não aparece no INDICADORES de 06/11: usando uma equipe de exemplo.</div>';
   else if(S.equipe==='real'&&!P.some(p=>p.id==='g'))h+='<div class="alert warn" style="margin:0 0 12px">Gerente não identificado no INDICADORES desta loja. As travas ligadas ao gerente ficam sem efeito até ele ser incluído.</div>';
   if(podeEditar())h+='<div class="row"><button class="btn" onclick="salvarSemana()">Salvar escala da semana</button><button class="btn alt" onclick="sugerir();S.salvo=null;render();toast(\'Escala sugerida pelas regras e pela fila do sábado.\')">Sugerir escala automática</button><span class="note">'+(S.salvo?'Salva por '+(S.salvo.por||'—')+(S.salvo.em?' em '+S.salvo.em:'')+'.':'Sugestão automática, ainda não salva.')+'</span><span class="note">Ou toque em um dia para mover a folga da pessoa.</span></div>';
-  h+='<div class="wrap"><table><tr><th style="text-align:left">Pessoa</th>'+DIAS.map(([d,l])=>'<th class="'+(d==='seg'&&S.segLock?'seg':'')+'">'+l+(d==='seg'&&S.segLock?'<br><small>sem folga</small>':'')+'</th>').join('')+'<th>Almoço</th><th>Horas</th></tr>';
+  h+='<div class="wrap"><table><tr><th style="text-align:left">Pessoa</th>'+DIAS.map(([d,l])=>'<th class="'+(d===forte(loja())[0]?'forte':d==='seg'&&S.segLock?'seg':'')+'"'+(d===forte(loja())[0]?' title="Dia de maior movimento da loja: '+forte(loja())[1]+'% da média de segunda a sexta"':'')+'>'+l+(d===forte(loja())[0]?'<br><small>🔥 maior movimento</small>':'')+(d==='seg'&&S.segLock?'<br><small>sem folga</small>':'')+'</th>').join('')+'<th>Almoço</th><th>Horas</th></tr>';
   lista.forEach(p=>{
     const i=P.indexOf(p);
     h+='<tr><td class="nome"><b>'+p.nome+'</b>'+(p.id===TOP?'<span class="tag">TOP</span>':'')+'<small>'+p.cargo+'</small></td>';
@@ -421,7 +425,7 @@ function vSemana(){
      +lin('Abre',c=>'<td>'+nm(c.abre)+'<br><small>'+c.ini+'</small></td>')
      +lin('Fecha',c=>'<td>'+nm(c.fecha)+'<br><small>'+c.fim+'</small></td>');
   }
-  h+='</table></div><div class="legend"><span><i class="sw" style="background:var(--red)"></i>Folga</span><span><i class="sw" style="background:var(--navybg);border:1px solid var(--line)"></i>Trabalho</span><span><i class="sw" style="background:var(--surface2)"></i>Segunda (folga bloqueada)</span><span>Domingo: loja fechada</span></div>';
+  h+='</table></div><div class="legend"><span><i class="sw" style="background:var(--red)"></i>Folga</span><span><i class="sw" style="background:var(--navybg);border:1px solid var(--line)"></i>Trabalho</span><span><i class="sw" style="background:var(--surface2)"></i>Segunda (folga bloqueada)</span><span><i class="sw" style="background:var(--forte)"></i>Dia de maior movimento da loja (segunda a sexta)</span><span>Domingo: loja fechada</span></div>';
   if(S.perfil!=='vendedor'){
     bad.forEach(a=>h+='<div class="alert bad">⛔ '+a+'</div>');
     warn.forEach(a=>h+='<div class="alert warn">⚠️ '+a+'</div>');
@@ -497,7 +501,7 @@ function orientacao(){
   const mud=it.filter(x=>x[1]!==x[2]).length;
   let h='<div class="ori"><div class="orih"><b>Orientação para '+l.n+'</b><span>Pré-seleção feita pelo movimento da loja de janeiro a novembro/2026</span>'+(mud?'<button class="btn alt" onclick="trocaLoja(S.loja)">Voltar ao recomendado</button>':'')+'</div>';
   it.forEach(x=>{const ok=x[1]===x[2];h+='<div class="orii '+(ok?'':'mud')+'"><div><b>'+x[0]+': '+x[1]+'</b>'+(ok?'<span class="st ok">✔ seguindo o recomendado</span>':'<span class="st no">⚠ alterado para '+x[2]+'</span>')+'</div><p>'+(ok?'':'Antes de mudar, veja o porquê da escolha. ')+x[3]+'</p></div>'});
-  h+='<p class="orif">Folga: melhor dia <b>'+DNOME[l.dias[0]]+'</b>, depois <b>'+DNOME[l.dias[1]]+'</b> · Ponta mais fraca: <b>'+(l.fraca==='a'?'abertura':'fechamento')+'</b>'+(l.duas?', com 2 pessoas nas duas pontas':', onde 1 pessoa basta')+'</p></div>';
+  h+='<p class="orif">🔥 Dia de maior movimento: <b>'+DNOME[forte(l)[0]]+'</b> ('+forte(l)[1]+'% da média de segunda a sexta) · Folga: melhor dia <b>'+DNOME[l.dias[0]]+'</b>, depois <b>'+DNOME[l.dias[1]]+'</b> · Ponta mais fraca: <b>'+(l.fraca==='a'?'abertura':'fechamento')+'</b>'+(l.duas?', com 2 pessoas nas duas pontas':', onde 1 pessoa basta')+'</p></div>';
   return h;
 }
 function opcoes(){
@@ -599,9 +603,9 @@ function vGeral(){
   let reg=null;
   lin.forEach(r=>{
     if(niv!=='loja'&&r.l.reg!==reg){reg=r.l.reg;h+='<tr class="cob"><th colspan="7" style="text-align:left">Região '+reg+'</th></tr>'}
-    h+='<tr><td class="nome"><b>'+r.l.c+'</b> '+r.l.n+'<small>'+r.P.filter(ok).length+' pessoas'+(r.i===S.loja?' · loja aberta na grade':'')+'</small></td>'+dias.map(d=>'<td style="text-align:left">'+(r.P.filter(p=>ok(p)&&r.f[p.id]===d).map(p=>'<span class="chip" style="background:'+CGC[p.cargo]+'" title="'+p.cargo+'">'+CGL[p.cargo]+'</span> '+p.nome.split(' ')[0]).join('<br>')||'<span style="color:var(--muted)">—</span>')+'</td>').join('')+'</tr>';
+    h+='<tr><td class="nome"><b>'+r.l.c+'</b> '+r.l.n+'<small>'+r.P.filter(ok).length+' pessoas'+(r.i===S.loja?' · loja aberta na grade':'')+'</small></td>'+dias.map(d=>'<td style="text-align:left"'+(d===forte(r.l)[0]?' class="fortec" title="Dia de maior movimento desta loja ('+forte(r.l)[1]+'% da média)"':'')+'>'+(d===forte(r.l)[0]?'<small class="fx">🔥 maior movimento</small>':'')+(r.P.filter(p=>ok(p)&&r.f[p.id]===d).map(p=>'<span class="chip" style="background:'+CGC[p.cargo]+'" title="'+p.cargo+'">'+CGL[p.cargo]+'</span> '+p.nome.split(' ')[0]).join('<br>')||'<span style="color:var(--muted)">—</span>')+'</td>').join('')+'</tr>';
   });
-  h+='</table></div><p class="note">A escala de cada loja é a sugerida pelas regras e pelo movimento dela. Ajustes feitos à mão valem só para a loja aberta na grade.</p>';
+  h+='</table></div><p class="note">🔥 marca o dia de maior movimento de cada loja, de segunda a sexta.</p><p class="note">A escala de cada loja é a sugerida pelas regras e pelo movimento dela. Ajustes feitos à mão valem só para a loja aberta na grade.</p>';
   return h;
 }
 function aplicaCfg(){const c=CFG[loja().c];if(!c)return;if(c.sab&&SAB[c.sab])S.sab=c.sab;if(typeof c.seg==='boolean')S.segLock=c.seg;if(c.hor&&HOR[c.hor])[S.ini,S.fim]=c.hor.split('-').map(Number);['modo','aperto','crit'].forEach(k=>{if(c[k])S[k]=c[k]});if(c.vagas)S.vagas=+c.vagas}
