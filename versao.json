@@ -2,6 +2,20 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v224",
+      "data": "16/11/2026",
+      "hora": "12:20",
+      "itens": [
+        {
+          "painel": "PDI Semanal",
+          "o_que": "Coordenação: área \"Horário da geração\" no quadro PDI semanal com os gerentes, para escolher a que horas de segunda o PDI dos gerentes é gerado (e o botão ✓ Fiz o PDI aparece), e botão Gerar agora.",
+          "para": [
+            "coord"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v223",
       "data": "16/11/2026",
       "hora": "11:55",

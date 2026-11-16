@@ -131,12 +131,21 @@ h3{font-size:14px;margin:0 0 6px}
   function visao(){ try{ return !!(window.STDados&&STDados.visao&&STDados.visao()); }catch(e){ return false; } }
   function prazoTxt(p){ if(!p) return ''; var x=p.split(' '); return dBr(x[0])+' às '+(x[1]||'').replace(':00','h'); }
 
-  var SUPD=null, GERD=null, PEND=[], TOPO='';
+  var SUPD=null, GERD=null, PEND=[], TOPO='', GERHORA=null;
+  /* horário em que o PDI dos gerentes é gerado (segunda): fica no Servidor do Painel (BANCO); a coordenação muda aqui (16/11/2026) */
+  var URL_BANCO='https://script.google.com/macros/s/AKfycbzVe8joykFt0rWX9CjFgpeOaABckMFttVwV8u4e-yJh8qXPr6JTmlAzfgNjiAPAHGEwLg/exec';
+  function banco(tipo,extra){
+    var ck=window.STDados&&STDados.crachaGuardado&&STDados.crachaGuardado(); if(!ck||!ck.tk) return Promise.reject(new Error('Sem crachá do app nesta tela. Abra pelo Só Tintas App.'));
+    var b={tipo:tipo,u:'cracha',p:ck.tk}; for(var k in (extra||{})) b[k]=extra[k];
+    return fetch(URL_BANCO,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(b)}).then(function(r){return r.json();});
+  }
+  function horaGer(){ var h=(GERHORA&&GERHORA.hora)||'12:15', x=h.split(':'); return Number(x[0])+'h'+(x[1]==='00'?'':x[1]); }
   function carregar(){
     return STDados.chamar('semana').then(function(j){
       if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não respondeu.');
       D=j; var ps=[];
       if(j.perfil==='sup'||j.perfil==='coord'||j.perfil==='anl') ps.push(STDados.chamar('semanaSup').then(function(k){ SUPD=(k&&k.ok)?k:null; }).catch(function(){ SUPD=null; }));
+      if(j.perfil==='ger'||j.perfil==='sup'||j.perfil==='coord'||j.perfil==='anl') ps.push(banco('pdiGerHoraLer').then(function(k){ GERHORA=(k&&k.ok)?k:null; }).catch(function(){ GERHORA=null; }));
       if(j.perfil==='ger'||j.perfil==='sup'||j.perfil==='coord'||j.perfil==='anl') ps.push(STDados.chamar('semanaGer').then(function(k){ GERD=(k&&k.ok)?k:null; }).catch(function(){ GERD=null; }));
       return Promise.all(ps);
     }).then(function(){ montar(); }).catch(function(e){ $('raiz').innerHTML='<div class="card"><h2>Não consegui abrir</h2><p class="sub">'+esc(e.message||e)+'</p><button class="btn azul" type="button" id="deNovo">Tentar de novo</button></div>'; $('deNovo').onclick=carregar; });
@@ -322,8 +331,8 @@ h3{font-size:14px;margin:0 0 6px}
   /* bloco dentro do card da loja (supervisor / coordenação) */
   function blocoGerLoja(cod,ro){
     var x=gerAtual(cod)[0]; if(!x) return '';
-    /* a semana dos gerentes nasce segunda às 12h15: antes disso, o que existe é a semana passada */
-    if(GERD&&D.atual&&GERD.atual<D.atual) return '<div class="vend" style="border-color:var(--navy)"><b>PDI semanal com o gerente</b><p class="sub" style="margin:4px 0 0">O PDI desta semana com o gerente é gerado hoje às 12h15. A partir daí aparece aqui o botão <b>✓ Fiz o PDI com o gerente</b>, que vale até quarta às 18h.</p></div>';
+    /* a semana dos gerentes nasce segunda no horário escolhido pela coordenação (padrão 12h15): antes disso, o que existe é a semana passada */
+    if(GERD&&D.atual&&GERD.atual<D.atual) return '<div class="vend" style="border-color:var(--navy)"><b>PDI semanal com o gerente</b><p class="sub" style="margin:4px 0 0">O PDI desta semana com o gerente é gerado hoje às '+horaGer()+'. A partir daí aparece aqui o botão <b>✓ Fiz o PDI com o gerente</b>, que vale até quarta às 18h.</p></div>';
     var ab=ABERTOS['g:'+x.chave], f=x.ficha||{};
     var h='<div class="vend" style="border-color:var(--navy)"><div class="vend-top"><div><b>PDI semanal com o gerente · '+esc(nm(x.gerente||f.gerente||''))+'</b><div class="sub">'+esc(f.orient||'')+'</div></div><div class="linha">'+chip(x.situacao)+(x.aval?'<span class="chip c-respondido">'+x.aval.nota+'/'+x.aval.total+'</span>':'')+'</div></div>';
     h+='<div class="linha" style="margin-top:8px">'+(x.situacao==='aguardando'&&!ro?'<button class="btn azul" type="button" data-gerfeito="'+esc(x.chave)+'">✓ Fiz o PDI com o gerente</button>':'')+
@@ -336,14 +345,24 @@ h3{font-size:14px;margin:0 0 6px}
   /* topo da tela do supervisor/coordenação: todos os gerentes da carteira, com o botão "Fiz o PDI" à vista */
   function topoGer(cods,ro){
     if(!GERD) return '';
-    if(D.atual&&GERD.atual<D.atual) return '<section class="card"><h2 style="margin:0">PDI semanal com os gerentes</h2><p class="sub" style="margin:6px 0 0">O PDI desta semana com os gerentes é gerado hoje às 12h15. Depois disso, o botão <b>✓ Fiz o PDI</b> de cada gerente aparece aqui e no card de cada loja, até quarta às 18h. Ao marcar, a avaliação do gerente é liberada.</p></section>';
+    if(D.atual&&GERD.atual<D.atual) return '<section class="card"><h2 style="margin:0">PDI semanal com os gerentes</h2><p class="sub" style="margin:6px 0 0">O PDI desta semana com os gerentes é gerado hoje às '+horaGer()+'. Depois disso, o botão <b>✓ Fiz o PDI</b> de cada gerente aparece aqui e no card de cada loja, até quarta às 18h. Ao marcar, a avaliação do gerente é liberada.</p>'+cfgHoraGer(ro)+'</section>';
     var G=cods.map(function(c){return gerAtual(c)[0];}).filter(Boolean); if(!G.length) return '';
     var feitos=G.filter(function(x){return x.situacao!=='aguardando'&&x.situacao!=='nao_feito';}).length;
     var h='<section class="card"><div class="vend-top"><h2 style="margin:0">PDI semanal com os gerentes</h2><span class="sub">feito <b>'+feitos+'/'+G.length+'</b>'+(G[0].prazoFeito?' · marcar até '+esc(prazoTxt(G[0].prazoFeito)):'')+'</span></div><p class="sub" style="margin:4px 0 8px">Faça a conversa com o gerente e toque em <b>✓ Fiz o PDI</b>: a avaliação dele é liberada na hora.</p><ul class="lista">';
     G.forEach(function(x){ var f=x.ficha||{};
       h+='<li><span><b>Loja '+esc(x.loja)+'</b> · '+esc(nm(x.gerente||f.gerente||''))+'</span><span class="linha">'+chip(x.situacao)+(x.aval?'<span class="chip c-respondido">'+x.aval.nota+'/'+x.aval.total+'</span>':'')+
         (x.situacao==='aguardando'&&!ro?'<button class="btn azul" type="button" data-gerfeito="'+esc(x.chave)+'">✓ Fiz o PDI</button>':'')+'</span></li>'; });
-    return h+'</ul></section>';
+    return h+'</ul>'+cfgHoraGer(ro)+'</section>';
+  }
+  /* só a coordenação: horário da geração de segunda e "Gerar agora" */
+  function cfgHoraGer(ro){
+    if(D.perfil!=='coord'||ro) return '';
+    var g=GERHORA, h=(g&&g.hora)||'12:15';
+    return '<div class="comp" style="margin-top:10px"><b>Horário da geração (coordenação)</b><div class="sub">Toda segunda, neste horário, o servidor gera o PDI com os gerentes e as questões dos supervisores, e o botão ✓ Fiz o PDI aparece. Só gera se o Painel já estiver atualizado no dia.</div>'+
+      '<div class="linha" style="margin-top:8px;flex-wrap:wrap;gap:8px"><label class="sub">Segunda às <input type="time" id="gerHora" value="'+esc(h)+'" min="06:00" max="18:00" step="900" style="font:inherit;padding:6px 8px;border-radius:8px"></label>'+
+      '<button class="btn" type="button" data-gerhora="1">Salvar horário</button>'+
+      (g&&g.gerada?'<span class="sub">Semana já gerada'+(g.geradaEm?' em '+esc(prazoTxt(g.geradaEm)):'')+'</span>':'<button class="btn azul" type="button" data-gergerar="1">Gerar agora</button>')+'</div>'+
+      (g?'<div class="sub" style="margin-top:6px">'+(g.por?'Último ajuste: '+esc(g.por)+'.':'Horário padrão.')+(g.agendador?'':' O agendador é ligado ao salvar o horário.')+'</div>':'<div class="sub" style="margin-top:6px">Não consegui ler o horário no servidor.</div>')+'</div>';
   }
   function blocoGerFech(cod,ro){
     var x=gerAnt(cod)[0]; if(!x) return '';
@@ -451,7 +470,7 @@ h3{font-size:14px;margin:0 0 6px}
       h+='<section class="card"><div class="vend-top"><h2 style="margin:0">'+(x.meu?'Meu PDI semanal':'PDI semanal de '+esc(x.supervisor))+'</h2><div class="linha">'+(x.plano?'<span class="chip c-respondido">Plano registrado</span>':(x.prazoAberto?'<span class="chip c-liberado">Plano até '+esc(prazoTxt(d.prazo))+'</span>':'<span class="chip c-nao_feito">Plano não registrado</span>'))+
         (x.situacao?'<span class="chip c-'+esc(x.situacao)+'">Com a coordenação: '+esc(SIT[x.situacao]||x.situacao)+'</span>':'')+(x.aval?'<span class="chip c-respondido">'+x.aval.nota+'/'+x.aval.total+'</span>':'')+'</div></div>';
       /* ritual da coordenação com o supervisor */
-      h+='<div class="linha" style="margin:6px 0 2px">'+(D.perfil==='coord'&&!ro&&x.situacao==='aguardando'?(x.temQuestoes?'<button class="btn azul" type="button" data-supfeito="'+esc(x.chave)+'">✓ Fiz o PDI com o supervisor</button>':'<span class="sub">As questões do supervisor saem às 12h15 de segunda.</span>'):'')+
+      h+='<div class="linha" style="margin:6px 0 2px">'+(D.perfil==='coord'&&!ro&&x.situacao==='aguardando'?(x.temQuestoes?'<button class="btn azul" type="button" data-supfeito="'+esc(x.chave)+'">✓ Fiz o PDI com o supervisor</button>':'<span class="sub">As questões do supervisor saem às '+horaGer()+' de segunda.</span>'):'')+
         (x.feito_em?'<span class="sub">PDI com a coordenação feito '+esc(quando(x.feito_em))+(x.feito_por?' por '+esc(x.feito_por):'')+(x.situacao==='liberado'&&x.prazoAval?' · responde até '+esc(prazoTxt(x.prazoAval)):'')+'</span>':(d.prazoFeito&&x.situacao==='aguardando'&&D.perfil==='coord'?'<span class="sub">marcar até '+esc(prazoTxt(d.prazoFeito))+'</span>':''))+'</div>';
       if(x.meu&&x.situacao==='liberado'&&!ro){ h+='<h3 style="margin-top:8px">Avaliação da semana com a coordenação</h3><p class="aviso">Responda até <b>'+esc(prazoTxt(x.prazoAval))+'</b>. São '+(x.questoes||[]).length+' questões sobre a sua carteira. Só dá para enviar uma vez.</p><div id="s'+SUPD.linhas.indexOf(x)+'_questoes"><p class="sub">Preparando as questões…</p></div>'; PEND.push({linha:x,px:'s'+SUPD.linhas.indexOf(x)+'_',acao:'semanaSupAval'}); }
       else if(x.aval&&(x.meu||D.perfil==='coord'||D.perfil==='anl')) h+=resultado(x.aval);
@@ -490,6 +509,18 @@ h3{font-size:14px;margin:0 0 6px}
       t.disabled=true; t.textContent='Liberando…';
       STDados.chamar('semanaFeito',{chave:t.dataset.feito}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não confirmou.'); toast('Avaliação liberada para o vendedor.'); return carregar(); })
         .catch(function(err){ t.disabled=false; t.textContent='✓ Fiz o PDI semanal'; toast(err.message); });
+      return;
+    }
+    if(t.dataset.gerhora){
+      var hv=($('gerHora')||{}).value||''; t.disabled=true; t.textContent='Salvando…';
+      banco('pdiGerHora',{hora:hv}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não confirmou.'); GERHORA=j; toast('Horário salvo: segunda às '+horaGer()+'.'); montar(); })
+        .catch(function(e){ toast('Não salvou: '+(e.message||e)); t.disabled=false; t.textContent='Salvar horário'; });
+      return;
+    }
+    if(t.dataset.gergerar){
+      t.disabled=true; t.textContent='Gerando… (até 2 min)';
+      banco('pdiGerGerarAgora').then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não confirmou.'); GERHORA=j; toast('PDI dos gerentes gerado.'); return carregar(); })
+        .catch(function(e){ toast('Não gerou: '+(e.message||e)); t.disabled=false; t.textContent='Gerar agora'; });
       return;
     }
     if(t.dataset.gerfeito){
