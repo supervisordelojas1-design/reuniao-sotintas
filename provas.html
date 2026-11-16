@@ -760,7 +760,7 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
     Object.keys(L).sort().forEach(function(k){ o.push({tipo:'loja',v:k,t:'Loja '+k+(L[k]?' · '+L[k]:'')}); });
     gers(); return o; }
   function pctTxt(a,n){ return n?Math.round(a/n*100)+'%':'—'; }
-  function rDados(E){
+  function rDados0(E){
     var ok=rOk(E), V=cru('vend','atual').filter(ok).map(function(r){ var p=acharPessoa(r.loja,r.nome); r.app=statusApp(p&&p.p); return r; }), G=cru('ger','atual').filter(ok), SP=E.tipo==='loja'?[]:cru('sup','atual').filter(function(r){ return E.tipo==='geral'||mesmoSup(r.sup,E.v); });
     var T=MT?MT.L.filter(ok):[], HH=H?H.linhas.filter(function(x){return x.t==='vend';}).filter(ok):[], HG=H?H.linhas.filter(function(x){return x.t==='ger';}).filter(ok):[];
     var AVL=AV?AV.provas.map(function(P){ var L=linhasAvulsa(P).filter(ok); return {P:P,L:L,c:ctAv(L)}; }).filter(function(x){return x.L.length;}):[];
@@ -769,13 +769,23 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
     if(ACMAP) Object.keys(ACMAP).forEach(function(k){ ACMAP[k].forEach(function(x){ if(usados.indexOf(x)<0&&x.p) SEM.push({tipo:'vend',nome:nm(x.p.nome),loja:String(x.p.loja),lojaNome:x.p.lojaNome||'',sup:x.p.sup||'',sit:'sem_pdi',aval:null}); }); });
     SEM=SEM.filter(ok);
     return {V:V,G:G,SP:SP,SEM:SEM,T:T,HH:HH,HG:HG,AVL:AVL,cV:conta(V),cG:conta(G),cS:conta(SP),mV:media(V),mG:media(G)}; }
+  /* 16/11/2026 (Bruno): o relatório escolhe os cargos. Prova da semana existe para
+     vendedor, gerente e supervisor; assistente comercial e auxiliar aparecem
+     onde têm prova — a Trilha Mentor. "Operador de caixa" é assistente comercial. */
+  function rFam(r){ if(r.tipo==='sup'||r.tipo==='ger'||r.tipo==='vend') return r.tipo; var c=norm(r.cargo||'');
+    if(/supervis/.test(c)) return 'sup'; if(/gerente/.test(c)) return 'ger'; if(/assist|caixa/.test(c)) return 'ass'; if(/auxil/.test(c)) return 'aux'; return 'vend'; }
+  function rDados(E,op){ var D=rDados0(E), cg=(op&&op.cg)||null; D.cg=cg; if(!cg) return D;
+    var f=function(r){ return cg[rFam(r)]!==false; };
+    if(cg.vend===false){ D.V=[]; D.SEM=[]; D.HH=[]; } if(cg.ger===false){ D.G=[]; D.HG=[]; } if(cg.sup===false) D.SP=[];
+    D.T=D.T.filter(f); D.AVL=D.AVL.map(function(x){ var L=x.L.filter(f); return {P:x.P,L:L,c:ctAv(L)}; }).filter(function(x){return x.L.length;});
+    D.cV=conta(D.V); D.cG=conta(D.G); D.cS=conta(D.SP); D.mV=media(D.V); D.mG=media(D.G); return D; }
   function rCargo(r){ var T=TIPOS[r.tipo||'vend']||TIPOS.vend; return T.Aval; }
-  function rNomes(D){
+  function rNomes(D,op){
     var todos=D.V.concat(D.G).concat(D.SP).concat(D.SEM||[]), ord=function(a,b){ var la=a.loja||'zzz', lb=b.loja||'zzz'; return (la<lb?-1:la>lb?1:0)||(norm(a.nome)<norm(b.nome)?-1:1); };
     return [['respondido','Quem fez a prova','fizeram','ok','✅'],['liberado','Prova aberta: falta responder','com a prova aberta','wn','📝'],
             ['aguardando','Esperando o PDI: a prova nem abriu','esperando o PDI','bd','⏳'],['perdeu','Perdeu o prazo','perderam o prazo','bd','❌'],
             ['sempdi','Sem PDI gerado: conferir o cadastro','sem PDI gerado','','⚠️']]
-      .map(function(g){ return {k:g[0],tit:g[1],curto:g[2],cor:g[3],ic:g[4],L:todos.filter(function(r){ return (GRUPO[r.sit]||'perdeu')===g[0]; }).sort(ord)}; }); }
+      .map(function(g){ return {k:g[0],tit:g[1],curto:g[2],cor:g[3],ic:g[4],L:todos.filter(function(r){ return (GRUPO[r.sit]||'perdeu')===g[0]; }).sort(ord)}; }).filter(function(g){ return !op||!op.sit||op.sit[g.k]!==false; }); }
   function rLeitura(E,D){ var L=[], c=D.cV, n=D.V.length;
     if(c.aguardando){ var lj={}; D.V.forEach(function(r){ if(r.sit==='aguardando') lj[r.loja]=(lj[r.loja]||0)+1; }); var top=Object.keys(lj).sort(function(a,b){return lj[b]-lj[a];}).slice(0,3);
       L.push(['Destravar o ritual',c.aguardando+' de '+n+(c.aguardando===1?' vendedor espera':' vendedores esperam')+' o gerente fazer o PDI para a prova abrir'+(E.tipo!=='loja'&&top.length?' (mais em '+top.map(function(k){return k+': '+lj[k];}).join(', ')+')':'')+'.','Supervisor liga para esses gerentes ainda na segunda de manhã e confere o "Fiz o PDI" antes das 12h.']); }
@@ -785,23 +795,23 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
     if(D.HH.length){ var TM={}; D.HH.forEach(function(x){ (x.q||[]).forEach(function(q){ var o=TM[q[0]]=TM[q[0]]||{a:0,t:0}; o.t++; o.a+=q[1]; }); }); var pior=Object.keys(TM).filter(function(k){return TM[k].t>=5;}).map(function(k){return {n:H.temas[k],p:TM[k].a/TM[k].t};}).sort(function(a,b){return a.p-b.p;})[0];
       if(pior&&pior.p<.85) L.push(['Tema para reforçar',pior.n+' tem o menor acerto nas provas ('+Math.round(pior.p*100)+'%).','No próximo PDI, o gerente pede que o vendedor explique esse ponto com as próprias palavras antes de encerrar.']); }
     if(D.T.length){ var ct=ctMT(D.T); if(ct.nao_iniciou/D.T.length>=.3) L.push(['Trilha Mentor parada',ct.nao_iniciou+' de '+D.T.length+(ct.nao_iniciou===1?' pessoa não iniciou':' pessoas não iniciaram')+' a trilha.','Meta curta: todo mundo com o Módulo 1 até sexta, com um padrinho entre os aprovados da loja.']); }
-    if(!L.length) L.push(n?['Ritual em dia','Nada crítico nesta semana.','Manter o ritmo e reconhecer quem fechou 100%.']:['Sem provas de vendedor nesta semana','Nenhum PDI semanal de vendedor foi gerado neste recorte.','Conferir se os vendedores estão com meta lançada no Autcom: sem meta, o PDI não é gerado.']);
+    if(!L.length){ if(n) L.push(['Ritual em dia','Nada crítico nesta semana.','Manter o ritmo e reconhecer quem fechou 100%.']); else if(!D.cg||D.cg.vend!==false) L.push(['Sem provas de vendedor nesta semana','Nenhum PDI semanal de vendedor foi gerado neste recorte.','Conferir se os vendedores estão com meta lançada no Autcom: sem meta, o PDI não é gerado.']); }
     return L; }
   function rConteudo(E,op,D){
     var B=[], t=function(tit,cols,rows,nota){ if(rows.length) B.push({t:'tab',tit:tit,cols:cols,rows:rows,nota:nota||''}); }, b=function(h){ B.push({t:'b',h:h}); };
     var tile=function(v,l,s,cor){ return '<div class="r-tile"><b style="color:'+(cor||'#16233d')+'">'+v+'</b><span>'+l+'</span><small>'+(s||'')+'</small></div>'; };
     var cV=D.cV, nV=D.V.length, ct=D.T.length?ctMT(D.T):null;
-    b('<div class="r-tiles">'+tile(pctTxt(cV.respondido,nV),'Vendedores fizeram',cV.respondido+' de '+nV+(D.mV!=null?' · média '+virg(D.mV):''),cV.respondido/Math.max(nV,1)>=.7?'#0B7A55':'#C62828')+
+    b('<div class="r-tiles">'+(D.cg&&D.cg.vend===false?'':tile(pctTxt(cV.respondido,nV),'Vendedores fizeram',cV.respondido+' de '+nV+(D.mV!=null?' · média '+virg(D.mV):''),cV.respondido/Math.max(nV,1)>=.7?'#0B7A55':'#C62828'))+
       (D.G.length?tile(pctTxt(D.cG.respondido,D.G.length),'Gerentes fizeram',D.cG.respondido+' de '+D.G.length,D.cG.respondido/D.G.length>=.7?'#0B7A55':'#C62828'):'')+
       (D.SP.length?tile(pctTxt(D.cS.respondido,D.SP.length),'Supervisores fizeram',D.cS.respondido+' de '+D.SP.length,D.cS.respondido/D.SP.length>=.7?'#0B7A55':'#C62828'):'')+
       (ct?tile(pctTxt(ct.aprovado,D.T.length),'Trilha Mentor aprovados',ct.aprovado+' de '+D.T.length,'#1C3F8F'):'')+'</div>');
-    if(op.cons) b('<h3>Leitura do consultor: dos números às ações</h3><ol class="r-cons">'+rLeitura(E,D).map(function(x){ return '<li><b>'+esc(x[0])+'.</b> '+esc(x[1])+'<br><span>Ação:</span> '+esc(x[2])+'</li>'; }).join('')+'</ol>');
+    var LE=op.cons?rLeitura(E,D):[]; if(LE.length) b('<h3>Leitura do consultor: dos números às ações</h3><ol class="r-cons">'+LE.map(function(x){ return '<li><b>'+esc(x[0])+'.</b> '+esc(x[1])+'<br><span>Ação:</span> '+esc(x[2])+'</li>'; }).join('')+'</ol>');
     /* 16/11/2026 (Bruno): nomes por situação — quem fez, quem está com a prova
        aberta, quem espera o PDI, quem perdeu o prazo e quem ficou sem PDI.
        Vendedores, gerentes e supervisores juntos, na ordem das lojas. São os
        mesmos grupos dos cartões da tela, para o número do cartão virar nome. */
     if(op.nomes){
-      var NM=rNomes(D), tot=NM.reduce(function(a,g){return a+g.L.length;},0);
+      var NM=rNomes(D,op), tot=NM.reduce(function(a,g){return a+g.L.length;},0);
       b('<h3>Nomes por situação</h3><p class="r-p">'+(tot?NM.filter(function(g){return g.L.length;}).map(function(g){return g.L.length+' '+g.curto;}).join(' · ')+'. Vendedores, gerentes e supervisores, na ordem das lojas.':'Nenhuma prova gerada neste recorte nesta semana.')+'</p>');
       NM.forEach(function(g){
         if(g.k==='respondido') t(g.tit+' ('+g.L.length+')',['Pessoa','Cargo','Loja','Nota'],g.L.map(function(r){ var n2=notaDe(r); return [{v:r.nome,b:1},rCargo(r),r.loja||'—',n2!=null?{v:r.aval.nota+'/'+r.aval.total,c:n2>=8?'ok':n2>=6?'wn':'bd'}:'—']; }));
@@ -896,7 +906,7 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
   function rCelula(c){ if(c&&typeof c==='object') return '<td'+(c.c?' class="'+c.c+'"':'')+'>'+(c.b?'<b>':'')+esc(c.v)+(c.b?'</b>':'')+'</td>'; return '<td>'+esc(c)+'</td>'; }
   function rGerar(E,op){
     return rCarrega(R_LIB_H2C).then(function(){ return rCarrega(R_LIB_PDF); }).then(function(){ return rGarantir(op); }).then(function(){
-      var D=rDados(E), blocos=rConteudo(E,op,D), host=document.createElement('div'), pags=[], co=null;
+      var D=rDados(E,op), blocos=rConteudo(E,op,D), host=document.createElement('div'), pags=[], co=null;
       host.style.cssText='position:fixed;left:-10000px;top:0;z-index:-1'; host.innerHTML='<style>'+R_CSS+'</style>'; document.body.appendChild(host);
       var agora=String(S.agora||''), quando=dBr(agora)+'/'+agora.slice(0,4)+' às '+agora.slice(11,16);
       var nova=function(){ var p=document.createElement('div'); p.className='r-pg'; p.innerHTML='<div class="r-band"><i></i></div><div class="r-hd"><div><h1>Relatório de Provas</h1><p>Central de Provas · semana de '+dBr(S.atual)+' · gerado em '+esc(quando)+'</p></div><div class="r-esc">'+esc(E.t)+'</div></div><div class="r-co"></div><div class="r-ft"><span>Só Tintas App · Colorindo Vidas e Realizando Sonhos</span><span data-pg></span></div>'; host.appendChild(p); pags.push(p); co=p.querySelector('.r-co'); };
@@ -923,31 +933,42 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
      mundo acha o próprio nome sem ler o parágrafo inteiro. */
   function rPorLoja(L,comNota){ var o=[], m={};
     L.forEach(function(r){ var k=r.loja||''; if(!m[k]){ m[k]={k:k,n:'',p:[]}; o.push(m[k]); } if(k&&!m[k].n&&r.lojaNome) m[k].n=r.lojaNome;
-      m[k].p.push(r.nome+(k&&r.tipo==='ger'?' (gerente)':'')+(comNota&&r.aval&&r.aval.total?' '+r.aval.nota+'/'+r.aval.total:'')); });
-    return o.map(function(x){ return '• *'+(x.k?x.k+(x.n?' '+x.n:''):'Supervisão')+':* '+x.p.join(', '); }); }
-  function rTexto(E,D,op){ var c=D.cV, n=D.V.length, SEP='━━━━━━━━━━━━━━━';
+      m[k].p.push('• '+r.nome+(k&&r.tipo==='ger'?' (gerente)':'')+(comNota&&r.aval&&r.aval.total?' — '+r.aval.nota+'/'+r.aval.total:'')); });
+    var out=[]; o.forEach(function(x){ out.push('','*'+(x.k?x.k+(x.n?' '+x.n:''):'Supervisão')+'*'); x.p.forEach(function(l){ out.push(l); }); }); return out; }
+  function rTexto(E,D,op){ var c=D.cV, n=D.V.length, SEP='━━━━━━━━━━━━━━━', cg=D.cg||{};
     var L=['📋 *RELATÓRIO DE PROVAS*','*'+E.t+'*','Semana de '+dBr(S.atual)+' · posição das '+String(S.agora||'').slice(11,16),'',SEP,'📊 *RESUMO*'];
-    L.push('• *Vendedores:* '+c.respondido+' de '+n+' fizeram ('+pctTxt(c.respondido,n)+')'+(D.mV!=null?' · média '+virg(D.mV):''));
-    if(c.liberado) L.push('   📝 '+c.liberado+' com a prova aberta'); if(c.aguardando) L.push('   ⏳ '+c.aguardando+(c.aguardando===1?' espera':' esperam')+' o gerente fazer o PDI'); if(c.perdeu) L.push('   ❌ '+c.perdeu+(c.perdeu===1?' perdeu':' perderam')+' o prazo');
-    if(D.SEM&&D.SEM.length) L.push('   ⚠️ '+D.SEM.length+' sem PDI gerado');
+    if(cg.vend!==false){ L.push('• *Vendedores:* '+c.respondido+' de '+n+' fizeram ('+pctTxt(c.respondido,n)+')'+(D.mV!=null?' · média '+virg(D.mV):''));
+      if(c.liberado) L.push('   📝 '+c.liberado+' com a prova aberta'); if(c.aguardando) L.push('   ⏳ '+c.aguardando+(c.aguardando===1?' espera':' esperam')+' o gerente fazer o PDI'); if(c.perdeu) L.push('   ❌ '+c.perdeu+(c.perdeu===1?' perdeu':' perderam')+' o prazo');
+      if(D.SEM&&D.SEM.length) L.push('   ⚠️ '+D.SEM.length+' sem PDI gerado'); }
     if(D.G.length) L.push('• *Gerentes:* '+D.cG.respondido+' de '+D.G.length+' fizeram ('+pctTxt(D.cG.respondido,D.G.length)+')'); if(D.SP.length) L.push('• *Supervisores:* '+D.cS.respondido+' de '+D.SP.length+' fizeram ('+pctTxt(D.cS.respondido,D.SP.length)+')');
     if(D.T.length){ var ct=ctMT(D.T); L.push('• *Trilha Mentor:* '+ct.aprovado+(ct.aprovado===1?' aprovado':' aprovados')+' de '+D.T.length+' · '+ct.nao_iniciou+(ct.nao_iniciou===1?' não iniciou':' não iniciaram')); }
-    if(op&&op.nomes){ rNomes(D).forEach(function(g){ if(!g.L.length) return;
+    if(op&&op.nomes){ rNomes(D,op).forEach(function(g){ if(!g.L.length) return;
       L.push('',SEP,g.ic+' *'+g.tit.toUpperCase()+' ('+g.L.length+')*'); rPorLoja(g.L,g.k==='respondido').forEach(function(x){ L.push(x); }); }); }
-    L.push('',SEP,'🎯 *AÇÕES*'); rLeitura(E,D).forEach(function(x,i){ L.push((i+1)+'. *'+x[0]+':* '+x[2]); });
+    var AC2=rLeitura(E,D); if(AC2.length){ L.push('',SEP,'🎯 *AÇÕES*'); AC2.forEach(function(x,i){ L.push((i+1)+'. *'+x[0]+':* '+x[2]); }); }
     L.push('','_Central de Provas · Só Tintas App_'); return L.join('\n'); }
   function abrirRelatorio(){
     var EE=rEscopos(), sel=0; if(F.loja){ EE.forEach(function(e,i){ if(e.tipo==='loja'&&e.v===cod3(F.loja)) sel=i; }); } else if(F.sup){ EE.forEach(function(e,i){ if(e.tipo==='sup'&&e.v===F.sup) sel=i; }); }
     var ck=function(k,t,on){ return '<label class="opc"><input type="checkbox" data-ro="'+k+'"'+(on?' checked':'')+'> '+t+'</label>'; };
+    var cx=function(g,k,t){ return '<label class="opc"><input type="checkbox" data-'+g+'="'+k+'" checked> '+t+'</label>'; };
+    var lkS='border:0;background:transparent;color:var(--navy);font:600 12px inherit;text-decoration:underline;cursor:pointer;padding:0 2px';
+    var mk=function(g){ return '<span style="font-weight:500;margin-left:6px"><button type="button" style="'+lkS+'" data-rgrupo="'+g+'" data-rv="1">marcar todos</button> · <button type="button" style="'+lkS+'" data-rgrupo="'+g+'" data-rv="0">limpar</button></span>'; };
     abrirDlg('Relatório de Provas','PDF para salvar ou enviar pelo WhatsApp',
       '<div class="campo"><label for="rEsc">Abrangência</label><select id="rEsc">'+EE.map(function(e,i){return '<option value="'+i+'"'+(i===sel?' selected':'')+'>'+esc(e.t)+'</option>';}).join('')+'</select></div>'+
-      '<fieldset class="campo"><legend>O que entra</legend>'+ck('cons','Leitura do consultor (dos números às ações)',1)+ck('nomes','Nomes por situação: quem fez, prova aberta, esperando o PDI, perdeu o prazo e sem PDI',1)+ck('sem','Provas da semana: situação, pendências e destaques',1)+ck('trilha','Trilha Mentor',1)+ck('avulsas','Provas avulsas',1)+ck('hist','Histórico e acerto por tema',1)+ck('tema','Acerto por tema detalhado (por grupo e quem mais erra)',1)+ck('faltam','Quem ainda não fez (lista para cobrança)',0)+ck('nominal','Lista nominal completa (todas as pessoas)',0)+'</fieldset>'+
+      '<fieldset class="campo"><legend>Cargos '+mk('rc')+'</legend>'+cx('rc','sup','Supervisão')+cx('rc','ger','Gerente')+cx('rc','vend','Vendedor')+cx('rc','ass','Assistente Comercial')+cx('rc','aux','Auxiliar')+
+        '<p class="sub" style="margin:2px 0 0">Assistente e Auxiliar não têm prova da semana: entram na Trilha Mentor.</p></fieldset>'+
+      '<fieldset class="campo"><legend>Nomes por situação '+mk('rn')+'</legend>'+cx('rn','respondido','Quem fez a prova (com a nota)')+cx('rn','liberado','Prova aberta: falta responder')+cx('rn','aguardando','Esperando o PDI: a prova nem abriu')+cx('rn','perdeu','Perdeu o prazo')+cx('rn','sempdi','Sem PDI gerado')+'</fieldset>'+
+      '<fieldset class="campo"><legend>Outros blocos '+mk('ro')+'</legend>'+ck('cons','Leitura do consultor (dos números às ações)',1)+ck('sem','Provas da semana: situação, pendências e destaques',1)+ck('trilha','Trilha Mentor',1)+ck('avulsas','Provas avulsas',1)+ck('hist','Histórico e acerto por tema',1)+ck('tema','Acerto por tema detalhado (por grupo e quem mais erra)',1)+ck('faltam','Quem ainda não fez (lista para cobrança)',0)+ck('nominal','Lista nominal completa (todas as pessoas)',0)+'</fieldset>'+
       '<p class="sub" id="rSt" role="status" style="margin:0"></p><div class="m-pe"><button type="button" class="btn2" data-rtexto="1">Texto para WhatsApp</button><button type="button" class="btn2" data-rbaixar="1">Salvar PDF</button><button type="button" class="btn" data-rzap="1">Enviar PDF</button></div><div id="rPrev" class="r-prev"></div>');
+    Array.prototype.forEach.call(document.querySelectorAll('[data-rgrupo]'),function(bt){ bt.onclick=function(){ var on=bt.getAttribute('data-rv')==='1';
+      Array.prototype.forEach.call(document.querySelectorAll('[data-'+bt.getAttribute('data-rgrupo')+']'),function(c){ if(c.type==='checkbox') c.checked=on; }); }; });
     RDOC=null; window.__REL=EE; }
-  function rOpcoes(){ var o={gerFicha:true}; Array.prototype.forEach.call(document.querySelectorAll('[data-ro]'),function(c){ o[c.dataset.ro]=c.checked; }); return o; }
+  function rOpcoes(){ var o={gerFicha:true,sit:{},cg:{}}, q=function(sel,f){ Array.prototype.forEach.call(document.querySelectorAll(sel),f); };
+    q('input[data-ro]',function(c){ o[c.dataset.ro]=c.checked; }); q('input[data-rn]',function(c){ o.sit[c.dataset.rn]=c.checked; }); q('input[data-rc]',function(c){ o.cg[c.dataset.rc]=c.checked; });
+    o.nomes=Object.keys(o.sit).some(function(k){ return o.sit[k]; }); return o; }
   function rAcao(acao,b){
     var E=window.__REL[Number($('rEsc').value)], st=function(h){ var e=$('rSt'); if(e) e.innerHTML=h; };
-    if(acao==='texto'){ rGarantir(rOpcoes()).then(function(){ var tx=rTexto(E,rDados(E),rOpcoes());
+    var O0=rOpcoes(); if(!Object.keys(O0.cg).some(function(k){ return O0.cg[k]; })){ st('<span class="erro-m">Marque pelo menos um cargo.</span>'); return; }
+    if(acao==='texto'){ rGarantir(O0).then(function(){ var tx=rTexto(E,rDados(E,O0),O0);
       /* a mensagem também vai para a área de transferência: se o WhatsApp cortar um texto longo, é só colar */
       try{ navigator.clipboard.writeText(tx).then(function(){ st('Mensagem copiada. Se o WhatsApp não abrir com o texto, é só colar na conversa.'); },function(){}); }catch(e){}
       window.open('https://wa.me/?text='+encodeURIComponent(tx),'_blank','noopener,noreferrer'); }); return; }

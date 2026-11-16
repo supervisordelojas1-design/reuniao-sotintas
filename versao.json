@@ -2,6 +2,22 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v229",
+      "data": "16/11/2026",
+      "hora": "16:45",
+      "itens": [
+        {
+          "painel": "Central de Provas",
+          "o_que": "Relatório: cada situação virou uma caixa própria (quem fez, prova aberta, esperando o PDI, perdeu o prazo, sem PDI), há escolha de cargos (Supervisão, Gerente, Vendedor, Assistente Comercial e Auxiliar) e, no texto do WhatsApp, os nomes saem um embaixo do outro, por loja.",
+          "para": [
+            "coord",
+            "sup",
+            "ger"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v228",
       "data": "16/11/2026",
       "hora": "16:35",
