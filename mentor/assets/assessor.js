@@ -232,7 +232,7 @@
     if (p.diluicao) l.push('Diluição: ' + p.diluicao);
     if (p.demaos) l.push('Demãos: ' + p.demaos);
     if (p.secagem) l.push('Secagem: ' + p.secagem);
-    if (Number(p.durabilidade) > 0) l.push('Durabilidade: ' + p.durabilidade + ' anos' + (p.durabilidade_fonte ? ' (' + p.durabilidade_fonte + ')' : ''));
+    if (Number(p.durabilidade) > 0) l.push('Durabilidade: ' + (global.CONTEUDO && CONTEUDO.durabilidadeTxt ? CONTEUDO.durabilidadeTxt(p) : p.durabilidade + ' anos'));
     const r = embalagensProduto(p).map(e => `${e} ≈ ${fmtM2(p.rend[e])} m²`).join(' · ');
     if (r) l.push('Rendimento: ' + r + (p.rend_tipo === 'acabado' ? ' (parede pronta, ' + (p.demaos || '2 a 3') + ' demãos)' : ' (por demão)'));
     if (p.obs) l.push('Obs.: ' + p.obs);

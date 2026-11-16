@@ -146,7 +146,7 @@
       <div class="campo mt-2"><label>Preço por embalagem (R$)</label><input type="number" inputmode="decimal" step="0.01" placeholder="Ex: 189,90" value="${m.preco}" oninput="App.calc.setDadoQuieto('preco',this.value)"></div>
       <div class="campo"><label>Margem extra de segurança (%)</label><div class="chips">${[0, 5, 10, 15, 20].map(p => `<button class="chip ${Number(m.margem) === p ? 'ativo' : ''}" onclick="App.calc.setDado('margem',${p})">${p}%</button>`).join('')}</div><div class="ajuda">10% para superfície lisa, 20% para textura/reboco.</div></div>
       <div class="card info"><div class="negrito">⏳ Custo ao longo do tempo <span class="mini texto-3">(opcional)</span></div>
-      <div class="campo mt-1"><label>Durabilidade do produto (anos)</label><input type="number" inputmode="decimal" step="0.5" min="0" placeholder="Ex: 5" value="${m.durab == null ? '' : m.durab}" oninput="App.calc.setDadoQuieto('durab',this.value)"><div class="ajuda">${prod && Number(prod.durabilidade) > 0 ? `📘 Fabricante: <b>${esc(String(prod.durabilidade))} anos</b>${prod.durabilidade_fonte ? ' (' + esc(prod.durabilidade_fonte) + ')' : ''}.` : (prod ? 'O catálogo deste produto não declara durabilidade em anos.' : '')} Use o que está na embalagem ou no boletim técnico do fabricante.</div></div>
+      <div class="campo mt-1"><label>Durabilidade do produto (anos)</label><input type="number" inputmode="decimal" step="0.5" min="0" placeholder="Ex: 5" value="${m.durab == null ? '' : m.durab}" oninput="App.calc.setDadoQuieto('durab',this.value)">${prod && Number(prod.durabilidade_max) > Number(prod.durabilidade) ? `<div class="chips mt-1">${Array.from({ length: prod.durabilidade_max - prod.durabilidade + 1 }, (_, i) => Number(prod.durabilidade) + i).map(a => `<button class="chip ${num(m.durab) === a ? 'ativo' : ''}" onclick="App.calc.setDado('durab',${a})">${a} anos</button>`).join('')}</div>` : ''}<div class="ajuda">${prod && Number(prod.durabilidade) > 0 ? `${prod.durabilidade_origem === 'regua' ? '📏' : '📘'} <b>${esc(CONTEUDO.durabilidadeTxt(prod))}</b>.${Number(prod.durabilidade_max) > Number(prod.durabilidade) ? ' A conta começa pelo menor número; ajuste conforme a exposição (sol, chuva, maresia) e a preparação.' : ''}` : (prod ? (prod.durabilidade_origem === 'complemento' ? 'Complemento não tem durabilidade própria: use a do acabamento que vai por cima.' : 'Sem durabilidade em anos declarada para este produto.') : 'Régua Só Tintas: econômica ≈ 1 ano · standard ≈ 3 · premium 5 a 8.')} Média de referência; não é garantia.</div></div>
       <div class="campo" style="margin:0"><label>Mão de obra</label><div class="chips mb-1">${[['m2', 'R$ por m²'], ['total', 'Valor total (R$)']].map(([k, t]) => `<button class="chip ${(m.moModo || 'm2') === k ? 'ativo' : ''}" onclick="App.calc.setDado('moModo','${k}')">${t}</button>`).join('')}</div><input type="number" inputmode="decimal" step="0.01" min="0" placeholder="${(m.moModo || 'm2') === 'm2' ? 'Ex: 25,00 por m²' : 'Ex: 3.500,00 pela obra'}" value="${m.mo == null ? '' : m.mo}" oninput="App.calc.setDadoQuieto('mo',this.value)"><div class="ajuda">Deixe em branco se o cliente não vai contratar pintor.</div></div></div>
       <button class="btn bloco" onclick="App.calc.calcular()">CALCULAR</button></div>
       <button class="btn link bloco" onclick="App.calc.ir('material')">‹ Trocar produto</button>`;
@@ -161,11 +161,11 @@
   App.calc.escolherProduto = (id) => {
     const m = C.rascunho.atual; if (!m) return;
     const p = id ? Assessor.produtoPorId(id, App.cont) : null;
-    if (!p) { delete m.produto_id; delete m.produto_nome; delete m.produto_marca; if (!(liquido(m.tipo) ? EMB_TINTA : EMB_OUTROS).includes(m.emb)) { m.emb = liquido(m.tipo) ? '18 L' : '25 Kg'; m.rend = ''; } calcSalvar(); App.render(); return; }
+    if (!p) { delete m.produto_id; delete m.produto_nome; delete m.produto_marca; delete m.durabMax; if (!(liquido(m.tipo) ? EMB_TINTA : EMB_OUTROS).includes(m.emb)) { m.emb = liquido(m.tipo) ? '18 L' : '25 Kg'; m.rend = ''; } calcSalvar(); App.render(); return; }
     m.produto_id = p.id; m.produto_nome = p.marca + ' ' + p.nome; m.produto_marca = p.marca;
     const embs = Assessor.embalagensProduto(p); if (embs.length && !embs.includes(m.emb)) m.emb = embs[0];
     const r = Assessor.rendimentoPorDemao(p, m.emb); if (r) { m.rend = r.valor; if (p.rend_tipo === 'acabado') m.demaos = 2; }
-    m.durab = Number(p.durabilidade) > 0 ? p.durabilidade : '';
+    m.durab = Number(p.durabilidade) > 0 ? p.durabilidade : ''; m.durabMax = Number(p.durabilidade_max) > 0 ? p.durabilidade_max : '';
     calcSalvar(); App.render();
   };
   // Vindo do Especificador / aba Produtos: abre a calculadora já com o produto
@@ -177,7 +177,7 @@
     const m = C.rascunho.atual; m.produto_id = p.id; m.produto_nome = p.marca + ' ' + p.nome; m.produto_marca = p.marca;
     const embs = Assessor.embalagensProduto(p); m.emb = embs[0] || (liquido(tipo) ? '18 L' : '25 Kg');
     const r = Assessor.rendimentoPorDemao(p, m.emb); if (r) { m.rend = r.valor; if (p.rend_tipo === 'acabado') m.demaos = 2; }
-    if (Number(p.durabilidade) > 0) m.durab = p.durabilidade;
+    if (Number(p.durabilidade) > 0) { m.durab = p.durabilidade; m.durabMax = Number(p.durabilidade_max) > 0 ? p.durabilidade_max : ''; }
     C.tela = C.rascunho.totalArea > 0 ? 'dados' : 'area'; calcSalvar();
     App.cache.abaAssessor = 'calc';
     if (App.rota.view === 'assessor' && App.rota.params[0] === 'calc') App.render(); else location.hash = '#/assessor/calc';
@@ -191,7 +191,8 @@
     /* custo no tempo: (produto por m² + mão de obra por m²) ÷ anos de durabilidade */
     const moV = Math.max(0, num(m.mo)), mo = (m.moModo || 'm2') === 'm2' ? moV * area : moV, anos = Math.max(0, num(m.durab));
     const custoM2 = area ? custo / area : 0, moM2 = area ? mo / area : 0, totalM2 = custoM2 + moM2;
-    return { areaAj, qtd, comprar, custo, sobra, custoM2, mo, moM2, totalM2, total: custo + mo, anos, m2Ano: anos > 0 ? totalM2 / anos : 0, prodM2Ano: anos > 0 ? custoM2 / anos : 0, porAno: anos > 0 ? (custo + mo) / anos : 0 };
+    const anosMax = Math.max(0, num(m.durabMax));
+    return { areaAj, qtd, comprar, custo, sobra, custoM2, mo, moM2, totalM2, total: custo + mo, anos, anosMax: anosMax > anos && anos > 0 ? anosMax : 0, m2AnoMax: anosMax > anos && anos > 0 ? totalM2 / anosMax : 0, m2Ano: anos > 0 ? totalM2 / anos : 0, prodM2Ano: anos > 0 ? custoM2 / anos : 0, porAno: anos > 0 ? (custo + mo) / anos : 0 };
   }
   const anosTxt = (a) => fmtNum(a, a % 1 ? 1 : 0) + (a === 1 ? ' ano' : ' anos');
   function custoTempo(m, r) {
@@ -206,8 +207,9 @@
       <tr><td>Durabilidade</td><td style="text-align:right">${anosTxt(r.anos)}</td></tr>
       <tr><td>Conta</td><td style="text-align:right">${comMO ? `(${fmtNum(r.custoM2, 2)} + ${fmtNum(r.moM2, 2)})` : fmtNum(r.custoM2, 2)} ÷ ${fmtNum(r.anos, r.anos % 1 ? 1 : 0)} = <b>${fmtBRL(r.m2Ano)}</b></td></tr>
       ${comMO ? `<tr><td>Só o produto, por m²/ano</td><td style="text-align:right">${fmtBRL(r.prodM2Ano)}</td></tr>` : ''}
-      <tr><td>Custo da obra por ano</td><td style="text-align:right"><b>${fmtBRL(r.porAno)}</b></td></tr></table>
-      <p class="mini texto-3 mt-1" style="margin-bottom:0">Durabilidade conforme a especificação do fabricante; depende de preparação correta da superfície, aplicação e exposição. Não é garantia da loja.</p></div>`;
+      <tr><td>Custo da obra por ano</td><td style="text-align:right"><b>${fmtBRL(r.porAno)}</b></td></tr>
+      ${r.anosMax ? `<tr><td>Se durar ${anosTxt(r.anosMax)}</td><td style="text-align:right"><b>${fmtBRL(r.m2AnoMax)}</b> /m²/ano</td></tr>` : ''}</table>
+      <p class="mini texto-3 mt-1" style="margin-bottom:0">Durabilidade: número do fabricante quando ele declara; senão, média de referência da Só Tintas por linha. Depende de preparação correta da superfície, aplicação e exposição. Não é garantia.</p></div>`;
   }
   App.calc.calcular = () => { const r = calcularMaterial(C.rascunho.atual); if (!r) return App.toast('Informe área e rendimento maiores que zero'); Object.assign(C.rascunho.atual, { res: r }); calcSalvar(); ir('resultado'); };
   function calcResultado() {
@@ -492,7 +494,7 @@
     const linha = (l, v) => v ? `<tr><td class="texto-2">${l}</td><td style="text-align:right"><b>${esc(v)}</b></td></tr>` : '';
     return `<button class="btn link" onclick="App.prod.fechar()">‹ Voltar aos produtos</button>
       <div class="card"><div class="linha" style="align-items:flex-start;gap:12px">${p.imagem ? `<img class="foto-produto" src="${esc(p.imagem)}" alt="${esc(p.nome)}" onclick="App.cache.paginasAtuais=['${esc(p.imagem)}'];App.abrirVisor(0)">` : ''}<div class="cresce"><div class="chips" style="gap:6px"><span class="etiqueta ${marcaCor(p.marca)}">${esc(p.marca)}${p.linha ? ' · ' + esc(p.linha) : ''}</span><span class="etiqueta cinza">${esc(Assessor.classeNome(p.classe, App.cont))}</span></div><h2 class="mt-1">${esc(p.nome)}</h2>${p.destaque ? `<p class="pequeno" style="margin:0">${esc(p.destaque)}</p>` : ''}</div></div></div>
-      <div class="card"><h3>📋 Ficha rápida</h3><table class="pequeno" style="width:100%">${linha('Ambiente', p.ambiente === 'ambos' ? 'Interior e exterior' : p.ambiente ? p.ambiente[0].toUpperCase() + p.ambiente.slice(1) : '')}${linha('Superfícies', (p.superficies || []).join(', '))}${linha('Acabamento', (p.acabamento || []).filter(a => a !== 'não aplicável').join(', '))}${linha('Diluição', p.diluicao)}${linha('Demãos', p.demaos)}${linha('Secagem', p.secagem)}${linha('Durabilidade', Number(p.durabilidade) > 0 ? p.durabilidade + ' anos' + (p.durabilidade_fonte ? ' (' + p.durabilidade_fonte + ')' : '') : '')}</table></div>
+      <div class="card"><h3>📋 Ficha rápida</h3><table class="pequeno" style="width:100%">${linha('Ambiente', p.ambiente === 'ambos' ? 'Interior e exterior' : p.ambiente ? p.ambiente[0].toUpperCase() + p.ambiente.slice(1) : '')}${linha('Superfícies', (p.superficies || []).join(', '))}${linha('Acabamento', (p.acabamento || []).filter(a => a !== 'não aplicável').join(', '))}${linha('Diluição', p.diluicao)}${linha('Demãos', p.demaos)}${linha('Secagem', p.secagem)}${linha('Durabilidade', CONTEUDO.durabilidadeTxt(p))}</table></div>
       ${embs.length ? `<div class="card"><h3>📏 Rendimento${p.rend_tipo === 'acabado' ? ' (parede pronta, ' + esc(p.demaos || '2 a 3') + ' demãos)' : ' por demão'}</h3><table class="pequeno" style="width:100%">${embs.map(e => `<tr><td>${esc(e)}</td><td style="text-align:right"><b>${fmtNum(p.rend[e], 0)} m²</b>${p.rend_tipo === 'acabado' ? ` <span class="mini texto-3">(≈ ${fmtNum(p.rend[e] * 2, 0)} m² por demão)</span>` : ''}</td></tr>`).join('')}</table>${p.obs ? `<div class="ajuda">${esc(p.obs)}</div>` : ''}</div>` : ''}
       ${u.usos.length || u.cond.length ? `<div class="card info"><h3>🎯 Quando indicar</h3>${u.usos.length ? `<div class="pequeno"><b>Entra no sistema de:</b> ${esc(u.usos.join(' · '))}</div>` : ''}${u.cond.length ? `<div class="pequeno mt-1"><b>Tratamento para:</b> ${esc(u.cond.join(' · '))}</div>` : ''}</div>` : ''}
       <div class="botoes"><button class="btn" onclick="App.calc.novoComProduto('${p.id}')">🧮 Calcular quantidade</button><a class="btn verde" href="${zap(textoFichaProduto(p))}" target="_blank" rel="noopener">📲 Enviar ficha</a></div>

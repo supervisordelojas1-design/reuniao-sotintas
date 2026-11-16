@@ -158,16 +158,31 @@ CONTEUDO.classes_produto = {
   add({ id: 'eucatex_spray', marca: 'Eucatex', nome: 'Sprays Premium (Uso Geral, Metalizada, Alta Temperatura, Luminosa)', linha: 'Spray', classe: 'esmalte_sintetico', superficies: ['metal', 'madeira', 'alvenaria', 'gesso', 'cerâmica'], acabamento: ['brilhante', 'fosco', 'metalizado'], diluicao: 'Pronto para uso', demaos: '2 a 3', secagem: 'Toque 15 min · manuseio 1 h · final 24 h', rend: { '400 ml': 0, '300 ml': 0 }, destaque: 'Retoques e pequenas peças com secagem ultra rápida; versão alta temperatura (600 °C).' });
   add({ id: 'eucatex_thinner', marca: 'Eucatex', nome: 'Eucatex Ráz (aguarrás) e Thinners 9800 / 9116 / 9100', linha: 'Solventes', classe: 'diluente', superficies: [], acabamento: [], diluicao: '', demaos: '', rend: {}, destaque: 'Diluentes para esmaltes sintéticos, vernizes e limpeza; Thinner 9800 para limpar antes de repintar com Eucalux.' });
 
-  /* Durabilidade em anos, só onde o fabricante declara (Catálogo Coral 2025/2 e Catálogo Eucatex 2026).
-     Sem declaração = sem número: o vendedor informa na Calculadora conforme a embalagem/boletim técnico. */
+  /* DURABILIDADE (anos) — duas fontes, nesta ordem:
+     1. FABRICANTE: só onde ele declara em anos (catálogos Coral 2025/2 e Eucatex 2026 e boletins técnicos).
+     2. RÉGUA SÓ TINTAS (referência comercial definida pela coordenação em 16/11/2026), pela linha do produto:
+        econômica ≈ 1 ano · standard ≈ 3 anos · premium 5 a 8 anos (a conta usa 5, o mais conservador).
+     Complementos (massa, selador, fundo, diluente, removedor, reparo) não têm durabilidade própria:
+     quem dura é o acabamento. O vendedor sempre pode ajustar o número na Calculadora. */
   const DURAB = {
-    coral_hammerite: [10, 'durabilidade · Catálogo Coral'], coral_coralit_antiferrugem: [10, 'durabilidade · Catálogo Coral'], coral_coralit_ultra: [10, 'durabilidade · Catálogo Coral'],
+    coral_hammerite: [10, 'durabilidade · Catálogo Coral'], coral_coralit_antiferrugem: [10, 'durabilidade · boletim técnico Coral'], coral_coralit_ultra: [10, 'durabilidade · Catálogo Coral'],
+    coral_coralit_total: [10, 'durabilidade · boletim técnico Coral'], coral_coralit_secagem_rapida: [10, 'durabilidade · boletim técnico Coral'],
     coral_cetol_deck: [6, 'durabilidade · Catálogo Coral'], coral_cetol_classic: [6, 'durabilidade · Catálogo Coral'], coral_cetol_beleza_natural: [3, 'durabilidade · Catálogo Coral'],
     coral_cetol_stain: [3, 'durabilidade · Catálogo Coral'], coral_solgard: [5, 'durabilidade · Catálogo Coral'], coral_extra_maritimo: [2, 'durabilidade · Catálogo Coral'],
-    eucatex_super_borracha: [5, 'proteção · Catálogo Eucatex'], eucatex_verniz_copal: [2, 'garantia · Catálogo Eucatex'], eucatex_verniz_tingidor: [3, 'garantia · Catálogo Eucatex'],
+    eucatex_super_borracha: [5, 'proteção · boletim técnico Eucatex'], eucatex_verniz_copal: [2, 'garantia · Catálogo Eucatex'], eucatex_verniz_tingidor: [3, 'garantia · Catálogo Eucatex'],
     eucatex_verniz_deck: [6, 'garantia · Catálogo Eucatex'], eucatex_verniz_maritimo: [3, 'garantia · Catálogo Eucatex'], eucatex_power_stain: [3, 'garantia · Catálogo Eucatex']
   };
-  for (const p of P) if (DURAB[p.id] && p.durabilidade == null) { p.durabilidade = DURAB[p.id][0]; p.durabilidade_fonte = DURAB[p.id][1]; }
+  const SEM_DURAB = ['massa_acrilica', 'massa_corrida', 'selador', 'fundo_preparador', 'massa_madeira', 'fundo_madeira', 'fundo_galvanizado', 'fundo_anticorrosivo', 'promotor_aderencia', 'diluente', 'seladora_madeira', 'removedor', 'reparo', 'fissura', 'umidade_rodape', 'antimofo', 'neutralizador_ferrugem'];
+  const REGUA = [[/econ[oô]mic/i, 1, null, 'régua Só Tintas · linha econômica'], [/standard/i, 3, null, 'régua Só Tintas · linha standard'], [/premium/i, 5, 8, 'régua Só Tintas · linha premium']];
+  for (const p of P) {
+    if (p.durabilidade != null) continue;
+    if (DURAB[p.id]) { p.durabilidade = DURAB[p.id][0]; p.durabilidade_fonte = DURAB[p.id][1]; p.durabilidade_origem = 'fabricante'; continue; }
+    if (SEM_DURAB.includes(p.classe)) { p.durabilidade_origem = 'complemento'; continue; }
+    const txt = (p.classe || '') + ' ' + (p.linha || '') + ' ' + (p.nome || '');
+    const r = REGUA.find(x => x[0].test(txt));
+    if (r) { p.durabilidade = r[1]; if (r[2]) p.durabilidade_max = r[2]; p.durabilidade_fonte = r[3]; p.durabilidade_origem = 'regua'; }
+  }
+  CONTEUDO.durabilidadeTxt = (p) => !p || !(Number(p.durabilidade) > 0) ? '' : (Number(p.durabilidade_max) > Number(p.durabilidade) ? p.durabilidade + ' a ' + p.durabilidade_max : p.durabilidade) + (Number(p.durabilidade_max || p.durabilidade) === 1 ? ' ano' : ' anos') + (p.durabilidade_fonte ? ' (' + p.durabilidade_fonte + ')' : '');
 
   CONTEUDO.produtos = P;
 

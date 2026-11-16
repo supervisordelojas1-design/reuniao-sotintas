@@ -2,6 +2,17 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v233",
+      "data": "16/11/2026",
+      "hora": "18:45",
+      "itens": [
+        {
+          "painel": "Mentor ST PRO · Calculadora",
+          "o_que": "Durabilidade já vem preenchida pela linha do produto: econômica cerca de 1 ano, standard cerca de 3 anos e premium de 5 a 8 anos (a conta começa em 5 e você ajusta). Onde o fabricante declara o número, vale o do fabricante. Também aparece na ficha do produto."
+        }
+      ]
+    },
+    {
       "v": "ast-v232",
       "data": "16/11/2026",
       "hora": "18:25",
