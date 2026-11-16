@@ -917,14 +917,24 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
         var nome=('Relatorio de Provas - '+E.t.replace(/[^\wÀ-ú ]+/g,' ').replace(/\s+/g,' ').trim()+' - '+dBr(agora).replace('/','-')+'.pdf');
         return {blob:pdf.output('blob'),imgs:imgs,nome:nome,D:D}; }, function(e){ host.remove(); throw e; });
     }); }
-  function rTexto(E,D,op){ var c=D.cV, n=D.V.length, L=['*RELATÓRIO DE PROVAS — '+E.t.toUpperCase()+'*','Semana de '+dBr(S.atual)+' · posição das '+String(S.agora||'').slice(11,16),''];
-    L.push('*Vendedores:* '+c.respondido+' de '+n+' fizeram ('+pctTxt(c.respondido,n)+')'+(D.mV!=null?' · média '+virg(D.mV):''));
-    if(c.aguardando) L.push('⏳ '+c.aguardando+' esperam o gerente fazer o PDI'); if(c.liberado) L.push('📝 '+c.liberado+' com a prova aberta'); if(c.perdeu) L.push('❌ '+c.perdeu+' perderam o prazo');
-    if(D.G.length) L.push('*Gerentes:* '+D.cG.respondido+' de '+D.G.length+' fizeram'); if(D.SP.length) L.push('*Supervisores:* '+D.cS.respondido+' de '+D.SP.length+' fizeram');
-    if(D.T.length){ var ct=ctMT(D.T); L.push('*Trilha Mentor:* '+ct.aprovado+' aprovados de '+D.T.length+' · '+ct.nao_iniciou+' não iniciaram'); }
-    if(op&&op.nomes){ rNomes(D).forEach(function(g){ if(!g.L.length) return; L.push('',g.ic+' *'+g.tit+' ('+g.L.length+')*');
-      L.push(g.L.map(function(r){ return r.nome+(r.loja?' ('+r.loja+')':'')+(g.k==='respondido'&&r.aval&&r.aval.total?' '+r.aval.nota+'/'+r.aval.total:''); }).join(', ')); }); }
-    L.push('','*Ações:*'); rLeitura(E,D).forEach(function(x,i){ L.push((i+1)+'. '+x[0]+': '+x[2]); });
+  /* 16/11/2026 (Bruno): mensagem do WhatsApp organizada — cabeçalho, resumo em
+     tópicos, nomes por situação com uma linha por loja e as ações numeradas.
+     Analogia: é a escalação no quadro do vestiário. Uma linha por setor, e todo
+     mundo acha o próprio nome sem ler o parágrafo inteiro. */
+  function rPorLoja(L,comNota){ var o=[], m={};
+    L.forEach(function(r){ var k=r.loja||''; if(!m[k]){ m[k]={k:k,n:'',p:[]}; o.push(m[k]); } if(k&&!m[k].n&&r.lojaNome) m[k].n=r.lojaNome;
+      m[k].p.push(r.nome+(k&&r.tipo==='ger'?' (gerente)':'')+(comNota&&r.aval&&r.aval.total?' '+r.aval.nota+'/'+r.aval.total:'')); });
+    return o.map(function(x){ return '• *'+(x.k?x.k+(x.n?' '+x.n:''):'Supervisão')+':* '+x.p.join(', '); }); }
+  function rTexto(E,D,op){ var c=D.cV, n=D.V.length, SEP='━━━━━━━━━━━━━━━';
+    var L=['📋 *RELATÓRIO DE PROVAS*','*'+E.t+'*','Semana de '+dBr(S.atual)+' · posição das '+String(S.agora||'').slice(11,16),'',SEP,'📊 *RESUMO*'];
+    L.push('• *Vendedores:* '+c.respondido+' de '+n+' fizeram ('+pctTxt(c.respondido,n)+')'+(D.mV!=null?' · média '+virg(D.mV):''));
+    if(c.liberado) L.push('   📝 '+c.liberado+' com a prova aberta'); if(c.aguardando) L.push('   ⏳ '+c.aguardando+(c.aguardando===1?' espera':' esperam')+' o gerente fazer o PDI'); if(c.perdeu) L.push('   ❌ '+c.perdeu+(c.perdeu===1?' perdeu':' perderam')+' o prazo');
+    if(D.SEM&&D.SEM.length) L.push('   ⚠️ '+D.SEM.length+' sem PDI gerado');
+    if(D.G.length) L.push('• *Gerentes:* '+D.cG.respondido+' de '+D.G.length+' fizeram ('+pctTxt(D.cG.respondido,D.G.length)+')'); if(D.SP.length) L.push('• *Supervisores:* '+D.cS.respondido+' de '+D.SP.length+' fizeram ('+pctTxt(D.cS.respondido,D.SP.length)+')');
+    if(D.T.length){ var ct=ctMT(D.T); L.push('• *Trilha Mentor:* '+ct.aprovado+(ct.aprovado===1?' aprovado':' aprovados')+' de '+D.T.length+' · '+ct.nao_iniciou+(ct.nao_iniciou===1?' não iniciou':' não iniciaram')); }
+    if(op&&op.nomes){ rNomes(D).forEach(function(g){ if(!g.L.length) return;
+      L.push('',SEP,g.ic+' *'+g.tit.toUpperCase()+' ('+g.L.length+')*'); rPorLoja(g.L,g.k==='respondido').forEach(function(x){ L.push(x); }); }); }
+    L.push('',SEP,'🎯 *AÇÕES*'); rLeitura(E,D).forEach(function(x,i){ L.push((i+1)+'. *'+x[0]+':* '+x[2]); });
     L.push('','_Central de Provas · Só Tintas App_'); return L.join('\n'); }
   function abrirRelatorio(){
     var EE=rEscopos(), sel=0; if(F.loja){ EE.forEach(function(e,i){ if(e.tipo==='loja'&&e.v===cod3(F.loja)) sel=i; }); } else if(F.sup){ EE.forEach(function(e,i){ if(e.tipo==='sup'&&e.v===F.sup) sel=i; }); }
@@ -937,7 +947,10 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
   function rOpcoes(){ var o={gerFicha:true}; Array.prototype.forEach.call(document.querySelectorAll('[data-ro]'),function(c){ o[c.dataset.ro]=c.checked; }); return o; }
   function rAcao(acao,b){
     var E=window.__REL[Number($('rEsc').value)], st=function(h){ var e=$('rSt'); if(e) e.innerHTML=h; };
-    if(acao==='texto'){ rGarantir(rOpcoes()).then(function(){ window.open('https://wa.me/?text='+encodeURIComponent(rTexto(E,rDados(E),rOpcoes())),'_blank','noopener,noreferrer'); }); return; }
+    if(acao==='texto'){ rGarantir(rOpcoes()).then(function(){ var tx=rTexto(E,rDados(E),rOpcoes());
+      /* a mensagem também vai para a área de transferência: se o WhatsApp cortar um texto longo, é só colar */
+      try{ navigator.clipboard.writeText(tx).then(function(){ st('Mensagem copiada. Se o WhatsApp não abrir com o texto, é só colar na conversa.'); },function(){}); }catch(e){}
+      window.open('https://wa.me/?text='+encodeURIComponent(tx),'_blank','noopener,noreferrer'); }); return; }
     var bts=document.querySelectorAll('[data-rzap],[data-rbaixar],[data-rtexto]'); Array.prototype.forEach.call(bts,function(x){x.disabled=true;});
     st('⏳ Montando o relatório e desenhando as páginas…');
     var fim=function(){ Array.prototype.forEach.call(bts,function(x){x.disabled=false;}); };
