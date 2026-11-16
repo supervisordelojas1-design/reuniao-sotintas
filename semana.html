@@ -131,7 +131,7 @@ h3{font-size:14px;margin:0 0 6px}
   function visao(){ try{ return !!(window.STDados&&STDados.visao&&STDados.visao()); }catch(e){ return false; } }
   function prazoTxt(p){ if(!p) return ''; var x=p.split(' '); return dBr(x[0])+' às '+(x[1]||'').replace(':00','h'); }
 
-  var SUPD=null, GERD=null, PEND=[];
+  var SUPD=null, GERD=null, PEND=[], TOPO='';
   function carregar(){
     return STDados.chamar('semana').then(function(j){
       if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não respondeu.');
@@ -276,6 +276,27 @@ h3{font-size:14px;margin:0 0 6px}
     if(f.ind&&f.ind.length) h+='<ul class="lista">'+f.ind.map(function(i){return '<li><span>'+esc(i.nome)+'</span><span>'+esc(i.atual)+' · meta '+esc(i.meta)+' '+(i.ok==null?'':i.ok?'🟢':'🔴')+'</span></li>';}).join('')+'</ul>';
     return h;
   }
+  /* 16/11/2026 (Bruno): o resumo do PDI com o gerente traz a carteira de clientes e os orçamentos em aberto da loja,
+     os mesmos que vão no PDI de cada vendedor (somados os vendedores da loja na semana) */
+  function carteiraLoja(cod,id){
+    var V=D.linhas.filter(function(l){return l.loja===cod&&l.semana===D.atual&&l.comp;});
+    if(!V.length) V=D.linhas.filter(function(l){return l.loja===cod&&l.semana===D.anterior&&l.comp;});
+    if(!V.length) return '';
+    var C={}, O=[];
+    V.forEach(function(l){ var vn=nm(l.comp.nome||l.vendedor);
+      (l.comp.lista||[]).forEach(function(x){ var k=String(x.cli||'').toUpperCase(); if(!k) return; if(!C[k]) C[k]={cli:x.cli,media:x.media||0,daLoja:x.daLoja,vend:[]}; if(C[k].vend.indexOf(vn)<0) C[k].vend.push(vn); });
+      (l.comp.orcs||[]).forEach(function(o){ O.push({cli:o.cli,tel:o.tel,valor:o.valor||0,dias:o.dias,doc:o.doc,vend:vn}); }); });
+    var L=Object.keys(C).map(function(k){return C[k];}).sort(function(a,b){return b.media-a.media;});
+    O.sort(function(a,b){return (b.dias||0)-(a.dias||0)||b.valor-a.valor;});
+    var aL=ABERTOS[id+':cl'], aO=ABERTOS[id+':co'], tot=O.reduce(function(s,o){return s+o.valor;},0);
+    var h='<h3 style="margin-top:12px">Carteira de clientes da loja</h3><div class="comp"><b>'+L.length+' clientes CNPJ da carteira sem compra no mês</b><div class="sub">Os mesmos das listas de positivação dos vendedores ('+V.length+' vendedor'+(V.length===1?'':'es')+')</div>';
+    h+=L.length?'<ul class="lista">'+L.slice(0,aL?L.length:8).map(function(x){return '<li><span>'+esc(x.cli)+' <span class="sub">· '+(x.daLoja?'sem vendedor':esc(x.vend.join(', ')))+'</span></span><span>média '+brl(x.media)+'</span></li>';}).join('')+'</ul>'+
+      (L.length>8?'<button class="mais" type="button" data-mais="'+esc(id)+':cl">'+(aL?'Mostrar menos':'Ver os '+L.length+' clientes')+'</button>':''):'<div class="sub">Nenhum cliente sem compra nas listas desta semana.</div>';
+    h+='</div><h3 style="margin-top:12px">Orçamentos em aberto</h3><div class="comp"><b>'+O.length+' orçamento'+(O.length===1?'':'s')+' · '+brl(tot)+'</b><div class="sub">Os mesmos do PDI de cada vendedor, do mais antigo para o mais novo</div>';
+    h+=O.length?'<ul class="lista">'+O.slice(0,aO?O.length:8).map(function(o){return '<li><span>'+(o.doc?'<b>Nº '+esc(o.doc)+'</b> · ':'')+esc(o.cli)+' <span class="sub">· '+esc(o.vend)+'</span>'+(o.tel?' · <a href="tel:'+esc(String(o.tel).replace(/[^\d+]/g,''))+'" style="color:var(--navy)">'+esc(o.tel)+'</a>':'')+'</span><span>'+brl(o.valor)+(o.dias!=null?' · '+o.dias+' dias':'')+'</span></li>';}).join('')+'</ul>'+
+      (O.length>8?'<button class="mais" type="button" data-mais="'+esc(id)+':co">'+(aO?'Mostrar menos':'Ver os '+O.length+' orçamentos')+'</button>':''):'<div class="sub">Nenhum orçamento em aberto nas listas dos vendedores.</div>';
+    return h+'</div>';
+  }
   function blocoCompGer(C){
     if(!C||!C.length) return '<p class="sub">Sem compromissos registrados.</p>';
     return C.map(function(c){return '<div class="comp"><span class="n">'+c.n+'</span><b>'+esc(c.titulo)+'</b><div style="margin-top:4px"><b>Ação:</b> '+esc(c.acao)+'</div>'+(c.obs?'<div><b>Observar:</b> '+esc(c.obs)+'</div>':'')+'</div>';}).join('');
@@ -285,7 +306,7 @@ h3{font-size:14px;margin:0 0 6px}
     var f=x.ficha||{};
     var h='<section class="card"><div class="vend-top"><h2 style="margin:0">Meu PDI semanal com o supervisor · Loja '+esc(x.loja)+'</h2><div class="linha">'+chip(x.situacao)+(x.aval?'<span class="chip c-respondido">'+x.aval.nota+'/'+x.aval.total+'</span>':'')+'</div></div>';
     h+='<p class="sub" style="margin:4px 0 8px">Supervisor: '+esc(f.supervisor||'')+(x.feito_em?' · PDI feito '+esc(quando(x.feito_em))+(x.feito_por?' por '+esc(x.feito_por):''):'')+'</p>';
-    h+=fichaGer(f)+'<h3 style="margin-top:12px">Os 3 compromissos da semana</h3>'+blocoCompGer(x.comp);
+    h+=fichaGer(f)+carteiraLoja(x.loja,'mg:'+x.chave)+'<h3 style="margin-top:12px">Os 3 compromissos da semana</h3>'+blocoCompGer(x.comp);
     h+='<h3 style="margin-top:12px">Avaliação da semana</h3>';
     if(x.situacao==='aguardando') h+='<p>A avaliação libera quando o seu supervisor marcar que fez o PDI semanal com você'+(x.prazoFeito?' (até '+esc(prazoTxt(x.prazoFeito))+')':'')+'.</p>';
     else if(x.situacao==='liberado'){ h+='<p class="aviso">Responda até <b>'+esc(prazoTxt(x.prazoAval))+'</b>. São '+(x.questoes||[]).length+' questões sobre a sua loja. Só dá para enviar uma vez.</p><div id="g'+i+'_questoes"><p class="sub">Preparando as questões…</p></div>'; PEND.push({linha:x,px:'g'+i+'_',acao:'semanaGerAval'}); }
@@ -301,13 +322,28 @@ h3{font-size:14px;margin:0 0 6px}
   /* bloco dentro do card da loja (supervisor / coordenação) */
   function blocoGerLoja(cod,ro){
     var x=gerAtual(cod)[0]; if(!x) return '';
+    /* a semana dos gerentes nasce segunda às 12h15: antes disso, o que existe é a semana passada */
+    if(GERD&&D.atual&&GERD.atual<D.atual) return '<div class="vend" style="border-color:var(--navy)"><b>PDI semanal com o gerente</b><p class="sub" style="margin:4px 0 0">O PDI desta semana com o gerente é gerado hoje às 12h15. A partir daí aparece aqui o botão <b>✓ Fiz o PDI com o gerente</b>, que vale até quarta às 18h.</p></div>';
     var ab=ABERTOS['g:'+x.chave], f=x.ficha||{};
     var h='<div class="vend" style="border-color:var(--navy)"><div class="vend-top"><div><b>PDI semanal com o gerente · '+esc(nm(x.gerente||f.gerente||''))+'</b><div class="sub">'+esc(f.orient||'')+'</div></div><div class="linha">'+chip(x.situacao)+(x.aval?'<span class="chip c-respondido">'+x.aval.nota+'/'+x.aval.total+'</span>':'')+'</div></div>';
     h+='<div class="linha" style="margin-top:8px">'+(x.situacao==='aguardando'&&!ro?'<button class="btn azul" type="button" data-gerfeito="'+esc(x.chave)+'">✓ Fiz o PDI com o gerente</button>':'')+
+      (x.situacao==='nao_feito'?'<span class="chip c-nao_feito">O prazo para marcar o PDI terminou'+(x.prazoFeito?' em '+esc(prazoTxt(x.prazoFeito)):'')+'</span>':'')+
       (x.feito_em?'<span class="sub">PDI feito '+esc(quando(x.feito_em))+(x.feito_por?' por '+esc(x.feito_por):'')+(x.situacao==='liberado'&&x.prazoAval?' · ele responde até '+esc(prazoTxt(x.prazoAval)):'')+'</span>':(x.prazoFeito&&x.situacao==='aguardando'?'<span class="sub">marcar até '+esc(prazoTxt(x.prazoFeito))+'</span>':''))+
       '<button class="mais" type="button" data-abrir="g:'+esc(x.chave)+'">'+(ab?'Fechar ficha':'Ver ficha e compromissos')+'</button></div>';
-    if(ab) h+='<div style="margin-top:8px">'+fichaGer(f)+'<h3 style="margin-top:12px">Os 3 compromissos do gerente</h3>'+blocoCompGer(x.comp)+(x.aval?resultado(x.aval):'')+'</div>';
+    if(ab) h+='<div style="margin-top:8px">'+fichaGer(f)+carteiraLoja(cod,'g:'+x.chave)+'<h3 style="margin-top:12px">Os 3 compromissos do gerente</h3>'+blocoCompGer(x.comp)+(x.aval?resultado(x.aval):'')+'</div>';
     return h+'</div>';
+  }
+  /* topo da tela do supervisor/coordenação: todos os gerentes da carteira, com o botão "Fiz o PDI" à vista */
+  function topoGer(cods,ro){
+    if(!GERD) return '';
+    if(D.atual&&GERD.atual<D.atual) return '<section class="card"><h2 style="margin:0">PDI semanal com os gerentes</h2><p class="sub" style="margin:6px 0 0">O PDI desta semana com os gerentes é gerado hoje às 12h15. Depois disso, o botão <b>✓ Fiz o PDI</b> de cada gerente aparece aqui e no card de cada loja, até quarta às 18h. Ao marcar, a avaliação do gerente é liberada.</p></section>';
+    var G=cods.map(function(c){return gerAtual(c)[0];}).filter(Boolean); if(!G.length) return '';
+    var feitos=G.filter(function(x){return x.situacao!=='aguardando'&&x.situacao!=='nao_feito';}).length;
+    var h='<section class="card"><div class="vend-top"><h2 style="margin:0">PDI semanal com os gerentes</h2><span class="sub">feito <b>'+feitos+'/'+G.length+'</b>'+(G[0].prazoFeito?' · marcar até '+esc(prazoTxt(G[0].prazoFeito)):'')+'</span></div><p class="sub" style="margin:4px 0 8px">Faça a conversa com o gerente e toque em <b>✓ Fiz o PDI</b>: a avaliação dele é liberada na hora.</p><ul class="lista">';
+    G.forEach(function(x){ var f=x.ficha||{};
+      h+='<li><span><b>Loja '+esc(x.loja)+'</b> · '+esc(nm(x.gerente||f.gerente||''))+'</span><span class="linha">'+chip(x.situacao)+(x.aval?'<span class="chip c-respondido">'+x.aval.nota+'/'+x.aval.total+'</span>':'')+
+        (x.situacao==='aguardando'&&!ro?'<button class="btn azul" type="button" data-gerfeito="'+esc(x.chave)+'">✓ Fiz o PDI</button>':'')+'</span></li>'; });
+    return h+'</ul></section>';
   }
   function blocoGerFech(cod,ro){
     var x=gerAnt(cod)[0]; if(!x) return '';
@@ -330,6 +366,7 @@ h3{font-size:14px;margin:0 0 6px}
     if(D.perfil==='ger'){ h+=gerAtual().map(cardMeuGer).join(''); gerAnt().forEach(function(x){ if(!gerAtual(x.loja).length||x.fechamento||x.aval) h+=cardMeuGerAnt(x); }); }
     if(!A.length&&!P.length){ $('raiz').innerHTML=h+'<div class="card"><h2>Ainda não há PDI semanal'+(D.perfil==='ger'?' dos vendedores':'')+'</h2><p class="sub">Ele é criado toda segunda de manhã, junto com o resumo semanal das lojas.</p></div>'; PEND.forEach(function(q){ montarQuestoes(q.linha,null,q.px,q.acao); }); PEND=[]; return; }
     var lojas={}, so=lojasDoFiltro(); A.concat(P).forEach(function(l){ if(!so||so[l.loja]) lojas[l.loja]=1; });
+    TOPO=D.perfil!=='ger'?topoGer(Object.keys(lojas).sort(),ro):'';
     Object.keys(lojas).sort().forEach(function(cod){
       var a=A.filter(function(l){return l.loja===cod;}), p=P.filter(function(l){return l.loja===cod;});
       var feitos=a.filter(function(l){return l.situacao!=='aguardando'&&l.situacao!=='nao_feito';}).length, resp=a.filter(function(l){return l.aval;});
@@ -442,7 +479,7 @@ h3{font-size:14px;margin:0 0 6px}
     });
     return h;
   }
-  function montar(){ if(D.perfil==='vend') telaVendedor(); else { var pl=placar(); telaLider(); var b=blocoSup(); if(b) $('raiz').insertAdjacentHTML('afterbegin',b); if(pl) $('raiz').insertAdjacentHTML('afterbegin',pl); PEND.forEach(function(q){ if(visao()) $(q.px+'questoes').innerHTML='<p class="sub">Modo "Ver como": as questões só aparecem para a própria pessoa.</p>'; else montarQuestoes(q.linha,null,q.px,q.acao); }); PEND=[]; } }
+  function montar(){ if(D.perfil==='vend') telaVendedor(); else { var pl=placar(); TOPO=''; telaLider(); var b=blocoSup(); if(b) $('raiz').insertAdjacentHTML('afterbegin',b); if(TOPO) $('raiz').insertAdjacentHTML('afterbegin',TOPO); if(pl) $('raiz').insertAdjacentHTML('afterbegin',pl); PEND.forEach(function(q){ if(visao()) $(q.px+'questoes').innerHTML='<p class="sub">Modo "Ver como": as questões só aparecem para a própria pessoa.</p>'; else montarQuestoes(q.linha,null,q.px,q.acao); }); PEND=[]; } }
 
   document.addEventListener('click',function(e){
     var t=e.target.closest('button'); if(!t) return;
