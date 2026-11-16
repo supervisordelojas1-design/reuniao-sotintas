@@ -764,10 +764,14 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
     var ok=rOk(E), V=cru('vend','atual').filter(ok).map(function(r){ var p=acharPessoa(r.loja,r.nome); r.app=statusApp(p&&p.p); return r; }), G=cru('ger','atual').filter(ok), SP=E.tipo==='loja'?[]:cru('sup','atual').filter(function(r){ return E.tipo==='geral'||mesmoSup(r.sup,E.v); });
     var T=MT?MT.L.filter(ok):[], HH=H?H.linhas.filter(function(x){return x.t==='vend';}).filter(ok):[], HG=H?H.linhas.filter(function(x){return x.t==='ger';}).filter(ok):[];
     var AVL=AV?AV.provas.map(function(P){ var L=linhasAvulsa(P).filter(ok); return {P:P,L:L,c:ctAv(L)}; }).filter(function(x){return x.L.length;}):[];
-    return {V:V,G:G,SP:SP,T:T,HH:HH,HG:HG,AVL:AVL,cV:conta(V),cG:conta(G),cS:conta(SP),mV:media(V),mG:media(G)}; }
+    /* quem está no cadastro de acessos e ficou sem PDI nesta semana: o mesmo "Sem PDI gerado" do cartão da tela */
+    var usados=[], SEM=[]; cru('vend','atual').forEach(function(r){ var p=acharPessoa(r.loja,r.nome); if(p) usados.push(p); });
+    if(ACMAP) Object.keys(ACMAP).forEach(function(k){ ACMAP[k].forEach(function(x){ if(usados.indexOf(x)<0&&x.p) SEM.push({tipo:'vend',nome:nm(x.p.nome),loja:String(x.p.loja),lojaNome:x.p.lojaNome||'',sup:x.p.sup||'',sit:'sem_pdi',aval:null}); }); });
+    SEM=SEM.filter(ok);
+    return {V:V,G:G,SP:SP,SEM:SEM,T:T,HH:HH,HG:HG,AVL:AVL,cV:conta(V),cG:conta(G),cS:conta(SP),mV:media(V),mG:media(G)}; }
   function rCargo(r){ var T=TIPOS[r.tipo||'vend']||TIPOS.vend; return T.Aval; }
   function rNomes(D){
-    var todos=D.V.concat(D.G).concat(D.SP), ord=function(a,b){ var la=a.loja||'zzz', lb=b.loja||'zzz'; return (la<lb?-1:la>lb?1:0)||(norm(a.nome)<norm(b.nome)?-1:1); };
+    var todos=D.V.concat(D.G).concat(D.SP).concat(D.SEM||[]), ord=function(a,b){ var la=a.loja||'zzz', lb=b.loja||'zzz'; return (la<lb?-1:la>lb?1:0)||(norm(a.nome)<norm(b.nome)?-1:1); };
     return [['respondido','Quem fez a prova','fizeram','ok','✅'],['liberado','Prova aberta: falta responder','com a prova aberta','wn','📝'],
             ['aguardando','Esperando o PDI: a prova nem abriu','esperando o PDI','bd','⏳'],['perdeu','Perdeu o prazo','perderam o prazo','bd','❌'],
             ['sempdi','Sem PDI gerado: conferir o cadastro','sem PDI gerado','','⚠️']]
