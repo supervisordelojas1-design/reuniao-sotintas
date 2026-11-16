@@ -2,6 +2,20 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v218",
+      "data": "15/11/2026",
+      "hora": "22:40",
+      "itens": [
+        {
+          "painel": "Escala & Folgas",
+          "o_que": "Jornada de 42h (transição) como padrão, com seletor 42h / 40h por loja. Dia normal de 8h24. Nas lojas de sábado curto, o sábado fica das 8h às 13h (5h, com pausa de 15 min) e quem trabalha nele sai às 18h15 nos outros quatro dias; quem folga no sábado faz cinco dias de 8h24.",
+          "para": [
+            "coord"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v217",
       "data": "15/11/2026",
       "hora": "21:15",

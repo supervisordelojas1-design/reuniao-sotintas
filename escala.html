@@ -149,6 +149,9 @@ td select{min-width:0;min-height:32px;padding:0 5px;font-size:12.5px;width:auto}
       <option value="6">Exemplo com 6 pessoas</option>
     </select>
   </label>
+  <label>Jornada semanal
+    <select id="jor"><option value="42">42h (transição) ★ recomendado</option><option value="40">40h</option></select>
+  </label>
   <label>Horário na semana
     <select id="hor"></select>
   </label>
@@ -163,13 +166,13 @@ td select{min-width:0;min-height:32px;padding:0 5px;font-size:12.5px;width:auto}
   </label>
   <label>Quem trabalha sábado curto
     <select id="modo">
-      <option value="B" selected>B · Dia cheio 8h–18h (40h)</option>
-      <option value="A">A · Sem acordo, dia de 8h (36h)</option>
+      <option value="B" selected>B · Compensa nos 4 dias de semana</option>
+      <option value="A">A · Sem compensar (fica devendo horas)</option>
     </select>
   </label>
   <label>Dia com ponta descoberta
     <select id="aperto">
-      <option value="comp" selected>Compensar na semana (9h + 7h)</option>
+      <option value="comp" selected>Compensar na mesma semana</option>
       <option value="alm">Almoço de 2h (sem compensar)</option>
       <option value="nada">Só equilibrar e avisar</option>
     </select>
@@ -241,7 +244,7 @@ function montaAlmoco(){
 }
 const SLOTS=['12h–13h','13h–14h','14h–15h'];
 const TABS=[['semana','Grade da semana'],['fila','Fila do sábado'],['geral','Rede e regiões'],['ferias','Férias'],['banco','Banco de horas']];
-const S={fer:{},ini:8,fim:18,equipe:'real',nivel:'rede',reg:'Bruno',cargoF:'todos',loja:0,segLock:true,min2:false,aperto:'comp',crit:'fila',sem:0,perfil:'gerente',sab:'curto',modo:'B',vagas:1,tab:'semana',folga:{},alm:{g:1,a:2,v1:0,v2:1,v3:2,x:0}};
+const S={jor:42,fer:{},ini:8,fim:18,equipe:'real',nivel:'rede',reg:'Bruno',cargoF:'todos',loja:0,segLock:true,min2:false,aperto:'comp',crit:'fila',sem:0,perfil:'gerente',sab:'curto',modo:'B',vagas:1,tab:'semana',folga:{},alm:{g:1,a:2,v1:0,v2:1,v3:2,x:0}};
 
 const SAB={curto:['Curto atual','8h às 13h','13h'],curto9:['Curto 9h–13h','9h às 13h','13h'],curto12:['Curto reduzido','8h às 12h','12h'],integral:['Integral atual','8h às 18h','18h'],integral17:['Integral reduzido','8h às 17h','17h']};
 const curto=()=>S.sab.startsWith('curto');
@@ -292,10 +295,10 @@ const SLOTH=[12,13,14];
 function vazios(f=S.folga){
   const T=plano(f),out=[];
   ['seg','ter','qua','qui','sex','sab'].forEach(d=>{
-    const pr=P.filter(p=>T[p.id][d]);if(!pr.some(p=>T[p.id][d].l>0))return;
+    const pr=P.filter(p=>T[p.id][d]);if(!pr.some(p=>T[p.id][d].l>=1))return;
     for(let h=12;h<16;h++){
       const aberta=pr.some(p=>h>=T[p.id][d].a&&h<T[p.id][d].b);if(!aberta)continue;
-      const na=pr.filter(p=>{const o=T[p.id][d];if(h<o.a||h>=o.b)return false;const st=SLOTH[S.alm[p.id]];return !(o.l>0&&h>=st&&h<st+o.l)}).length;
+      const na=pr.filter(p=>{const o=T[p.id][d];if(h<o.a||h>=o.b)return false;const st=SLOTH[S.alm[p.id]];return !(o.l>=1&&h>=st&&h<st+o.l)}).length;
       if(!na)out.push([d,h]);
     }
   });
@@ -313,43 +316,58 @@ function ajustaAlmoco(){
     if(!ok)return;
   }
 }
-const lab=o=>o?o.a+'h–'+o.b+'h':'FOLGA';
-const mins=o=>o?(o.b-o.a-o.l)*60:0;
+const fh=v=>{const m=Math.round(v*60);return Math.floor(m/60)+'h'+(m%60?String(m%60).padStart(2,'0'):'')};
+const fdur=v=>{const m=Math.round(v*60);return m%60?(m>=60?Math.floor(m/60)+'h'+String(m%60).padStart(2,'0'):m+' min'):m/60+'h'};
+const lab=o=>o?fh(o.a)+'–'+fh(o.b):'FOLGA';
+const mins=o=>o?Math.round((o.b-o.a-o.l)*60):0;
+const JOR=()=>S.jor===40?40:42;
 function plano(f){
   const WD=['seg','ter','qua','qui','sex'],T={};P.forEach(p=>T[p.id]={});
+  const J=S.jor===40?40:42,Lb=J/5,EPS=1e-6; // jornada semanal e horas de um dia normal (8h ou 8h24)
   const fimSab=parseInt(SAB[S.sab][2]),pres=d=>P.filter(p=>f[p.id]!==d),ini=S.ini,fim=S.fim;
   P.forEach(p=>{if(f[p.id]==='sab')T[p.id].sab=null});
-  const ps=pres('sab');let sabEdge=false;
-  if(curto())ps.forEach((p,i)=>T[p.id].sab=S.sab==='curto9'?{a:9,b:13,l:0}:fimSab===12||i%2===0?{a:8,b:12,l:0}:{a:9,b:13,l:0});
-  else if(fimSab===17)ps.forEach(p=>T[p.id].sab={a:8,b:17,l:1});
+  const ps=pres('sab');let sabEdge=false,satH=4;
+  if(curto()){
+    // 42h: sábado 8h às 13h vira turno único de 5h, com pausa de 15 min que não conta como hora trabalhada
+    if(J===42&&S.sab==='curto'){satH=5;ps.forEach(p=>T[p.id].sab={a:8,b:13.25,l:.25,pau:1})}
+    else ps.forEach((p,i)=>T[p.id].sab=S.sab==='curto9'?{a:9,b:13,l:0}:fimSab===12||i%2===0?{a:8,b:12,l:0}:{a:9,b:13,l:0});
+  }
+  else if(fimSab===17)ps.forEach(p=>T[p.id].sab=J===40?{a:8,b:17,l:1}:{a:8,b:9+Lb,l:1,pos:1});
   else sabEdge=true;
-  const diaCheio=p=>curto()&&S.modo==='B'&&f[p.id]!=='sab'; // quem trabalha sábado curto faz 9h nos dias de semana
+  const diaCheio=p=>curto()&&S.modo==='B'&&f[p.id]!=='sab'; // quem trabalha sábado curto compensa nos 4 dias de semana
+  const Ldc=(J-satH)/4; // 40h: 9h · 42h com sábado de 5h: 9h15 · 42h com sábado de 4h: 9h30
   const modo=curto()&&S.aperto==='comp'?'nada':S.aperto==='comp'&&P.length<=3?'alm':S.aperto;
   const owed={},longs={},N={},M=S.min2?2:1;P.forEach(p=>{owed[p.id]=0;longs[p.id]=0});
   const dias=WD.map(d=>[d,ini,fim]);if(sabEdge)dias.push(['sab',8,18]);
   dias.forEach(([d,i0,f0],di)=>{
-    const pr=pres(d),Wd=f0-i0,flex=[];N[d]=pr.length;
+    const pr=pres(d),Wd=f0-i0,flex=[],delta=Wd-1-Lb;N[d]=pr.length;
     P.forEach(p=>{if(f[p.id]===d)T[p.id][d]=null});
-    pr.forEach(p=>{const L=Math.min(d!=='sab'&&diaCheio(p)?9:8,Wd-1);if(L+1>=Wd)T[p.id][d]={a:i0,b:f0,l:Wd-L};else flex.push([p,L])});
+    pr.forEach(p=>{
+      let L=d!=='sab'&&diaCheio(p)?Ldc:Lb;if(J===40)L=Math.min(L,Wd-1);
+      if(L+1>=Wd-EPS){ // o dia não cabe com folga no horário da loja: entra na abertura e, em 42h, sai depois do fechamento
+        const o=J===40?{a:i0,b:f0,l:Wd-L}:{a:i0,b:i0+L+1,l:1};if(o.b>f0+EPS)o.pos=1;T[p.id][d]=o;
+      }else flex.push([p,L]);
+    });
     const kf=Math.floor(flex.length/2);
     flex.forEach(([p,L],i)=>{const naFraca=((i+di)%flex.length)<kf,abre=loja().fraca==='a'?naFraca:!naFraca;T[p.id][d]=abre?{a:i0,b:i0+L+1,l:1}:{a:f0-L-1,b:f0,l:1}});
     if(modo==='nada'||Wd!==10)return;
+    const normal=o=>!o.x&&!o.pos&&Math.abs(o.b-o.a-(Lb+1))<EPS;
     for(let g=0;g<3;g++){
-      const ab=pr.filter(p=>T[p.id][d].a===i0).length,fe=pr.filter(p=>T[p.id][d].b===f0).length;
+      const ab=pr.filter(p=>T[p.id][d].a===i0).length,fe=pr.filter(p=>T[p.id][d].b>=f0-EPS).length;
       if(ab>=M&&fe>=M)break;
-      const c=pr.filter(p=>{const o=T[p.id][d];return !o.x&&o.b-o.a===9&&(ab<M?o.a!==i0:o.b!==f0)}).sort((x,y)=>longs[x.id]-longs[y.id]);
+      const c=pr.filter(p=>{const o=T[p.id][d];return normal(o)&&(ab<M?o.a!==i0:o.b<f0-EPS)}).sort((x,y)=>longs[x.id]-longs[y.id]);
       if(!c.length)break;
       const q=c[0];longs[q.id]++;
-      if(modo==='comp'){T[q.id][d]={a:i0,b:f0,l:1,x:1};owed[q.id]++}else T[q.id][d]={a:i0,b:f0,l:2,x:2};
+      if(modo==='comp'){T[q.id][d]={a:i0,b:f0,l:1,x:1,dl:delta};owed[q.id]++}else T[q.id][d]={a:i0,b:f0,l:Wd-Lb,x:2};
     }
   });
   if(modo==='comp'){
-    const pref=['sex','qui','qua','ter','sab','seg'].filter(d=>dias.some(x=>x[0]===d)),sh={};
+    const pref=['sex','qui','qua','ter','sab','seg'].filter(d=>dias.some(x=>x[0]===d)),sh={},delta=9-Lb;
     [...P].sort((x,y)=>(y.id==='g')-(x.id==='g')).forEach(p=>{
       while(owed[p.id]>0){
-        const d=pref.find(d=>{const o=T[p.id][d];return N[d]>=4&&o&&!o.x&&o.b-o.a===9&&(sh[d]||0)<2&&!(d==='seg'&&p.id==='g')});
+        const d=pref.find(d=>{const o=T[p.id][d];return N[d]>=4&&o&&!o.x&&!o.pos&&Math.abs(o.b-o.a-(Lb+1))<EPS&&(sh[d]||0)<2&&!(d==='seg'&&p.id==='g')});
         if(!d)break;
-        const o=T[p.id][d],i0=d==='sab'?8:ini;T[p.id][d]=o.a===i0?{a:o.a,b:o.b-1,l:1,x:-1}:{a:o.a+1,b:o.b,l:1,x:-1};
+        const o=T[p.id][d],i0=d==='sab'?8:ini;T[p.id][d]=o.a===i0?{a:o.a,b:o.b-delta,l:1,x:-1,dl:delta}:{a:o.a+delta,b:o.b,l:1,x:-1,dl:delta};
         sh[d]=(sh[d]||0)+1;owed[p.id]--;
       }
     });
@@ -363,7 +381,7 @@ function cobre(d,f=S.folga){
   const pres=P.map(p=>({p,o:T[p.id][d]})).filter(x=>x.o).map(x=>({p:x.p,o:x.o,t:lab(x.o)}));
   const g=pres.find(o=>o.p.id==='g');
   const resp=g?g.p:(pres.find(o=>o.p.id===TOP)||pres.find(o=>o.p.id==='a')||pres[0]).p;
-  return {pres,resp,subst:!g,fim:fn+'h',ini:an+'h',abre:pres.filter(x=>x.o.a===an),fecha:pres.filter(x=>x.o.b===fn)};
+  return {pres,resp,subst:!g,fim:fn+'h',ini:an+'h',abre:pres.filter(x=>x.o.a===an),fecha:pres.filter(x=>x.o.b>=fn-1e-6)};
 }
 function alertas(){
   const bad=conflito(S.folga), warn=[];
@@ -379,7 +397,7 @@ function alertas(){
     if(c.abre.length<min)warn.push('Abertura da '+NOME_DIA[d]+' com '+c.abre.length+' pessoa(s) às '+c.ini+'.');
     if(c.fecha.length<min)warn.push('Fechamento da '+NOME_DIA[d]+' com '+c.fecha.length+' pessoa(s) às '+c.fim+'.');
   }
-  P.forEach(p=>{const mm=minutos(p.id);if(mm<2400)warn.push(p.nome+' fecha a semana em '+hm(mm)+': a loja está liberando '+hm(2400-mm)+'.');if(mm>2400)bad.push(p.nome+' passa de 40h na semana ('+hm(mm)+').')});
+  P.forEach(p=>{const mm=minutos(p.id);if(mm<JOR()*60)warn.push(p.nome+' fecha a semana em '+hm(mm)+': a loja está liberando '+hm(JOR()*60-mm)+'.');if(mm>JOR()*60)bad.push(p.nome+' passa de '+JOR()+'h na semana ('+hm(mm)+').')});
   const ow=plano(S.folga)._owed;if(ow)P.forEach(p=>{if(ow[p.id]>0)warn.push(p.nome+' fica com +'+ow[p.id]+'h sem dia para compensar nesta semana.')});
   const nsab=P.filter(p=>S.folga[p.id]==='sab').length;
   if(nsab>vagasEf())warn.push('Folgas no sábado ('+nsab+') acima das vagas da loja ('+vagasEf()+').');
@@ -419,7 +437,7 @@ function vSemana(){
     const i=P.indexOf(p);
     h+='<tr><td class="nome"><b>'+p.nome+'</b>'+(p.id===TOP?'<span class="tag">TOP</span>':'')+'<small>'+p.cargo+'</small></td>';
     DIAS.forEach(([d])=>{
-      const o=PL[p.id][d],f=!o,t=lab(o)+(o&&o.x===1?'<br><span class="tag">+1h cobre as pontas</span>':o&&o.x===-1?'<br><span class="tag" style="background:var(--okbg);color:var(--ok)">−1h compensa</span>':o&&o.x===2?'<br><span class="tag">almoço de 2h</span>':'');
+      const o=PL[p.id][d],f=!o,t=lab(o)+(o&&o.x===1?'<br><span class="tag">+'+fdur(o.dl)+' cobre as pontas</span>':o&&o.x===-1?'<br><span class="tag" style="background:var(--okbg);color:var(--ok)">−'+fdur(o.dl)+' compensa</span>':o&&o.x===2?'<br><span class="tag">almoço de '+fdur(o.l)+'</span>':o&&o.pau?'<br><span class="tag">pausa de 15 min</span>':o&&o.pos?'<br><span class="tag">sai após fechar</span>':'');
       h+='<td class="'+(f?'f':d==='seg'&&S.segLock?'segc':'t')+(podeEditar()?' edit':'')+'" onclick="setFolga(\''+p.id+'\',\''+d+'\')">'+t+'</td>';
     });
     h+='<td>'+(podeEditar()
@@ -474,10 +492,10 @@ function vBanco(){
   return '<h3 style="margin-top:0">Banco de horas — 2ª fase</h3><p>Reservado. Nesta fase o painel cobre escala, folgas e feriados.</p><div class="cards"><div class="kpi"><b>Saldo</b><span>por pessoa, com extrato</span></div><div class="kpi"><b>Créditos</b><span>hora além da escala</span></div><div class="kpi"><b>Débitos</b><span>saída antecipada, falta</span></div><div class="kpi warn"><b>Avisos</b><span>saldo alto ou a vencer</span></div></div><p class="note">Pela opção escolhida para o sábado curto, a escala em si nunca gera débito.</p>';
 }
 function render(){
-  setDias();$('sub').textContent=loja().c+' '+loja().n+' · Semana de '+dm(semIni(S.sem))+' a '+dm(new Date(semIni(S.sem).getTime()+5*D1))+' · Escala 5x2 · 40h semanais';
+  setDias();$('sub').textContent=loja().c+' '+loja().n+' · Semana de '+dm(semIni(S.sem))+' a '+dm(new Date(semIni(S.sem).getTime()+5*D1))+' · Escala 5x2 · '+JOR()+'h semanais';
   $('tabs').innerHTML=TABS.map(([k,l])=>'<button class="'+(S.tab===k?'on':'')+'" onclick="S.tab=\''+k+'\';render()">'+l+'</button>').join('');
   $('view').innerHTML={semana:vSemana,fila:vFila,feriados:vFeriados,banco:vBanco,geral:vGeral,ferias:()=>'<h3 style="margin-top:0">Férias — em preparação</h3><p>Esta área vai avisar quem está com férias vencendo, por loja, região e rede. Falta entrar o arquivo do RH com as datas de admissão.</p>'}[S.tab]();
-  const co=S.perfil==='coord'&&!RO;['seg','hor','sab','aperto','crit','vagas','equipe'].forEach(k=>$(k).disabled=!co);$('modo').disabled=!co||!curto();$('trava').style.display=co?'none':'block';
+  const co=S.perfil==='coord'&&!RO;['seg','hor','sab','aperto','crit','vagas','equipe','jor'].forEach(k=>$(k).disabled=!co);$('modo').disabled=!co||!curto();$('trava').style.display=co?'none':'block';
 }
 $('equipe').onchange=e=>{S.equipe=e.target.value;montaEquipe();sugerir();render()};
 const HOR={'8-18':'8h às 18h','9-18':'9h às 18h'}; // o fechamento é sempre às 18h (decisão do Bruno, 15/11/2026)
@@ -486,7 +504,7 @@ const pc=v=>String(v).replace('.',',')+'%';
 function recOf(l){
   let hor=/(^|[^1])9h/.test(l.recSem)?'9-18':'8-18';
   if(hor==='9-18'&&l.sab==='c')hor='8-18'; // abrir às 9h deixaria o sábado curto em 36h: a loja não libera hora
-  return {seg:l.seg<=2,hor,sab:l.sab==='i'?(l.recSab.startsWith('Fechar')?'integral17':'integral'):'curto9'};
+  return {seg:l.seg<=2,hor,sab:l.sab==='i'?(l.recSab.startsWith('Fechar')?'integral17':'integral'):JOR()===42?'curto':'curto9'};
 }
 function aplicaRec(l){const r=recOf(l);S.sab=r.sab;S.segLock=r.seg;S.min2=!!l.duas;[S.ini,S.fim]=r.hor.split('-').map(Number)}
 function motivos(l){
@@ -496,10 +514,11 @@ function motivos(l){
   const cedo='A primeira hora traz só '+pc(l.sh8)+' do faturamento do dia ('+String(l.at8).replace('.',',')+' atendimento por hora).';
   const tarde=(l.sh17>=15?'A última hora concentra '+pc(l.sh17)+' do faturamento do dia.':'A última hora traz '+pc(l.sh17)+' do dia.')+(l.ap18>=300?' Ainda são faturados '+R$(l.ap18)+' por dia depois das 18h.':'');
   const piloto=' É uma hipótese para piloto: a venda depois das 18h não mostra quem encontrou a loja fechada.';
-  m.hor=r.hor==='8-18'&&/(^|[^1])9h/.test(l.recSem)?cedo+' Mesmo assim a loja fica em 8h às 18h: abrindo às 9h, quem trabalha no sábado curto fecharia a semana em 36h, e a regra é ninguém dever hora e a loja não liberar hora a mais.'
+  m.hor=r.hor==='8-18'&&/(^|[^1])9h/.test(l.recSem)?cedo+' Mesmo assim a loja fica em 8h às 18h: abrindo às 9h, quem trabalha no sábado curto fecharia a semana com horas a menos, e a regra é ninguém dever hora e a loja não liberar hora a mais.'
     :r.hor==='8-18'?'A primeira hora traz '+pc(l.sh8)+' do faturamento do dia e a última '+pc(l.sh17)+'. Nenhuma é fraca o bastante para cortar, e depois das 18h a loja fatura '+R$(l.ap18)+' por dia.'
-    :cedo+' Abrindo às 9h, a jornada de 8h cobre a loja inteira e todos abrem e fecham juntos.'+(l.sab==='c'?' Atenção: quem trabalha no sábado curto fica com 36h na semana.':'');
-  m.sab=r.sab==='curto9'?(l.sv12>l.sv8*1.1?'Das 12h às 13h a loja vende '+R$(l.sv12)+' por sábado, contra '+R$(l.sv8)+' das 8h às 9h. Com 9h–13h o turno é único e todos trabalham juntos.':'A primeira e a última hora do sábado vendem quase o mesmo ('+R$(l.sv8)+' e '+R$(l.sv12)+'). Fica 9h–13h para seguir o padrão da rede.')
+    :cedo+' Abrindo às 9h, a jornada de 8h cobre a loja inteira e todos abrem e fecham juntos.'+(l.sab==='c'?' Atenção: quem trabalha no sábado curto fecha a semana com horas a menos.':'');
+  m.sab=r.sab==='curto'?'Na jornada de 42h o sábado fica das 8h às 13h, como é hoje para o cliente: turno único de 5h, com pausa de 15 min. Quem trabalha no sábado fecha as 42h saindo às 18h15 nos outros quatro dias (15 min depois do fechamento). Quem folga no sábado faz cinco dias de 8h24.'
+    :r.sab==='curto9'?(l.sv12>l.sv8*1.1?'Das 12h às 13h a loja vende '+R$(l.sv12)+' por sábado, contra '+R$(l.sv8)+' das 8h às 9h. Com 9h–13h o turno é único e todos trabalham juntos.':'A primeira e a última hora do sábado vendem quase o mesmo ('+R$(l.sv8)+' e '+R$(l.sv12)+'). Fica 9h–13h para seguir o padrão da rede.')
     :r.sab==='integral17'?'Das 17h às 18h a loja vende só '+R$(l.sv17)+' por sábado. Fechando às 17h o turno é único de 8h, com todos da abertura ao fechamento.'
     :'Das 17h às 18h a loja ainda vende '+R$(l.sv17)+' por sábado, acima de R$ 500. Vale manter até as 18h.';
   return m;
@@ -512,7 +531,7 @@ function orientacao(){
   const mud=it.filter(x=>x[1]!==x[2]).length;
   let h='<div class="ori"><div class="orih"><b>Orientação para '+l.n+'</b><span>Pré-seleção feita pelo movimento da loja de janeiro a novembro/2026</span>'+(mud?'<button class="btn alt" onclick="trocaLoja(S.loja)">Voltar ao recomendado</button>':'')+'</div>';
   it.forEach(x=>{const ok=x[1]===x[2];h+='<div class="orii '+(ok?'':'mud')+'"><div><b>'+x[0]+': '+x[1]+'</b>'+(ok?'<span class="st ok">✔ seguindo o recomendado</span>':'<span class="st no">⚠ alterado para '+x[2]+'</span>')+'</div><p>'+(ok?'':'Antes de mudar, veja o porquê da escolha. ')+x[3]+'</p></div>'});
-  h+='<p class="orif">🔥 Dia de maior movimento: <b>'+DNOME[forte(l)[0]]+'</b> ('+forte(l)[1]+'% da média de segunda a sexta) · Folga: melhor dia <b>'+DNOME[l.dias[0]]+'</b>, depois <b>'+DNOME[l.dias[1]]+'</b> · Ponta mais fraca: <b>'+(l.fraca==='a'?'abertura':'fechamento')+'</b>'+(l.duas?', com 2 pessoas nas duas pontas':', onde 1 pessoa basta')+'</p></div>';
+  h+='<p class="orif"><b>Jornada de '+JOR()+'h.</b> '+(JOR()===42?'Dia normal de 8h24 (8h às 17h24 ou 8h36 às 18h). '+(curto()?'Quem trabalha no sábado curto compensa nos outros quatro dias.':'No sábado integral o dia também é de 8h24.'):'Dia normal de 8h. '+(curto()?'Quem trabalha no sábado curto faz 9h nos outros quatro dias.':''))+'</p><p class="orif">🔥 Dia de maior movimento: <b>'+DNOME[forte(l)[0]]+'</b> ('+forte(l)[1]+'% da média de segunda a sexta) · Folga: melhor dia <b>'+DNOME[l.dias[0]]+'</b>, depois <b>'+DNOME[l.dias[1]]+'</b> · Ponta mais fraca: <b>'+(l.fraca==='a'?'abertura':'fechamento')+'</b>'+(l.duas?', com 2 pessoas nas duas pontas':', onde 1 pessoa basta')+'</p></div>';
   return h;
 }
 function opcoes(){
@@ -585,10 +604,10 @@ function equipeDe(i){const e=S.equipe==='real'&&EQUIPES[LOJAS[i].c];return e&&e.
 function montaEquipe(){P=equipeDe(S.loja);S.semEquipe=S.equipe==='real'&&!(EQUIPES[loja().c]||[]).length;montaAlmoco()}
 function escalaLoja(i){
   if(i===S.loja)return {P,f:S.folga};
-  const bk=[S.loja,S.sab,S.segLock,S.min2,P,S.ini,S.fim],l=LOJAS[i];
-  S.loja=i;aplicaRec(l);P=equipeDe(i);
+  const bk=[S.loja,S.sab,S.segLock,S.min2,P,S.ini,S.fim,S.jor],l=LOJAS[i];
+  S.loja=i;S.jor=(CFG[l.c]||{}).jor===40?40:42;aplicaRec(l);P=equipeDe(i);
   const r={P,f:calc(S.sem)};
-  [S.loja,S.sab,S.segLock,S.min2,P,S.ini,S.fim]=bk;return r;
+  [S.loja,S.sab,S.segLock,S.min2,P,S.ini,S.fim,S.jor]=bk;return r;
 }
 const CG=['Gerente','Assistente','Vendedor','Auxiliar'],CGC={Gerente:'#cde2fb',Assistente:'#fbd9cb',Vendedor:'#c9efe0',Auxiliar:'#fbe7b8'},CGL={Gerente:'G',Assistente:'A',Vendedor:'V',Auxiliar:'X'};
 function vGeral(){
@@ -630,10 +649,10 @@ function salvarSemana(){
   STDados.chamar('escalaSalvar',{loja:loja().c,sem:semKey(S.sem),folga,alm},true).then(r=>{if(!r||!r.ok)throw new Error((r&&r.erro)||'O servidor não confirmou.');SALVOS[k]={folga,alm,por:r.por,em:r.em};S.salvo=SALVOS[k];render();toast('Escala salva.')}).catch(e=>toast('Não salvou: '+e.message));
 }
 function salvarCfg(){
-  if(S.perfil!=='coord'||!REAL||RO||PFREAL!=='coord')return;const cfg={sab:S.sab,seg:S.segLock,hor:S.ini+'-'+S.fim,modo:S.modo,aperto:S.aperto,crit:S.crit,vagas:S.vagas};CFG[loja().c]=cfg;
+  if(S.perfil!=='coord'||!REAL||RO||PFREAL!=='coord')return;const cfg={jor:JOR(),sab:S.sab,seg:S.segLock,hor:S.ini+'-'+S.fim,modo:S.modo,aperto:S.aperto,crit:S.crit,vagas:S.vagas};CFG[loja().c]=cfg;
   STDados.chamar('escalaCfg',{loja:loja().c,cfg},true).then(r=>{if(!r||!r.ok)throw new Error((r&&r.erro)||'O servidor não confirmou.')}).catch(e=>toast('A seleção não foi gravada: '+e.message));
 }
-function trocaLoja(i){S.loja=i;aplicaRec(loja());aplicaCfg();montaEquipe();opcoes();['modo','aperto','crit'].forEach(k=>$(k).value=S[k]);$('vagas').value=S.vagas;carregaSemana();render()}
+function trocaLoja(i){S.loja=i;S.jor=(CFG[loja().c]||{}).jor===40?40:42;$('jor').value=S.jor;aplicaRec(loja());aplicaCfg();montaEquipe();opcoes();['modo','aperto','crit'].forEach(k=>$(k).value=S[k]);$('vagas').value=S.vagas;carregaSemana();render()}
 $('hor').onchange=e=>{[S.ini,S.fim]=e.target.value.split('-').map(Number);salvarCfg();render()};
 $('loja').onchange=e=>trocaLoja(+e.target.value);
 $('seg').onchange=e=>{S.segLock=e.target.value==='1';salvarCfg();sugerir();S.salvo=null;render()};
@@ -641,6 +660,7 @@ $('aperto').onchange=e=>{S.aperto=e.target.value;salvarCfg();render()};
 $('crit').onchange=e=>{S.crit=e.target.value;salvarCfg();sugerir();S.salvo=null;render()};
 $('sem').onchange=e=>{S.sem=+e.target.value;carregaSemana();render()};
 $('perfil').onchange=e=>{S.perfil=e.target.value;render()};
+$('jor').onchange=e=>{S.jor=+e.target.value===40?40:42;if(curto())S.sab=recOf(loja()).sab;salvarCfg();opcoes();sugerir();S.salvo=null;render()};
 $('sab').onchange=e=>{S.sab=e.target.value;salvarCfg();render()};
 $('modo').onchange=e=>{S.modo=e.target.value;salvarCfg();render()};
 $('vagas').onchange=e=>{S.vagas=+e.target.value;salvarCfg();sugerir();S.salvo=null;render()};
