@@ -157,7 +157,7 @@ td select{min-width:0;min-height:32px;padding:0 5px;font-size:12.5px;width:auto}
   </label>
   <label>Sábado da loja
     <select id="sab">
-      <option value="curto" selected>Curto atual (8h às 13h)</option>
+      <option value="curto" selected>Curto (8h às 14h na 42h)</option>
       <option value="curto9">Curto 9h às 13h (turno único)</option>
       <option value="curto12">Curto reduzido (8h às 12h)</option>
       <option value="integral">Integral atual (8h às 18h)</option>
@@ -247,6 +247,8 @@ const S={jor:42,fer:{},ini:8,fim:18,equipe:'real',nivel:'rede',reg:'Bruno',cargo
 
 const SAB={curto:['Curto atual','8h às 13h','13h'],curto9:['Curto 9h–13h','9h às 13h','13h'],curto12:['Curto reduzido','8h às 12h','12h'],integral:['Integral atual','8h às 18h','18h'],integral17:['Integral reduzido','8h às 17h','17h']};
 const curto=()=>S.sab.startsWith('curto');
+/* 42h (decisão do Bruno, 16/11/2026): o sábado curto passa a ir das 8h às 14h, e quem trabalha nele faz os 4 dias de semana das 8h às 18h (9h). */
+const SB=k=>k==='curto'&&S.jor!==40?['Curto 42h','8h às 14h','14h']:SAB[k];
 const $=id=>document.getElementById(id);
 const nome=id=>P.find(p=>p.id===id).nome;
 const hm=m=>Math.floor(m/60)+'h'+String(m%60).padStart(2,'0');
@@ -320,23 +322,24 @@ const fdur=v=>{const m=Math.round(v*60);return m%60?(m>=60?Math.floor(m/60)+'h'+
 const lab=o=>o?fh(o.a)+'–'+fh(o.b):'FOLGA';
 const mins=o=>o?Math.round((o.b-o.a-o.l)*60):0;
 const JOR=()=>S.jor===40?40:42;
-/* Sem acordo de compensação (decisão do Bruno, 15/11/2026): nenhum dia passa da jornada normal (8h24 em 42h, 8h em 40h). */
+/* EC 141/2026: o limite de 8h por dia continua; as 42h (8h24 por dia, ou 9h nos dias de quem trabalha no sábado curto) dependem do termo aditivo da convenção coletiva.
+   ACORDO=false mantém desligada a compensação entre dias das pontas (9h + 7h48). */
 const ACORDO=false;
 function plano(f){
   const WD=['seg','ter','qua','qui','sex'],T={};P.forEach(p=>T[p.id]={});
   const J=S.jor===40?40:42,Lb=J/5,EPS=1e-6; // jornada semanal e horas de um dia normal (8h ou 8h24)
-  const fimSab=parseInt(SAB[S.sab][2]),pres=d=>P.filter(p=>f[p.id]!==d),ini=S.ini,fim=S.fim;
+  const fimSab=parseInt(SB(S.sab)[2]),pres=d=>P.filter(p=>f[p.id]!==d),ini=S.ini,fim=S.fim;
   P.forEach(p=>{if(f[p.id]==='sab')T[p.id].sab=null});
   const ps=pres('sab');let sabEdge=false,satH=4;
   if(curto()){
-    // 42h: sábado 8h às 13h vira turno único de 5h, com pausa de 15 min que não conta como hora trabalhada
-    if(J===42&&S.sab==='curto'){satH=5;ps.forEach(p=>T[p.id].sab={a:8,b:13.25,l:.25,pau:1})}
+    // 42h: sábado das 8h às 14h, turno único de 6h, com pausa de 15 min que não conta como hora trabalhada (saída 14h15)
+    if(J===42&&S.sab==='curto'){satH=6;ps.forEach(p=>T[p.id].sab={a:8,b:14.25,l:.25,pau:1})}
     else ps.forEach((p,i)=>T[p.id].sab=S.sab==='curto9'?{a:9,b:13,l:0}:fimSab===12||i%2===0?{a:8,b:12,l:0}:{a:9,b:13,l:0});
   }
   else if(fimSab===17)ps.forEach(p=>T[p.id].sab=J===40?{a:8,b:17,l:1}:{a:8,b:9+Lb,l:1,pos:1});
   else sabEdge=true;
-  const diaCheio=p=>ACORDO&&curto()&&S.modo==='B'&&f[p.id]!=='sab'; // quem trabalha sábado curto compensa nos 4 dias de semana
-  const Ldc=(J-satH)/4; // 40h: 9h · 42h com sábado de 5h: 9h15 · 42h com sábado de 4h: 9h30
+  const diaCheio=p=>curto()&&f[p.id]!=='sab'&&(J===42&&S.sab==='curto'||ACORDO&&S.modo==='B'); // quem trabalha sábado curto compensa nos 4 dias de semana
+  const Ldc=(J-satH)/4; // 42h com sábado de 6h: 9h (8h às 18h com 1h de almoço) · 40h com sábado de 4h: 9h
   const ap=!ACORDO&&S.aperto==='comp'?'alm':S.aperto,modo=curto()&&ap==='comp'?'nada':ap==='comp'&&P.length<=3?'alm':ap;
   const owed={},longs={},N={},M=S.min2?2:1;P.forEach(p=>{owed[p.id]=0;longs[p.id]=0});
   const dias=WD.map(d=>[d,ini,fim]);if(sabEdge)dias.push(['sab',8,18]);
@@ -346,7 +349,7 @@ function plano(f){
     pr.forEach(p=>{
       let L=d!=='sab'&&diaCheio(p)?Ldc:Lb;if(J===40)L=Math.min(L,Wd-1);
       if(L+1>=Wd-EPS){ // o dia não cabe com folga no horário da loja: entra na abertura e, em 42h, sai depois do fechamento
-        const o=J===40?{a:i0,b:f0,l:Wd-L}:{a:i0,b:i0+L+1,l:1};if(o.b>f0+EPS)o.pos=1;T[p.id][d]=o;
+        const o=J===40?{a:i0,b:f0,l:Wd-L}:{a:i0,b:i0+L+1,l:1};if(o.b>f0+EPS){if(diaCheio(p)){o.a=f0-L-1;o.b=f0;o.pre=1}else o.pos=1}T[p.id][d]=o;
       }else flex.push([p,L]);
     });
     const kf=Math.floor(flex.length/2);
@@ -378,7 +381,7 @@ function plano(f){
 function minutos(id,f=S.folga){const T=plano(f);return ['seg','ter','qua','qui','sex','sab'].reduce((s,d)=>s+mins(T[id][d]),0)}
 function turno(p,i,d,f=S.folga){return lab(plano(f)[p.id][d])}
 function cobre(d,f=S.folga){
-  const T=plano(f),fn=d==='sab'?parseInt(SAB[S.sab][2]):S.fim,an=d==='sab'?(S.sab==='curto9'?9:8):S.ini;
+  const T=plano(f),fn=d==='sab'?parseInt(SB(S.sab)[2]):S.fim,an=d==='sab'?(S.sab==='curto9'?9:8):S.ini;
   const pres=P.map(p=>({p,o:T[p.id][d]})).filter(x=>x.o).map(x=>({p:x.p,o:x.o,t:lab(x.o)}));
   const g=pres.find(o=>o.p.id==='g');
   const resp=g?g.p:(pres.find(o=>o.p.id===TOP)||pres.find(o=>o.p.id==='a')||pres[0]).p;
@@ -518,7 +521,7 @@ function motivos(l){
   m.hor=r.hor==='8-18'&&/(^|[^1])9h/.test(l.recSem)?cedo+' Mesmo assim a loja fica em 8h às 18h por enquanto, que é o horário que o cliente já conhece.'
     :r.hor==='8-18'?'A primeira hora traz '+pc(l.sh8)+' do faturamento do dia e a última '+pc(l.sh17)+'. Nenhuma é fraca o bastante para cortar, e depois das 18h a loja fatura '+R$(l.ap18)+' por dia.'
     :cedo+' Abrindo às 9h, a jornada de 8h cobre a loja inteira e todos abrem e fecham juntos.'+'';
-  m.sab=r.sab==='curto'?'Na jornada de 42h o sábado fica das 8h às 13h, como é hoje para o cliente: turno único de 5h, com pausa de 15 min. Sem acordo de compensação nenhum dia passa de 8h24, então quem trabalha no sábado fecha a semana em 38h36 (4 dias de 8h24 + 5h). Quem folga no sábado faz cinco dias de 8h24 e fecha 42h.'
+  m.sab=r.sab==='curto'?'Na jornada de 42h o sábado vai das 8h às 14h (1h a mais que hoje para o cliente): turno único de 6h, com pausa de 15 min, saída às 14h15. Quem trabalha no sábado faz os 4 dias de semana das 8h às 18h (9h, com 1h de almoço) e fecha 42h: 4 × 9h + 6h. Quem folga no sábado faz cinco dias de 8h24 e também fecha 42h.'
     :r.sab==='curto9'?(l.sv12>l.sv8*1.1?'Das 12h às 13h a loja vende '+R$(l.sv12)+' por sábado, contra '+R$(l.sv8)+' das 8h às 9h. Com 9h–13h o turno é único e todos trabalham juntos.':'A primeira e a última hora do sábado vendem quase o mesmo ('+R$(l.sv8)+' e '+R$(l.sv12)+'). Fica 9h–13h para seguir o padrão da rede.')
     :r.sab==='integral17'?'Das 17h às 18h a loja vende só '+R$(l.sv17)+' por sábado. Fechando às 17h o turno é único de 8h, com todos da abertura ao fechamento.'
     :'Das 17h às 18h a loja ainda vende '+R$(l.sv17)+' por sábado, acima de R$ 500. Vale manter até as 18h.';
@@ -528,18 +531,18 @@ function orientacao(){
   const l=loja(),r=recOf(l),m=motivos(l);
   const it=[['Trava de folga na segunda',r.seg?'Sim':'Não',S.segLock?'Sim':'Não',m.seg],
             ['Horário na semana',HOR[r.hor],HOR[S.ini+'-'+S.fim],m.hor],
-            ['Sábado da loja',SAB[r.sab][1],SAB[S.sab][1],m.sab]];
+            ['Sábado da loja',SB(r.sab)[1],SB(S.sab)[1],m.sab]];
   const mud=it.filter(x=>x[1]!==x[2]).length;
   let h='<div class="ori"><div class="orih"><b>Orientação para '+l.n+'</b><span>Pré-seleção feita pelo movimento da loja de janeiro a novembro/2026</span>'+(mud?'<button class="btn alt" onclick="trocaLoja(S.loja)">Voltar ao recomendado</button>':'')+'</div>';
   it.forEach(x=>{const ok=x[1]===x[2];h+='<div class="orii '+(ok?'':'mud')+'"><div><b>'+x[0]+': '+x[1]+'</b>'+(ok?'<span class="st ok">✔ seguindo o recomendado</span>':'<span class="st no">⚠ alterado para '+x[2]+'</span>')+'</div><p>'+(ok?'':'Antes de mudar, veja o porquê da escolha. ')+x[3]+'</p></div>'});
-  h+='<p class="orif"><b>Jornada de '+JOR()+'h.</b> '+(JOR()===42?'Dia normal de 8h24 (8h às 17h24 ou 8h36 às 18h). '+'Sem acordo de compensação, nenhum dia passa de 8h24. '+(curto()?'Quem trabalha no sábado curto fecha a semana abaixo de 42h.':'No sábado integral o dia também é de 8h24.'):'Dia normal de 8h, e nenhum dia passa disso. '+(curto()?'Quem trabalha no sábado curto fecha a semana abaixo de 40h.':''))+'</p><p class="orif">🔥 Dia de maior movimento: <b>'+DNOME[forte(l)[0]]+'</b> ('+forte(l)[1]+'% da média de segunda a sexta) · Folga: melhor dia <b>'+DNOME[l.dias[0]]+'</b>, depois <b>'+DNOME[l.dias[1]]+'</b> · Ponta mais fraca: <b>'+(l.fraca==='a'?'abertura':'fechamento')+'</b>'+(l.duas?', com 2 pessoas nas duas pontas':', onde 1 pessoa basta')+'</p></div>';
+  h+='<p class="orif"><b>Jornada de '+JOR()+'h.</b> '+(JOR()===42?'Dia normal de 8h24 (8h às 17h24 ou 8h36 às 18h). '+(S.sab==='curto'?'Quem trabalha no sábado (8h às 14h) faz os dias de semana das 8h às 18h (9h) e fecha 42h. ':curto()?'Quem trabalha no sábado curto fecha a semana abaixo de 42h. ':'No sábado integral o dia também é de 8h24. ')+'<br>⚖️ Pela EC 141/2026 o limite de 8h por dia continua: os dias de 8h24 e de 9h só valem com o termo aditivo da convenção coletiva. Sem o aditivo até 16/12, use 40h.':'Dia normal de 8h, e nenhum dia passa disso. '+(curto()?'Quem trabalha no sábado curto fecha a semana abaixo de 40h.':''))+'</p><p class="orif">🔥 Dia de maior movimento: <b>'+DNOME[forte(l)[0]]+'</b> ('+forte(l)[1]+'% da média de segunda a sexta) · Folga: melhor dia <b>'+DNOME[l.dias[0]]+'</b>, depois <b>'+DNOME[l.dias[1]]+'</b> · Ponta mais fraca: <b>'+(l.fraca==='a'?'abertura':'fechamento')+'</b>'+(l.duas?', com 2 pessoas nas duas pontas':', onde 1 pessoa basta')+'</p></div>';
   return h;
 }
 function opcoes(){
   const r=recOf(loja()),st=' ★ recomendado';
   $('seg').innerHTML=[['1','Sim'],['0','Não']].map(([v,t])=>'<option value="'+v+'">'+t+((v==='1')===r.seg?st:'')+'</option>').join('');
   $('hor').innerHTML=Object.keys(HOR).map(k=>'<option value="'+k+'">'+HOR[k]+(k===r.hor?st:'')+'</option>').join('');
-  $('sab').innerHTML=Object.keys(SAB).map(k=>'<option value="'+k+'">'+SAB[k][0]+' ('+SAB[k][1]+')'+(k===r.sab?st:'')+'</option>').join('');
+  $('sab').innerHTML=Object.keys(SAB).map(k=>'<option value="'+k+'">'+SB(k)[0]+' ('+SB(k)[1]+')'+(k===r.sab?st:'')+'</option>').join('');
   $('seg').value=S.segLock?'1':'0';$('hor').value=S.ini+'-'+S.fim;$('sab').value=S.sab;
 }
 /* ───────── FÉRIAS ───────── */
