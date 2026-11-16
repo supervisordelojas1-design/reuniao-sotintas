@@ -133,7 +133,7 @@
     return '';
   }
   function resultadoHtml(c, r) {
-    const av = avaliar(c, r); const sit = av.situacao || {}; const fundo = { vermelho: '#FDE8E8', amarelo: '#FFF3E0', verde: '#E3F5EA' }[av.semaforo];
+    const av = avaliar(c, r); const sit = av.situacao || {}; const fundo = { vermelho: 'var(--st-tint-red)', amarelo: 'var(--st-tint-orange)', verde: 'var(--st-tint-green)' }[av.semaforo];
     const prep = Array.isArray(r.prep) ? r.prep : [];
     return `<div class="card" style="background:${fundo}"><div class="negrito">${sit.emoji || ''} ${esc(sit.rotulo || '')}</div><div class="pequeno mt-1">${esc(sit.orientacao || '')}</div>
       ${av.pendentes ? `<div class="mini texto-3 mt-1">${av.pendentes} item(ns) ainda sem resposta.</div>` : ''}
@@ -395,7 +395,7 @@
   };
   function telaRelatorio(v) {
     const c = porId('vistoria'); const r = v.respostas || {}; const cab = r._cab || {}; const av = avaliar(c, r); const sit = av.situacao || {};
-    const fundo = { vermelho: '#FDE8E8', amarelo: '#FFF3E0', verde: '#E3F5EA' }[av.semaforo];
+    const fundo = { vermelho: 'var(--st-tint-red)', amarelo: 'var(--st-tint-orange)', verde: 'var(--st-tint-green)' }[av.semaforo];
     const linhas = (s) => { const out = [];
       for (const it of s.itens) { const vv = r[it.id];
         if (it.tipo === 'sn' && vv) { const al = it.alerta && vv === it.alerta; out.push(`<li class="${al ? (it.gravidade || 'amarelo') : ''}">${al ? '⚠️' : vv === 'na' ? '➖' : '✅'} ${esc(it.texto)} — <b>${vv === 'sim' ? 'Sim' : vv === 'nao' ? 'Não' : 'N.A.'}</b>${al && it.msg ? ' → ' + esc(it.msg) : ''}</li>`); }

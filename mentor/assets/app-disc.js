@@ -32,7 +32,7 @@
     const q = QUESTIONS[S.i]; const n = QUESTIONS.length; const respondidas = Object.keys(S.resp).length;
     return App.cabecalho('Perfil DISC', `Pergunta ${S.i + 1} de ${n}`, { voltar: '#/perfil', cor: 'amarelo' }) + `<div class="tela">
       <div class="barra fina mb-2"><span style="width:${respondidas / n * 100}%"></span></div>
-      <div class="card"><div class="etiqueta" style="background:${DIM_COLORS[q.dim]}22;color:${DIM_COLORS[q.dim]}">${DIM_EMOJIS[q.dim]} ${esc(DIM_LABELS[q.dim])}</div><div class="quiz-pergunta mt-1">“${esc(q.text)}”</div>
+      <div class="card"><div class="etiqueta" style="background:${DIM_COLORS[q.dim]}22;color:var(--texto);border:1.5px solid ${DIM_COLORS[q.dim]}">${DIM_EMOJIS[q.dim]} ${esc(DIM_LABELS[q.dim])}</div><div class="quiz-pergunta mt-1">“${esc(q.text)}”</div>
       <div class="grade-2" style="grid-template-columns:repeat(5,1fr);gap:6px">${[1, 2, 3, 4, 5].map(v => `<button class="btn ${S.resp[q.id] === v ? 'amarelo' : 'contorno'}" style="padding:12px 0" onclick="App.disc.responder(${q.id},${v})">${v}</button>`).join('')}</div>
       <div class="linha entre mini texto-3 mt-1"><span>Não me descreve</span><span>Me descreve totalmente</span></div></div>
       <div class="botoes">${S.i > 0 ? `<button class="btn contorno" onclick="App.disc.ir(-1)">‹ Anterior</button>` : ''}${S.i < n - 1 ? `<button class="btn azul" onclick="App.disc.ir(1)">Próxima ›</button>` : `<button class="btn verde" ${respondidas < n ? 'disabled' : ''} onclick="App.disc.finalizar()">Ver meu perfil ✔</button>`}</div></div>`;

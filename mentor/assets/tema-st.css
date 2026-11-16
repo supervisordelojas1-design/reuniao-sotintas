@@ -144,7 +144,6 @@ input, select, textarea, .campo input, .campo select, .campo textarea, .chat-ent
 
 /* ── Escuro: o que tinha cor clara escrita direto no HTML ── */
 :root[data-theme="dark"] [style*="background:var(--fundo)"] { background: var(--st-surface-2) !important; }
-:root[data-theme="dark"] [style*="color:#222"] { color: var(--st-ink) !important; }
 :root[data-theme="dark"] .etiqueta.amarela { background: #3a3110; color: #f3d36b; }
 :root[data-theme="dark"] .icone-grande.amarelo { background: #3a3110; }
 :root[data-theme="dark"] .card.destaque { border-color: #6b5a1c; }
@@ -176,3 +175,107 @@ input, select, textarea, .campo input, .campo select, .campo textarea, .chat-ent
 .seq-dia:nth-child(1) i{animation-delay:.05s}.seq-dia:nth-child(2) i{animation-delay:.1s}.seq-dia:nth-child(3) i{animation-delay:.15s}.seq-dia:nth-child(4) i{animation-delay:.2s}.seq-dia:nth-child(5) i{animation-delay:.25s}.seq-dia:nth-child(6) i{animation-delay:.3s}.seq-dia:nth-child(7) i{animation-delay:.35s}
 @keyframes seqPop{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
 @media (prefers-reduced-motion:reduce){.seq-chama.viva,.seq-dia.on i{animation:none}}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   CONTRASTE (ast-v231 · 16/11/2026)
+   Auditoria de legibilidade nos dois temas. Regra: todo texto com no
+   mínimo 4,5:1 sobre o fundo. Três causas tratadas aqui:
+   1. fundo claro fixo que não acompanhava o tema escuro;
+   2. texto branco sobre a cor de destaque, que no escuro é clara;
+   3. cinzas e verdes fracos demais para texto pequeno.
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  --st-muted: #4f596b; --st-muted-2: #5f6877;
+  --st-tint-orange: #fff3e0;
+  --st-solid-blue: #1f4fd1; --st-solid-blue-2: #14306f; --st-solid-red: #d32027; --st-solid-red-2: #a8161c;
+  --verde: #157a45;
+}
+:root[data-theme="dark"] {
+  --st-muted: #a3adc2; --st-muted-2: #8f9ab0;
+  --st-tint-orange: #3a2412;
+  --verde: #4cc98a;
+}
+::placeholder { color: var(--st-muted-2); opacity: 1; }
+
+/* 1 ─ superfícies que eram claras fixas */
+.caixa-opcao { background: var(--st-surface); color: var(--st-ink); border-color: var(--st-line); }
+.caixa-opcao:hover { border-color: var(--st-muted-2); }
+.caixa-opcao.ativa { background: var(--st-tint-blue); border-color: var(--st-accent); }
+.caixa-opcao input, .quiz-opcao input { accent-color: var(--st-accent); }
+.etiqueta, .item-lista .num, .quiz-opcao .letra, .codigo, .vf-vazia, .thumb-prod.vazio, .org-ico.pequeno,
+.org-sub-item, .org-rede { background: var(--st-surface-2); color: var(--st-muted); }
+.org-sub-item, .org-rede, .quiz-opcao .letra, .codigo { color: var(--st-ink); }
+.org-chip.minha { color: var(--st-ink); }
+.item-lista.atual .num { background: var(--st-yellow); color: #14213a; }
+.card.erro, .aula-conteudo .atencao, .atencao-box, .quiz-opcao.errada, .ck-msg.vermelho,
+.etiqueta.vermelha, .icone-grande.vermelho { background: var(--st-tint-red); }
+.card.alerta, .ck-msg, .etiqueta.laranja, .icone-grande.laranja { background: var(--st-tint-orange); }
+.card.erro, .card.alerta, .aula-conteudo .atencao, .atencao-box, .aula-conteudo .dica, .dica-box,
+.aula-conteudo .destaque, .destaque-box { color: var(--st-ink); }
+.quiz-opcao.sel { background: var(--st-tint-blue); border-color: var(--st-accent); }
+.quiz-opcao.certa { background: var(--st-tint-green); }
+table.tabela tr:hover td { background: var(--st-surface-2); }
+.nao-permitimos b { color: var(--vermelho-escuro); }
+.marca-coral { color: #9a3412; }
+.org-trilha .forte { color: var(--st-accent); }
+.org-painel.vermelho { --cor-suave: var(--st-tint-red); }
+.org-painel.amarelo { --cor-suave: var(--st-tint-yellow); }
+.org-painel.laranja { --cor-suave: var(--st-tint-orange); }
+:root[data-theme="dark"] .card.erro { border-color: #6b2a30; }
+:root[data-theme="dark"] .card.alerta { background: var(--st-tint-orange); border-color: #6b4420; }
+:root[data-theme="dark"] .ck-msg { color: #ffb877; }
+:root[data-theme="dark"] .nao-permitimos b { color: var(--st-red); }
+:root[data-theme="dark"] .nao-permitimos .np-item { border-top-color: rgba(255, 107, 112, .25); }
+:root[data-theme="dark"] .marca-coral { background: #3a2012; color: #ffb38a; }
+:root[data-theme="dark"] .marca-eucatex { background: #15352a; color: #7fe0ae; }
+:root[data-theme="dark"] .etiqueta.azul { color: var(--st-accent); }
+:root[data-theme="dark"] .org-trilho::before, :root[data-theme="dark"] .org-trilho::after,
+:root[data-theme="dark"] .org-diretor::before { background: var(--st-line); }
+
+/* 2 ─ faixas coloridas com texto branco: cor cheia fixa, igual nos dois temas */
+.mantra, .video-thumb, .toast.xp { background: linear-gradient(135deg, var(--st-solid-blue-2), var(--st-solid-blue)); color: #fff; }
+.aula-conteudo .regra, .resultado-calc { background: var(--st-solid-blue-2); color: #fff; }
+.tl-ano span { background: var(--st-solid-blue-2); color: #fff; }
+.nv-treino b { background: var(--st-solid-blue); color: #fff; }
+.org-raiz { background: linear-gradient(135deg, var(--st-solid-red), var(--st-solid-red-2)); }
+.org-raiz small { opacity: 1; }
+.rel-marca { background: var(--st-solid-red); }
+.org-diretor.vermelho, .org-painel.vermelho { --cor: var(--st-solid-red); }
+.org-diretor.azul, .org-painel.azul { --cor: var(--st-solid-blue); }
+.org-diretor.verde, .org-painel.verde { --cor: #157a45; }
+.org-diretor.laranja, .org-painel.laranja { --cor: #b85c00; }
+.org-diretor.amarelo .org-avatar, .org-painel.amarelo .org-avatar { background: linear-gradient(135deg, #FFD100, #E0B000); color: #2a2000; }
+:root[data-theme="dark"] .org-diretor.sel, :root[data-theme="dark"] .org-painel { border-color: var(--cor); }
+.quiz-opcao.sel .letra { background: var(--st-accent); color: var(--st-accent-ink); }
+.item-lista.feito .num, .quiz-opcao.certa .letra { background: var(--verde); color: #fff; }
+.quiz-opcao.errada .letra { background: var(--st-solid-red); color: #fff; }
+.chip.vermelho.ativo { background: var(--st-solid-red); border-color: var(--st-solid-red); color: #fff; }
+:root[data-theme="dark"] .item-lista.feito .num, :root[data-theme="dark"] .quiz-opcao.certa .letra { color: #0f1522; }
+.toast { background: var(--st-ink); color: var(--st-bg); }
+.toast.xp { color: #fff; }
+
+/* 3 ─ bloqueados e níveis: legíveis, sem "apagar" o bloco inteiro */
+.conquista.bloqueada { opacity: 1; filter: none; color: var(--st-muted); border: 1px dashed var(--st-line); box-shadow: none; }
+.conquista.bloqueada .emoji { filter: grayscale(1); opacity: .45; }
+.item-lista.bloqueado { opacity: 1; box-shadow: none; border: 1px dashed var(--st-line); }
+.item-lista.bloqueado .titulo { color: var(--st-muted); }
+.item-lista.bloqueado .num { filter: grayscale(1); opacity: .7; }
+.nv-bar { opacity: 1; filter: saturate(.75); }
+.nv-step.atual .nv-bar { filter: none; outline-color: var(--st-accent); }
+:root[data-theme="dark"] .nv-bar, :root[data-theme="dark"] .nv-badge { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22); }
+
+/* painel do gestor: rodapé da lateral (era branco/amarelo sobre azul) */
+.g-lateral .rodape { opacity: 1; color: var(--st-muted); }
+
+/* papel branco (relatório de vistoria): sempre com as cores do tema claro, inclusive no escuro */
+.rel {
+  color-scheme: light;
+  --st-ink: #14213a; --st-muted: #4f596b; --st-muted-2: #5f6877; --st-line: #dde1e8; --st-surface: #ffffff; --st-surface-2: #eef1f6;
+  --st-red: #d32027; --st-accent: #1f4fd1;
+  --st-tint-blue: #e8eefc; --st-tint-green: #e3f5ea; --st-tint-yellow: #fff6d6; --st-tint-red: #fde8e8; --st-tint-orange: #fff3e0;
+  --texto: #1A1D24; --texto-2: #4f596b; --texto-3: #5f6877; --borda: #dde1e8;
+  --vermelho: #d32027; --verde: #157a45; --verde-claro: #e3f5ea; --azul: #1f4fd1; --azul-claro: #e8eefc;
+}
+.rel-sem.amarelo { background: #fff6d6; color: #1A1D24; }
+.rel-sem.verde { color: #1A1D24; }

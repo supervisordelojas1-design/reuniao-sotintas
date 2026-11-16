@@ -70,7 +70,7 @@
     const esc0 = U.escopoDe(DB.usuario, DB.conteudo);
     $('#painel').innerHTML = `<div class="g-layout"><aside class="g-lateral"><div class="logo-st"><span class="marca">SÓ TINTAS</span></div><div class="pequeno negrito mb-2">MENTOR ST PRO · ${souCoord() ? 'Coordenação' : souMkt() ? 'Marketing' : esc(perfilRotulo(DB.usuario.perfil))}</div><div class="mini mb-2" style="opacity:.8">${esc(esc0.rotulo)}</div>
       <nav>${secoes.map(([k, i, l]) => `<button class="${G.secao === k ? 'ativo' : ''}" onclick="Gestor.ir('${k}')">${i} ${l}</button>`).join('')}</nav>
-      <div class="rodape">${esc(DB.usuario.nome)}<br>${DB.mode === 'demo' ? '🧪 modo demonstração' : '🟢 conectado ao Supabase'}<br><a href="index.html" style="color:#FFD200">Abrir o app</a> · <a href="#" style="color:#fff" onclick="Gestor.sair()">Sair</a></div></aside>
+      <div class="rodape">${esc(DB.usuario.nome)}<br>${DB.mode === 'demo' ? '🧪 modo demonstração' : '🟢 conectado ao Supabase'}<br><a href="index.html">Abrir o app</a> · <a href="#" onclick="Gestor.sair()">Sair</a></div></aside>
       <main class="g-conteudo">${corpo}</main></div>`;
   }
   const ir = (s) => { G.secao = s; G.detalhe = null; render(); };

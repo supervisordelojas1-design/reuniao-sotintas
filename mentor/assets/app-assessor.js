@@ -328,7 +328,7 @@
   }
   function especResultado() {
     const r = E.resultado; const semaforo = E.condicoes.includes('umidade') ? 'vermelho' : (E.condicoes.length ? 'amarelo' : 'verde');
-    const cores = { vermelho: ['#FDE8E8', '🔴 VERMELHO — resolva a causa antes de vender o acabamento'], amarelo: ['#FFF3E0', '🟡 AMARELO — exige preparação/correção (inclua na lista)'], verde: ['#E3F5EA', '🟢 VERDE — pode seguir para a preparação normal'] };
+    const cores = { vermelho: ['var(--st-tint-red)', '🔴 VERMELHO — resolva a causa antes de vender o acabamento'], amarelo: ['var(--st-tint-orange)', '🟡 AMARELO — exige preparação/correção (inclua na lista)'], verde: ['var(--st-tint-green)', '🟢 VERDE — pode seguir para a preparação normal'] };
     const ultimoCalc = (C.projetos[C.projetos.length - 1] || C.rascunho);
     return `<div class="card" style="background:${cores[semaforo][0]}"><div class="negrito">${cores[semaforo][1]}</div><div class="pequeno texto-2 mt-1">${esc(r.superficie.nome)} · ${esc(r.ambiente.nome || '')} · risco principal: ${esc(r.superficie.risco)}</div></div>
       ${r.passos.map((p, i) => `<div class="card"><div class="passo"><span class="n">${i + 1}</span><div class="cresce"><div class="t">${esc(p.titulo)}</div><ul>${p.itens.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div></div></div>`).join('')}
@@ -373,7 +373,7 @@
   App.diag.abrir = (id) => { DG.aberto = id; App.render(); };
   App.diag.fechar = () => { DG.aberto = null; App.render(); };
   function diagFicha(f) {
-    const sem = { vermelho: ['#FDE8E8', '🔴 Não trate a pintura como solução antes de resolver a causa'], amarelo: ['#FFF3E0', '🟡 Investigue e inclua a correção na preparação'], verde: ['#E3F5EA', '🟢 Problema de aplicação/preparação — corrigível na pintura'] };
+    const sem = { vermelho: ['var(--st-tint-red)', '🔴 Não trate a pintura como solução antes de resolver a causa'], amarelo: ['var(--st-tint-orange)', '🟡 Investigue e inclua a correção na preparação'], verde: ['var(--st-tint-green)', '🟢 Problema de aplicação/preparação — corrigível na pintura'] };
     App.cache.paginasAtuais = [f.foto, f.pagina].filter(Boolean);
     return `<button class="btn link" onclick="App.diag.fechar()">‹ Voltar às fichas</button>
       <div class="card" style="background:${sem[f.semaforo][0]}"><div class="etiqueta">Ficha ${String(f.n).padStart(2, '0')} · ${esc(f.categoria)}</div><h2 class="mt-1">${esc(f.nome)}</h2><div class="pequeno negrito">${sem[f.semaforo][1]}</div></div>
