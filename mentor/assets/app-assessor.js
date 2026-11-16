@@ -131,6 +131,8 @@
   App.calc.escolher = (tipo) => { const t = tipo.toLowerCase(); C.rascunho.atual = { id: uid(), tipo, area: C.rascunho.totalArea, demaos: (t.includes('massa') || t.includes('tinta')) ? 2 : 1, rend: '', emb: liquido(tipo) ? '18 L' : '25 Kg', preco: '', margem: 0 }; calcSalvar(); ir('dados'); };
   function calcDados() {
     const m = C.rascunho.atual; if (!m) return calcMaterial();
+    /* mão de obra agora é sempre o valor total; rascunho antigo em R$/m² é convertido uma vez */
+    if (m.moModo !== 'total') { if (num(m.mo) > 0 && num(m.area) > 0) m.mo = Math.round(num(m.mo) * num(m.area) * 100) / 100; m.moModo = 'total'; }
     const prod = m.produto_id ? Assessor.produtoPorId(m.produto_id, App.cont) : null;
     const embs = prod ? Assessor.embalagensProduto(prod) : [...(liquido(m.tipo) ? EMB_TINTA : EMB_OUTROS), 'Outro'];
     const dica = prod ? (Assessor.rendimentoPorDemao(prod, m.emb) || {}).nota : (CONTEUDO.rendimentos_tipicos[m.tipo] || {})[m.emb];
@@ -139,7 +141,7 @@
     const grupo = (marca) => { const l = catalogo.filter(p => Assessor.mesmaMarca(p.marca, marca)); return l.length ? `<optgroup label="${marca}">${l.map(p => `<option value="${p.id}" ${m.produto_id === p.id ? 'selected' : ''}>${esc(p.nome)}${p.linha ? ' · ' + esc(p.linha) : ''}</option>`).join('')}</optgroup>` : ''; };
     return progresso(3) + `<div class="card"><h2>Dados de ${esc(m.tipo)}</h2>
       ${catalogo.length ? `<div class="campo"><label>Produto do catálogo (opcional — preenche o rendimento)</label><select onchange="App.calc.escolherProduto(this.value)"><option value="">— Informar rendimento manualmente —</option>${grupo('Coral')}${grupo('Eucatex')}</select>${prod ? `<div class="linha mt-1" style="align-items:flex-start">${thumb(prod, 'media')}<div class="ajuda" style="margin:0 0 0 8px">✔ <b>${esc(prod.marca)} ${esc(prod.nome)}</b>${prod.destaque ? ' — ' + esc(prod.destaque) : ''} <button class="btn link mini" onclick="App.prod.abrir('${prod.id}')">ver ficha ›</button></div></div>` : ''}</div>` : ''}
-      <div class="campo"><label>Área de aplicação (m²)</label><input type="number" inputmode="decimal" value="${m.area}" oninput="App.calc.setDadoQuieto('area',this.value)"></div>
+      <div class="campo"><label>Área de aplicação (m²)</label><input type="number" inputmode="decimal" value="${m.area}" oninput="App.calc.setDadoQuieto('area',this.value);App.calc.moDica()"></div>
       <div class="campo"><label>Número de demãos</label><div class="grade-2" style="grid-template-columns:repeat(4,1fr)">${[1, 2, 3, 4].map(d => `<button class="btn ${m.demaos === d ? '' : 'contorno'}" onclick="App.calc.setDado('demaos',${d})">${d}</button>`).join('')}</div>${prod && prod.demaos ? `<div class="ajuda">Catálogo: ${esc(prod.demaos)} demão(s).</div>` : ''}</div>
       <div class="card info"><div class="campo"><label>Embalagem</label><div class="chips">${embs.map(e => `<button class="chip ${m.emb === e ? 'ativo' : ''}" onclick="App.calc.setDado('emb','${e}')">${e}</button>`).join('')}</div>${m.emb === 'Outro' ? `<input class="mt-1" placeholder="Ex.: 20 L" value="${esc(m.embOutro || '')}" oninput="App.calc.setDadoQuieto('embOutro',this.value)">` : ''}</div>
       <div class="campo" style="margin:0"><label>Rendimento da embalagem (m² por demão)</label><input type="number" inputmode="decimal" placeholder="Ex: 300" value="${m.rend}" oninput="App.calc.setDadoQuieto('rend',this.value)"><div class="ajuda">${dica ? '💡 ' + (prod ? '' : 'Típico: ') + esc(dica) + ' ' : ''}Confira na lata — cada produto tem o seu.</div></div></div>
@@ -147,7 +149,7 @@
       <div class="campo"><label>Margem extra de segurança (%)</label><div class="chips">${[0, 5, 10, 15, 20].map(p => `<button class="chip ${Number(m.margem) === p ? 'ativo' : ''}" onclick="App.calc.setDado('margem',${p})">${p}%</button>`).join('')}</div><div class="ajuda">10% para superfície lisa, 20% para textura/reboco.</div></div>
       <div class="card info"><div class="negrito">⏳ Custo ao longo do tempo <span class="mini texto-3">(opcional)</span></div>
       <div class="campo mt-1"><label>Durabilidade do produto (anos)</label><input type="number" inputmode="decimal" step="0.5" min="0" placeholder="Ex: 5" value="${m.durab == null ? '' : m.durab}" oninput="App.calc.setDadoQuieto('durab',this.value)">${prod && Number(prod.durabilidade_max) > Number(prod.durabilidade) ? `<div class="chips mt-1">${Array.from({ length: prod.durabilidade_max - prod.durabilidade + 1 }, (_, i) => Number(prod.durabilidade) + i).map(a => `<button class="chip ${num(m.durab) === a ? 'ativo' : ''}" onclick="App.calc.setDado('durab',${a})">${a} anos</button>`).join('')}</div>` : ''}<div class="ajuda">${prod && Number(prod.durabilidade) > 0 ? `${prod.durabilidade_origem === 'regua' ? '📏' : '📘'} <b>${esc(CONTEUDO.durabilidadeTxt(prod))}</b>.${Number(prod.durabilidade_max) > Number(prod.durabilidade) ? ' A conta começa pelo menor número; ajuste conforme a exposição (sol, chuva, maresia) e a preparação.' : ''}` : (prod ? (prod.durabilidade_origem === 'complemento' ? 'Complemento não tem durabilidade própria: use a do acabamento que vai por cima.' : '✍️ <b>Digite a durabilidade</b>: este produto não tem número do fabricante nem régua da linha. Use o que está na embalagem ou a sua experiência com a obra.') : 'Régua Só Tintas: econômica ≈ 1 ano · standard ≈ 3 · premium 5 a 8.')} Média de referência; não é garantia.</div></div>
-      <div class="campo" style="margin:0"><label>Mão de obra</label><div class="chips mb-1">${[['m2', 'R$ por m²'], ['total', 'Valor total (R$)']].map(([k, t]) => `<button class="chip ${(m.moModo || 'm2') === k ? 'ativo' : ''}" onclick="App.calc.setDado('moModo','${k}')">${t}</button>`).join('')}</div><input type="number" inputmode="decimal" step="0.01" min="0" placeholder="${(m.moModo || 'm2') === 'm2' ? 'Ex: 25,00 por m²' : 'Ex: 3.500,00 pela obra'}" value="${m.mo == null ? '' : m.mo}" oninput="App.calc.setDadoQuieto('mo',this.value)"><div class="ajuda">Deixe em branco se o cliente não vai contratar pintor.</div></div></div>
+      <div class="campo" style="margin:0"><label>Mão de obra — valor total da obra (R$)</label><input type="number" inputmode="decimal" step="0.01" min="0" placeholder="Ex: 3.500,00" value="${m.mo == null ? '' : m.mo}" oninput="App.calc.setDadoQuieto('mo',this.value);App.calc.moDica()"><div class="ajuda"><span id="calc-mo-dica">${moDicaTxt(m)}</span> Deixe em branco se o cliente não vai contratar pintor.</div></div></div>
       <button class="btn bloco" onclick="App.calc.calcular()">CALCULAR</button></div>
       <button class="btn link bloco" onclick="App.calc.ir('material')">‹ Trocar produto</button>`;
   }
@@ -157,6 +159,8 @@
     calcSalvar(); App.render();
   };
   App.calc.setDadoQuieto = (k, v) => { C.rascunho.atual[k] = v; calcSalvar(); };
+  const moDicaTxt = (m) => { const mo = num(m.mo), area = num(m.area); return mo > 0 && area > 0 ? `= <b>${fmtBRL(mo / area)} por m²</b> (${fmtBRL(mo)} ÷ ${fmtNum(area)} m²).` : mo > 0 ? 'Informe a área para ver o valor por m².' : 'O valor por m² é calculado sozinho.'; };
+  App.calc.moDica = () => { const e = document.getElementById('calc-mo-dica'); if (e && C.rascunho && C.rascunho.atual) e.innerHTML = moDicaTxt(C.rascunho.atual); };
   // Escolher um produto do catálogo: define embalagem e rendimento por demão
   App.calc.escolherProduto = (id) => {
     const m = C.rascunho.atual; if (!m) return;
@@ -189,7 +193,7 @@
     const qtd = areaAj * demaos / rend; const comprar = Math.ceil(qtd - 1e-9); const custo = comprar * preco;
     const sobra = (comprar * rend - areaAj * demaos) / demaos; // m² que ainda daria para pintar com as demãos definidas
     /* custo no tempo: (produto por m² + mão de obra por m²) ÷ anos de durabilidade */
-    const moV = Math.max(0, num(m.mo)), mo = (m.moModo || 'm2') === 'm2' ? moV * area : moV, anos = Math.max(0, num(m.durab));
+    const moV = Math.max(0, num(m.mo)), mo = m.moModo === 'total' ? moV : moV * area, anos = Math.max(0, num(m.durab));
     const custoM2 = area ? custo / area : 0, moM2 = area ? mo / area : 0, totalM2 = custoM2 + moM2;
     const anosMax = Math.max(0, num(m.durabMax));
     return { areaAj, qtd, comprar, custo, sobra, custoM2, mo, moM2, totalM2, total: custo + mo, anos, anosMax: anosMax > anos && anos > 0 ? anosMax : 0, m2AnoMax: anosMax > anos && anos > 0 ? totalM2 / anosMax : 0, m2Ano: anos > 0 ? totalM2 / anos : 0, prodM2Ano: anos > 0 ? custoM2 / anos : 0, porAno: anos > 0 ? (custo + mo) / anos : 0 };

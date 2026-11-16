@@ -2,6 +2,17 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v235",
+      "data": "16/11/2026",
+      "hora": "19:05",
+      "itens": [
+        {
+          "painel": "Mentor ST PRO · Calculadora",
+          "o_que": "Mão de obra agora é um campo só: o valor total da obra. O valor por m² aparece sozinho, na hora, e entra na conta do custo por ano."
+        }
+      ]
+    },
+    {
       "v": "ast-v234",
       "data": "16/11/2026",
       "hora": "18:55",
