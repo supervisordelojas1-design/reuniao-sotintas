@@ -9464,6 +9464,11 @@ syncNav();
         <span class="ini-txt"><span class="ini-nm">CRM de Vendas</span><span class="ini-ds">Orçamentos, carteira, pós-venda e pintores: registrar cada contato </span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
+      <button type="button" class="ini-card feat" data-act="contatos" data-contatos="1">
+        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg></span>
+        <span class="ini-txt"><span class="ini-nm">Contatos das Lojas</span><span class="ini-ds">Filial, gerente, telefone e e-mail · um toque para falar com a loja</span></span>
+        <span class="ini-go" aria-hidden="true">&rarr;</span>
+      </button>
       <button type="button" class="ini-card feat" data-act="acessos" data-lider="1" data-noanl="1">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
         <span class="ini-txt"><span class="ini-nm">Acesso de usuários</span><span class="ini-ds">Liberar, novo PIN de gerente e vendedor, desativar</span></span>
@@ -9709,6 +9714,8 @@ body.foco .wrap{padding-bottom:40px}
     Array.prototype.forEach.call(grid.querySelectorAll('[data-coordonly]'),function(c){
       var s=sessao(); c.style.display = (s&&!ehVend()&&s.escopo==='todos'&&String(s.papel||'').toLowerCase()!=='analista') ? '' : 'none';
     });
+    /* nov/2026: Contatos das Lojas — todo mundo que não é vendedor; a régua (verContatos) abre ou fecha por cargo */
+    Array.prototype.forEach.call(grid.querySelectorAll('[data-contatos]'),function(c){ c.style.display = (sessao() && !vend) ? '' : 'none'; });
     Array.prototype.forEach.call(grid.querySelectorAll('[data-direitos]'),function(c){
       /* Pelo papel VIGENTE, não pela sessão real: com o "Ver como" aberto,
          ler SESSAO.perm devolvia o direito de quem está logado e o card
@@ -9733,7 +9740,7 @@ body.foco .wrap{padding-bottom:40px}
     pontos:'verRanking', ranking:'verRanking', provas:'verProvas', avulsas:'verMinhasProvas',
     uso:'verUso', crm:'verCRM', bonus:'verBonus', simulador:'verSimulador', proposta:'verProposta',
     mentor:'verMentor', especialista:'verEspecialista', cadastro:'gerirCadastro',
-    acessos:'gerirAcessos', conteudo:'gerirConteudo', central:'gerirCentral', escala:'verEscala' };
+    acessos:'gerirAcessos', conteudo:'gerirConteudo', central:'gerirCentral', escala:'verEscala', contatos:'verContatos' };
   function aplicarRegua(){
     if(typeof podePainel!=='function') return;
     Array.prototype.forEach.call(grid.querySelectorAll('[data-act]'),function(c){
@@ -9868,6 +9875,19 @@ body.foco .wrap{padding-bottom:40px}
     if(!ovD||!ifrD) return; titOv('Escala & Folgas · Só Tintas');
     var tema=(window.STtema?window.STtema.get():'light');
     ifrD.setAttribute('src','escala.html?tema='+tema+'&v='+Date.now());
+    ovD.style.display='flex'; document.body.style.overflow='hidden';
+  }
+  /* Contatos das Lojas (nov/2026): filial, gerente, telefone e e-mail num lugar só.
+     Quem tem "Editar equipe" na régua corrige pela própria tela (o servidor confere de novo). */
+  function abrirContatos(){
+    var padrao=!!(sessao() && !ehVend());
+    if(!(typeof podePainel==='function'?podePainel('verContatos',padrao):padrao)) return;
+    if(!ovD||!ifrD) return; titOv('Contatos das Lojas · Só Tintas');
+    var ed=false;
+    try{ var linha=permEscolher(REGUA_PERM, papelVigente()); ed = linha ? !!linha.editarEquipe : ehCoordenador(); }catch(e){ ed=false; }
+    if(ehVend()||ehAnl()) ed=false;
+    var tema=(window.STtema?window.STtema.get():'light');
+    ifrD.setAttribute('src','contatos.html?tema='+tema+(ed?'&ed=1':'')+'&v='+Date.now());
     ovD.style.display='flex'; document.body.style.overflow='hidden';
   }
   function abrirCentral(){
@@ -10142,6 +10162,7 @@ body.foco .wrap{padding-bottom:40px}
     if(act==='cadastro'){ abrirCadastro(); return; }
     if(act==='central'){ abrirCentral(); return; }
     if(act==='escala'){ abrirEscala(); return; }
+    if(act==='contatos'){ abrirContatos(); return; }
     if(act==='conteudo'){ abrirConteudo(); return; }
     if(act==='mentor'){ abrirMentor(); return; }
     if(act==='especialista'){ abrirMentor('#/assessor'); return; }
@@ -10197,6 +10218,7 @@ body.foco .wrap{padding-bottom:40px}
     ['verPDISemanal','PDI Semanal','semana'],['verRanking','Ranking ST','pontos'],
     ['verProvas','Central de Provas','provas'],['verMinhasProvas','Minhas Provas','avulsas'],
     ['verUso','Acessos ao App','uso'],['verCRM','CRM de Vendas','crm'],['verEscala','Escala & Folgas','escala'],
+    ['verContatos','Contatos das Lojas','contatos'],
     ['verBonus','Bonificações','bonus'],['verSimulador','Simulador de Bônus','simulador'],
     ['verProposta','Proposta de Vendedor','proposta'],['verMentor','Mentor','mentor'],
     ['verEspecialista','Especialista ST','especialista'],
@@ -10247,6 +10269,7 @@ body.foco .wrap{padding-bottom:40px}
       else if(c.hasAttribute('data-direitos'))  v = !!(linha && linha.editarEquipe);
       else if(c.hasAttribute('data-crm'))       v = ['vend','ger','sup','anl','coord'].indexOf(pf)>=0;
       else if(c.hasAttribute('data-avulsas'))   v = ['vend','ger','sup'].indexOf(pf)>=0;
+      else if(c.hasAttribute('data-contatos'))  v = !vend;
       else v = true;   /* Operação: agenda, rotina, despesas — todo mundo */
       out[a]=!!v;
     });
@@ -10701,6 +10724,7 @@ button[id^="ov"][id$="Fechar"]:hover{transform:translateY(-1px);box-shadow:0 6px
     avulsas:['📝 Minhas Provas','As provas lançadas para você responder, cada uma com o seu prazo.'],
     provas:['📊 Central de Provas','Provas da semana e Trilha Mentor: quem fez, quem está pendente e as notas. Dá para tirar a lista de quem ainda não fez.'],
     crm:['📇 CRM de Vendas','Orçamentos, carteira, pós-venda e pintores — cada contato fica registrado.'],
+    contatos:['📞 Contatos das Lojas','Filial, gerente, telefone e e-mail de toda a rede, com um toque para o WhatsApp.'],
     bonus:['💰 Bonificações','Quanto vale cada nível e o que falta para o próximo.'],
     simulador:['🧮 Simulador de Bônus','Preencha os seus números e veja quanto já garantiu e o que ainda paga no mês.'],
     agenda:['🗓️ Agenda','Os seus compromissos da semana, reuniões e visitas.'],

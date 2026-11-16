@@ -1,0 +1,308 @@
+<!doctype html><html lang="pt-BR" data-theme="dark" style="color-scheme:dark"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Contatos das Lojas · Só Tintas</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#0f1522; --surface:#1a2336; --surface2:#222d44; --ink:#eef2fb; --muted:#9aa5bb; --line:#2c3850;
+  --accent:#ff3b47; --navy:#6f95f5; --ok:#3fbf7f; --bad:#ff6b6b; --warn:#ffab5e;
+  --okbg:#12301f; --badbg:#3a1a20; --warnbg:#3a2717; --navybg:#1e2b4d;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Public Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+html[data-theme="light"]{
+  --bg:#f5f7fb; --surface:#ffffff; --surface2:#eef2f8; --ink:#16233d; --muted:#5a677f; --line:#e4e9f3;
+  --navy:#1C3F8F; --ok:#178048; --bad:#c42a22; --warn:#b35600;
+  --okbg:#e1f3e8; --badbg:#fdeceb; --warnbg:#ffefdd; --navybg:#e7edf9;
+  color-scheme:light;
+}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+.wrap{max-width:980px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-right,0px)) 60px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px}
+.topbar{height:8px;background:var(--accent);border-radius:0 0 6px 6px;margin:-20px 0 4px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(24px,4vw,34px);line-height:1.05;margin:4px 0 0;color:var(--accent)}
+h2{font-family:var(--f-display);font-size:18px;margin:0 0 4px}
+.sub{color:var(--muted);font-size:13px}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:9px 14px;font:700 13px var(--f-body);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn.pri{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.sm{padding:6px 10px;font-size:12.5px;border-radius:9px}
+.btn:disabled{opacity:.55;cursor:default}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:0 6px 20px rgba(0,0,0,.12);min-width:0}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.kpi span{display:block;font-size:12px;color:var(--muted);font-weight:700}
+.kpi b{font-family:var(--f-display);font-size:26px;line-height:1.1;font-variant-numeric:tabular-nums}
+.barra{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.barra input[type=search]{flex:1;min-width:200px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:10px 12px;font:500 14px var(--f-body)}
+.filtros{display:flex;flex-wrap:wrap;gap:6px}
+.filtros button{border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:999px;padding:6px 12px;font:700 12.5px var(--f-body);cursor:pointer}
+.filtros button[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.lista{display:flex;flex-direction:column;gap:10px}
+.ct{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--navy);border-radius:12px;padding:12px 14px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:center}
+.ct.falta{border-left-color:var(--warn)}
+.ct .loja{font-family:var(--f-display);font-weight:800;font-size:16px}
+.ct .quem{font-weight:700}
+.ct .linha{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.ct .linha b{color:var(--ink);font-weight:600}
+.ct .acoes{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:800;white-space:nowrap}
+.c-warn{background:var(--warnbg);color:var(--warn)}.c-bad{background:var(--badbg);color:var(--bad)}.c-ok{background:var(--okbg);color:var(--ok)}.c-navy{background:var(--navybg);color:var(--navy)}
+.grupo{font-family:var(--f-display);font-weight:800;font-size:15px;margin:10px 0 0;display:flex;align-items:center;gap:8px}
+.grupo small{font:600 12px var(--f-body);color:var(--muted)}
+.ed{grid-column:1/-1;border-top:1px dashed var(--line);padding-top:10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;align-items:end}
+.ed label{display:flex;flex-direction:column;gap:3px;font-size:12px;font-weight:700;color:var(--muted)}
+.ed input{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:9px;padding:9px 10px;font:500 14px var(--f-body);width:100%}
+.ed .st{grid-column:1/-1;font-size:13px;font-weight:600}
+.avisos{margin:6px 0 0;padding:0;list-style:none}
+.avisos li{padding:6px 0;border-bottom:1px solid var(--line);font-size:13px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.avisos li:last-child{border-bottom:0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--muted);font-size:11.5px;font-weight:700;padding:6px;border-bottom:1px solid var(--line)}
+td{padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+.tabw{overflow-x:auto}
+@media (max-width:560px){ .ct{grid-template-columns:1fr} .ct .acoes{justify-content:flex-start} }
+</style></head><body>
+<div class="wrap">
+  <div class="topbar"></div>
+  <header>
+    <div><div class="eyebrow">Só Tintas · contatos</div><h1>Contatos das Lojas</h1><div class="sub" id="sub">Carregando…</div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button type="button" class="btn" id="btnCopiar">Copiar lista</button>
+      <button type="button" class="btn" id="btnTema"><span id="temaIc">🌙</span> <span id="temaTx">Escuro</span></button>
+    </div>
+  </header>
+  <main id="raiz" style="display:flex;flex-direction:column;gap:14px"><p class="sub">Carregando os contatos…</p></main>
+</div>
+<script>
+(function(){
+  function qp(n){try{return new URLSearchParams(location.search).get(n);}catch(e){return null;}}
+  function ls(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+  var p=(qp('tema')||'').toLowerCase(), t=(p==='claro'||p==='light')?'light':(p==='escuro'||p==='dark')?'dark':null;
+  if(!t){ var s=(ls('st_tema')||'').toLowerCase(); t=(s==='light'||s==='claro')?'light':'dark'; }
+  window.__setTema=function(tema){ document.documentElement.setAttribute('data-theme',tema); document.documentElement.style.colorScheme=tema;
+    var ic=document.getElementById('temaIc'), tx=document.getElementById('temaTx'); if(ic) ic.textContent=tema==='light'?'☀️':'🌙'; if(tx) tx.textContent=tema==='light'?'Claro':'Escuro';
+    try{localStorage.setItem('st_tema',tema);}catch(e){} try{ if(window.parent&&window.parent!==window) window.parent.postMessage({st_tema:tema},'*'); }catch(e){} };
+  window.__setTema(t);
+  window.addEventListener('message',function(ev){ var d=ev&&ev.data; if(d&&(d.st_tema==='light'||d.st_tema==='dark')) window.__setTema(d.st_tema); });
+  document.getElementById('btnTema').onclick=function(){ window.__setTema(document.documentElement.getAttribute('data-theme')==='light'?'dark':'light'); };
+})();
+</script>
+<script>
+/* CONTATOS DAS LOJAS (nov/2026)
+   Uma área só para achar a loja, o gerente, o telefone e o e-mail — e, para a
+   coordenação, conferir o que os envios automáticos usam.
+
+   De onde vem: o mesmo pedido "equipe" que o app já faz ao Servidor do App.
+   Ele junta a aba EQUIPE (loja → supervisor → gerente), a USUARIOS e a agenda
+   de contatos, e é exatamente o que a rotina da Meta do dia lê.
+
+   Analogia: é a lista telefônica da portaria. Cada setor tinha a sua, e quando
+   o ramal mudava só uma era corrigida. Aqui é uma lista, e quem corrige,
+   corrige para todo mundo. */
+(function(){
+  var URL_APP='https://script.google.com/macros/s/AKfycbxC916U8rNw_-HFTW7vtFZz4AC_B1bHcTLE3bvMDWji6E5lAqkXgC0EIgQFtjHYTp8I/exec';
+  var DOMINIO='@sotintasnet.com.br';
+  var $=function(id){ return document.getElementById(id); };
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function norm(s){ var t=String(s||'').trim().toLowerCase(); try{ t=t.normalize('NFD').replace(/[̀-ͯ]/g,''); }catch(e){} return t.replace(/\s+/g,' '); }
+  function sessao(){ try{ return JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null'); }catch(e){ return null; } }
+  function qp(n){ try{ return new URLSearchParams(location.search).get(n); }catch(e){ return null; } }
+  function cod(l){ var m=/^\s*(\d{1,3})/.exec(String(l||'')); return m?('00'+m[1]).slice(-2):''; }
+  function nomeLoja(l){ return String(l||'').replace(/^\s*\d{1,3}\s*-\s*/,'').trim(); }
+  function digitos(f){ return String(f||'').replace(/\D/g,''); }
+  function foneWa(f){ var d=digitos(f); if(!d) return ''; if(d.length===10||d.length===11) d='55'+d; return d.length<12?'':d; }
+  function foneBonito(f){ var d=digitos(f); if(d.length===13&&d.indexOf('55')===0) d=d.slice(2);
+    if(d.length===11) return '('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7);
+    if(d.length===10) return '('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6);
+    return String(f||'').trim(); }
+  function emails(e){ return String(e||'').split(/[,;\s]+/).map(function(x){ return x.trim(); }).filter(function(x){ return x.indexOf('@')>0; }); }
+
+  var S=sessao();
+  /* quem pode corrigir: o app-pai diz (ele conhece a régua); o servidor confere de novo na hora de gravar */
+  var PODE_EDITAR = qp('ed')==='1';
+  var D=null, LOJAS=[], GESTAO=[], FILTRO='', BUSCA='', ABERTO='';
+
+  if(!S||!S.nome){ $('raiz').innerHTML='<div class="card"><h2>Abra pelo Só Tintas App</h2><p class="sub">Esta área usa o seu acesso do app. Entre com o seu login e toque em Contatos das Lojas.</p></div>'; $('sub').textContent=''; return; }
+
+  function carregar(){
+    $('sub').textContent='Carregando…';
+    fetch(URL_APP+'?acao=equipe&t='+Date.now()).then(function(r){ return r.json(); }).then(function(res){
+      if(!res||!res.ok||!res.equipe) throw new Error((res&&res.erro)||'resposta vazia');
+      D=res; montar(); pintar();
+    }).catch(function(e){
+      $('sub').textContent='';
+      $('raiz').innerHTML='<div class="card"><h2>Não consegui carregar</h2><p class="sub">Sem conexão com o servidor ('+esc(e&&e.message||e)+'). Confira o sinal e tente de novo.</p><button class="btn pri" id="btnDeNovo">Tentar de novo</button></div>';
+      var b=$('btnDeNovo'); if(b) b.onclick=carregar;
+    });
+  }
+
+  function pessoa(nome){
+    var eq=D.equipe||{}, alvo=norm(nome); if(!alvo) return null;
+    var k=Object.keys(eq), i;
+    for(i=0;i<k.length;i++) if(norm(k[i])===alvo){ var p=eq[k[i]]; p.__nome=k[i].trim(); return p; }
+    return null;
+  }
+
+  function montar(){
+    var eq=D.equipe||{}, g=D.gerentes||{}, mapa={};
+    /* 1) toda loja de alguma carteira entra — mesmo a que está sem gerente */
+    Object.keys(eq).forEach(function(n){ (eq[n].lojas||[]).forEach(function(l){ var c=cod(l); if(!c) return;
+      mapa[c]=mapa[c]||{cod:c,loja:String(l).trim(),sup:'',gerente:'',fone:'',email:''}; mapa[c].sup=n.trim(); }); });
+    /* 2) quem responde por cada loja */
+    Object.keys(g).forEach(function(k){ var x=g[k]||{}, c=cod(x.loja||k); if(!c) return;
+      mapa[c]=mapa[c]||{cod:c,loja:String(x.loja||k).trim(),sup:'',gerente:'',fone:'',email:''};
+      mapa[c].gerente=String(x.gerente||'').trim(); });
+    LOJAS=Object.keys(mapa).sort().map(function(c){ var o=mapa[c], p=pessoa(o.gerente);
+      if(p){ o.fone=String(p.fone||'').trim(); o.email=String(p.email||'').trim(); }
+      var s=pessoa(o.sup); o.supEmail=s?String(s.email||'').trim():''; o.supFone=s?String(s.fone||'').trim():'';
+      return o; });
+    /* supervisão, coordenação e apoio: quem não é gerente de loja */
+    GESTAO=Object.keys(eq).filter(function(n){ var p=eq[n]||{}; return !/gerente/i.test(String(p.papel||'')) ; })
+      .map(function(n){ var p=eq[n]; return {nome:n.trim(), papel:String(p.papel||'').trim(), fone:String(p.fone||'').trim(), email:String(p.email||'').trim(), lojas:(p.lojas||[]).length}; });
+  }
+
+  function faltas(o){
+    var f=[]; if(!o.gerente) f.push(['c-bad','sem gerente']);
+    if(o.gerente&&!emails(o.email).length) f.push(['c-bad','sem e-mail']);
+    if(o.gerente&&!foneWa(o.fone)) f.push(['c-warn','sem telefone']);
+    if(emails(o.email).some(function(e){ return e.toLowerCase().slice(-DOMINIO.length)!==DOMINIO; })) f.push(['c-warn','e-mail fora da empresa']);
+    return f;
+  }
+
+  function visiveis(){
+    var b=norm(BUSCA);
+    return LOJAS.filter(function(o){
+      if(FILTRO==='__falta'){ if(!faltas(o).length) return false; }
+      else if(FILTRO && norm(o.sup)!==norm(FILTRO)) return false;
+      if(!b) return true;
+      return norm(o.loja+' '+o.gerente+' '+o.email+' '+o.sup+' '+o.fone).indexOf(b)>=0 || digitos(o.fone).indexOf(digitos(BUSCA)||'#')>=0;
+    });
+  }
+
+  function cartao(o){
+    var f=faltas(o), ms=emails(o.email), wa=foneWa(o.fone);
+    var h='<div class="ct'+(f.length&&PODE_EDITAR?' falta':'')+'" data-cod="'+esc(o.cod)+'">'+
+      '<div><div class="loja">'+esc(o.cod)+' · '+esc(nomeLoja(o.loja))+'</div>'+
+      '<div class="quem">'+(o.gerente?esc(o.gerente):'<span class="chip c-bad">sem gerente no mapa</span>')+
+        (o.gerente?' <span class="sub" style="font-weight:500">· gerente</span>':'')+'</div>'+
+      '<div class="linha">Telefone: <b>'+(o.fone?esc(foneBonito(o.fone)):'—')+'</b></div>'+
+      '<div class="linha">E-mail: <b>'+(ms.length?ms.map(esc).join('<br>'):'—')+'</b></div>'+
+      '<div class="linha">Supervisor: <b>'+esc(o.sup||'—')+'</b>'+(PODE_EDITAR&&o.supEmail?' <span class="sub">('+esc(o.supEmail)+')</span>':'')+'</div>'+
+      (PODE_EDITAR&&f.length?'<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">'+f.map(function(x){ return '<span class="chip '+x[0]+'">'+x[1]+'</span>'; }).join('')+'</div>':'')+
+      '</div><div class="acoes">'+
+      (wa?'<a class="btn sm pri" href="https://wa.me/'+wa+'" target="_blank" rel="noopener noreferrer">WhatsApp</a>':'')+
+      (wa?'<a class="btn sm" href="tel:+'+wa+'">Ligar</a>':'')+
+      (ms.length?'<a class="btn sm" href="mailto:'+esc(ms.join(','))+'">E-mail</a>':'')+
+      (PODE_EDITAR&&o.gerente?'<button type="button" class="btn sm" data-editar="'+esc(o.cod)+'">Corrigir</button>':'')+
+      '</div>';
+    if(PODE_EDITAR && ABERTO===o.cod){
+      h+='<div class="ed">'+
+        '<label>Telefone (WhatsApp) de '+esc(o.gerente)+'<input id="edFone" inputmode="tel" autocomplete="off" value="'+esc(o.fone)+'"></label>'+
+        '<label>E-mail dos envios (mais de um: separe por vírgula)<input id="edMail" inputmode="email" autocomplete="off" value="'+esc(o.email)+'"></label>'+
+        '<label>Seu PIN (confirma)<input id="edPin" type="password" inputmode="numeric" autocomplete="off" maxlength="6"></label>'+
+        '<div style="display:flex;gap:6px"><button type="button" class="btn pri" id="edSalvar">Salvar</button><button type="button" class="btn" id="edCancelar">Cancelar</button></div>'+
+        '<div class="st sub" id="edSt">Vale para todas as lojas de '+esc(o.gerente)+': o contato é da pessoa, não da loja.</div></div>';
+    }
+    return h+'</div>';
+  }
+
+  function pintar(){
+    var sups={}; LOJAS.forEach(function(o){ if(o.sup) sups[o.sup]=(sups[o.sup]||0)+1; });
+    var comFalta=LOJAS.filter(function(o){ return faltas(o).length; });
+    var v=visiveis();
+    $('sub').textContent=LOJAS.length+' lojas · toque em WhatsApp, Ligar ou E-mail para falar com a loja';
+    var h='';
+    h+='<div class="barra"><input type="search" id="busca" placeholder="Buscar loja, gerente, e-mail ou telefone" value="'+esc(BUSCA)+'" aria-label="Buscar contato"></div>';
+    h+='<div class="filtros" role="group" aria-label="Filtrar por supervisor">'+
+      '<button type="button" data-f="" aria-pressed="'+(FILTRO===''?'true':'false')+'">Todas ('+LOJAS.length+')</button>'+
+      Object.keys(sups).sort().map(function(s){ return '<button type="button" data-f="'+esc(s)+'" aria-pressed="'+(FILTRO===s?'true':'false')+'">'+esc(s)+' ('+sups[s]+')</button>'; }).join('')+
+      (PODE_EDITAR?'<button type="button" data-f="__falta" aria-pressed="'+(FILTRO==='__falta'?'true':'false')+'">⚠ A conferir ('+comFalta.length+')</button>':'')+
+      '</div>';
+
+    if(PODE_EDITAR){
+      h+='<div class="card"><h2>Conferência da coordenação</h2>'+
+        (comFalta.length
+          ? '<p class="sub">'+comFalta.length+' loja(s) com algo a conferir. Toque em <b>Corrigir</b> no cartão da loja.</p><ul class="avisos">'+
+            comFalta.map(function(o){ return '<li><b>'+esc(o.cod)+' · '+esc(nomeLoja(o.loja))+'</b>'+faltas(o).map(function(x){ return '<span class="chip '+x[0]+'">'+x[1]+'</span>'; }).join('')+
+              (o.gerente?'<span class="sub">'+esc(o.gerente)+'</span>':'<span class="sub">defina o gerente em Rotina → Equipe</span>')+'</li>'; }).join('')+'</ul>'
+          : '<p class="sub"><span class="chip c-ok">tudo certo</span> Todas as lojas têm gerente, telefone e e-mail da empresa.</p>')+
+        '</div>';
+    }
+
+    h+='<div class="lista" id="lista">'+(v.length?v.map(cartao).join(''):'<p class="sub">Nenhuma loja com esse filtro.</p>')+'</div>';
+
+    if(!BUSCA && FILTRO!=='__falta'){
+      h+='<div class="grupo">Supervisão e coordenação <small>'+GESTAO.length+' pessoa(s)</small></div><div class="lista">'+
+        GESTAO.map(function(p){ var wa=foneWa(p.fone), ms=emails(p.email);
+          return '<div class="ct"><div><div class="quem">'+esc(p.nome)+' <span class="sub" style="font-weight:500">· '+esc(p.papel)+(p.lojas?' · '+p.lojas+' loja(s)':'')+'</span></div>'+
+            '<div class="linha">Telefone: <b>'+(p.fone?esc(foneBonito(p.fone)):'—')+'</b></div>'+
+            '<div class="linha">E-mail: <b>'+(ms.length?ms.map(esc).join('<br>'):'—')+'</b></div></div>'+
+            '<div class="acoes">'+(wa?'<a class="btn sm pri" href="https://wa.me/'+wa+'" target="_blank" rel="noopener noreferrer">WhatsApp</a>':'')+
+            (ms.length?'<a class="btn sm" href="mailto:'+esc(ms.join(','))+'">E-mail</a>':'')+'</div></div>'; }).join('')+'</div>';
+    }
+
+    if(PODE_EDITAR){
+      h+='<div class="card"><h2>Envios automáticos — quem recebe</h2><p class="sub">O que sai sozinho e de onde vem o endereço.</p><div class="tabw"><table>'+
+        '<tr><th>Envio</th><th>Quando</th><th>Para quem</th><th>De onde vem o e-mail</th></tr>'+
+        '<tr><td><b>Meta do dia</b></td><td>Todo dia, antes das 8h</td><td>Gerente de cada loja</td><td>Esta lista (o e-mail do cartão da loja)</td></tr>'+
+        '<tr><td><b>Resumo da manhã</b></td><td>Todo dia, 8h–9h</td><td>Cada usuário, os compromissos dele</td><td>Cadastro da pessoa (o mesmo que você corrige aqui ou ela em Minha conta)</td></tr>'+
+        '<tr><td><b>Resumo semanal em PDF</b></td><td>Segunda, 8h–9h</td><td>E-mail da loja, cópia ao supervisor</td><td>Lista fixa de e-mails de loja no servidor do Painel; sem ela, o cadastro do gerente. A cópia usa o e-mail do supervisor</td></tr>'+
+        '<tr><td><b>PDI semanal</b></td><td>Segunda, 12h–13h</td><td>Aparece no app; a coordenação recebe o resumo</td><td>Conta da coordenação</td></tr>'+
+        '<tr><td><b>PDI mensal e base dos gestores</b></td><td>Dia 1º</td><td>Aparece no app; a coordenação recebe o aviso</td><td>Conta da coordenação</td></tr>'+
+        '</table></div><p class="sub" style="margin-top:8px">Mudou o e-mail de uma loja? Corrija aqui e avise a coordenação do app: o resumo semanal ainda usa uma lista própria.</p></div>';
+    }
+    $('raiz').innerHTML=h;
+    ligar();
+  }
+
+  function ligar(){
+    var b=$('busca');
+    if(b){ b.oninput=function(){ BUSCA=b.value; var pos=b.selectionStart; pintar(); var n=$('busca'); if(n){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(e){} } }; }
+    Array.prototype.forEach.call(document.querySelectorAll('[data-f]'),function(x){ x.onclick=function(){ FILTRO=x.getAttribute('data-f'); ABERTO=''; pintar(); }; });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-editar]'),function(x){ x.onclick=function(){ var c=x.getAttribute('data-editar'); ABERTO=(ABERTO===c?'':c); pintar();
+      var el=document.querySelector('.ct[data-cod="'+c+'"] .ed'); if(el){ try{ el.scrollIntoView({block:'center',behavior:'smooth'}); }catch(e){} } }; });
+    var s=$('edSalvar'), c=$('edCancelar');
+    if(c) c.onclick=function(){ ABERTO=''; pintar(); };
+    if(s) s.onclick=salvar;
+  }
+
+  function st(txt,cor){ var e=$('edSt'); if(!e) return; e.innerHTML=txt; e.style.color=cor||''; }
+
+  function salvar(){
+    var o=LOJAS.filter(function(x){ return x.cod===ABERTO; })[0]; if(!o) return;
+    var fone=($('edFone').value||'').trim(), mail=($('edMail').value||'').replace(/\s+/g,'').replace(/;/g,','), pin=($('edPin').value||'').trim();
+    var lista=mail?mail.split(','):[];
+    if(!fone&&!lista.length){ st('Informe o telefone ou o e-mail.','var(--bad)'); return; }
+    for(var i=0;i<lista.length;i++){ if(!/^[^@,]+@[^@,]+\.[^@,]+$/.test(lista[i])){ st('E-mail inválido: <b>'+esc(lista[i]||'(vazio)')+'</b>','var(--bad)'); return; } }
+    if(fone && !foneWa(fone)){ st('Telefone incompleto: use DDD + número.','var(--bad)'); return; }
+    if(!/^\d{4,6}$/.test(pin)){ st('Digite <b>o seu PIN</b> para confirmar.','var(--bad)'); $('edPin').focus(); return; }
+    var bt=$('edSalvar'); bt.disabled=true; st('Gravando…','');
+    fetch(URL_APP,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({tipo:'contatoLojaSalvar', login:S.nome, pin:pin, nome:o.gerente, email:lista.join(','), fone:fone})})
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        if(res&&res.versaoAntiga) throw new Error('A correção pela tela ainda não foi ligada no servidor do app: falta implantar a versão nova. Nada foi alterado.');
+        if(!res||!res.ok) throw new Error((res&&res.erro)||'Não consegui gravar.');
+        ABERTO=''; carregar();
+      })
+      .catch(function(e){ bt.disabled=false; st(esc(e&&e.message||String(e)),'var(--bad)'); });
+  }
+
+  $('btnCopiar').onclick=function(){
+    if(!D) return;
+    var txt='CONTATOS DAS LOJAS · SÓ TINTAS\n\n'+visiveis().map(function(o){
+      return o.cod+' · '+nomeLoja(o.loja)+'\n'+(o.gerente||'sem gerente')+(o.fone?' · '+foneBonito(o.fone):'')+'\n'+(emails(o.email).join(', ')||'sem e-mail')+'\nSupervisor: '+(o.sup||'—');
+    }).join('\n\n');
+    var ok=function(){ var b=$('btnCopiar'); b.textContent='Copiado ✓'; setTimeout(function(){ b.textContent='Copiar lista'; },1800); };
+    try{ navigator.clipboard.writeText(txt).then(ok,function(){ fallback(); }); }catch(e){ fallback(); }
+    function fallback(){ var ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); ok(); }catch(e){} ta.remove(); }
+  };
+
+  carregar();
+})();
+</script>
+</body></html>
