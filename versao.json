@@ -2,6 +2,20 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v219",
+      "data": "15/11/2026",
+      "hora": "23:00",
+      "itens": [
+        {
+          "painel": "Escala & Folgas",
+          "o_que": "A escala passou a seguir a regra principal, sem contar com acordo de compensação: nenhum dia passa de 8h24 (42h) ou 8h (40h). Saíram os dias de 9h15 e a compensação entre dias. Nas lojas de sábado curto, quem trabalha no sábado aparece com as horas que faltam para fechar a semana.",
+          "para": [
+            "coord"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v218",
       "data": "15/11/2026",
       "hora": "22:40",

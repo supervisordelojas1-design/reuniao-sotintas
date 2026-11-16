@@ -164,7 +164,7 @@ td select{min-width:0;min-height:32px;padding:0 5px;font-size:12.5px;width:auto}
       <option value="integral17">Integral reduzido (8h às 17h)</option>
     </select>
   </label>
-  <label>Quem trabalha sábado curto
+  <label style="display:none">Quem trabalha sábado curto
     <select id="modo">
       <option value="B" selected>B · Compensa nos 4 dias de semana</option>
       <option value="A">A · Sem compensar (fica devendo horas)</option>
@@ -172,8 +172,7 @@ td select{min-width:0;min-height:32px;padding:0 5px;font-size:12.5px;width:auto}
   </label>
   <label>Dia com ponta descoberta
     <select id="aperto">
-      <option value="comp" selected>Compensar na mesma semana</option>
-      <option value="alm">Almoço de 2h (sem compensar)</option>
+      <option value="alm" selected>Almoço estendido (sem passar do dia)</option>
       <option value="nada">Só equilibrar e avisar</option>
     </select>
   </label>
@@ -244,7 +243,7 @@ function montaAlmoco(){
 }
 const SLOTS=['12h–13h','13h–14h','14h–15h'];
 const TABS=[['semana','Grade da semana'],['fila','Fila do sábado'],['geral','Rede e regiões'],['ferias','Férias'],['banco','Banco de horas']];
-const S={jor:42,fer:{},ini:8,fim:18,equipe:'real',nivel:'rede',reg:'Bruno',cargoF:'todos',loja:0,segLock:true,min2:false,aperto:'comp',crit:'fila',sem:0,perfil:'gerente',sab:'curto',modo:'B',vagas:1,tab:'semana',folga:{},alm:{g:1,a:2,v1:0,v2:1,v3:2,x:0}};
+const S={jor:42,fer:{},ini:8,fim:18,equipe:'real',nivel:'rede',reg:'Bruno',cargoF:'todos',loja:0,segLock:true,min2:false,aperto:'alm',crit:'fila',sem:0,perfil:'gerente',sab:'curto',modo:'A',vagas:1,tab:'semana',folga:{},alm:{g:1,a:2,v1:0,v2:1,v3:2,x:0}};
 
 const SAB={curto:['Curto atual','8h às 13h','13h'],curto9:['Curto 9h–13h','9h às 13h','13h'],curto12:['Curto reduzido','8h às 12h','12h'],integral:['Integral atual','8h às 18h','18h'],integral17:['Integral reduzido','8h às 17h','17h']};
 const curto=()=>S.sab.startsWith('curto');
@@ -321,6 +320,8 @@ const fdur=v=>{const m=Math.round(v*60);return m%60?(m>=60?Math.floor(m/60)+'h'+
 const lab=o=>o?fh(o.a)+'–'+fh(o.b):'FOLGA';
 const mins=o=>o?Math.round((o.b-o.a-o.l)*60):0;
 const JOR=()=>S.jor===40?40:42;
+/* Sem acordo de compensação (decisão do Bruno, 15/11/2026): nenhum dia passa da jornada normal (8h24 em 42h, 8h em 40h). */
+const ACORDO=false;
 function plano(f){
   const WD=['seg','ter','qua','qui','sex'],T={};P.forEach(p=>T[p.id]={});
   const J=S.jor===40?40:42,Lb=J/5,EPS=1e-6; // jornada semanal e horas de um dia normal (8h ou 8h24)
@@ -334,9 +335,9 @@ function plano(f){
   }
   else if(fimSab===17)ps.forEach(p=>T[p.id].sab=J===40?{a:8,b:17,l:1}:{a:8,b:9+Lb,l:1,pos:1});
   else sabEdge=true;
-  const diaCheio=p=>curto()&&S.modo==='B'&&f[p.id]!=='sab'; // quem trabalha sábado curto compensa nos 4 dias de semana
+  const diaCheio=p=>ACORDO&&curto()&&S.modo==='B'&&f[p.id]!=='sab'; // quem trabalha sábado curto compensa nos 4 dias de semana
   const Ldc=(J-satH)/4; // 40h: 9h · 42h com sábado de 5h: 9h15 · 42h com sábado de 4h: 9h30
-  const modo=curto()&&S.aperto==='comp'?'nada':S.aperto==='comp'&&P.length<=3?'alm':S.aperto;
+  const ap=!ACORDO&&S.aperto==='comp'?'alm':S.aperto,modo=curto()&&ap==='comp'?'nada':ap==='comp'&&P.length<=3?'alm':ap;
   const owed={},longs={},N={},M=S.min2?2:1;P.forEach(p=>{owed[p.id]=0;longs[p.id]=0});
   const dias=WD.map(d=>[d,ini,fim]);if(sabEdge)dias.push(['sab',8,18]);
   dias.forEach(([d,i0,f0],di)=>{
@@ -514,10 +515,10 @@ function motivos(l){
   const cedo='A primeira hora traz só '+pc(l.sh8)+' do faturamento do dia ('+String(l.at8).replace('.',',')+' atendimento por hora).';
   const tarde=(l.sh17>=15?'A última hora concentra '+pc(l.sh17)+' do faturamento do dia.':'A última hora traz '+pc(l.sh17)+' do dia.')+(l.ap18>=300?' Ainda são faturados '+R$(l.ap18)+' por dia depois das 18h.':'');
   const piloto=' É uma hipótese para piloto: a venda depois das 18h não mostra quem encontrou a loja fechada.';
-  m.hor=r.hor==='8-18'&&/(^|[^1])9h/.test(l.recSem)?cedo+' Mesmo assim a loja fica em 8h às 18h: abrindo às 9h, quem trabalha no sábado curto fecharia a semana com horas a menos, e a regra é ninguém dever hora e a loja não liberar hora a mais.'
+  m.hor=r.hor==='8-18'&&/(^|[^1])9h/.test(l.recSem)?cedo+' Mesmo assim a loja fica em 8h às 18h por enquanto, que é o horário que o cliente já conhece.'
     :r.hor==='8-18'?'A primeira hora traz '+pc(l.sh8)+' do faturamento do dia e a última '+pc(l.sh17)+'. Nenhuma é fraca o bastante para cortar, e depois das 18h a loja fatura '+R$(l.ap18)+' por dia.'
-    :cedo+' Abrindo às 9h, a jornada de 8h cobre a loja inteira e todos abrem e fecham juntos.'+(l.sab==='c'?' Atenção: quem trabalha no sábado curto fecha a semana com horas a menos.':'');
-  m.sab=r.sab==='curto'?'Na jornada de 42h o sábado fica das 8h às 13h, como é hoje para o cliente: turno único de 5h, com pausa de 15 min. Quem trabalha no sábado fecha as 42h saindo às 18h15 nos outros quatro dias (15 min depois do fechamento). Quem folga no sábado faz cinco dias de 8h24.'
+    :cedo+' Abrindo às 9h, a jornada de 8h cobre a loja inteira e todos abrem e fecham juntos.'+'';
+  m.sab=r.sab==='curto'?'Na jornada de 42h o sábado fica das 8h às 13h, como é hoje para o cliente: turno único de 5h, com pausa de 15 min. Sem acordo de compensação nenhum dia passa de 8h24, então quem trabalha no sábado fecha a semana em 38h36 (4 dias de 8h24 + 5h). Quem folga no sábado faz cinco dias de 8h24 e fecha 42h.'
     :r.sab==='curto9'?(l.sv12>l.sv8*1.1?'Das 12h às 13h a loja vende '+R$(l.sv12)+' por sábado, contra '+R$(l.sv8)+' das 8h às 9h. Com 9h–13h o turno é único e todos trabalham juntos.':'A primeira e a última hora do sábado vendem quase o mesmo ('+R$(l.sv8)+' e '+R$(l.sv12)+'). Fica 9h–13h para seguir o padrão da rede.')
     :r.sab==='integral17'?'Das 17h às 18h a loja vende só '+R$(l.sv17)+' por sábado. Fechando às 17h o turno é único de 8h, com todos da abertura ao fechamento.'
     :'Das 17h às 18h a loja ainda vende '+R$(l.sv17)+' por sábado, acima de R$ 500. Vale manter até as 18h.';
@@ -531,7 +532,7 @@ function orientacao(){
   const mud=it.filter(x=>x[1]!==x[2]).length;
   let h='<div class="ori"><div class="orih"><b>Orientação para '+l.n+'</b><span>Pré-seleção feita pelo movimento da loja de janeiro a novembro/2026</span>'+(mud?'<button class="btn alt" onclick="trocaLoja(S.loja)">Voltar ao recomendado</button>':'')+'</div>';
   it.forEach(x=>{const ok=x[1]===x[2];h+='<div class="orii '+(ok?'':'mud')+'"><div><b>'+x[0]+': '+x[1]+'</b>'+(ok?'<span class="st ok">✔ seguindo o recomendado</span>':'<span class="st no">⚠ alterado para '+x[2]+'</span>')+'</div><p>'+(ok?'':'Antes de mudar, veja o porquê da escolha. ')+x[3]+'</p></div>'});
-  h+='<p class="orif"><b>Jornada de '+JOR()+'h.</b> '+(JOR()===42?'Dia normal de 8h24 (8h às 17h24 ou 8h36 às 18h). '+(curto()?'Quem trabalha no sábado curto compensa nos outros quatro dias.':'No sábado integral o dia também é de 8h24.'):'Dia normal de 8h. '+(curto()?'Quem trabalha no sábado curto faz 9h nos outros quatro dias.':''))+'</p><p class="orif">🔥 Dia de maior movimento: <b>'+DNOME[forte(l)[0]]+'</b> ('+forte(l)[1]+'% da média de segunda a sexta) · Folga: melhor dia <b>'+DNOME[l.dias[0]]+'</b>, depois <b>'+DNOME[l.dias[1]]+'</b> · Ponta mais fraca: <b>'+(l.fraca==='a'?'abertura':'fechamento')+'</b>'+(l.duas?', com 2 pessoas nas duas pontas':', onde 1 pessoa basta')+'</p></div>';
+  h+='<p class="orif"><b>Jornada de '+JOR()+'h.</b> '+(JOR()===42?'Dia normal de 8h24 (8h às 17h24 ou 8h36 às 18h). '+'Sem acordo de compensação, nenhum dia passa de 8h24. '+(curto()?'Quem trabalha no sábado curto fecha a semana abaixo de 42h.':'No sábado integral o dia também é de 8h24.'):'Dia normal de 8h, e nenhum dia passa disso. '+(curto()?'Quem trabalha no sábado curto fecha a semana abaixo de 40h.':''))+'</p><p class="orif">🔥 Dia de maior movimento: <b>'+DNOME[forte(l)[0]]+'</b> ('+forte(l)[1]+'% da média de segunda a sexta) · Folga: melhor dia <b>'+DNOME[l.dias[0]]+'</b>, depois <b>'+DNOME[l.dias[1]]+'</b> · Ponta mais fraca: <b>'+(l.fraca==='a'?'abertura':'fechamento')+'</b>'+(l.duas?', com 2 pessoas nas duas pontas':', onde 1 pessoa basta')+'</p></div>';
   return h;
 }
 function opcoes(){
@@ -638,7 +639,7 @@ function vGeral(){
   h+='</table></div><p class="note">🔥 marca o dia de maior movimento de cada loja, de segunda a sexta.</p><p class="note">A escala de cada loja é a sugerida pelas regras e pelo movimento dela. Ajustes feitos à mão valem só para a loja aberta na grade.</p>';
   return h;
 }
-function aplicaCfg(){const c=CFG[loja().c];if(!c)return;if(c.sab&&SAB[c.sab])S.sab=c.sab;if(typeof c.seg==='boolean')S.segLock=c.seg;if(c.hor&&HOR[c.hor])[S.ini,S.fim]=c.hor.split('-').map(Number);['modo','aperto','crit'].forEach(k=>{if(c[k])S[k]=c[k]});if(c.vagas)S.vagas=+c.vagas}
+function aplicaCfg(){const c=CFG[loja().c];if(!c)return;if(c.sab&&SAB[c.sab])S.sab=c.sab;if(typeof c.seg==='boolean')S.segLock=c.seg;if(c.hor&&HOR[c.hor])[S.ini,S.fim]=c.hor.split('-').map(Number);['modo','aperto','crit'].forEach(k=>{if(c[k])S[k]=c[k]});if(c.vagas)S.vagas=+c.vagas;if(!ACORDO){S.modo='A';if(S.aperto==='comp')S.aperto='alm'}}
 function carregaSemana(){const sv=SALVOS[loja().c+'|'+semKey(S.sem)];S.salvo=null;
   if(sv&&sv.folga){const f={},a={};let okk=true;P.forEach(p=>{if(sv.folga[p.nome])f[p.id]=sv.folga[p.nome];else okk=false;if(sv.alm&&sv.alm[p.nome]!=null)a[p.id]=+sv.alm[p.nome]});
     if(okk){S.folga=f;Object.assign(S.alm,a);S.salvo=sv;return}}
