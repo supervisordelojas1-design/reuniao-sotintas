@@ -2,6 +2,17 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v234",
+      "data": "16/11/2026",
+      "hora": "18:55",
+      "itens": [
+        {
+          "painel": "Mentor ST PRO · Calculadora",
+          "o_que": "Nos produtos sem durabilidade definida (impermeabilizantes, mantas, resinas, epóxis, efeitos e outros), a Calculadora pede que o vendedor digite a durabilidade em anos."
+        }
+      ]
+    },
+    {
       "v": "ast-v233",
       "data": "16/11/2026",
       "hora": "18:45",
