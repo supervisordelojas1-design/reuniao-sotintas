@@ -158,6 +158,17 @@ CONTEUDO.classes_produto = {
   add({ id: 'eucatex_spray', marca: 'Eucatex', nome: 'Sprays Premium (Uso Geral, Metalizada, Alta Temperatura, Luminosa)', linha: 'Spray', classe: 'esmalte_sintetico', superficies: ['metal', 'madeira', 'alvenaria', 'gesso', 'cerâmica'], acabamento: ['brilhante', 'fosco', 'metalizado'], diluicao: 'Pronto para uso', demaos: '2 a 3', secagem: 'Toque 15 min · manuseio 1 h · final 24 h', rend: { '400 ml': 0, '300 ml': 0 }, destaque: 'Retoques e pequenas peças com secagem ultra rápida; versão alta temperatura (600 °C).' });
   add({ id: 'eucatex_thinner', marca: 'Eucatex', nome: 'Eucatex Ráz (aguarrás) e Thinners 9800 / 9116 / 9100', linha: 'Solventes', classe: 'diluente', superficies: [], acabamento: [], diluicao: '', demaos: '', rend: {}, destaque: 'Diluentes para esmaltes sintéticos, vernizes e limpeza; Thinner 9800 para limpar antes de repintar com Eucalux.' });
 
+  /* Durabilidade em anos, só onde o fabricante declara (Catálogo Coral 2025/2 e Catálogo Eucatex 2026).
+     Sem declaração = sem número: o vendedor informa na Calculadora conforme a embalagem/boletim técnico. */
+  const DURAB = {
+    coral_hammerite: [10, 'durabilidade · Catálogo Coral'], coral_coralit_antiferrugem: [10, 'durabilidade · Catálogo Coral'], coral_coralit_ultra: [10, 'durabilidade · Catálogo Coral'],
+    coral_cetol_deck: [6, 'durabilidade · Catálogo Coral'], coral_cetol_classic: [6, 'durabilidade · Catálogo Coral'], coral_cetol_beleza_natural: [3, 'durabilidade · Catálogo Coral'],
+    coral_cetol_stain: [3, 'durabilidade · Catálogo Coral'], coral_solgard: [5, 'durabilidade · Catálogo Coral'], coral_extra_maritimo: [2, 'durabilidade · Catálogo Coral'],
+    eucatex_super_borracha: [5, 'proteção · Catálogo Eucatex'], eucatex_verniz_copal: [2, 'garantia · Catálogo Eucatex'], eucatex_verniz_tingidor: [3, 'garantia · Catálogo Eucatex'],
+    eucatex_verniz_deck: [6, 'garantia · Catálogo Eucatex'], eucatex_verniz_maritimo: [3, 'garantia · Catálogo Eucatex'], eucatex_power_stain: [3, 'garantia · Catálogo Eucatex']
+  };
+  for (const p of P) if (DURAB[p.id] && p.durabilidade == null) { p.durabilidade = DURAB[p.id][0]; p.durabilidade_fonte = DURAB[p.id][1]; }
+
   CONTEUDO.produtos = P;
 
   /* Imagens das embalagens (recortadas dos catálogos Coral 2025/2 e Eucatex 2026) — assets/produtos/<id>.jpg */

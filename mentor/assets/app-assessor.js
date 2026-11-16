@@ -145,6 +145,9 @@
       <div class="campo" style="margin:0"><label>Rendimento da embalagem (m² por demão)</label><input type="number" inputmode="decimal" placeholder="Ex: 300" value="${m.rend}" oninput="App.calc.setDadoQuieto('rend',this.value)"><div class="ajuda">${dica ? '💡 ' + (prod ? '' : 'Típico: ') + esc(dica) + ' ' : ''}Confira na lata — cada produto tem o seu.</div></div></div>
       <div class="campo mt-2"><label>Preço por embalagem (R$)</label><input type="number" inputmode="decimal" step="0.01" placeholder="Ex: 189,90" value="${m.preco}" oninput="App.calc.setDadoQuieto('preco',this.value)"></div>
       <div class="campo"><label>Margem extra de segurança (%)</label><div class="chips">${[0, 5, 10, 15, 20].map(p => `<button class="chip ${Number(m.margem) === p ? 'ativo' : ''}" onclick="App.calc.setDado('margem',${p})">${p}%</button>`).join('')}</div><div class="ajuda">10% para superfície lisa, 20% para textura/reboco.</div></div>
+      <div class="card info"><div class="negrito">⏳ Custo ao longo do tempo <span class="mini texto-3">(opcional)</span></div>
+      <div class="campo mt-1"><label>Durabilidade do produto (anos)</label><input type="number" inputmode="decimal" step="0.5" min="0" placeholder="Ex: 5" value="${m.durab == null ? '' : m.durab}" oninput="App.calc.setDadoQuieto('durab',this.value)"><div class="ajuda">${prod && Number(prod.durabilidade) > 0 ? `📘 Fabricante: <b>${esc(String(prod.durabilidade))} anos</b>${prod.durabilidade_fonte ? ' (' + esc(prod.durabilidade_fonte) + ')' : ''}.` : (prod ? 'O catálogo deste produto não declara durabilidade em anos.' : '')} Use o que está na embalagem ou no boletim técnico do fabricante.</div></div>
+      <div class="campo" style="margin:0"><label>Mão de obra</label><div class="chips mb-1">${[['m2', 'R$ por m²'], ['total', 'Valor total (R$)']].map(([k, t]) => `<button class="chip ${(m.moModo || 'm2') === k ? 'ativo' : ''}" onclick="App.calc.setDado('moModo','${k}')">${t}</button>`).join('')}</div><input type="number" inputmode="decimal" step="0.01" min="0" placeholder="${(m.moModo || 'm2') === 'm2' ? 'Ex: 25,00 por m²' : 'Ex: 3.500,00 pela obra'}" value="${m.mo == null ? '' : m.mo}" oninput="App.calc.setDadoQuieto('mo',this.value)"><div class="ajuda">Deixe em branco se o cliente não vai contratar pintor.</div></div></div>
       <button class="btn bloco" onclick="App.calc.calcular()">CALCULAR</button></div>
       <button class="btn link bloco" onclick="App.calc.ir('material')">‹ Trocar produto</button>`;
   }
@@ -162,6 +165,7 @@
     m.produto_id = p.id; m.produto_nome = p.marca + ' ' + p.nome; m.produto_marca = p.marca;
     const embs = Assessor.embalagensProduto(p); if (embs.length && !embs.includes(m.emb)) m.emb = embs[0];
     const r = Assessor.rendimentoPorDemao(p, m.emb); if (r) { m.rend = r.valor; if (p.rend_tipo === 'acabado') m.demaos = 2; }
+    m.durab = Number(p.durabilidade) > 0 ? p.durabilidade : '';
     calcSalvar(); App.render();
   };
   // Vindo do Especificador / aba Produtos: abre a calculadora já com o produto
@@ -173,6 +177,7 @@
     const m = C.rascunho.atual; m.produto_id = p.id; m.produto_nome = p.marca + ' ' + p.nome; m.produto_marca = p.marca;
     const embs = Assessor.embalagensProduto(p); m.emb = embs[0] || (liquido(tipo) ? '18 L' : '25 Kg');
     const r = Assessor.rendimentoPorDemao(p, m.emb); if (r) { m.rend = r.valor; if (p.rend_tipo === 'acabado') m.demaos = 2; }
+    if (Number(p.durabilidade) > 0) m.durab = p.durabilidade;
     C.tela = C.rascunho.totalArea > 0 ? 'dados' : 'area'; calcSalvar();
     App.cache.abaAssessor = 'calc';
     if (App.rota.view === 'assessor' && App.rota.params[0] === 'calc') App.render(); else location.hash = '#/assessor/calc';
@@ -183,14 +188,34 @@
     const areaAj = area * (1 + margem / 100);
     const qtd = areaAj * demaos / rend; const comprar = Math.ceil(qtd - 1e-9); const custo = comprar * preco;
     const sobra = (comprar * rend - areaAj * demaos) / demaos; // m² que ainda daria para pintar com as demãos definidas
-    return { areaAj, qtd, comprar, custo, sobra, custoM2: area ? custo / area : 0 };
+    /* custo no tempo: (produto por m² + mão de obra por m²) ÷ anos de durabilidade */
+    const moV = Math.max(0, num(m.mo)), mo = (m.moModo || 'm2') === 'm2' ? moV * area : moV, anos = Math.max(0, num(m.durab));
+    const custoM2 = area ? custo / area : 0, moM2 = area ? mo / area : 0, totalM2 = custoM2 + moM2;
+    return { areaAj, qtd, comprar, custo, sobra, custoM2, mo, moM2, totalM2, total: custo + mo, anos, m2Ano: anos > 0 ? totalM2 / anos : 0, prodM2Ano: anos > 0 ? custoM2 / anos : 0, porAno: anos > 0 ? (custo + mo) / anos : 0 };
+  }
+  const anosTxt = (a) => fmtNum(a, a % 1 ? 1 : 0) + (a === 1 ? ' ano' : ' anos');
+  function custoTempo(m, r) {
+    if (!r || r.totalM2 == null) return '';
+    if (!(r.anos > 0)) return `<div class="card info mt-2 pequeno">⏳ <b>Custo ao longo do tempo:</b> informe a durabilidade do produto em <b>Ajustar dados</b> para ver quanto a pintura custa por m² a cada ano.</div>`;
+    const comMO = r.mo > 0;
+    return `<div class="card destaque mt-2"><h3>⏳ Custo ao longo do tempo</h3>
+      <div class="linha entre"><div><div class="pequeno texto-2">Custo por m² a cada ano</div><div style="font-size:1.7rem;font-weight:800;line-height:1.1">${fmtBRL(r.m2Ano)}<span class="pequeno"> /m²/ano</span></div></div><span class="etiqueta azul">${anosTxt(r.anos)}</span></div>
+      <table class="pequeno mt-1" style="width:100%">
+      <tr><td>Produto por m²</td><td style="text-align:right">${fmtBRL(r.custoM2)}</td></tr>
+      ${comMO ? `<tr><td>Mão de obra por m²</td><td style="text-align:right">${fmtBRL(r.moM2)}</td></tr>` : ''}
+      <tr><td>Durabilidade</td><td style="text-align:right">${anosTxt(r.anos)}</td></tr>
+      <tr><td>Conta</td><td style="text-align:right">${comMO ? `(${fmtNum(r.custoM2, 2)} + ${fmtNum(r.moM2, 2)})` : fmtNum(r.custoM2, 2)} ÷ ${fmtNum(r.anos, r.anos % 1 ? 1 : 0)} = <b>${fmtBRL(r.m2Ano)}</b></td></tr>
+      ${comMO ? `<tr><td>Só o produto, por m²/ano</td><td style="text-align:right">${fmtBRL(r.prodM2Ano)}</td></tr>` : ''}
+      <tr><td>Custo da obra por ano</td><td style="text-align:right"><b>${fmtBRL(r.porAno)}</b></td></tr></table>
+      <p class="mini texto-3 mt-1" style="margin-bottom:0">Durabilidade conforme a especificação do fabricante; depende de preparação correta da superfície, aplicação e exposição. Não é garantia da loja.</p></div>`;
   }
   App.calc.calcular = () => { const r = calcularMaterial(C.rascunho.atual); if (!r) return App.toast('Informe área e rendimento maiores que zero'); Object.assign(C.rascunho.atual, { res: r }); calcSalvar(); ir('resultado'); };
   function calcResultado() {
     const m = C.rascunho.atual; const r = m && m.res; if (!r) return calcDados();
     const emb = m.emb === 'Outro' ? (m.embOutro || 'emb.') : m.emb;
     return progresso(4) + `<div class="resultado-calc"><div class="pequeno" style="opacity:.85">Você vai precisar de</div><div class="grande">${r.comprar} ${r.comprar === 1 ? 'embalagem' : 'embalagens'}</div><div>${esc(nomeMaterial(m))} · ${esc(emb)}</div>
-      <table><tr><td>Total estimado</td><td>${fmtBRL(r.custo)}</td></tr><tr><td>Custo / m²</td><td>${fmtBRL(r.custoM2)}/m²</td></tr></table></div>
+      <table><tr><td>Total estimado</td><td>${fmtBRL(r.custo)}</td></tr><tr><td>Custo do produto / m²</td><td>${fmtBRL(r.custoM2)}/m²</td></tr>${r.mo > 0 ? `<tr><td>Mão de obra</td><td>${fmtBRL(r.mo)} · ${fmtBRL(r.moM2)}/m²</td></tr><tr><td>Produto + mão de obra</td><td>${fmtBRL(r.total)} · ${fmtBRL(r.totalM2)}/m²</td></tr>` : ''}</table></div>
+      ${custoTempo(m, r)}
       <div class="card mt-2"><h3>Resumo do cálculo</h3><table class="pequeno" style="width:100%">
       <tr><td>Produto</td><td style="text-align:right"><b>${esc(nomeMaterial(m))} (${esc(emb)})</b></td></tr><tr><td>Área total</td><td style="text-align:right">${fmtNum(num(m.area))} m²</td></tr>
       ${Number(m.margem) > 0 ? `<tr><td>Margem (+${m.margem}%)</td><td style="text-align:right">${fmtNum(r.areaAj)} m²</td></tr>` : ''}<tr><td>Demãos</td><td style="text-align:right">${m.demaos}</td></tr><tr><td>Matemática</td><td style="text-align:right">${fmtNum(r.areaAj)} × ${m.demaos} ÷ ${fmtNum(num(m.rend), 0)} = ${fmtNum(r.qtd, 2)} emb.</td></tr><tr><td>Sobra estimada</td><td style="text-align:right">${fmtNum(r.sobra)} m²</td></tr></table>
@@ -199,6 +224,7 @@
   }
   App.calc.adicionar = () => { const m = C.rascunho.atual; C.rascunho.materiais.push({ ...m, res: m.res }); C.rascunho.atual = null; calcSalvar(); ir('projeto'); };
   const totalProjeto = (p) => (p.materiais || []).reduce((s, m) => s + ((m.res && m.res.custo) || 0), 0);
+  const moProjeto = (p) => (p.materiais || []).reduce((s, m) => s + ((m.res && m.res.mo) || 0), 0);
   /* produto final da obra = o acabamento (tinta, esmalte, verniz, textura); selador, fundo, primer e massa são preparação */
   const PREPARO = ['Massa corrida', 'Massa acrílica', 'Selador', 'Fundo preparador', 'Primer'];
   function produtoFinalDe(p, fresco) {
@@ -229,7 +255,8 @@
     return `<div class="card"><div class="linha entre"><input value="${esc(p.nome)}" style="font-weight:800;font-size:1.1rem;border:0;border-bottom:1.5px solid var(--borda);border-radius:0;padding:4px 0;flex:1" onchange="App.calc.C.rascunho.nome=this.value"><span class="etiqueta azul">${fmtNum(p.totalArea, 0)} m²</span></div>
       <h3 class="mt-2">Materiais desta obra</h3>
       ${p.materiais.length ? p.materiais.map((m, i) => `<div class="linha entre" style="padding:8px 0;border-bottom:1px solid var(--borda)"><div class="cresce"><div class="negrito pequeno">${esc(nomeMaterial(m))} · ${esc(m.emb === 'Outro' ? m.embOutro : m.emb)}</div><div class="mini texto-3">${m.res.comprar} un. · ${m.demaos} demão(s) · ${fmtNum(num(m.area), 0)} m²</div></div><b class="pequeno">${fmtBRL(m.res.custo)}</b><button class="btn mini cinza" style="margin-left:6px" onclick="App.calc.removerMaterial(${i})">✕</button></div>`).join('') : '<p class="pequeno texto-3">Nenhum material ainda.</p>'}
-      <div class="linha entre mt-2"><b>TOTAL ESTIMADO</b><b style="font-size:1.2rem;color:var(--vermelho)">${fmtBRL(totalProjeto(p))}</b></div></div>
+      <div class="linha entre mt-2"><b>TOTAL ESTIMADO</b><b style="font-size:1.2rem;color:var(--vermelho)">${fmtBRL(totalProjeto(p))}</b></div>
+      ${moProjeto(p) > 0 ? `<div class="linha entre pequeno mt-1"><span>Mão de obra</span><b>${fmtBRL(moProjeto(p))}</b></div><div class="linha entre mt-1"><b>PRODUTOS + MÃO DE OBRA</b><b>${fmtBRL(totalProjeto(p) + moProjeto(p))}</b></div>` : ''}</div>
       <button class="btn bloco contorno" onclick="App.calc.C.rascunho.atual=null;App.calc.ir('material')">＋ Calcular outro material</button>
       ${(function (f) { return f ? `<div class="card mt-2"><h3>Produto final da obra</h3>
         <div class="linha entre"><div class="cresce"><div class="negrito">${esc(f.nome)}</div><div class="mini texto-3">${esc(f.emb)} · ${f.comprar} un. · ${f.demaos} demão(s) · ${fmtNum(f.area, 0)} m²</div></div>${f.marca ? `<span class="etiqueta ${marcaCor(f.marca)}">${esc(f.marca)}</span>` : ''}</div>
@@ -246,6 +273,9 @@
     const l = [`*LISTA DE MATERIAIS — ${p.nome}*`, `Área: ${fmtNum(p.totalArea)} m²`, ''];
     p.materiais.forEach(m => l.push(`• ${nomeMaterial(m)} ${m.emb === 'Outro' ? m.embOutro : m.emb}: ${m.res.comprar} un. (${m.demaos} demão(s)) — ${fmtBRL(m.res.custo)}`));
     l.push('', `*Total estimado: ${fmtBRL(totalProjeto(p))}*`);
+    if (moProjeto(p) > 0) l.push(`Mão de obra: ${fmtBRL(moProjeto(p))}`, `*Produtos + mão de obra: ${fmtBRL(totalProjeto(p) + moProjeto(p))}*`);
+    const noTempo = p.materiais.filter(m => m.res && m.res.anos > 0);
+    if (noTempo.length) { l.push('', '*CUSTO AO LONGO DO TEMPO*'); noTempo.forEach(m => l.push(`• ${nomeMaterial(m)}: ${fmtBRL(m.res.m2Ano)} por m²/ano (${m.res.mo > 0 ? 'produto + mão de obra' : 'produto'} ${fmtBRL(m.res.totalM2)}/m² ÷ ${anosTxt(m.res.anos)} de durabilidade)`)); }
     const fin = produtoFinalDe(p, fresco);
     if (fin) { l.push('', `*PRODUTO FINAL — ${fin.nome}*`, `${fin.comprar} × ${fin.emb} · ${fin.demaos} demão(s) · ${fmtNum(fin.area, 0)} m²`); if (fin.destaque) l.push(fin.destaque); l.push(fin.ficha); }
     const comp = complementosDe(p, fresco);
@@ -462,7 +492,7 @@
     const linha = (l, v) => v ? `<tr><td class="texto-2">${l}</td><td style="text-align:right"><b>${esc(v)}</b></td></tr>` : '';
     return `<button class="btn link" onclick="App.prod.fechar()">‹ Voltar aos produtos</button>
       <div class="card"><div class="linha" style="align-items:flex-start;gap:12px">${p.imagem ? `<img class="foto-produto" src="${esc(p.imagem)}" alt="${esc(p.nome)}" onclick="App.cache.paginasAtuais=['${esc(p.imagem)}'];App.abrirVisor(0)">` : ''}<div class="cresce"><div class="chips" style="gap:6px"><span class="etiqueta ${marcaCor(p.marca)}">${esc(p.marca)}${p.linha ? ' · ' + esc(p.linha) : ''}</span><span class="etiqueta cinza">${esc(Assessor.classeNome(p.classe, App.cont))}</span></div><h2 class="mt-1">${esc(p.nome)}</h2>${p.destaque ? `<p class="pequeno" style="margin:0">${esc(p.destaque)}</p>` : ''}</div></div></div>
-      <div class="card"><h3>📋 Ficha rápida</h3><table class="pequeno" style="width:100%">${linha('Ambiente', p.ambiente === 'ambos' ? 'Interior e exterior' : p.ambiente ? p.ambiente[0].toUpperCase() + p.ambiente.slice(1) : '')}${linha('Superfícies', (p.superficies || []).join(', '))}${linha('Acabamento', (p.acabamento || []).filter(a => a !== 'não aplicável').join(', '))}${linha('Diluição', p.diluicao)}${linha('Demãos', p.demaos)}${linha('Secagem', p.secagem)}</table></div>
+      <div class="card"><h3>📋 Ficha rápida</h3><table class="pequeno" style="width:100%">${linha('Ambiente', p.ambiente === 'ambos' ? 'Interior e exterior' : p.ambiente ? p.ambiente[0].toUpperCase() + p.ambiente.slice(1) : '')}${linha('Superfícies', (p.superficies || []).join(', '))}${linha('Acabamento', (p.acabamento || []).filter(a => a !== 'não aplicável').join(', '))}${linha('Diluição', p.diluicao)}${linha('Demãos', p.demaos)}${linha('Secagem', p.secagem)}${linha('Durabilidade', Number(p.durabilidade) > 0 ? p.durabilidade + ' anos' + (p.durabilidade_fonte ? ' (' + p.durabilidade_fonte + ')' : '') : '')}</table></div>
       ${embs.length ? `<div class="card"><h3>📏 Rendimento${p.rend_tipo === 'acabado' ? ' (parede pronta, ' + esc(p.demaos || '2 a 3') + ' demãos)' : ' por demão'}</h3><table class="pequeno" style="width:100%">${embs.map(e => `<tr><td>${esc(e)}</td><td style="text-align:right"><b>${fmtNum(p.rend[e], 0)} m²</b>${p.rend_tipo === 'acabado' ? ` <span class="mini texto-3">(≈ ${fmtNum(p.rend[e] * 2, 0)} m² por demão)</span>` : ''}</td></tr>`).join('')}</table>${p.obs ? `<div class="ajuda">${esc(p.obs)}</div>` : ''}</div>` : ''}
       ${u.usos.length || u.cond.length ? `<div class="card info"><h3>🎯 Quando indicar</h3>${u.usos.length ? `<div class="pequeno"><b>Entra no sistema de:</b> ${esc(u.usos.join(' · '))}</div>` : ''}${u.cond.length ? `<div class="pequeno mt-1"><b>Tratamento para:</b> ${esc(u.cond.join(' · '))}</div>` : ''}</div>` : ''}
       <div class="botoes"><button class="btn" onclick="App.calc.novoComProduto('${p.id}')">🧮 Calcular quantidade</button><a class="btn verde" href="${zap(textoFichaProduto(p))}" target="_blank" rel="noopener">📲 Enviar ficha</a></div>

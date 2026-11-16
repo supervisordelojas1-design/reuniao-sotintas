@@ -2,6 +2,17 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v232",
+      "data": "16/11/2026",
+      "hora": "18:25",
+      "itens": [
+        {
+          "painel": "Mentor ST PRO · Calculadora",
+          "o_que": "Novo bloco Custo ao longo do tempo: informe a durabilidade do produto (já vem preenchida quando o fabricante declara) e, se quiser, a mão de obra por m² ou valor total. A calculadora mostra o custo por m² a cada ano e o custo da obra por ano, também no resumo enviado pelo WhatsApp."
+        }
+      ]
+    },
+    {
       "v": "ast-v231",
       "data": "16/11/2026",
       "hora": "18:00",
