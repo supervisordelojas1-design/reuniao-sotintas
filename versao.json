@@ -4,11 +4,11 @@
     {
       "v": "ast-v221",
       "data": "16/11/2026",
-      "hora": "08:45",
+      "hora": "09:10",
       "itens": [
         {
           "painel": "Escala & Folgas",
-          "o_que": "Nova trava de folga: o vendedor de maior performance não folga no dia de maior movimento da loja. Continua valendo que o gerente não folga junto com nenhum vendedor.",
+          "o_que": "Nova trava de folga: o vendedor mais experiente de alta performance (mais tempo de casa, pela admissão do relatório do RH, entre os de alta performance) não folga no dia de maior movimento da loja. A orientação de cada loja mostra quem é ele. Continua valendo que o gerente não folga junto com nenhum vendedor.",
           "para": [
             "coord"
           ]

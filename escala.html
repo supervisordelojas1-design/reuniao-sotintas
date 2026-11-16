@@ -232,6 +232,9 @@ let P=TODOS.filter(p=>EQ4.includes(p.id));
 const TOP='v1'; // vendedor de maior performance
 /* alta performance: o vendedor TOP e todo vendedor que bateu 100% da meta no mês fechado */
 const alta=p=>p.cargo==='Vendedor'&&(p.id===TOP||(p.pct!==null&&p.pct>=100));
+/* Vendedor-chave (regra do Bruno, 16/11/2026): entre os vendedores de alta performance, o de mais tempo de casa (admissão do RH). Sem data, fica o de maior performance. */
+function chave(){const c=P.filter(p=>alta(p)&&p.adm).sort((a,b)=>a.adm<b.adm?-1:a.adm>b.adm?1:0);return c.length?c[0]:P.find(p=>p.id===TOP)||null}
+const casaTxt=p=>{if(!p||!p.adm)return '';const m=Math.floor((Date.now()-new Date(p.adm+'T12:00:00'))/2629800000),a=Math.floor(m/12),r=m%12;return a?a+(a>1?' anos':' ano')+(r?' e '+r+(r>1?' meses':' mês'):''):r+(r>1?' meses':' mês')};
 /* almoço: o gerente não sai junto com o assistente nem com vendedor de alta performance */
 function almJuntos(){if(S.alm.g===undefined||!P.some(p=>p.id==='g'))return [];return P.filter(p=>p.id!=='g'&&(p.id==='a'||alta(p))&&S.alm[p.id]===S.alm.g)}
 function montaAlmoco(){
@@ -260,10 +263,10 @@ function filaPerf(){return P.filter(p=>p.pct!==null).sort((a,b)=>b.pct-a.pct||b.
 function filaRod(){return P.filter(p=>p.pct===null).sort((a,b)=>b.sem-a.sem)}
 
 function conflito(f){ // regras de dupla
-  const r=[],g=f.g,top=f[TOP];
+  const r=[],g=f.g,top=f[TOP],ch=chave();
   P.forEach(p=>{const d=f[p.id];if(!d)return;
     if(p.cargo==='Gerente'&&d==='seg')r.push('O gerente ('+p.nome+') está de folga na segunda.');
-    if(p.id===TOP&&p.cargo==='Vendedor'&&d===forte(loja())[0])r.push('O vendedor de maior performance ('+p.nome+') está de folga no dia de maior movimento da loja ('+NOME_DIA[d]+').'); // regra do Bruno, 16/11/2026
+    if(ch&&p.id===ch.id&&d===forte(loja())[0])r.push('O vendedor mais experiente de alta performance ('+p.nome+(ch.adm?', '+casaTxt(ch)+' de casa':'')+') está de folga no dia de maior movimento da loja ('+NOME_DIA[d]+').'); // regra do Bruno, 16/11/2026
     if(p.cargo==='Vendedor'&&g&&d===g)r.push((p.id===TOP?'O vendedor de maior performance (':'O vendedor (')+p.nome+') está de folga junto com o gerente ('+NOME_DIA[d]+').');
     if(p.cargo==='Assistente'&&g&&d===g)r.push('Gerente e assistente ('+p.nome+') estão de folga no mesmo dia ('+NOME_DIA[d]+').');
     if(p.cargo==='Auxiliar'&&g&&d===g)r.push('O auxiliar ('+p.nome+') está de folga junto com o gerente ('+NOME_DIA[d]+').');
@@ -536,7 +539,7 @@ function orientacao(){
   const mud=it.filter(x=>x[1]!==x[2]).length;
   let h='<div class="ori"><div class="orih"><b>Orientação para '+l.n+'</b><span>Pré-seleção feita pelo movimento da loja de janeiro a novembro/2026</span>'+(mud?'<button class="btn alt" onclick="trocaLoja(S.loja)">Voltar ao recomendado</button>':'')+'</div>';
   it.forEach(x=>{const ok=x[1]===x[2];h+='<div class="orii '+(ok?'':'mud')+'"><div><b>'+x[0]+': '+x[1]+'</b>'+(ok?'<span class="st ok">✔ seguindo o recomendado</span>':'<span class="st no">⚠ alterado para '+x[2]+'</span>')+'</div><p>'+(ok?'':'Antes de mudar, veja o porquê da escolha. ')+x[3]+'</p></div>'});
-  h+='<p class="orif"><b>Jornada de '+JOR()+'h.</b> '+(JOR()===42?'Dia normal de 8h24 (8h às 17h24 ou 8h36 às 18h). '+(S.sab==='curto'?'Quem trabalha no sábado (8h às 14h) faz os dias de semana das 8h às 18h (9h) e fecha 42h. ':curto()?'Quem trabalha no sábado curto fecha a semana abaixo de 42h. ':'No sábado integral o dia também é de 8h24. ')+'<br>⚖️ Pela EC 141/2026 o limite de 8h por dia continua: os dias de 8h24 e de 9h só valem com o termo aditivo da convenção coletiva. Sem o aditivo até 16/12, use 40h.':'Dia normal de 8h, e nenhum dia passa disso. '+(curto()?'Quem trabalha no sábado curto fecha a semana abaixo de 40h.':''))+'</p><p class="orif">🔥 Dia de maior movimento: <b>'+DNOME[forte(l)[0]]+'</b> ('+forte(l)[1]+'% da média de segunda a sexta; o vendedor de maior performance não folga nele) · Folga: melhor dia <b>'+DNOME[l.dias[0]]+'</b>, depois <b>'+DNOME[l.dias[1]]+'</b> · Ponta mais fraca: <b>'+(l.fraca==='a'?'abertura':'fechamento')+'</b>'+(l.duas?', com 2 pessoas nas duas pontas':', onde 1 pessoa basta')+'</p></div>';
+  h+='<p class="orif"><b>Jornada de '+JOR()+'h.</b> '+(JOR()===42?'Dia normal de 8h24 (8h às 17h24 ou 8h36 às 18h). '+(S.sab==='curto'?'Quem trabalha no sábado (8h às 14h) faz os dias de semana das 8h às 18h (9h) e fecha 42h. ':curto()?'Quem trabalha no sábado curto fecha a semana abaixo de 42h. ':'No sábado integral o dia também é de 8h24. ')+'<br>⚖️ Pela EC 141/2026 o limite de 8h por dia continua: os dias de 8h24 e de 9h só valem com o termo aditivo da convenção coletiva. Sem o aditivo até 16/12, use 40h.':'Dia normal de 8h, e nenhum dia passa disso. '+(curto()?'Quem trabalha no sábado curto fecha a semana abaixo de 40h.':''))+'</p><p class="orif">🔥 Dia de maior movimento: <b>'+DNOME[forte(l)[0]]+'</b> ('+forte(l)[1]+'% da média de segunda a sexta)'+(chave()?'. Nele não folga o vendedor mais experiente de alta performance: <b>'+chave().nome+'</b>'+(chave().adm?' ('+casaTxt(chave())+' de casa)':' (sem data de admissão: vale o de maior performance)'):'')+' · Folga: melhor dia <b>'+DNOME[l.dias[0]]+'</b>, depois <b>'+DNOME[l.dias[1]]+'</b> · Ponta mais fraca: <b>'+(l.fraca==='a'?'abertura':'fechamento')+'</b>'+(l.duas?', com 2 pessoas nas duas pontas':', onde 1 pessoa basta')+'</p></div>';
   return h;
 }
 function opcoes(){
@@ -551,7 +554,8 @@ const HOJE=new Date(2026,10,15),DIA=864e5;
 const fd=d=>String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
 const addAnos=(d,n)=>new Date(d.getFullYear()+n,d.getMonth(),d.getDate());
 const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
-function admDe(p,c){ // datas de exemplo, fixas por pessoa, até chegar o arquivo do RH
+function admDe(p,c){ // data real do RH quando a base traz (vendedores); senão, data de exemplo fixa por pessoa
+  if(p.adm)return new Date(p.adm+'T12:00:00');
   let h=7;for(const ch of c+p.nome)h=(h*31+ch.charCodeAt(0))%100003;
   return new Date(HOJE-(70+h%2100)*DIA);
 }
@@ -572,7 +576,7 @@ function vFerias(){
   if(S.perfil==='vendedor')L=L.filter(r=>r.p.id===EU());
   L.sort((a,b)=>a.ord-b.ord);
   const n=k=>L.filter(r=>r.st===k).length,op=(v,t,sel)=>'<option value="'+v+'"'+(sel?' selected':'')+'>'+t+'</option>';
-  let h='<div class="alert warn" style="margin:0 0 12px"><b>Datas de admissão de exemplo.</b> As pessoas são reais, mas as datas abaixo são fictícias até entrar o arquivo do RH. Não use estes prazos para decidir nada.</div>';
+  let h='<div class="alert warn" style="margin:0 0 12px"><b>Admissão:</b> vendedores com a data real do relatório do RH (08/11/2026). Gerentes, assistentes e auxiliares ainda com data de exemplo (marcados com *), até entrar o arquivo do RH com eles. Não use os prazos marcados para decidir nada.</div>';
   if(S.perfil!=='vendedor'){
     h+='<div class="row">';
     if(S.perfil!=='gerente')h+='<label class="fl">Nível<select onchange="S.nivel=this.value;render()">'+(S.perfil==='coord'?op('rede','Rede',niv==='rede'):'')+op('reg','Região (supervisor)',niv==='reg')+op('loja','Loja selecionada',niv==='loja')+'</select></label>';
@@ -597,7 +601,7 @@ function vFerias(){
   }
   h+='<h3>Pessoas, da mais urgente para a menos</h3><div class="wrap"><table><tr><th style="text-align:left">Pessoa</th><th style="text-align:left">Loja</th><th>Admissão</th><th>Tempo de casa</th><th>Período aquisitivo</th><th style="min-width:170px">Prazo para tirar</th><th>Sair até</th><th>Situação</th>'+(podeEditar()?'<th></th>':'')+'</tr>';
   L.slice(0,60).forEach(r=>{const f=FST[r.st],casa=r.anos>=1?r.anos+(r.anos>1?' anos':' ano'):r.meses+' meses';
-    h+='<tr><td class="nome"><span class="chip" style="background:'+CGC[r.p.cargo]+'">'+CGL[r.p.cargo]+'</span> <b>'+r.p.nome+'</b></td><td class="nome">'+r.l.c+' '+r.l.n+'</td><td>'+fd(r.adm)+'</td><td>'+casa+'</td>';
+    h+='<tr><td class="nome"><span class="chip" style="background:'+CGC[r.p.cargo]+'">'+CGL[r.p.cargo]+'</span> <b>'+r.p.nome+'</b></td><td class="nome">'+r.l.c+' '+r.l.n+'</td><td>'+fd(r.adm)+(r.p.adm?'':' *')+'</td><td>'+casa+'</td>';
     if(r.st==='aq')h+='<td colspan="2">Completa 1 ano em '+fd(r.direito)+'</td><td>—</td>';
     else h+='<td>'+fd(r.aqIni)+' a '+fd(r.aqFim)+'</td><td><div class="tl" title="'+r.pct+'% do prazo já passou. Limite legal: '+fd(r.limite)+'"><i style="width:'+r.pct+'%;background:'+f[1]+'"></i></div><small>'+r.pct+'% do prazo usado</small></td><td><b>'+fd(r.sair)+'</b><br><small>'+(r.dias<0?'há '+(-r.dias)+' dias':'em '+r.dias+' dias')+'</small></td>';
     h+='<td><span class="fst" style="border-color:'+f[1]+'"><i style="background:'+f[1]+'"></i>'+f[2]+' '+f[0]+'</span></td>'+(podeEditar()?'<td>'+(r.st==='aq'?'':'<button class="btn alt mini" onclick="S.fer[\''+r.k+'\']=!S.fer[\''+r.k+'\'];render()">'+(r.st==='feito'?'Desfazer':'Marcar programada')+'</button>')+'</td>':'')+'</tr>'});
