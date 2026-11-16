@@ -489,7 +489,7 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
   }
 
   /* ── ficha da pessoa: linha do tempo do ritual, nota e ações ── */
-  function temProva(r){ return r.tipo==='vend'?!!r.chave&&podeVer():!!(podeVer()&&r.aval&&r.aval.revisao); }
+  function temProva(r){ return r.tipo==='vend'?!!r.chave&&(podeVer()||(gerVe()&&(r.sit==='respondido'||r.sit==='nao_respondeu'))):!!(podeVer()&&r.aval&&r.aval.revisao); }
   function abrirFicha(i){
     var r=TUDO_ATUAL[i]; if(!r) return;
     if(TIPO==='hist'){ fichaHist(r); return; }
@@ -927,6 +927,8 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
 
   function emVisao(){ return !!(window.STDados&&STDados.visao&&STDados.visao()); }
   function podeVer(){ return !!S&&(S.perfil==='coord'||S.perfil==='sup')&&!emVisao(); }
+  /* 16/11/2026 (Bruno): o gerente também abre a prova dos vendedores da loja, depois que o vendedor respondeu ou o prazo acabou */
+  function gerVe(){ return !!S&&S.perfil==='ger'&&!emVisao(); }
   function podePrazo(){ return !!S&&S.perfil==='coord'&&!emVisao(); }
   function prazoCurto(p){ return dBr(p)+' '+String(p).slice(11,16); }
   function toast(m){ var t=document.createElement('div'); t.className='toast'; t.setAttribute('role','status'); t.textContent=m; document.body.appendChild(t); setTimeout(function(){t.remove();},3200); }
@@ -935,7 +937,7 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
     if(!d.open) d.showModal(); }
   function fecharDlg(){ var d=$('dlg'); if(d.open) d.close(); }
 
-  /* ── prova completa: perguntas, resposta do vendedor e gabarito (coordenação e supervisor) ── */
+  /* ── prova completa: perguntas, resposta do vendedor e gabarito (coordenação, supervisor e, depois da resposta ou do prazo, o gerente da loja) ── */
   function verProva(chave){
     var r=TUDO_ATUAL.filter(function(x){return x.chave===chave;})[0]; if(!r) return;
     abrirDlg(r.nome,'Loja '+r.loja+(r.lojaNome?' · '+r.lojaNome:'')+' · '+rotSit(r.sit,'vend'),'<p class="sub">Carregando a prova…</p>');
