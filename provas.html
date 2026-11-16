@@ -805,6 +805,7 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
       (D.G.length?tile(pctTxt(D.cG.respondido,D.G.length),'Gerentes fizeram',D.cG.respondido+' de '+D.G.length,D.cG.respondido/D.G.length>=.7?'#0B7A55':'#C62828'):'')+
       (D.SP.length?tile(pctTxt(D.cS.respondido,D.SP.length),'Supervisores fizeram',D.cS.respondido+' de '+D.SP.length,D.cS.respondido/D.SP.length>=.7?'#0B7A55':'#C62828'):'')+
       (ct?tile(pctTxt(ct.aprovado,D.T.length),'Trilha Mentor aprovados',ct.aprovado+' de '+D.T.length,'#1C3F8F'):'')+'</div>');
+    if(!D.V.length&&!D.G.length&&!D.SP.length&&!D.T.length&&!D.AVL.length&&!(D.SEM&&D.SEM.length)) b('<p class="r-p"><b>Nenhuma prova registrada para os cargos escolhidos neste recorte.</b> Assistente Comercial e Auxiliar não têm prova da semana; entram quando tiverem acesso à Trilha Mentor.</p>');
     var LE=op.cons?rLeitura(E,D):[]; if(LE.length) b('<h3>Leitura do consultor: dos números às ações</h3><ol class="r-cons">'+LE.map(function(x){ return '<li><b>'+esc(x[0])+'.</b> '+esc(x[1])+'<br><span>Ação:</span> '+esc(x[2])+'</li>'; }).join('')+'</ol>');
     /* 16/11/2026 (Bruno): nomes por situação — quem fez, quem está com a prova
        aberta, quem espera o PDI, quem perdeu o prazo e quem ficou sem PDI.
@@ -942,6 +943,7 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
       if(D.SEM&&D.SEM.length) L.push('   ⚠️ '+D.SEM.length+' sem PDI gerado'); }
     if(D.G.length) L.push('• *Gerentes:* '+D.cG.respondido+' de '+D.G.length+' fizeram ('+pctTxt(D.cG.respondido,D.G.length)+')'); if(D.SP.length) L.push('• *Supervisores:* '+D.cS.respondido+' de '+D.SP.length+' fizeram ('+pctTxt(D.cS.respondido,D.SP.length)+')');
     if(D.T.length){ var ct=ctMT(D.T); L.push('• *Trilha Mentor:* '+ct.aprovado+(ct.aprovado===1?' aprovado':' aprovados')+' de '+D.T.length+' · '+ct.nao_iniciou+(ct.nao_iniciou===1?' não iniciou':' não iniciaram')); }
+    if(!D.V.length&&!D.G.length&&!D.SP.length&&!D.T.length&&!(D.SEM&&D.SEM.length)) L.push('• Nenhuma prova registrada para os cargos escolhidos neste recorte.');
     if(op&&op.nomes){ rNomes(D,op).forEach(function(g){ if(!g.L.length) return;
       L.push('',SEP,g.ic+' *'+g.tit.toUpperCase()+' ('+g.L.length+')*'); rPorLoja(g.L,g.k==='respondido').forEach(function(x){ L.push(x); }); }); }
     var AC2=rLeitura(E,D); if(AC2.length){ L.push('',SEP,'🎯 *AÇÕES*'); AC2.forEach(function(x,i){ L.push((i+1)+'. *'+x[0]+':* '+x[2]); }); }
