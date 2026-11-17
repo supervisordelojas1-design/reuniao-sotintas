@@ -44,10 +44,7 @@ h3{font-size:14px;margin:0 0 6px}
 .lista li{display:flex;justify-content:space-between;gap:10px;font-size:13px;border-bottom:1px solid var(--line);padding:4px 0}
 .lista li span:last-child{color:var(--muted);white-space:nowrap}
 .mais{background:none;border:0;color:var(--navy);font:700 12.5px var(--f-body);cursor:pointer;padding:4px 0}
-.reg{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:10px;padding:9px 12px;margin-top:6px;font:inherit;cursor:pointer}
-.reg .seta{display:inline-block;width:14px;color:var(--navy);font-weight:700}
-.reg-corpo{padding:8px 4px 4px 14px;border-left:2px solid var(--line);margin:0 0 4px 8px}
-.reg-corpo select{font:inherit;padding:6px 8px;border-radius:8px;max-width:100%}
+.barra-loja select{font:inherit;padding:6px 8px;border-radius:8px;max-width:100%}
 .q{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0}
 .q p{margin:0 0 6px;font-weight:700}
 .q label{display:flex;gap:8px;align-items:flex-start;padding:6px 8px;border-radius:8px;cursor:pointer}
@@ -358,31 +355,29 @@ h3{font-size:14px;margin:0 0 6px}
     if(D.atual&&GERD.atual<D.atual) return '<section class="card"><h2 style="margin:0">PDI semanal com os gerentes</h2><p class="sub" style="margin:6px 0 0">O PDI desta semana com os gerentes é gerado '+quandoGer()+' às '+horaGer()+'. Depois disso, o botão <b>✓ Fiz o PDI</b> de cada gerente aparece aqui e no card de cada loja, por '+prazoGerH()+' horas. Ao marcar, a avaliação do gerente é liberada.</p>'+cfgHoraGer(ro)+'</section>';
     var G=cods.map(function(c){return gerAtual(c)[0];}).filter(Boolean); if(!G.length) return '';
     var feitos=G.filter(function(x){return x.situacao!=='aguardando'&&x.situacao!=='nao_feito';}).length;
-    var h='<section class="card"><div class="vend-top"><h2 style="margin:0">PDI semanal com os gerentes</h2><span class="sub">feito <b>'+feitos+'/'+G.length+'</b>'+(G[0].prazoFeito?' · marcar até '+esc(prazoTxt(G[0].prazoFeito)):'')+'</span></div><p class="sub" style="margin:4px 0 8px">Abra a região, escolha a loja, faça a conversa com o gerente e toque em <b>✓ Fiz o PDI</b>: a avaliação dele é liberada na hora.</p>';
-    /* em cascata: região (supervisor) → loja. Tudo começa recolhido; a coordenação abre só o que quer ver */
-    var RG=regioesGer(G), ehFeito=function(x){return x.situacao!=='aguardando'&&x.situacao!=='nao_feito';};
-    if(RG.length>1){ var todas=RG.every(function(r){return GREG[r.k];}); h+='<div class="linha"><button class="mais" type="button" data-gregtodas="'+(todas?'0':'1')+'">'+(todas?'Recolher tudo':'Expandir tudo')+'</button></div>'; }
-    RG.forEach(function(r){
-      var ab=!!GREG[r.k], nf=r.G.filter(ehFeito).length, ag=r.G.filter(function(x){return x.situacao==='aguardando';}).length;
-      h+='<button class="reg" type="button" data-greg="'+esc(r.k)+'" aria-expanded="'+ab+'"><span><span class="seta">'+(ab?'▾':'▸')+'</span><b>'+esc(r.nome)+'</b></span><span class="sub">'+r.G.length+' loja'+(r.G.length>1?'s':'')+' · feito <b>'+nf+'/'+r.G.length+'</b>'+(ag?' · '+ag+' aguardando':'')+'</span></button>';
-      if(!ab) return;
-      var sel=GLOJA[r.k]||''; if(sel&&!r.G.some(function(x){return String(x.loja)===sel;})) sel='';
-      h+='<div class="reg-corpo"><label class="sub">Loja <select data-gloja="'+esc(r.k)+'"><option value="">Todas as lojas ('+r.G.length+')</option>'+
-        r.G.map(function(x){ var f=x.ficha||{}; return '<option value="'+esc(x.loja)+'"'+(String(x.loja)===sel?' selected':'')+'>'+esc(x.loja)+' · '+esc(nm(x.gerente||f.gerente||''))+' — '+esc(SIT[x.situacao]||x.situacao)+'</option>'; }).join('')+'</select></label><ul class="lista" style="margin-top:6px">';
-      r.G.filter(function(x){return !sel||String(x.loja)===sel;}).forEach(function(x){ var f=x.ficha||{};
-        h+='<li><span><b>Loja '+esc(x.loja)+'</b> · '+esc(nm(x.gerente||f.gerente||''))+'</span><span class="linha">'+chip(x.situacao)+(x.aval?'<span class="chip c-respondido">'+x.aval.nota+'/'+x.aval.total+'</span>':'')+
-          (x.situacao==='aguardando'&&!ro?'<button class="btn azul" type="button" data-gerfeito="'+esc(x.chave)+'">✓ Fiz o PDI</button>':'')+'</span></li>'; });
-      h+='</ul></div>';
-    });
-    return h+cfgHoraGer(ro)+'</section>';
+    var ag=G.filter(function(x){return x.situacao==='aguardando';}).length, padT=SECPAD==null?D.perfil==='sup':SECPAD, abT=secAb('topo',padT);   /* supervisor: abre aberto, é onde ele marca o PDI */
+    var h='<section class="card"><div class="vend-top"><h2 style="margin:0">PDI semanal com os gerentes</h2><span class="sub">feito <b>'+feitos+'/'+G.length+'</b>'+(ag?' · '+ag+' aguardando':'')+(G[0].prazoFeito?' · marcar até '+esc(prazoTxt(G[0].prazoFeito)):'')+'</span></div><div class="linha">'+secBtn('topo',padT)+'</div>';
+    if(!abT) return h+'</section>';
+    h+='<p class="sub" style="margin:4px 0 8px">Faça a conversa com o gerente e toque em <b>✓ Fiz o PDI</b>: a avaliação dele é liberada na hora.</p><ul class="lista">';
+    G.forEach(function(x){ var f=x.ficha||{};
+      h+='<li><span><b>Loja '+esc(x.loja)+'</b> · '+esc(nm(x.gerente||f.gerente||''))+'</span><span class="linha">'+chip(x.situacao)+(x.aval?'<span class="chip c-respondido">'+x.aval.nota+'/'+x.aval.total+'</span>':'')+
+        (x.situacao==='aguardando'&&!ro?'<button class="btn azul" type="button" data-gerfeito="'+esc(x.chave)+'">✓ Fiz o PDI</button>':'')+'</span></li>'; });
+    return h+'</ul>'+cfgHoraGer(ro)+'</section>';
   }
-  /* regiões do quadro dos gerentes: cada supervisor com as lojas da carteira dele (pelas linhas da semana dos supervisores) */
-  var GREG={}, GLOJA={};
-  function regioesGer(G){
-    var mapa={}; supsAtuais().forEach(function(s){ codsDe(s).forEach(function(c){ mapa[String(c)]=s.supervisor; }); });
-    var R={}, ord=[]; G.forEach(function(x){ var k=mapa[String(x.loja)]||''; if(!R[k]){ R[k]=[]; ord.push(k); } R[k].push(x); });
-    ord.sort(function(a,b){ return !a?1:!b?-1:a.localeCompare(b,'pt-BR'); });
-    return ord.map(function(k){ return {k:k||'_', nome:k?'Região '+nm(k):(ord.length>1?'Outras lojas':'Lojas'), G:R[k]}; });
+  /* ── escolher a loja e expandir/recolher (17/11/2026): a regional se escolhe no Placar; aqui, a loja e o que fica aberto ── */
+  var SEC={}, SECPAD=null, LOJASEL='', BARRA='';   /* SECPAD: null = como a tela abre; true/false = depois de Expandir/Recolher tudo */
+  function secAb(k,pad){ return (k in SEC)?SEC[k]:(pad!=null?pad:!!SECPAD); }
+  function secBtn(k,pad){ var a=secAb(k,pad); return '<button class="mais" type="button" data-sec="'+esc(k)+'" aria-expanded="'+a+'">'+(a?'▾ Recolher':'▸ Expandir')+'</button>'; }
+  function nomeLoja(cod){
+    var n=''; supsAtuais().forEach(function(s){ var d=s.dados||{}; (d.auditoria||[]).forEach(function(a){ if(String(a.cod)===String(cod)&&a.nome) n=a.nome; }); if(d.foco&&String(d.foco.cod)===String(cod)&&d.foco.nome) n=d.foco.nome; });
+    var g=gerAtual(cod)[0], gn=g?nm(g.gerente||(g.ficha&&g.ficha.gerente)||''):'';
+    return (n?' '+n:'')+(gn?' · '+gn:'');
+  }
+  function barraLoja(cods){
+    if(D.perfil==='ger'||cods.length<2) return '';
+    return '<section class="card barra-loja"><div class="linha" style="flex-wrap:wrap;gap:12px"><label class="sub">Loja <select data-lojasel="1"><option value="">Todas as lojas ('+cods.length+')</option>'+
+      cods.map(function(c){ return '<option value="'+esc(c)+'"'+(c===LOJASEL?' selected':'')+'>'+esc(c)+esc(nomeLoja(c))+'</option>'; }).join('')+'</select></label>'+
+      '<button class="mais" type="button" data-sectodas="1">▾ Expandir tudo</button><button class="mais" type="button" data-sectodas="0">▸ Recolher tudo</button></div></section>';
   }
   /* só a coordenação: dia e horário da geração e "Gerar agora" */
   function cfgHoraGer(ro){
@@ -416,12 +411,18 @@ h3{font-size:14px;margin:0 0 6px}
     if(D.perfil==='ger'){ h+=gerAtual().map(cardMeuGer).join(''); gerAnt().forEach(function(x){ if(!gerAtual(x.loja).length||x.fechamento||x.aval) h+=cardMeuGerAnt(x); }); }
     if(!A.length&&!P.length){ $('raiz').innerHTML=h+'<div class="card"><h2>Ainda não há PDI semanal'+(D.perfil==='ger'?' dos vendedores':'')+'</h2><p class="sub">Ele é criado toda segunda de manhã, junto com o resumo semanal das lojas.</p></div>'; PEND.forEach(function(q){ montarQuestoes(q.linha,null,q.px,q.acao); }); PEND=[]; return; }
     var lojas={}, so=lojasDoFiltro(); A.concat(P).forEach(function(l){ if(!so||so[l.loja]) lojas[l.loja]=1; });
+    BARRA=barraLoja(Object.keys(lojas).sort());
+    if(LOJASEL&&!lojas[LOJASEL]) LOJASEL='';
+    if(LOJASEL&&D.perfil!=='ger'){ lojas={}; lojas[LOJASEL]=1; }
     TOPO=D.perfil!=='ger'?topoGer(Object.keys(lojas).sort(),ro):'';
     Object.keys(lojas).sort().forEach(function(cod){
       var a=A.filter(function(l){return l.loja===cod;}), p=P.filter(function(l){return l.loja===cod;});
       var feitos=a.filter(function(l){return l.situacao!=='aguardando'&&l.situacao!=='nao_feito';}).length, resp=a.filter(function(l){return l.aval;});
       var media=resp.length?(resp.reduce(function(s,l){return s+l.aval.nota;},0)/resp.length):null;
-      h+='<section class="card"><div class="vend-top"><h2 style="margin:0">Loja '+esc(cod)+'</h2><span class="sub">PDI feito <b>'+feitos+'/'+a.length+'</b> · respondido <b>'+resp.length+'/'+a.length+'</b>'+(media!=null?' · média <b>'+media.toFixed(1).replace('.',',')+'</b>':'')+'</span></div>';
+      var kL='loja:'+cod, padL=!!SECPAD||LOJASEL===cod, abL=D.perfil==='ger'||secAb(kL,padL);
+      h+='<section class="card"><div class="vend-top"><h2 style="margin:0">Loja '+esc(cod)+(D.perfil==='ger'?'':esc(nomeLoja(cod)))+'</h2><span class="sub">PDI feito <b>'+feitos+'/'+a.length+'</b> · respondido <b>'+resp.length+'/'+a.length+'</b>'+(media!=null?' · média <b>'+media.toFixed(1).replace('.',',')+'</b>':'')+'</span></div>';
+      if(D.perfil!=='ger') h+='<div class="linha">'+secBtn(kL,padL)+'</div>';
+      if(!abL){ h+='</section>'; return; }
       if(D.perfil!=='ger') h+=blocoGerLoja(cod,ro);
       a.forEach(function(l){
         var aberto=ABERTOS[l.chave];
@@ -495,14 +496,16 @@ h3{font-size:14px;margin:0 0 6px}
   function blocoSup(){
     if(!SUPD||!SUPD.linhas||!SUPD.linhas.length) return '';
     var ro=visao(), h='';
-    var vale=function(x){ return !((D.perfil==='coord'||D.perfil==='anl')&&FILTRO)||x.supervisor===FILTRO; };
+    var vale=function(x){ if(((D.perfil==='coord'||D.perfil==='anl')&&FILTRO)&&x.supervisor!==FILTRO) return false;
+      return !LOJASEL||x.meu||codsDe(x).some(function(c){return String(c)===LOJASEL;}); };   /* loja escolhida: só o supervisor dela */
     SUPD.linhas.filter(function(x){return x.semana===SUPD.atual&&vale(x);}).forEach(function(x){
       var d=x.dados||{}, p=x.plano||{}, f=d.foco, ed=x.meu&&x.prazoAberto&&!ro;
       h+='<section class="card"><div class="vend-top"><h2 style="margin:0">'+(x.meu?'Meu PDI semanal':'PDI semanal de '+esc(x.supervisor))+'</h2><div class="linha">'+(x.plano?'<span class="chip c-respondido">Plano registrado</span>':(x.prazoAberto?'<span class="chip c-liberado">Plano até '+esc(prazoTxt(d.prazo))+'</span>':'<span class="chip c-nao_feito">Plano não registrado</span>'))+
         (x.situacao?'<span class="chip c-'+esc(x.situacao)+'">Com a coordenação: '+esc(SIT[x.situacao]||x.situacao)+'</span>':'')+(x.aval?'<span class="chip c-respondido">'+x.aval.nota+'/'+x.aval.total+'</span>':'')+'</div></div>';
       /* ritual da coordenação com o supervisor */
-      h+='<div class="linha" style="margin:6px 0 2px">'+(D.perfil==='coord'&&!ro&&x.situacao==='aguardando'?(x.temQuestoes?'<button class="btn azul" type="button" data-supfeito="'+esc(x.chave)+'">✓ Fiz o PDI com o supervisor</button>':'<span class="sub">As questões do supervisor saem às '+horaGer()+' de segunda.</span>'):'')+
+      h+='<div class="linha" style="margin:6px 0 2px">'+(D.perfil==='coord'&&!ro&&x.situacao==='aguardando'?(x.temQuestoes?'<button class="btn azul" type="button" data-supfeito="'+esc(x.chave)+'">✓ Fiz o PDI com o supervisor</button>':'<span class="sub">As questões do supervisor saem '+quandoGer()+' às '+horaGer()+'.</span>'):'')+
         (x.feito_em?'<span class="sub">PDI com a coordenação feito '+esc(quando(x.feito_em))+(x.feito_por?' por '+esc(x.feito_por):'')+(x.situacao==='liberado'&&x.prazoAval?' · responde até '+esc(prazoTxt(x.prazoAval)):'')+'</span>':(d.prazoFeito&&x.situacao==='aguardando'&&D.perfil==='coord'?'<span class="sub">marcar até '+esc(prazoTxt(d.prazoFeito))+'</span>':''))+'</div>';
+      if(!x.meu){ h+='<div class="linha">'+secBtn('sup:'+x.chave)+'</div>'; if(!secAb('sup:'+x.chave)){ h+='</section>'; return; } }
       if(x.meu&&x.situacao==='liberado'&&!ro){ h+='<h3 style="margin-top:8px">Avaliação da semana com a coordenação</h3><p class="aviso">Responda até <b>'+esc(prazoTxt(x.prazoAval))+'</b>. São '+(x.questoes||[]).length+' questões sobre a sua carteira. Só dá para enviar uma vez.</p><div id="s'+SUPD.linhas.indexOf(x)+'_questoes"><p class="sub">Preparando as questões…</p></div>'; PEND.push({linha:x,px:'s'+SUPD.linhas.indexOf(x)+'_',acao:'semanaSupAval'}); }
       else if(x.aval&&(x.meu||D.perfil==='coord'||D.perfil==='anl')) h+=resultado(x.aval);
       if(d.carteira) h+='<div class="kpis" style="margin-top:8px"><div class="kpi"><span>Carteira</span><b>'+d.carteira.lojas+' lojas</b></div><div class="kpi"><span>Atingido</span><b>'+pct(d.carteira.pct)+'</b></div><div class="kpi"><span>Projeção</span><b>'+pct(d.carteira.pp)+'</b></div><div class="kpi"><span>Falta</span><b>'+brl(d.carteira.falta)+'</b></div></div>';
@@ -520,8 +523,9 @@ h3{font-size:14px;margin:0 0 6px}
     });
     SUPD.linhas.filter(function(x){return x.semana===SUPD.anterior&&vale(x);}).forEach(function(x){
       var p=x.plano||{}, f=x.fechamento||{}, d=x.dados||{}, pode=!ro&&(x.meu||D.perfil==='coord');
-      h+='<section class="card"><h3>Fechamento do supervisor · semana de '+dBr(x.semana)+(x.meu?'':' · '+esc(x.supervisor))+'</h3>'+
-        '<p class="sub" style="margin:0 0 6px">Plano: '+(x.plano?'visita em '+esc(dBr(p.visita))+' na loja '+esc(d.foco?d.foco.cod+' '+d.foco.nome:'')+' · '+esc(p.acao):'não registrado')+'</p>'+
+      h+='<section class="card"><h3>Fechamento do supervisor · semana de '+dBr(x.semana)+(x.meu?'':' · '+esc(x.supervisor))+'</h3>'+(x.meu?'':'<div class="linha">'+secBtn('supf:'+x.chave)+'</div>');
+      if(!x.meu&&!secAb('supf:'+x.chave)){ h+='</section>'; return; }
+      h+='<p class="sub" style="margin:0 0 6px">Plano: '+(x.plano?'visita em '+esc(dBr(p.visita))+' na loja '+esc(d.foco?d.foco.cod+' '+d.foco.nome:'')+' · '+esc(p.acao):'não registrado')+'</p>'+
         (pode?'<div class="fech"><label>Fez a visita?<select id="sfV_'+esc(x.chave)+'"><option value="">—</option><option value="sim"'+(f.visitou==='sim'?' selected':'')+'>Sim</option><option value="nao"'+(f.visitou==='nao'?' selected':'')+'>Não</option></select></label>'+
           '<label>Resultado<input type="text" id="sfR_'+esc(x.chave)+'" value="'+esc(f.resultado||'')+'" placeholder="Ex.: projeção da loja subiu de 70% para 82%"></label></div>'+
           '<div class="linha" style="margin-top:8px"><button class="btn" type="button" data-supfechar="'+esc(x.chave)+'">Salvar fechamento</button>'+(x.fechamento?'<span class="sub">salvo por '+esc(f.por||'')+'</span>':'')+'</div>'
@@ -529,15 +533,15 @@ h3{font-size:14px;margin:0 0 6px}
     });
     return h;
   }
-  function montar(){ if(D.perfil==='vend') telaVendedor(); else { var pl=placar(); TOPO=''; telaLider(); var b=blocoSup(); if(b) $('raiz').insertAdjacentHTML('afterbegin',b); if(TOPO) $('raiz').insertAdjacentHTML('afterbegin',TOPO); if(pl) $('raiz').insertAdjacentHTML('afterbegin',pl); PEND.forEach(function(q){ if(visao()) $(q.px+'questoes').innerHTML='<p class="sub">Modo "Ver como": as questões só aparecem para a própria pessoa.</p>'; else montarQuestoes(q.linha,null,q.px,q.acao); }); PEND=[]; } }
+  function montar(){ if(D.perfil==='vend') telaVendedor(); else { var pl=placar(); TOPO=''; BARRA=''; telaLider(); var b=blocoSup(); if(b) $('raiz').insertAdjacentHTML('afterbegin',b); if(TOPO) $('raiz').insertAdjacentHTML('afterbegin',TOPO); if(BARRA) $('raiz').insertAdjacentHTML('afterbegin',BARRA); if(pl) $('raiz').insertAdjacentHTML('afterbegin',pl); PEND.forEach(function(q){ if(visao()) $(q.px+'questoes').innerHTML='<p class="sub">Modo "Ver como": as questões só aparecem para a própria pessoa.</p>'; else montarQuestoes(q.linha,null,q.px,q.acao); }); PEND=[]; } }
 
-  document.addEventListener('change',function(e){ var t=e.target; if(t&&t.dataset&&t.dataset.gloja!=null){ GLOJA[t.dataset.gloja]=t.value; montar(); } });
+  document.addEventListener('change',function(e){ var t=e.target; if(t&&t.dataset&&t.dataset.lojasel!=null){ LOJASEL=t.value; montar(); } });
   document.addEventListener('click',function(e){
     var t=e.target.closest('button'); if(!t) return;
-    if(t.dataset.filtro!=null){ FILTRO=t.dataset.filtro; try{ localStorage.setItem('st_semana_filtro',FILTRO); }catch(e){} montar(); return; }
+    if(t.dataset.filtro!=null){ FILTRO=t.dataset.filtro; LOJASEL=''; try{ localStorage.setItem('st_semana_filtro',FILTRO); }catch(e){} montar(); return; }
     if(t.dataset.mais){ ABERTOS[t.dataset.mais]=!ABERTOS[t.dataset.mais]; montar(); return; }
-    var rg=t.closest&&t.closest('[data-greg]'); if(rg){ GREG[rg.dataset.greg]=!GREG[rg.dataset.greg]; montar(); return; }
-    if(t.dataset.gregtodas){ var abre=t.dataset.gregtodas==='1'; regioesGer(gerAtual()).forEach(function(r){ GREG[r.k]=abre; }); montar(); return; }
+    if(t.dataset.sec){ SEC[t.dataset.sec]=t.getAttribute('aria-expanded')!=='true'; montar(); return; }
+    if(t.dataset.sectodas!=null){ SECPAD=t.dataset.sectodas==='1'; SEC={}; montar(); return; }
     if(t.dataset.abrir){ ABERTOS[t.dataset.abrir]=!ABERTOS[t.dataset.abrir]; montar(); return; }
     if(t.dataset.feito){
       t.disabled=true; t.textContent='Liberando…';
