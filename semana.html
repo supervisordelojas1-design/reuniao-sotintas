@@ -53,6 +53,7 @@ h3{font-size:14px;margin:0 0 6px}
 .q.erro{border-color:var(--bad)}
 .rev{display:flex;gap:8px;font-size:13px;padding:4px 0;border-bottom:1px solid var(--line)}
 .rev .ok{color:var(--ok);font-weight:800}.rev .x{color:var(--bad);font-weight:800}
+.rev .rev-r{font-weight:600;margin-top:2px}
 .vend{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0;background:var(--surface)}
 .vend-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .vend-top b{font-size:15px}
@@ -247,7 +248,12 @@ h3{font-size:14px;margin:0 0 6px}
   function resultado(a){
     if(!a) return '';
     var h='<div class="bom" style="font-size:15px">Você acertou <b>'+a.nota+' de '+a.total+'</b> sobre o seu PDI'+(a.mentor?' e <b>'+a.mentor.acertos+' de '+a.mentor.total+'</b> no Mentor ('+esc(a.mentor.titulo||a.mentor.modulo)+')':'')+'.</div>';
-    if(a.revisao) h+='<div style="margin-top:8px">'+a.revisao.map(function(r,i){return '<div class="rev"><span class="'+(r.ok?'ok':'x')+'">'+(r.ok?'✓':'✗')+'</span><span>'+(i+1)+'. '+(r.ok?'':'Resposta certa: ')+'<b>'+esc(r.certa)+'</b></span></div>';}).join('')+'</div>';
+    if(a.revisao) h+='<div style="margin-top:8px">'+a.revisao.map(function(r,i){
+      /* 17/11/2026 (Bruno): prova completa na correção — enunciado, o que marcou (se errou) e a resposta certa. Sem enunciado (servidor antigo), fica a linha resumida */
+      if(!r.t) return '<div class="rev"><span class="'+(r.ok?'ok':'x')+'">'+(r.ok?'✓':'✗')+'</span><span>'+(i+1)+'. '+(r.ok?'':'Resposta certa: ')+'<b>'+esc(r.certa)+'</b></span></div>';
+      return '<div class="rev"><span class="'+(r.ok?'ok':'x')+'">'+(r.ok?'✓':'✗')+'</span><span><b>'+(i+1)+'. '+esc(r.t)+'</b>'+
+        (r.ok?'<div class="rev-r ok">✓ Resposta: '+esc(r.certa)+'</div>'
+             :(r.marcada?'<div class="rev-r x">✗ Marcou: '+esc(r.marcada)+'</div>':'')+'<div class="rev-r ok">✓ Resposta certa: '+esc(r.certa)+'</div>')+'</span></div>'; }).join('')+'</div>';
     return h;
   }
   function montarQuestoes(linha,MT,px,acao){
