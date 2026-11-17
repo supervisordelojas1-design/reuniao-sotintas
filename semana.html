@@ -44,6 +44,10 @@ h3{font-size:14px;margin:0 0 6px}
 .lista li{display:flex;justify-content:space-between;gap:10px;font-size:13px;border-bottom:1px solid var(--line);padding:4px 0}
 .lista li span:last-child{color:var(--muted);white-space:nowrap}
 .mais{background:none;border:0;color:var(--navy);font:700 12.5px var(--f-body);cursor:pointer;padding:4px 0}
+.reg{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:10px;padding:9px 12px;margin-top:6px;font:inherit;cursor:pointer}
+.reg .seta{display:inline-block;width:14px;color:var(--navy);font-weight:700}
+.reg-corpo{padding:8px 4px 4px 14px;border-left:2px solid var(--line);margin:0 0 4px 8px}
+.reg-corpo select{font:inherit;padding:6px 8px;border-radius:8px;max-width:100%}
 .q{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0}
 .q p{margin:0 0 6px;font-weight:700}
 .q label{display:flex;gap:8px;align-items:flex-start;padding:6px 8px;border-radius:8px;cursor:pointer}
@@ -354,11 +358,31 @@ h3{font-size:14px;margin:0 0 6px}
     if(D.atual&&GERD.atual<D.atual) return '<section class="card"><h2 style="margin:0">PDI semanal com os gerentes</h2><p class="sub" style="margin:6px 0 0">O PDI desta semana com os gerentes é gerado '+quandoGer()+' às '+horaGer()+'. Depois disso, o botão <b>✓ Fiz o PDI</b> de cada gerente aparece aqui e no card de cada loja, por '+prazoGerH()+' horas. Ao marcar, a avaliação do gerente é liberada.</p>'+cfgHoraGer(ro)+'</section>';
     var G=cods.map(function(c){return gerAtual(c)[0];}).filter(Boolean); if(!G.length) return '';
     var feitos=G.filter(function(x){return x.situacao!=='aguardando'&&x.situacao!=='nao_feito';}).length;
-    var h='<section class="card"><div class="vend-top"><h2 style="margin:0">PDI semanal com os gerentes</h2><span class="sub">feito <b>'+feitos+'/'+G.length+'</b>'+(G[0].prazoFeito?' · marcar até '+esc(prazoTxt(G[0].prazoFeito)):'')+'</span></div><p class="sub" style="margin:4px 0 8px">Faça a conversa com o gerente e toque em <b>✓ Fiz o PDI</b>: a avaliação dele é liberada na hora.</p><ul class="lista">';
-    G.forEach(function(x){ var f=x.ficha||{};
-      h+='<li><span><b>Loja '+esc(x.loja)+'</b> · '+esc(nm(x.gerente||f.gerente||''))+'</span><span class="linha">'+chip(x.situacao)+(x.aval?'<span class="chip c-respondido">'+x.aval.nota+'/'+x.aval.total+'</span>':'')+
-        (x.situacao==='aguardando'&&!ro?'<button class="btn azul" type="button" data-gerfeito="'+esc(x.chave)+'">✓ Fiz o PDI</button>':'')+'</span></li>'; });
-    return h+'</ul>'+cfgHoraGer(ro)+'</section>';
+    var h='<section class="card"><div class="vend-top"><h2 style="margin:0">PDI semanal com os gerentes</h2><span class="sub">feito <b>'+feitos+'/'+G.length+'</b>'+(G[0].prazoFeito?' · marcar até '+esc(prazoTxt(G[0].prazoFeito)):'')+'</span></div><p class="sub" style="margin:4px 0 8px">Abra a região, escolha a loja, faça a conversa com o gerente e toque em <b>✓ Fiz o PDI</b>: a avaliação dele é liberada na hora.</p>';
+    /* em cascata: região (supervisor) → loja. Tudo começa recolhido; a coordenação abre só o que quer ver */
+    var RG=regioesGer(G), ehFeito=function(x){return x.situacao!=='aguardando'&&x.situacao!=='nao_feito';};
+    if(RG.length>1){ var todas=RG.every(function(r){return GREG[r.k];}); h+='<div class="linha"><button class="mais" type="button" data-gregtodas="'+(todas?'0':'1')+'">'+(todas?'Recolher tudo':'Expandir tudo')+'</button></div>'; }
+    RG.forEach(function(r){
+      var ab=!!GREG[r.k], nf=r.G.filter(ehFeito).length, ag=r.G.filter(function(x){return x.situacao==='aguardando';}).length;
+      h+='<button class="reg" type="button" data-greg="'+esc(r.k)+'" aria-expanded="'+ab+'"><span><span class="seta">'+(ab?'▾':'▸')+'</span><b>'+esc(r.nome)+'</b></span><span class="sub">'+r.G.length+' loja'+(r.G.length>1?'s':'')+' · feito <b>'+nf+'/'+r.G.length+'</b>'+(ag?' · '+ag+' aguardando':'')+'</span></button>';
+      if(!ab) return;
+      var sel=GLOJA[r.k]||''; if(sel&&!r.G.some(function(x){return String(x.loja)===sel;})) sel='';
+      h+='<div class="reg-corpo"><label class="sub">Loja <select data-gloja="'+esc(r.k)+'"><option value="">Todas as lojas ('+r.G.length+')</option>'+
+        r.G.map(function(x){ var f=x.ficha||{}; return '<option value="'+esc(x.loja)+'"'+(String(x.loja)===sel?' selected':'')+'>'+esc(x.loja)+' · '+esc(nm(x.gerente||f.gerente||''))+' — '+esc(SIT[x.situacao]||x.situacao)+'</option>'; }).join('')+'</select></label><ul class="lista" style="margin-top:6px">';
+      r.G.filter(function(x){return !sel||String(x.loja)===sel;}).forEach(function(x){ var f=x.ficha||{};
+        h+='<li><span><b>Loja '+esc(x.loja)+'</b> · '+esc(nm(x.gerente||f.gerente||''))+'</span><span class="linha">'+chip(x.situacao)+(x.aval?'<span class="chip c-respondido">'+x.aval.nota+'/'+x.aval.total+'</span>':'')+
+          (x.situacao==='aguardando'&&!ro?'<button class="btn azul" type="button" data-gerfeito="'+esc(x.chave)+'">✓ Fiz o PDI</button>':'')+'</span></li>'; });
+      h+='</ul></div>';
+    });
+    return h+cfgHoraGer(ro)+'</section>';
+  }
+  /* regiões do quadro dos gerentes: cada supervisor com as lojas da carteira dele (pelas linhas da semana dos supervisores) */
+  var GREG={}, GLOJA={};
+  function regioesGer(G){
+    var mapa={}; supsAtuais().forEach(function(s){ codsDe(s).forEach(function(c){ mapa[String(c)]=s.supervisor; }); });
+    var R={}, ord=[]; G.forEach(function(x){ var k=mapa[String(x.loja)]||''; if(!R[k]){ R[k]=[]; ord.push(k); } R[k].push(x); });
+    ord.sort(function(a,b){ return !a?1:!b?-1:a.localeCompare(b,'pt-BR'); });
+    return ord.map(function(k){ return {k:k||'_', nome:k?'Região '+nm(k):(ord.length>1?'Outras lojas':'Lojas'), G:R[k]}; });
   }
   /* só a coordenação: dia e horário da geração e "Gerar agora" */
   function cfgHoraGer(ro){
@@ -507,10 +531,13 @@ h3{font-size:14px;margin:0 0 6px}
   }
   function montar(){ if(D.perfil==='vend') telaVendedor(); else { var pl=placar(); TOPO=''; telaLider(); var b=blocoSup(); if(b) $('raiz').insertAdjacentHTML('afterbegin',b); if(TOPO) $('raiz').insertAdjacentHTML('afterbegin',TOPO); if(pl) $('raiz').insertAdjacentHTML('afterbegin',pl); PEND.forEach(function(q){ if(visao()) $(q.px+'questoes').innerHTML='<p class="sub">Modo "Ver como": as questões só aparecem para a própria pessoa.</p>'; else montarQuestoes(q.linha,null,q.px,q.acao); }); PEND=[]; } }
 
+  document.addEventListener('change',function(e){ var t=e.target; if(t&&t.dataset&&t.dataset.gloja!=null){ GLOJA[t.dataset.gloja]=t.value; montar(); } });
   document.addEventListener('click',function(e){
     var t=e.target.closest('button'); if(!t) return;
     if(t.dataset.filtro!=null){ FILTRO=t.dataset.filtro; try{ localStorage.setItem('st_semana_filtro',FILTRO); }catch(e){} montar(); return; }
     if(t.dataset.mais){ ABERTOS[t.dataset.mais]=!ABERTOS[t.dataset.mais]; montar(); return; }
+    var rg=t.closest&&t.closest('[data-greg]'); if(rg){ GREG[rg.dataset.greg]=!GREG[rg.dataset.greg]; montar(); return; }
+    if(t.dataset.gregtodas){ var abre=t.dataset.gregtodas==='1'; regioesGer(gerAtual()).forEach(function(r){ GREG[r.k]=abre; }); montar(); return; }
     if(t.dataset.abrir){ ABERTOS[t.dataset.abrir]=!ABERTOS[t.dataset.abrir]; montar(); return; }
     if(t.dataset.feito){
       t.disabled=true; t.textContent='Liberando…';
