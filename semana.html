@@ -140,6 +140,12 @@ h3{font-size:14px;margin:0 0 6px}
     return fetch(URL_BANCO,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(b)}).then(function(r){return r.json();});
   }
   function horaGer(){ var h=(GERHORA&&GERHORA.hora)||'12:15', x=h.split(':'); return Number(x[0])+'h'+(x[1]==='00'?'':x[1]); }
+  /* dia da geração escolhido pela coordenação (1 segunda … 6 sábado; padrão segunda) e prazo do "Fiz o PDI" em horas depois da geração */
+  var DIASGER={'1':'segunda','2':'terça','3':'quarta','4':'quinta','5':'sexta','6':'sábado'};
+  function diaGerNum(){ var n=String((GERHORA&&GERHORA.diaNum)||'1'); return DIASGER[n]?n:'1'; }
+  function diaGer(){ return DIASGER[diaGerNum()]; }
+  function quandoGer(){ var n=diaGerNum(), hoje=String(new Date().getDay()); return hoje===n?'hoje':(n==='6'?'no sábado':'na '+DIASGER[n]); }
+  function prazoGerH(){ return Number(GERHORA&&GERHORA.prazoHoras)||12; }
   function carregar(){
     return STDados.chamar('semana').then(function(j){
       if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não respondeu.');
@@ -331,8 +337,8 @@ h3{font-size:14px;margin:0 0 6px}
   /* bloco dentro do card da loja (supervisor / coordenação) */
   function blocoGerLoja(cod,ro){
     var x=gerAtual(cod)[0]; if(!x) return '';
-    /* a semana dos gerentes nasce segunda no horário escolhido pela coordenação (padrão 12h15): antes disso, o que existe é a semana passada */
-    if(GERD&&D.atual&&GERD.atual<D.atual) return '<div class="vend" style="border-color:var(--navy)"><b>PDI semanal com o gerente</b><p class="sub" style="margin:4px 0 0">O PDI desta semana com o gerente é gerado hoje às '+horaGer()+'. A partir daí aparece aqui o botão <b>✓ Fiz o PDI com o gerente</b>, que vale até quarta às 18h.</p></div>';
+    /* a semana dos gerentes nasce no dia e horário escolhidos pela coordenação (padrão 12h15): antes disso, o que existe é a semana passada */
+    if(GERD&&D.atual&&GERD.atual<D.atual) return '<div class="vend" style="border-color:var(--navy)"><b>PDI semanal com o gerente</b><p class="sub" style="margin:4px 0 0">O PDI desta semana com o gerente é gerado '+quandoGer()+' às '+horaGer()+'. A partir daí aparece aqui o botão <b>✓ Fiz o PDI com o gerente</b>, que vale por '+prazoGerH()+' horas.</p></div>';
     var ab=ABERTOS['g:'+x.chave], f=x.ficha||{};
     var h='<div class="vend" style="border-color:var(--navy)"><div class="vend-top"><div><b>PDI semanal com o gerente · '+esc(nm(x.gerente||f.gerente||''))+'</b><div class="sub">'+esc(f.orient||'')+'</div></div><div class="linha">'+chip(x.situacao)+(x.aval?'<span class="chip c-respondido">'+x.aval.nota+'/'+x.aval.total+'</span>':'')+'</div></div>';
     h+='<div class="linha" style="margin-top:8px">'+(x.situacao==='aguardando'&&!ro?'<button class="btn azul" type="button" data-gerfeito="'+esc(x.chave)+'">✓ Fiz o PDI com o gerente</button>':'')+
@@ -345,7 +351,7 @@ h3{font-size:14px;margin:0 0 6px}
   /* topo da tela do supervisor/coordenação: todos os gerentes da carteira, com o botão "Fiz o PDI" à vista */
   function topoGer(cods,ro){
     if(!GERD) return '';
-    if(D.atual&&GERD.atual<D.atual) return '<section class="card"><h2 style="margin:0">PDI semanal com os gerentes</h2><p class="sub" style="margin:6px 0 0">O PDI desta semana com os gerentes é gerado hoje às '+horaGer()+'. Depois disso, o botão <b>✓ Fiz o PDI</b> de cada gerente aparece aqui e no card de cada loja, até quarta às 18h. Ao marcar, a avaliação do gerente é liberada.</p>'+cfgHoraGer(ro)+'</section>';
+    if(D.atual&&GERD.atual<D.atual) return '<section class="card"><h2 style="margin:0">PDI semanal com os gerentes</h2><p class="sub" style="margin:6px 0 0">O PDI desta semana com os gerentes é gerado '+quandoGer()+' às '+horaGer()+'. Depois disso, o botão <b>✓ Fiz o PDI</b> de cada gerente aparece aqui e no card de cada loja, por '+prazoGerH()+' horas. Ao marcar, a avaliação do gerente é liberada.</p>'+cfgHoraGer(ro)+'</section>';
     var G=cods.map(function(c){return gerAtual(c)[0];}).filter(Boolean); if(!G.length) return '';
     var feitos=G.filter(function(x){return x.situacao!=='aguardando'&&x.situacao!=='nao_feito';}).length;
     var h='<section class="card"><div class="vend-top"><h2 style="margin:0">PDI semanal com os gerentes</h2><span class="sub">feito <b>'+feitos+'/'+G.length+'</b>'+(G[0].prazoFeito?' · marcar até '+esc(prazoTxt(G[0].prazoFeito)):'')+'</span></div><p class="sub" style="margin:4px 0 8px">Faça a conversa com o gerente e toque em <b>✓ Fiz o PDI</b>: a avaliação dele é liberada na hora.</p><ul class="lista">';
@@ -354,15 +360,16 @@ h3{font-size:14px;margin:0 0 6px}
         (x.situacao==='aguardando'&&!ro?'<button class="btn azul" type="button" data-gerfeito="'+esc(x.chave)+'">✓ Fiz o PDI</button>':'')+'</span></li>'; });
     return h+'</ul>'+cfgHoraGer(ro)+'</section>';
   }
-  /* só a coordenação: horário da geração de segunda e "Gerar agora" */
+  /* só a coordenação: dia e horário da geração e "Gerar agora" */
   function cfgHoraGer(ro){
     if(D.perfil!=='coord'||ro) return '';
-    var g=GERHORA, h=(g&&g.hora)||'12:15';
-    return '<div class="comp" style="margin-top:10px"><b>Horário da geração (coordenação)</b><div class="sub">Toda segunda, neste horário, o servidor gera o PDI com os gerentes e as questões dos supervisores, e o botão ✓ Fiz o PDI aparece. Só gera se o Painel já estiver atualizado no dia.</div>'+
-      '<div class="linha" style="margin-top:8px;flex-wrap:wrap;gap:8px"><label class="sub">Segunda às <input type="time" id="gerHora" value="'+esc(h)+'" min="06:00" max="18:00" step="900" style="font:inherit;padding:6px 8px;border-radius:8px"></label>'+
-      '<button class="btn" type="button" data-gerhora="1">Salvar horário</button>'+
+    var g=GERHORA, h=(g&&g.hora)||'12:15', dn=diaGerNum();
+    var ops=['1','2','3','4','5','6'].map(function(n){ var t=DIASGER[n]; return '<option value="'+n+'"'+(n===dn?' selected':'')+'>'+t.charAt(0).toUpperCase()+t.slice(1)+'</option>'; }).join('');
+    return '<div class="comp" style="margin-top:10px"><b>Dia e horário da geração (coordenação)</b><div class="sub">Toda semana, no dia e horário escolhidos, o servidor gera o PDI com os gerentes e as questões dos supervisores, e o botão ✓ Fiz o PDI aparece e vale por '+prazoGerH()+' horas. Só gera se o Painel já estiver atualizado no dia.</div>'+
+      '<div class="linha" style="margin-top:8px;flex-wrap:wrap;gap:8px"><label class="sub">Dia <select id="gerDia" style="font:inherit;padding:6px 8px;border-radius:8px">'+ops+'</select></label><label class="sub">às <input type="time" id="gerHora" value="'+esc(h)+'" min="06:00" max="18:00" step="900" style="font:inherit;padding:6px 8px;border-radius:8px"></label>'+
+      '<button class="btn" type="button" data-gerhora="1">Salvar dia e horário</button>'+
       (g&&g.gerada?'<span class="sub">Semana já gerada'+(g.geradaEm?' em '+esc(prazoTxt(g.geradaEm)):'')+'</span>':'<button class="btn azul" type="button" data-gergerar="1">Gerar agora</button>')+'</div>'+
-      (g?'<div class="sub" style="margin-top:6px">'+(g.por?'Último ajuste: '+esc(g.por)+'.':'Horário padrão.')+(g.agendador?'':' O agendador é ligado ao salvar o horário.')+'</div>':'<div class="sub" style="margin-top:6px">Não consegui ler o horário no servidor.</div>')+'</div>';
+      (g?'<div class="sub" style="margin-top:6px">'+(g.por?'Último ajuste: '+esc(g.por)+'.':'Dia e horário padrão.')+(g.agendador?'':' O agendador é ligado ao salvar.')+'</div>':'<div class="sub" style="margin-top:6px">Não consegui ler o horário no servidor.</div>')+'</div>';
   }
   function blocoGerFech(cod,ro){
     var x=gerAnt(cod)[0]; if(!x) return '';
@@ -512,9 +519,9 @@ h3{font-size:14px;margin:0 0 6px}
       return;
     }
     if(t.dataset.gerhora){
-      var hv=($('gerHora')||{}).value||''; t.disabled=true; t.textContent='Salvando…';
-      banco('pdiGerHora',{hora:hv}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não confirmou.'); GERHORA=j; toast('Horário salvo: segunda às '+horaGer()+'.'); montar(); })
-        .catch(function(e){ toast('Não salvou: '+(e.message||e)); t.disabled=false; t.textContent='Salvar horário'; });
+      var hv=($('gerHora')||{}).value||'', dv=($('gerDia')||{}).value||'1'; t.disabled=true; t.textContent='Salvando…';
+      banco('pdiGerHora',{hora:hv,dia:dv}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não confirmou.'); GERHORA=j; toast('Salvo: '+diaGer()+' às '+horaGer()+'.'); montar(); })
+        .catch(function(e){ toast('Não salvou: '+(e.message||e)); t.disabled=false; t.textContent='Salvar dia e horário'; });
       return;
     }
     if(t.dataset.gergerar){
