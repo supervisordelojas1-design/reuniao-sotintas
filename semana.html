@@ -176,6 +176,9 @@ h3{font-size:14px;margin:0 0 6px}
   }
 
   /* ───────── compromissos (mesma ficha para vendedor e gerente) ───────── */
+  /* 17/11/2026 (Bruno): ligações de orçamento, carteira, pós-venda e pintores só valem se lançadas no CRM do app */
+  var CRM_REGRA='As ações de ligação para orçamentos em aberto, carteira de clientes, pós-venda e pintores só serão validadas se estiverem lançadas no CRM do app, na aba de cada área (Orçamentos, Carteira, Pós-venda e Pintores).';
+  function crmNota(){ return '<div class="comp" style="border-left-color:var(--bad);background:var(--badbg)"><b style="color:var(--bad)">⚠ Validação pelo CRM</b><div style="margin-top:4px">'+esc(CRM_REGRA)+'</div><div style="margin-top:6px"><a class="btn" style="display:inline-block;text-decoration:none;padding:6px 12px" href="crm.html">Abrir o CRM</a></div></div>'; }
   function blocoComp(c, id){
     if(!c) return '<p class="sub">Sem compromissos registrados.</p>';
     var h='<div class="kpis"><div class="kpi"><span>Meta do mês</span><b>'+brl(c.meta)+'</b></div><div class="kpi"><span>Realizado</span><b>'+brl(c.fat)+'</b></div>'+
@@ -184,13 +187,13 @@ h3{font-size:14px;margin:0 0 6px}
     h+='<div class="comp"><span class="n">1</span><b>'+(c.foco?'Indicador: '+esc(c.foco.nome)+' — de '+esc(c.foco.atual)+' para '+esc(c.foco.meta):'Indicadores CPF na meta: foco em volume')+'</b>'+
       (c.foco?'<div style="margin-top:4px"><b>Ação:</b> '+esc(c.foco.acao)+'</div><div><b>O gerente observa:</b> '+esc(c.foco.obs)+'</div>':'')+'</div>';
     var L=c.lista||[], ab=ABERTOS[id+':l'];
-    h+='<div class="comp"><span class="n">2</span><b>Positivar '+(c.positMeta||10)+' clientes CNPJ na semana (2 por dia útil)</b><div class="sub">Lista de '+L.length+' clientes da carteira sem compra no mês</div>'+
+    h+='<div class="comp"><span class="n">2</span><b>Positivar '+(c.positMeta||10)+' clientes CNPJ na semana (2 por dia útil)</b><div class="sub">Lista de '+L.length+' clientes da carteira sem compra no mês · lance cada ligação no CRM (aba Carteira)</div>'+
       '<ul class="lista">'+L.slice(0,ab?L.length:5).map(function(x){return '<li><span>'+esc(x.cli)+(x.daLoja?' <span class="sub">(sem vendedor)</span>':'')+'</span><span>média '+brl(x.media)+'</span></li>';}).join('')+'</ul>'+
       (L.length>5?'<button class="mais" type="button" data-mais="'+esc(id)+':l">'+(ab?'Mostrar menos':'Ver os '+L.length+' clientes')+'</button>':'')+'</div>';
     var O=c.orcs||[];
-    h+='<div class="comp"><span class="n">3</span><b>Retornar '+O.length+' orçamento'+(O.length===1?'':'s')+' em aberto</b>'+
+    h+='<div class="comp"><span class="n">3</span><b>Retornar '+O.length+' orçamento'+(O.length===1?'':'s')+' em aberto</b><div class="sub">Lance cada retorno no CRM (aba Orçamentos)</div>'+
       (O.length?'<ul class="lista">'+O.map(function(o){return '<li><span>'+(o.doc?'<b>Nº '+esc(o.doc)+'</b> · ':'')+esc(o.cli)+(o.tel?' · <a href="tel:'+esc(String(o.tel).replace(/[^\d+]/g,''))+'" style="color:var(--navy)">'+esc(o.tel)+'</a>':'')+'</span><span>'+brl(o.valor)+(o.dias!=null?' · '+o.dias+' dias':'')+'</span></li>';}).join('')+'</ul>':'<div class="sub">Nenhum orçamento em aberto no seu nome.</div>')+'</div>';
-    return h;
+    return h+crmNota();
   }
 
   /* ───────── avaliação do Mentor: o próximo módulo da trilha que ainda não foi aprovado ───────── */
@@ -326,7 +329,7 @@ h3{font-size:14px;margin:0 0 6px}
   }
   function blocoCompGer(C){
     if(!C||!C.length) return '<p class="sub">Sem compromissos registrados.</p>';
-    return C.map(function(c){return '<div class="comp"><span class="n">'+c.n+'</span><b>'+esc(c.titulo)+'</b><div style="margin-top:4px"><b>Ação:</b> '+esc(c.acao)+'</div>'+(c.obs?'<div><b>Observar:</b> '+esc(c.obs)+'</div>':'')+'</div>';}).join('');
+    return crmNota()+C.map(function(c){return '<div class="comp"><span class="n">'+c.n+'</span><b>'+esc(c.titulo)+'</b><div style="margin-top:4px"><b>Ação:</b> '+esc(c.acao)+'</div>'+(c.obs?'<div><b>Observar:</b> '+esc(c.obs)+'</div>':'')+'</div>';}).join('');
   }
   /* o card do próprio gerente */
   function cardMeuGer(x,i){
