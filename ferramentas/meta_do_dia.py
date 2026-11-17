@@ -159,7 +159,7 @@ def gerar(cod):
     h.append("</table>")
     if any(v['crm'] for v in VS):
         ns = sum(len(v['crm']['sem']) for v in VS if v['crm']); vs_ = sum(x['valor'] for v in VS if v['crm'] for x in v['crm']['sem']); nr = sum(len(v['crm']['ret']) for v in VS if v['crm'])
-        h.append(f"<div style='margin-top:12px;background:#eff6ff;border-radius:12px;padding:12px 14px;font-size:13px'><b style='color:#1e3a8a'>📋 CRM de Vendas</b> · <b>{ns}</b> orçamentos sem contato há 2 dias ou mais ({R(vs_)}) · <b>{nr}</b> retornos de hoje ou vencidos. <span style='color:#6b7280'>Cada vendedor registra o contato no app; você acompanha na aba Loja.</span></div>")
+        h.append(f"<div style='margin-top:12px;background:#eff6ff;border-radius:12px;padding:12px 14px;font-size:13px'><b style='color:#1e3a8a'>📋 CRM de Vendas</b> · <b>{ns}</b> orçamentos sem contato há 2 dias ou mais ({R(vs_)}) · <b>{nr}</b> retornos de hoje ou vencidos. <span style='color:#b91c1c'><b>⚠ Só é validado o que estiver lançado no CRM</b> (Orçamentos, Carteira, Pós-venda e Pintores).</span></div>")
     PV = []
     for v in VS:
         ok = v['ritmo'] >= v['md']; c = cor(v['alc']); falta = v['md'] - v['ritmo']
@@ -178,7 +178,7 @@ def gerar(cod):
             def lin(x, extra=''):
                 return (f"<tr style='border-top:1px solid #dbeafe'><td style='padding:5px 0'><b>{e(x['cli'].title()[:38])}</b><div style='font-size:11px;color:#6b7280'>Nº {e(str(x['doc']))}"
                         + (f" · há {x['dias']} dias" if x['dias'] is not None else '') + extra + f"</div></td><td align='right' style='white-space:nowrap;font-weight:bold'>{R(x['valor'])}</td></tr>")
-            vh.append(f"<div style='margin-top:12px;background:#eff6ff;border-radius:10px;padding:10px 12px'><div style='font-size:13px;font-weight:bold;color:#1e3a8a'>📋 Orçamentos para retornar hoje <span style='font-weight:normal;color:#6b7280'>· registre o contato no CRM de Vendas do app</span></div>")
+            vh.append(f"<div style='margin-top:12px;background:#eff6ff;border-radius:10px;padding:10px 12px'><div style='font-size:13px;font-weight:bold;color:#1e3a8a'>📋 Orçamentos para retornar hoje <span style='font-weight:normal;color:#6b7280'>· só vale se lançado no CRM do app</span></div>")
             if cr['ret']:
                 vh.append(f"<div style='font-size:12px;margin:8px 0 2px'><b>{len(cr['ret'])}</b> com retorno marcado para hoje ou vencido</div><table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='border-collapse:collapse;font-size:12.5px'>"
                           + ''.join(lin(x, f" · retorno {x['quando'][8:10]}/{x['quando'][5:7]}") for x in cr['ret'][:2]) + "</table>")
