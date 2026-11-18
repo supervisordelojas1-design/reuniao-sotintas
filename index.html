@@ -9666,7 +9666,7 @@ html[data-theme="dark"] #ovInicio .ini-hoje.ini-pontos{border-left-color:#7aa2ff
 html[data-theme="dark"] #ovInicio .ip-k{background:rgba(255,255,255,.06)}
 html[data-theme="dark"] #ovInicio .ip-k small,html[data-theme="dark"] #ovInicio .ip-l.ip-eu .ip-n{color:#9db8ff}
 /* v61 — modo vendedor: só os cards dele, sem o resumo do dia */
-body.modo-vendedor #ovInicio .ini-card:not([data-vend]){display:none!important}
+body.modo-vendedor #ovInicio .ini-card:not([data-vend]):not(.regua-on){display:none!important}
 /* administrador de conteúdo: sem Pontos ST e sem Ranking (são da área comercial) */
 body.modo-mkt #iniPontos,body.modo-mkt #iniTopPts,body.modo-mkt #ovInicio .ini-card[data-act="ranking"]{display:none!important}
 body.modo-vendedor #ovInicio .ini-sec,body.modo-vendedor #ovInicio #iniHoje{display:none!important}
@@ -9752,14 +9752,26 @@ body.foco .wrap{padding-bottom:40px}
     pontos:'verRanking', ranking:'verRanking', provas:'verProvas', avulsas:'verMinhasProvas',
     uso:'verUso', crm:'verCRM', bonus:'verBonus', bonusger:'verBonusGer', simulador:'verSimulador', proposta:'verProposta',
     mentor:'verMentor', especialista:'verEspecialista', cadastro:'gerirCadastro',
-    acessos:'gerirAcessos', conteudo:'gerirConteudo', central:'gerirCentral', escala:'verEscala', contatos:'verContatos' };
+    acessos:'gerirAcessos', conteudo:'gerirConteudo', central:'gerirCentral', escala:'verEscala', contatos:'verContatos',
+    /* nov/2026: blocos da Operação também entram na régua */
+    agenda:'verAgenda', agendar:'verAgendar', agora:'verReuniao', rotina:'verRotina', despesas:'verDespesas' };
   function aplicarRegua(){
     if(typeof podePainel!=='function') return;
     Array.prototype.forEach.call(grid.querySelectorAll('[data-act]'),function(c){
       var ch=CHAVE_DO_CARD[c.getAttribute('data-act')]; if(!ch) return;
-      var agora = c.style.display!=='none';
+      /* o vendedor só vê por regra os cards marcados data-vend (o CSS esconde o resto);
+         o padrão precisa dizer isso, senão a régua acharia que a Operação já está liberada */
+      var agora = c.style.display!=='none' && !(ehVend() && !c.hasAttribute('data-vend'));
       var vale = podePainel(ch, agora);
       c.style.display = vale ? '' : 'none';
+      c.classList.toggle('regua-on', !!vale);
+    });
+    /* seção sem nenhum card à mostra não deixa o título sozinho na tela */
+    Array.prototype.forEach.call(grid.querySelectorAll('.ini-sec'),function(t){
+      var g=t.nextElementSibling; if(!g||!g.classList.contains('ini-grid')) return;
+      var vend=ehVend(), tem=Array.prototype.some.call(g.querySelectorAll('.ini-card'),function(c){
+        return c.style.display!=='none' && !(vend && !c.hasAttribute('data-vend') && !c.classList.contains('regua-on')); });
+      t.style.display = tem ? '' : 'none'; g.style.display = tem ? '' : 'none';
     });
   }
   function saudar(){
@@ -10246,8 +10258,13 @@ body.foco .wrap{padding-bottom:40px}
     ['verProposta','Proposta de Vendedor','proposta'],['verMentor','Mentor','mentor'],
     ['verEspecialista','Especialista ST','especialista'],
     ['gerirCadastro','Cadastro da Equipe','cadastro'],['gerirAcessos','Acesso de usuários','acessos'],
-    ['gerirConteudo','Painel de Conteúdo','conteudo'],['gerirCentral','Central de Atualização','central']
+    ['gerirConteudo','Painel de Conteúdo','conteudo'],['gerirCentral','Central de Atualização','central'],
+    /* subárea Operação: os blocos de baixo da tela inicial */
+    ['#','Operação'],
+    ['verAgenda','Agenda','agenda'],['verAgendar','Agendar','agendar'],['verReuniao','Reunião','agora'],
+    ['verRotina','Rotina','rotina'],['verDespesas','Despesas','despesas']
   ];
+  PAINEIS.unshift(['#','Gestão']);
   var CICLO={'':'1','1':'0','0':''};
   var VISUAL={ '1':['✓','#0f6b40','#dcf3e6','liberado por você'],
                '0':['✗','#b3261e','#fbe3e1','bloqueado por você'] };
@@ -10293,7 +10310,7 @@ body.foco .wrap{padding-bottom:40px}
       else if(c.hasAttribute('data-crm'))       v = ['vend','ger','sup','anl','coord'].indexOf(pf)>=0;
       else if(c.hasAttribute('data-avulsas'))   v = ['vend','ger','sup'].indexOf(pf)>=0;
       else if(c.hasAttribute('data-contatos'))  v = !vend;
-      else v = true;   /* Operação: agenda, rotina, despesas — todo mundo */
+      else v = !vend || c.hasAttribute('data-vend');   /* Operação: agenda, rotina, despesas — todos, menos o vendedor */
       out[a]=!!v;
     });
     return out;
@@ -10378,7 +10395,12 @@ body.foco .wrap{padding-bottom:40px}
           '<div><button type="button" data-limpa="'+esc(i.cargo)+'" title="Volta toda a coluna ao padrão" '+
           'style="margin-top:3px;border:0;background:transparent;color:#8a95a8;font:700 10.5px inherit;cursor:pointer;text-decoration:underline">limpar</button></div></th>'; }).join('')+
         '</tr></thead><tbody>';
-      PAINEIS.forEach(function(p,n){
+      var n=0;
+      PAINEIS.forEach(function(p){
+        if(p[0]==='#'){ n=0;
+          h+='<tr><td colspan="'+(ITENS.length+1)+'" style="padding:9px 8px 6px;font:800 11px inherit;letter-spacing:.9px;text-transform:uppercase;color:#1C3F8F;background:#eef2f8;border-top:1px solid #dfe5ef">'+
+             '<span style="position:sticky;left:8px">'+esc(p[1])+'</span></td></tr>'; return; }
+        n++;
         var fundo = n%2 ? '#fff' : '#fcfdff';
         h+='<tr><td style="padding:5px 8px;font:600 12.5px inherit;color:#16233d;white-space:nowrap;position:sticky;left:0;background:'+fundo+';border-top:1px solid #eef2f8">'+esc(p[1])+'</td>'+
           ITENS.map(function(i){
