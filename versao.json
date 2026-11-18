@@ -2,6 +2,17 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v252",
+      "data": "18/11/2026",
+      "hora": "10:45",
+      "itens": [
+        {
+          "painel": "Mentor · Certificados",
+          "o_que": "Quem termina a prova de um fornecedor com nota 7 ou mais ganha um certificado individual, com nome, loja, nota e data, para baixar ou compartilhar. No fornecedor com mais de um módulo (Coral Mactra), sai um certificado por módulo, com o nome do módulo. O botão aparece logo depois da prova, na tela do módulo e em Perfil → Certificados. Vale também para quem já tinha sido aprovado."
+        }
+      ]
+    },
+    {
       "v": "ast-v251",
       "data": "18/11/2026",
       "hora": "03:30",

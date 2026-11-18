@@ -375,6 +375,7 @@
       ${p.aulas.map((a, i) => { const ok = App.feito('aula', a.id); return `<div class="item-lista ${ok ? 'feito' : ''}" onclick="location.hash='#/aula/${a.id}'"><span class="num">${ok ? '✔' : i + 1}</span><div class="cresce"><div class="titulo">${esc(a.titulo)}</div><div class="desc">${a.duracao_min} min · páginas ${a.pagina_inicial}–${a.pagina_final} · +${a.xp || App.cont.regras_xp.aula} ST</div></div><span class="seta">›</span></div>`; }).join('')}
       <div class="item-lista ${p.quiz ? 'feito' : (p.feitas === p.aulas.length ? 'atual' : 'bloqueado')}" onclick="${p.feitas === p.aulas.length ? `location.hash='#/quiz/${m.id}'` : `App.toast('Conclua todas as aulas para liberar o quiz')`}"><span class="num">${p.quiz ? '✔' : '📝'}</span><div class="cresce"><div class="titulo">Quiz do módulo</div><div class="desc">${App.cont.questoes.filter(q => q.modulo_id === m.id).length} questões · nota mínima ${fmtNum(App.corte(m.id))} · +${App.cont.regras_xp.quiz_aprovado} ST${melhor != null ? ` · melhor nota: <b>${fmtNum(melhor)}</b>` : ''}</div></div><span class="seta">›</span></div>
       ${p.concluido ? `<div class="card sucesso centro">🏅 Módulo concluído! Bônus de ${m.xp_bonus} ST recebido.</div>` : ''}
+      ${App.certForn.botao(m.id)}
       ${App.ck ? App.ck.cardModulo(m.id) : ''}
     </div>`;
   };
@@ -451,7 +452,7 @@
     if (!questoes.length) return App.cabecalho('Quiz', m.titulo, { voltar: `#/modulo/${m.id}` }) + '<div class="tela"><div class="card">Este módulo ainda não tem questões cadastradas. O gestor pode adicionar pelo painel.</div></div>';
     const chave = 'quiz:' + m.id;
     if (!App.cache.quiz || App.cache.quiz.chave !== chave) App.cache.quiz = { chave, i: 0, resp: {}, resultado: null, questoes, moduloId: m.id, final: false };
-    return montarQuiz(questoes, 'Quiz: ' + m.titulo, `${questoes.length} questões · nota mínima ${fmtNum(App.corte(m.id))}`, null, { chave, voltar: `#/modulo/${m.id}`, corte: App.corte(m.id) });
+    return montarQuiz(questoes, 'Quiz: ' + m.titulo, `${questoes.length} questões · nota mínima ${fmtNum(App.corte(m.id))}`, null, { chave, voltar: `#/modulo/${m.id}`, corte: App.corte(m.id), aprovadoHtml: App.certForn.botao(m.id) });
   };
   function sortearFinal() {
     const pool = App.cont.questoes.filter(q => q.final !== false);
@@ -477,14 +478,93 @@
     return html;
   };
 
+  /* ═════════════════════════ CERTIFICADOS DAS PROVAS DE FORNECEDOR (nov/2026) ═════════════════════════
+     Pedido do Bruno em 18/11/2026: certificado individual para quem termina a prova de um fornecedor com nota 7 ou
+     mais. Fornecedor com mais de um módulo ganha um certificado por módulo, com o nome do módulo.
+     Como o módulo é ligado ao fornecedor: campo "fornecedor" do módulo (id da tabela fornecedores do Painel de
+     Conteúdo) ou, sem ele, o começo do título (antes de " · ") igual ao nome do fornecedor. */
+  const CERT_NOTA = 7;
+  const certNucleo = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\([^)]*\)/g, ' ').replace(/^\s*linha\s+/, '').replace(/\s+/g, ' ').trim();
+  App.certForn = {
+    fornecedorDe(m) {
+      const F = (App.cont.fornecedores || []).filter(f => f && f.ativo !== false);
+      if (m.fornecedor) return F.find(f => f.id === m.fornecedor) || null;
+      const p = certNucleo(String(m.titulo || '').split(' · ')[0]);
+      return p ? (F.find(f => certNucleo(f.nome) === p) || null) : null;
+    },
+    lista() {
+      const mods = (App.cont.modulos || []).filter(m => m.ativo !== false).slice().sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+      const L = mods.map(m => ({ m, f: App.certForn.fornecedorDe(m) })).filter(x => x.f);
+      const qt = {}; L.forEach(x => { qt[x.f.id] = (qt[x.f.id] || 0) + 1; });
+      const itens = (App.prog && App.prog.itens) || [], tent = (App.prog && App.prog.tentativas) || [];
+      return L.map(x => {
+        const partes = String(x.m.titulo || '').split(' · ');
+        const multi = qt[x.f.id] > 1;
+        const item = itens.find(i => i.item_tipo === 'quiz' && i.item_id === x.m.id) || null;
+        const notas = tent.filter(t => t.modulo_id === x.m.id && t.aprovado).map(t => Number(t.nota)).filter(n => isFinite(n));
+        if (item && isFinite(Number(item.nota)) && item.nota != null) notas.push(Number(item.nota));
+        const nota = notas.length ? Math.max.apply(null, notas) : null;
+        const primeira = tent.filter(t => t.modulo_id === x.m.id && t.aprovado && Number(t.nota) >= CERT_NOTA).map(t => t.realizado_em).filter(Boolean).sort()[0];
+        return { id: x.m.id, m: x.m, f: x.f, multi,
+          fornecedor: partes.length > 1 ? partes[0].trim() : String(x.m.titulo || x.f.nome).trim(),
+          modulo: multi ? (partes.length > 1 ? partes.slice(1).join(' · ').trim() : String(x.m.titulo || '').trim()) : '',
+          nota, data: primeira || (item && item.concluido_em) || null, ok: !!item && nota != null && nota >= CERT_NOTA };
+      });
+    },
+    de(id) { return App.certForn.lista().find(x => x.id === id) || null; },
+    botao(id) { const c = App.certForn.de(id); return c && c.ok ? `<button class="btn bloco amarelo mt-1" onclick="location.hash='#/certificado/${id}'">🎓 Ver meu certificado</button>` : ''; }
+  };
+  App.desenharCertForn = (ct) => {
+    const c = $('#cert'); if (!c) return; const x = c.getContext('2d'); const W = c.width, H = c.height; const u = App.user || {};
+    const cabe = (txt, fonte, tam, max) => { let t = tam; do { x.font = `${fonte} ${t}px Poppins, Arial`; t -= 2; } while (x.measureText(txt).width > max && t > 22); };
+    x.fillStyle = '#fff'; x.fillRect(0, 0, W, H);
+    const g = x.createLinearGradient(0, 0, W, 0); g.addColorStop(0, '#E31E24'); g.addColorStop(1, '#B5141A'); x.fillStyle = g; x.fillRect(0, 0, W, 170);
+    x.fillStyle = '#FFD200'; x.fillRect(0, 170, W, 14); x.fillStyle = '#1B4DA1'; x.fillRect(0, H - 60, W, 60);
+    x.strokeStyle = '#FFD200'; x.lineWidth = 6; x.strokeRect(40, 40, W - 80, H - 80);
+    x.textAlign = 'center';
+    x.fillStyle = '#fff'; x.font = 'bold 54px Poppins, Arial'; x.fillText('SÓ TINTAS · MENTOR ST PRO', W / 2, 105);
+    x.font = '26px Poppins, Arial'; x.fillText('Colorindo Vidas e Realizando Sonhos', W / 2, 148);
+    x.fillStyle = '#1E2430'; x.font = 'bold 72px Poppins, Arial'; x.fillText('CERTIFICADO', W / 2, 300);
+    x.fillStyle = '#5B6472'; x.font = '28px Poppins, Arial'; x.fillText('TREINAMENTO DE FORNECEDOR', W / 2, 345);
+    x.font = '30px Poppins, Arial'; x.fillText('Certificamos que', W / 2, 415);
+    x.fillStyle = '#E31E24'; cabe(String(u.nome || '').toUpperCase(), 'bold', 64, W - 240); x.fillText(String(u.nome || '').toUpperCase(), W / 2, 500);
+    const lj = String(u.loja == null ? '' : u.loja).trim(), temLoja = lj && lj !== '—' && lj !== '-';
+    x.fillStyle = '#5B6472'; x.font = '30px Poppins, Arial'; x.fillText(`${u.cargo || 'Colaborador(a)'}${temLoja ? ' · Loja ' + lj : ''}`, W / 2, 555);
+    x.fillStyle = '#1E2430'; x.font = '34px Poppins, Arial'; x.fillText('concluiu com aprovação o treinamento', W / 2, 640);
+    x.fillStyle = '#1B4DA1'; cabe(ct.fornecedor, 'bold', 58, W - 240); x.fillText(ct.fornecedor, W / 2, 720);
+    let y = 720;
+    if (ct.modulo) { y = 790; x.fillStyle = '#1E2430'; cabe('Módulo: ' + ct.modulo, 'bold', 40, W - 240); x.fillText('Módulo: ' + ct.modulo, W / 2, y); }
+    x.fillStyle = '#1E2430'; x.font = '34px Poppins, Arial'; x.fillText(`com nota ${fmtNum(ct.nota)} na prova de conhecimento.`, W / 2, y + 70);
+    x.fillStyle = '#5B6472'; x.font = '28px Poppins, Arial'; x.fillText(`Rio de Janeiro, ${fmtData(ct.data)}`, W / 2, 960);
+    x.font = '24px Poppins, Arial'; x.fillText('Diretoria Só Tintas · Rafael Borba · Fred Borba · Thiago Borba', W / 2, 1015);
+    const quando = ct.data ? new Date(ct.data).getTime().toString(36).toUpperCase() : '';
+    x.fillStyle = '#fff'; x.font = '22px Poppins, Arial'; x.fillText(`Código: ${String(u.login || '').toUpperCase()}-${String(ct.id).toUpperCase()}-${quando}`, W / 2, H - 22);
+    const slug = certNucleo(ct.fornecedor + (ct.modulo ? ' ' + ct.modulo.split('—')[0] : '')).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    c.dataset.nome = `certificado-${slug}-${(u.login || 'colaborador')}.png`;
+    c.dataset.texto = `Concluí o treinamento ${ct.fornecedor}${ct.modulo ? ' — ' + ct.modulo : ''} no MENTOR ST PRO com nota ${fmtNum(ct.nota)}! 🎓`;
+    const img = $('#cert-img'); if (img) img.src = c.toDataURL('image/png');
+  };
+
   /* ═════════════════════════ CERTIFICADO ═════════════════════════ */
-  App.views.certificado = () => {
+  App.views.certificado = ([modId]) => {
+    const botoes = `<div class="botoes mt-2"><button class="btn" onclick="App.baixarCertificado()">⬇️ Baixar imagem</button><button class="btn verde" onclick="App.compartilharCertificado()">📲 Compartilhar</button></div>`;
+    if (modId) {
+      const ct = App.certForn.de(modId);
+      if (!ct) return App.views.certificado([]);
+      if (!ct.ok) return App.cabecalho('Certificado', ct.fornecedor, { voltar: '#/certificado' }) + `<div class="tela"><div class="card alerta">Faça a prova${ct.modulo ? ' deste módulo' : ''} e tire nota ${fmtNum(CERT_NOTA)} ou mais para gerar este certificado.</div><button class="btn bloco azul mt-1" onclick="location.hash='#/quiz/${ct.id}'">Ir para a prova ›</button></div>`;
+      App.posRender = () => App.desenharCertForn(ct);
+      return App.cabecalho('Seu certificado', ct.fornecedor + (ct.modulo ? ' · ' + ct.modulo.split('—')[0].trim() : ''), { voltar: '#/certificado', cor: 'amarelo' }) + `<div class="tela"><canvas id="cert" class="certificado-prev" width="1600" height="1131" style="display:none"></canvas><img id="cert-img" class="certificado-prev" alt="Certificado">
+      ${botoes}
+      <p class="pequeno texto-3 centro mt-2">Toque e segure a imagem para salvar no celular.</p></div>`;
+    }
     const fin = App.prog.itens.find(i => i.item_tipo === 'final');
-    if (!fin) return App.cabecalho('Certificado', '', { voltar: '#/perfil' }) + '<div class="tela"><div class="card alerta">Seja aprovado na avaliação final para gerar seu certificado.</div></div>';
+    const forn = App.certForn.lista();
+    const cartoes = forn.length ? `<h3 class="mt-2">Treinamentos de fornecedores</h3>` + forn.map(ct => `<div class="card clicavel" onclick="location.hash='#/${ct.ok ? 'certificado' : 'quiz'}/${ct.id}'"><div class="linha"><span class="icone-grande ${ct.ok ? 'verde' : 'cinza'}">${ct.ok ? '🎓' : '📝'}</span><div class="cresce"><div class="negrito">${esc(ct.fornecedor)}</div><div class="pequeno texto-2">${ct.modulo ? esc(ct.modulo) + ' · ' : ''}${ct.ok ? 'nota ' + fmtNum(ct.nota) + ' · certificado disponível' : (ct.nota != null ? 'nota ' + fmtNum(ct.nota) + ' · ' : '') + 'faça a prova e tire ' + fmtNum(CERT_NOTA) + ' ou mais'}</div></div><span class="seta">›</span></div></div>`).join('') : '';
+    if (!fin) return App.cabecalho('Certificados', '', { voltar: '#/perfil' }) + `<div class="tela"><div class="card alerta">Seja aprovado na avaliação final para gerar o certificado da Jornada do Campeão.</div>${cartoes}</div>`;
     App.posRender = () => App.desenharCertificado(fin);
-    return App.cabecalho('Seu certificado', 'Campeão Só Tintas', { voltar: '#/perfil', cor: 'amarelo' }) + `<div class="tela"><canvas id="cert" class="certificado-prev" width="1600" height="1131" style="display:none"></canvas><img id="cert-img" class="certificado-prev" alt="Certificado">
-      <div class="botoes mt-2"><button class="btn" onclick="App.baixarCertificado()">⬇️ Baixar imagem</button><button class="btn verde" onclick="App.compartilharCertificado()">📲 Compartilhar</button></div>
-      <p class="pequeno texto-3 centro mt-2">Toque e segure a imagem para salvar no celular. Compartilhe no grupo da loja e marque a Só Tintas!</p></div>`;
+    return App.cabecalho('Seus certificados', 'Campeão Só Tintas', { voltar: '#/perfil', cor: 'amarelo' }) + `<div class="tela"><canvas id="cert" class="certificado-prev" width="1600" height="1131" style="display:none"></canvas><img id="cert-img" class="certificado-prev" alt="Certificado">
+      ${botoes}
+      <p class="pequeno texto-3 centro mt-2">Toque e segure a imagem para salvar no celular. Compartilhe no grupo da loja e marque a Só Tintas!</p>${cartoes}</div>`;
   };
   App.desenharCertificado = (fin) => {
     const c = $('#cert'); if (!c) return; const x = c.getContext('2d'); const W = c.width, H = c.height; const u = App.user;
@@ -504,13 +584,14 @@
     x.fillStyle = '#5B6472'; x.font = '28px Poppins, Arial'; x.fillText(`Rio de Janeiro, ${fmtData(fin.concluido_em)}`, W / 2, 940);
     x.font = '24px Poppins, Arial'; x.fillText('Diretoria Só Tintas · Rafael Borba · Fred Borba · Thiago Borba', W / 2, 1010);
     x.fillStyle = '#fff'; x.font = '22px Poppins, Arial'; x.fillText(`Código: ${(u.login || '').toUpperCase()}-${new Date(fin.concluido_em).getTime().toString(36).toUpperCase()}`, W / 2, H - 22);
+    delete c.dataset.nome; delete c.dataset.texto;
     const img = $('#cert-img'); if (img) img.src = c.toDataURL('image/png');
   };
-  App.baixarCertificado = () => { const c = $('#cert'); const a = document.createElement('a'); a.download = `certificado-${(App.user.login || 'colaborador')}.png`; a.href = c.toDataURL('image/png'); a.click(); };
+  App.baixarCertificado = () => { const c = $('#cert'); const a = document.createElement('a'); a.download = c.dataset.nome || `certificado-${(App.user.login || 'colaborador')}.png`; a.href = c.toDataURL('image/png'); a.click(); };
   App.compartilharCertificado = async () => {
     const c = $('#cert'); c.toBlob(async (blob) => {
-      const file = new File([blob], 'certificado-so-tintas.png', { type: 'image/png' });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: 'Certificado Só Tintas', text: 'Concluí a Jornada do Campeão no MENTOR ST PRO! 🏆' }); } catch (e) {} }
+      const file = new File([blob], c.dataset.nome || 'certificado-so-tintas.png', { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: 'Certificado Só Tintas', text: c.dataset.texto || 'Concluí a Jornada do Campeão no MENTOR ST PRO! 🏆' }); } catch (e) {} }
       else { App.baixarCertificado(); App.toast('Imagem baixada — envie no WhatsApp 😉'); }
     });
   };
@@ -545,7 +626,7 @@
       ${App.niveis && App.veEvolucao() ? (() => { const v = App.niveis.meu(); const c = App.cont.niveis_vendas; return `<div class="card clicavel mt-2 destaque" onclick="location.hash='#/evolucao'"><div class="linha"><span class="icone-grande amarelo">📈</span><div class="cresce"><div class="negrito">Minha evolução${v ? ` · V${v.nivel} ${esc(v.rotulo)}` : ''}</div><div class="pequeno texto-2">${v ? `Loja ${esc(c.nomes_loja[v.nivelLoja])} · ${v.nivel < 5 ? `faltam ${Niveis.brlK(v.falta)} para o V${v.nivel + 1}` : 'topo da carreira'} · ganhe até ${Niveis.brl(v.ganhos.max)}/mês no seu nível` : 'Seu nível de venda, a curva V1→V5 e quanto você pode ganhar'}</div></div><span class="seta">›</span></div></div>`; })() : ''}
       <div class="card clicavel" onclick="location.hash='#/conquistas'"><div class="linha"><span class="icone-grande amarelo">🏅</span><div class="cresce"><div class="negrito">Conquistas</div><div class="pequeno texto-2">${(p.conquistas || []).length} de ${App.cont.conquistas.length}</div></div><span class="seta">›</span></div></div>
       <div class="card clicavel" onclick="location.hash='#/disc'"><div class="linha"><span class="icone-grande laranja">🧭</span><div class="cresce"><div class="negrito">Perfil DISC</div><div class="pequeno texto-2">${p.disc ? `${esc(p.disc.dominante)} (secundário ${esc(p.disc.secundario)})` : 'Faça o teste e descubra seu perfil'}</div></div><span class="seta">›</span></div></div>
-      <div class="card clicavel" onclick="location.hash='#/certificado'"><div class="linha"><span class="icone-grande ${App.feito('final', 'FINAL') ? 'verde' : 'cinza'}">🎓</span><div class="cresce"><div class="negrito">Certificado</div><div class="pequeno texto-2">${App.feito('final', 'FINAL') ? 'Disponível para baixar e compartilhar' : 'Seja aprovado na avaliação final'}</div></div><span class="seta">›</span></div></div>
+      <div class="card clicavel" onclick="location.hash='#/certificado'"><div class="linha"><span class="icone-grande ${App.feito('final', 'FINAL') || App.certForn.lista().some(c => c.ok) ? 'verde' : 'cinza'}">🎓</span><div class="cresce"><div class="negrito">Certificados</div><div class="pequeno texto-2">${(() => { const n = App.certForn.lista().filter(c => c.ok).length + (App.feito('final', 'FINAL') ? 1 : 0); return n ? n + (n === 1 ? ' disponível' : ' disponíveis') + ' para baixar e compartilhar' : 'Jornada do Campeão e treinamentos de fornecedores'; })()}</div></div><span class="seta">›</span></div></div>
       <h3 class="mt-2">Últimos pontos</h3>
       ${eventos.length ? eventos.map(e => `<div class="linha entre pequeno" style="padding:7px 0;border-bottom:1px solid var(--borda)"><span>${esc(nomesTipo[e.tipo] || e.tipo)} <span class="texto-3">· ${fmtData(e.criado_em)}</span></span><b style="color:var(--verde)">+${e.xp}</b></div>`).join('') : '<p class="pequeno texto-3">Nenhum ponto ainda. Comece pela trilha!</p>'}
       ${DB.util.ehMarketing && DB.util.ehMarketing(u) ? `<div class="card info mt-3"><div class="negrito">Nível de acesso: Marketing (conteúdo)</div><div class="botoes mt-1"><a class="btn azul" href="gestor.html">🛠️ Editar o conteúdo</a></div></div>` : DB.util.ehLider(u) ? `<div class="card info mt-3"><div class="negrito">Nível de acesso: ${esc(DB.util.PERFIS[u.perfil] || u.perfil)}</div><div class="pequeno texto-2">${esc(DB.util.escopoDe(u, App.cont).rotulo)}</div><div class="botoes mt-1"><button class="btn azul" onclick="location.hash='#/equipe'">📊 Painel da equipe</button>${DB.util.ehCoordenador(u) ? `<a class="btn contorno azul" href="gestor.html">🛠️ Painel do gestor</a>` : `<a class="btn contorno azul" href="gestor.html">🖥️ Versão para computador</a>`}</div></div>` : ''}
