@@ -37,7 +37,7 @@
   const HAB = {
     S: [
       ['presenca', 'Presença em loja', 'Visita com plano escrito e combinado registrado no app', 'Fechar toda visita com 1 combinado escrito no app e voltar na semana seguinte para conferir.'],
-      ['ritual', 'Ritual de segunda', 'Cobra pelo app e confere a evidência; não aceita só "fiz"', 'Abrir o placar do ritual toda segunda às 12h e pedir ao gerente que mostre no app quem fez e qual foi a nota.'],
+      ['ritual', 'Ritual de segunda', 'Cobra pelo app e confere a evidência; não aceita só "fiz"', 'Abrir o placar do ritual toda segunda às 18h e pedir ao gerente que mostre no app quem fez e qual foi a nota.'],
       ['feedback', 'Feedback ao gerente', 'Específico, na hora, com o exemplo do dado', 'Usar o roteiro situação → dado → impacto → combinado em cada conversa; nada de "melhora isso aí".'],
       ['pessoas', 'Desenvolvimento de pessoas', 'PDI dos gerentes feito e revisões em dia', 'Marcar a revisão de cada PDI no app no dia da conversa e cumprir a data, mesmo por telefone.'],
       ['numeros', 'Leitura dos números', 'Explica a carteira: onde falta, por quê e o que fazer', 'Antes de cada visita, escrever em 3 linhas o diagnóstico da loja a partir do Painel; conferir na loja se bate.'],
@@ -46,7 +46,7 @@
       ['atitude', 'Exemplo e atitude', 'Pontualidade, postura e resiliência com o time', 'Chegar na loja no horário combinado e manter o tom firme e respeitoso mesmo com resultado ruim.']
     ],
     G: [
-      ['ritual', 'Ritual de segunda', 'PDI com cada vendedor até 12h, marcado no app, e fechamento na segunda seguinte', 'Reservar a manhã de segunda para o ritual: 10 minutos por vendedor, app aberto, nenhum "aguardando" depois das 12h.'],
+      ['ritual', 'Ritual de segunda', 'PDI com cada vendedor até 18h, marcado no app, e fechamento na segunda seguinte', 'Reservar a manhã de segunda para o ritual: 10 minutos por vendedor, app aberto, nenhum "aguardando" depois das 18h.'],
       ['balcao', 'Presença no balcão', 'Acompanha atendimentos e corrige na hora (CPF, kit, linha superior)', 'Assistir 3 atendimentos por dia e dar o retorno ao vendedor no mesmo atendimento, não no fim do mês.'],
       ['feedback', 'Feedback ao vendedor', 'Específico, na hora, com o exemplo do dado', 'Usar situação → dado → impacto → combinado; registrar o combinado no PDI semanal.'],
       ['pessoas', 'Desenvolvimento do time', 'PDI Mensal e revisões em dia; integra o novato com padrinho', 'Marcar a revisão de cada PDI no app e cumprir a data; novato sem padrinho não começa.'],
@@ -113,8 +113,8 @@
       e: `Projeção de ${pct(x.pp)} da meta; ${x.tipo === 'G' ? (x.vendAbaixo || []).length + ' vendedor(es) abaixo do ritmo' : (x.lojasAbaixo || []).length + ' loja(s) abaixo de 95%'}.`,
       an: 'É o Brasileirão de pontos corridos: ninguém é campeão na última rodada. Quem perde ponto em casa toda semana chega em dezembro fazendo conta.' });
     if (r.n && r.feitos < r.n) A.push({ k: 'ritual', peso: (1 - r.feitos / r.n) * 5 + 0.5, t: 'Ritual de segunda sem falhar',
-      a: x.tipo === 'G' ? 'Conversar 10 minutos com cada vendedor na segunda de manhã, marcar "Fiz o PDI semanal" no app até 12h e registrar o fechamento de cada um na segunda seguinte.' : 'Na segunda, até 12h, conferir no app quais gerentes ainda não fizeram o PDI com os vendedores e ligar para eles; na quarta, cobrar os compromissos na visita.',
-      c: `${P} ${x.tipo === 'G' ? 'abre o app toda segunda antes das 12h e nenhum vendedor fica "aguardando"' : 'usa o placar do ritual como primeira tarefa de segunda e cobra pelo app, não só por telefone'}.`,
+      a: x.tipo === 'G' ? 'Conversar 10 minutos com cada vendedor na segunda de manhã, marcar "Fiz o PDI semanal" no app até 18h e registrar o fechamento de cada um na segunda seguinte.' : 'Na segunda, até 18h, conferir no app quais gerentes ainda não fizeram o PDI com os vendedores e ligar para eles; na quarta, cobrar os compromissos na visita.',
+      c: `${P} ${x.tipo === 'G' ? 'abre o app toda segunda antes das 18h e nenhum vendedor fica "aguardando"' : 'usa o placar do ritual como primeira tarefa de segunda e cobra pelo app, não só por telefone'}.`,
       e: `No mês: PDI feito ${r.feitos} de ${r.n} (${pct(r.feitos / r.n)}), respondido ${r.resp} de ${r.n}${r.media != null ? ', nota média ' + n1(r.media) : ''}.`,
       an: 'Ritual é como a escola de samba: o desfile dá certo porque todo mundo ensaiou na quadra, toda semana, mesmo sem avenida.' });
     if (x.tipo === 'S' && x.gerentes && x.gerentes.n && x.gerentes.feitos < x.gerentes.n) A.push({ k: 'gerentes', peso: (1 - x.gerentes.feitos / x.gerentes.n) * 4 + 0.5, t: 'PDI semanal com cada gerente',
@@ -393,7 +393,7 @@
       const ov = document.createElement('div'); ov.className = 'tm-ov'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Termo de PDI de ' + x.nome);
       ov.innerHTML = `<div class="tm-box"><div class="tm-top"><div><span class="pdi-lbl" style="display:block">Formalizar PDI · termo em PDF</span><b>${esc(x.nome)}</b><div class="pdi-meta">${esc(x.rotulo)} · ${TN[x.tier]}</div></div><button type="button" class="btn pequeno contorno" data-tm="fechar" aria-label="Fechar">✕</button></div>
         <div class="tm-form"><label class="pdi-q">Quem conduz a conversa<input type="text" data-tmf="lider" maxlength="80" value="${esc(t.lider)}" placeholder="Nome"></label><label class="pdi-q">Data da conversa<input type="date" data-tmf="data" value="${esc(t.data)}"></label>
-          <label class="pdi-q tm-l2">Compromisso do gestor, nas palavras dele<textarea data-tmf="compromisso" maxlength="600" placeholder="Ex.: Toda segunda, até 12h, faço o PDI com todos os vendedores e marco no app; na quarta cobro os compromissos no balcão.">${esc(t.compromisso)}</textarea></label>
+          <label class="pdi-q tm-l2">Compromisso do gestor, nas palavras dele<textarea data-tmf="compromisso" maxlength="600" placeholder="Ex.: Toda segunda, até 18h, faço o PDI com todos os vendedores e marco no app; na quarta cobro os compromissos no balcão.">${esc(t.compromisso)}</textarea></label>
           <label class="pdi-q tm-l2">Apoio da liderança<textarea data-tmf="apoio" maxlength="600" placeholder="Ex.: O supervisor visita a loja toda semana até quarta e revisa os 5 maiores orçamentos junto.">${esc(t.apoio)}</textarea></label>
           <p class="pdi-meta tm-l2" style="margin:0">Situação, metas e plano de ação vêm da ficha. A autoavaliação, a meta escolhida, o DISC e o tema saem como foram registrados no acompanhamento.</p></div>
         <div class="tm-acoes"><button type="button" class="btn azul" data-tm="gerar">Gerar termo</button><button type="button" class="btn verde" data-tm="zap">Enviar pelo WhatsApp</button><button type="button" class="btn contorno" data-tm="baixar">Baixar PDF</button><span class="pdi-meta" data-tm-st role="status" aria-live="polite"></span></div><div class="tm-prev" data-tm-prev></div></div>`;
