@@ -299,7 +299,7 @@ function calcVend(a,v){
 
  (function(){var f=+C[1]||0,at=+C[3]||0,nv=+C[4]||0,po=+C[5]||0;
   var tf=function(q){return q>=120000?200:q>=80000?100:q>=50000?75:q>=30000?50:0},tp=function(q){return q>=20?150:q>=15?100:q>=10?50:0},tn=function(q){return q>=10?100:q>=8?75:q>=4?50:0};
-  var dc=C[13]==null||C[13]===''?null:+C[13],td=dc!=null&&dc<0.17?50:0;
+  var dc=C[13]==null||C[13]===''?null:+C[13],td=dc!=null&&dc<=0.17?50:0;
   var soma=function(F,Pq,Nq){return Math.min(tf(F)+tp(Pq)+tn(Nq)+td,500)};
   var fj=pjN(f),pj=Math.floor(pjN(po)),nj=Math.floor(pjN(nv));
   var pre=po>=10&&at>0&&po/at>=0.5,preJ=pj>=10&&at>0&&pj/at>=0.5;
@@ -311,7 +311,7 @@ function calcVend(a,v){
   it.push({k:'icnpj',n:'Indicadores CNPJ',qd:'pago no dia 10',gar:gar,prj:prj,alvo:alvo,chk:chk,
    st:gar?'ok':prj?'rit':(tf(f)+tp(po)+tn(nv)+td)?'trava':'risco',stT:gar?'garantido até aqui':prj?'no ritmo':(tf(f)+tp(po)+tn(nv)+td)?'faixa batida · falta o pré-requisito':'sem faixa batida',
    falta:(tr.length?'Para liberar: '+tr.join(' · ')+'. ':'')+(px2.length?'Próxima faixa: '+px2.join(' · ')+'.':'Todas as faixas no máximo.'),
-   regra:'Faturamento CNPJ 30 mil = 50 · 50 mil = 75 · 80 mil = 100 · 120 mil = 200. Positivados 10 = 50 · 15 = 100 · 20 = 150. Novos 4 = 50 · 8 = 75 · 10 = 100. Teto de R$ 500. Desconto CNPJ abaixo de 17% = 50. Exige 95% da meta, 10 positivados e 50% da carteira.'+(dc==null?' O desconto CNPJ ainda não chega ao app e fica fora desta conta.':' O desconto é média do mês e pode mudar até o fechamento.')})})();
+   regra:'Faturamento CNPJ 30 mil = 50 · 50 mil = 75 · 80 mil = 100 · 120 mil = 200. Positivados 10 = 50 · 15 = 100 · 20 = 150. Novos 4 = 50 · 8 = 75 · 10 = 100. Teto de R$ 500. Desconto CNPJ até 17% = 50. Exige 95% da meta, 10 positivados e 50% da carteira.'+(dc==null?' O desconto CNPJ ainda não chega ao app e fica fora desta conta.':' O desconto é média do mês e pode mudar até o fechamento.')})})();
 
  (function(){var m=+C[0]||0,f=+C[1]||0;
   if(!m){ it.push({k:'cnpj',n:'Meta CNPJ',qd:'pago no dia 10',gar:0,prj:0,alvo:0,st:'na',stT:'sem meta CNPJ no mês',falta:'',regra:R(B.cnpj)+' com 100% da sua meta CNPJ e pelo menos 95% da meta de faturamento.'}); return; }

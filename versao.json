@@ -2,6 +2,17 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v251",
+      "data": "18/11/2026",
+      "hora": "03:30",
+      "itens": [
+        {
+          "painel": "Bônus do Mês · Simulador · PDI",
+          "o_que": "Desconto CNPJ: o bônus de R$ 50 vale com desconto até 17% (17% incluso), igual à planilha de pagamento."
+        }
+      ]
+    },
+    {
       "v": "ast-v250",
       "data": "18/11/2026",
       "hora": "03:10",

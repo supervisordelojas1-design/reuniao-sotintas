@@ -194,9 +194,9 @@ function calcular(x,pct){
  var tfN=x.fatCNPJ<30000?30000:x.fatCNPJ<50000?50000:x.fatCNPJ<80000?80000:x.fatCNPJ<120000?120000:null;
  var tp=x.posit>=20?150:x.posit>=15?100:x.posit>=10?50:0, tpN=x.posit<10?10:x.posit<15?15:x.posit<20?20:null;
  var tn=x.novos>=10?100:x.novos>=8?75:x.novos>=4?50:0, tnN=x.novos<4?4:x.novos<8?8:x.novos<10?10:null;
- var td=x.descCNPJ!=null&&x.descCNPJ<.17?50:0;
+ var td=x.descCNPJ!=null&&x.descCNPJ<=.17?50:0;
  var cn=[['fatCNPJ','Faturamento CNPJ','30 mil = 50 · 50 mil = 75 · 80 mil = 100 · 120 mil = 200',R(x.fatCNPJ),tf,200,tfN?R(tfN-x.fatCNPJ)+' p/ próxima faixa':'faixa máxima'],
-         ['descCNPJ','% desconto CNPJ','abaixo de 17% = R$ 50',x.descCNPJ==null?'informe':P(x.descCNPJ),td,50,x.descCNPJ==null?'informe o seu %':td?'—':'baixar para menos de 17%'],
+         ['descCNPJ','% desconto CNPJ','até 17% = R$ 50',x.descCNPJ==null?'informe':P(x.descCNPJ),td,50,x.descCNPJ==null?'informe o seu %':td?'—':'baixar para 17% ou menos'],
          ['posit','Clientes positivados','10 = 50 · 15 = 100 · 20 = 150',x.posit+' clientes',tp,150,tpN?(tpN-x.posit)+' cliente(s) p/ próxima faixa':'faixa máxima'],
          ['novos','Clientes novos','4 = 50 · 8 = 75 · 10 = 100',x.novos+' novos',tn,100,tnN?(tnN-x.novos)+' p/ próxima faixa':'faixa máxima']];
  var somaC=0;

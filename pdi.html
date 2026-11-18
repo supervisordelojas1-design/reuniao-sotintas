@@ -376,10 +376,10 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
         e: `Média de ${Math.round(cn.posit || 0)} clientes CNPJ positivados por mês (meta 10${v.cnloja ? `, média da loja ${n1(v.cnloja.posit)}` : ''}), ${brl(cn.fatcnpj)} de faturamento CNPJ (meta R$ 30 mil) e ${n1(cn.novos)} cliente(s) novo(s) por mês (meta 4). Carteira atribuída: ${v.cart_n || 0} cliente(s) com compra média acima de R$ 300.`,
         an: 'Carteira é horta: não adianta plantar mais se você não rega toda semana. O cliente que ninguém liga em 60 dias secou.' });
     }
-    if (ck.posit && !ck.desccnpj) A.push({ k: 'desccnpj', peso: 0.6, t: 'Desconto CNPJ abaixo de 17%',
+    if (ck.posit && !ck.desccnpj) A.push({ k: 'desccnpj', peso: 0.6, t: 'Desconto CNPJ até 17%',
       a: 'Negociar volume com prazo de entrega e programação de obra, não com preço. Desconto acima de 17% só com aprovação do gerente.',
       c: `${P} chega à negociação com a condição de entrega definida e registra no pedido o motivo de cada desconto especial.`,
-      e: `Desconto médio CNPJ de ${pct1(cn.desccnpj)}. Meta: abaixo de 17%.`,
+      e: `Desconto médio CNPJ de ${pct1(cn.desccnpj)}. Meta: até 17%.`,
       an: 'É negociar passe de jogador: o clube bom troca valor por bônus de desempenho, e não baixa o preço na primeira ligação.' });
     if (v.ve > v.v) {
       const prox = Math.min(5, v.v + 1), min = FX[v.nl][prox - 2], f = Math.max(0, min - v.md);
@@ -577,7 +577,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
             ${ind('Desconto CPF', pct1(cv.desccpf), '< 7%', v.cpk.desccpf, pct1(oi.desccpf))}
             ${ind('Faturamento CNPJ', brl(cn.fatcnpj), '≥ R$ 30 mil', ck.fatcnpj, brl(oi.fatcnpj))}
             ${ind('Alcance meta CNPJ', pct(cn.alccnpj), '≥ 100%', ck.alccnpj, pct(oi.alccnpj))}
-            ${ind('Desconto CNPJ', pct1(cn.desccnpj), '< 17%', ck.desccnpj, pct1(oi.desccnpj))}
+            ${ind('Desconto CNPJ', pct1(cn.desccnpj), 'até 17%', ck.desccnpj, pct1(oi.desccnpj))}
             ${ind('Positivados CNPJ', Math.round(cn.posit || 0), '≥ 10', ck.posit, oi.posit == null ? '—' : Math.round(oi.posit))}
             ${ind('% positivados', pct(cn.pposit), '≥ 50%', ck.pposit, '—')}
             ${ind('Clientes novos CNPJ', n1(cn.novos), '≥ 4', ck.novos, oi.novos == null ? '—' : Math.round(oi.novos))}
@@ -640,7 +640,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
         <div class="pdi-tw"><table class="pdi-t"><thead><tr><th>Pilar</th><th>Peso</th><th>O que mede</th></tr></thead><tbody>
         <tr><td>Resultado</td><td>40</td><td>Média de atingimento dos 3 últimos meses fechados (25), meses abaixo de 95% nos últimos 6 (10) e projeção do mês atual (5).</td></tr>
         <tr><td>CPF</td><td>25</td><td>Identificadas ≥ 80%, itens ≥ 2,5, ticket ≥ R$ 200, desconto &lt; 7%. Cada indicador fora vale 6,25.</td></tr>
-        <tr><td>CNPJ</td><td>20</td><td>Fat. CNPJ ≥ R$ 30 mil, alcance meta CNPJ ≥ 100%, desconto &lt; 17%, positivados ≥ 10, % positivados ≥ 50%, novos ≥ 4. Faturamento, positivados e novos não pesam quando o vendedor está na média dos colegas da própria loja.</td></tr>
+        <tr><td>CNPJ</td><td>20</td><td>Fat. CNPJ ≥ R$ 30 mil, alcance meta CNPJ ≥ 100%, desconto até 17%, positivados ≥ 10, % positivados ≥ 50%, novos ≥ 4. Faturamento, positivados e novos não pesam quando o vendedor está na média dos colegas da própria loja.</td></tr>
         <tr><td>Curva</td><td>15</td><td>Nível V atual contra o esperado pelo tempo de casa (treino de 3 meses; V1 até 6 meses de atuação, V2 6–12, V3 12–24, V4 24–36, V5 acima de 36).</td></tr>
         <tr><td>Peso da meta</td><td>× 0,85 a 1,15</td><td>Meta do mês comparada com a meta mediana da rede (${brl(b.medMeta)}).</td></tr></tbody></table></div>
         <p><b>Faixas:</b> P1 Crítico ≥ 65 · P2 Alta 50–65 · P3 Desenvolver 35–50 · P4 Potencializar &lt; 35. Vendedores com menos de 3 meses fechados ficam em Integração.</p>
@@ -687,7 +687,7 @@ html[data-theme="dark"] .pdi-link{color:#8fb0ff}
         ['Supervisor', sup], ['Gerente da loja', t.gerente], ['Data da conversa', dt(t.data)], ['Vigência (90 dias)', `até ${dt(somaDias(t.data, 90))}`]];
       B.push(`<section class="tm-sec"><h3>1. Identificação</h3><div class="tm-id">${id.map(([k, x, c]) => `<div class="${c || ''}"><span>${k}</span><b>${x ? esc(x) : '&nbsp;'}</b></div>`).join('')}</div></section>`);
       const ind = [['Vendas identificadas (CPF)', pct(cv.ident), '≥ 80%', cp.ident], ['Itens por venda CPF', n1(cv.itens), '≥ 2,5', cp.itens], ['Ticket médio CPF', brl(cv.ticket), '≥ R$ 200', cp.ticket], ['Desconto CPF', pct1(cv.desccpf), 'abaixo de 7%', cp.desccpf],
-        ['Faturamento CNPJ', brl(cn.fatcnpj), '≥ R$ 30 mil', ck.fatcnpj], ['Positivados CNPJ por mês', Math.round(cn.posit || 0), '≥ 10', ck.posit], ['Clientes novos CNPJ por mês', n1(cn.novos), '≥ 4', ck.novos], ['Desconto CNPJ', pct1(cn.desccnpj), 'abaixo de 17%', ck.desccnpj]];
+        ['Faturamento CNPJ', brl(cn.fatcnpj), '≥ R$ 30 mil', ck.fatcnpj], ['Positivados CNPJ por mês', Math.round(cn.posit || 0), '≥ 10', ck.posit], ['Clientes novos CNPJ por mês', n1(cn.novos), '≥ 4', ck.novos], ['Desconto CNPJ', pct1(cn.desccnpj), 'até 17%', ck.desccnpj]];
       if (cn.pativos != null) ind.push(['% Ativos CNPJ', pct(cn.pativos), '—', cn.pativos >= 0.5]);
       if (cn.repcnpj != null) ind.push(['% Representatividade CNPJ', pct(cn.repcnpj), '—', true]);
       ind.unshift(['% da meta (individual)', pct(v.a3), '≥ 100%', v.a3 >= 1]);
