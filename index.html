@@ -28,7 +28,7 @@
       if(tx) tx.textContent = tema==='dark'?'Escuro':'Claro';
       var mt=document.querySelector('meta[name="theme-color"]'); if(mt) mt.setAttribute('content', tema==='dark'?'#0f1522':'#1C3F8F');
       // repassa para os iframes abertos (Painel, Níveis, PDI, Ranking, Mentor, Proposta)
-      try{ ['ifrPainel','ifrNiveis','ifrBonus','ifrSimulador','ifrPdi','ifrRanking','ifrMentor','ifrProposta'].forEach(function(id){ var f=document.getElementById(id); if(f&&f.contentWindow) f.contentWindow.postMessage({st_tema:tema},'*'); }); }catch(e){}
+      try{ ['ifrPainel','ifrNiveis','ifrBonus','ifrBonusGer','ifrSimulador','ifrPdi','ifrRanking','ifrMentor','ifrProposta'].forEach(function(id){ var f=document.getElementById(id); if(f&&f.contentWindow) f.contentWindow.postMessage({st_tema:tema},'*'); }); }catch(e){}
     },
     toggle:function(){ this.set(this.get()==='dark'?'light':'dark'); }
   };
@@ -9318,6 +9318,13 @@ syncNav();
  <iframe id="ifrSimulador" title="Simulador de Bônus" style="flex:1;width:100%;border:0;background:#0f1522"></iframe>
 </div>
 <!-- ===== BONIFICACOES (aba embutida, espelha Niveis) ===== -->
+<div id="ovBonusGer" style="position:fixed;inset:0;z-index:99999;background:#0f1522;display:none;flex-direction:column">
+ <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;color:#fff;font:600 14px system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
+  <button id="ovBgFechar" style="border:0;border-radius:8px;padding:9px 13px;background:#FFD100;color:#0F2B46;font:inherit;cursor:pointer">&larr; Voltar ao início</button>
+  <span style="opacity:.85">Bônus do Gerente</span>
+ </div>
+ <iframe id="ifrBonusGer" title="Bônus do Gerente" style="flex:1;width:100%;border:0;background:#0f1522"></iframe>
+</div>
 <div id="ovBonus" style="position:fixed;inset:0;z-index:99999;background:#0f1522;display:none;flex-direction:column">
  <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;color:#fff;font:600 14px system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
   <button id="ovBnFechar" style="border:0;border-radius:8px;padding:9px 13px;background:#FFD100;color:#0F2B46;font:inherit;cursor:pointer">&larr; Voltar ao início</button>
@@ -9437,6 +9444,11 @@ syncNav();
       <button type="button" class="ini-card feat" data-act="simulador" data-gate="1" data-vend="1" data-ger="1">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-chart"/></svg></span>
         <span class="ini-txt"><span class="ini-nm">Simulador de Bônus</span><span class="ini-ds">Quanto já garantiu e o que mais paga no mês</span></span>
+        <span class="ini-go" aria-hidden="true">&rarr;</span>
+      </button>
+      <button type="button" class="ini-card feat" data-act="bonusger" data-gate="1" data-ger="1">
+        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-store"/></svg></span>
+        <span class="ini-txt"><span class="ini-nm">Bônus do Gerente</span><span class="ini-ds">Garantido, no ritmo e o que falta no mês</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
       <button type="button" class="ini-card feat" data-act="proposta" data-gate="1">
@@ -9738,7 +9750,7 @@ body.foco .wrap{padding-bottom:40px}
      em branco = nada muda. */
   var CHAVE_DO_CARD={ painel:'verMetas', niveis:'verNiveis', pdi:'verPDI', semana:'verPDISemanal',
     pontos:'verRanking', ranking:'verRanking', provas:'verProvas', avulsas:'verMinhasProvas',
-    uso:'verUso', crm:'verCRM', bonus:'verBonus', simulador:'verSimulador', proposta:'verProposta',
+    uso:'verUso', crm:'verCRM', bonus:'verBonus', bonusger:'verBonusGer', simulador:'verSimulador', proposta:'verProposta',
     mentor:'verMentor', especialista:'verEspecialista', cadastro:'gerirCadastro',
     acessos:'gerirAcessos', conteudo:'gerirConteudo', central:'gerirCentral', escala:'verEscala', contatos:'verContatos' };
   function aplicarRegua(){
@@ -9808,6 +9820,16 @@ body.foco .wrap{padding-bottom:40px}
     ovS.style.display='flex'; document.body.style.overflow='hidden';
   }
   if(xS){ xS.addEventListener('click', function(){ ovS.style.display='none'; ifrS.removeAttribute('src'); document.body.style.overflow=''; try{ if(window.abrirInicio) window.abrirInicio(); }catch(e){} }); }
+
+  // overlay do Bônus do Gerente (espelha o de Bonificações)
+  var ovBG=document.getElementById('ovBonusGer'), ifrBG=document.getElementById('ifrBonusGer'), xBG=document.getElementById('ovBgFechar');
+  function abrirBonusGer(){
+    if(!ovBG||!ifrBG) return;
+    var tema=(window.STtema?window.STtema.get():'light');
+    ifrBG.setAttribute('src','bonus-gerente.html?tema='+tema+'&v='+Date.now());
+    ovBG.style.display='flex'; document.body.style.overflow='hidden';
+  }
+  if(xBG){ xBG.addEventListener('click', function(){ ovBG.style.display='none'; ifrBG.removeAttribute('src'); document.body.style.overflow=''; try{ if(window.abrirInicio) window.abrirInicio(); }catch(e){} }); }
 
   // overlay de Bonificações (espelha o de Níveis)
   var ovB=document.getElementById('ovBonus'), ifrB=document.getElementById('ifrBonus'), xB=document.getElementById('ovBnFechar');
@@ -10148,6 +10170,7 @@ body.foco .wrap{padding-bottom:40px}
     if(act==='painel'){ var tp=document.getElementById('tabPainel'); if(tp) tp.click(); return; }
     if(act==='niveis'){ abrirNiveis(); return; }
     if(act==='bonus'){ abrirBonus(); return; }
+    if(act==='bonusger'){ abrirBonusGer(); return; }
     if(act==='simulador'){ abrirSimulador(); return; }
     if(act==='ranking'){ abrirRanking(); return; }
     if(act==='proposta'){ abrirProposta(); return; }
@@ -10219,7 +10242,7 @@ body.foco .wrap{padding-bottom:40px}
     ['verProvas','Central de Provas','provas'],['verMinhasProvas','Minhas Provas','avulsas'],
     ['verUso','Acessos ao App','uso'],['verCRM','CRM de Vendas','crm'],['verEscala','Escala & Folgas','escala'],
     ['verContatos','Contatos das Lojas','contatos'],
-    ['verBonus','Bonificações','bonus'],['verSimulador','Simulador de Bônus','simulador'],
+    ['verBonus','Bonificações','bonus'],['verSimulador','Simulador de Bônus','simulador'],['verBonusGer','Bônus do Gerente','bonusger'],
     ['verProposta','Proposta de Vendedor','proposta'],['verMentor','Mentor','mentor'],
     ['verEspecialista','Especialista ST','especialista'],
     ['gerirCadastro','Cadastro da Equipe','cadastro'],['gerirAcessos','Acesso de usuários','acessos'],
@@ -10690,7 +10713,7 @@ button[id^="ov"][id$="Fechar"]:hover{transform:translateY(-1px);box-shadow:0 6px
   var aberto=ov.classList.contains('aberto');
   new MutationObserver(function(){ var a=ov.classList.contains('aberto'); if(a&&!aberto) animar(); aberto=a; }).observe(ov,{attributes:true,attributeFilter:['class']});
   if(aberto) animar();
-  ['ovPainel','ovNiveis','ovBonus','ovSimulador','ovRanking','ovPdi','ovMentor','ovProposta'].forEach(function(id){
+  ['ovPainel','ovNiveis','ovBonus','ovBonusGer','ovSimulador','ovRanking','ovPdi','ovMentor','ovProposta'].forEach(function(id){
     var o=document.getElementById(id); if(!o) return; var vis=false;
     new MutationObserver(function(){ var v=o.style.display&&o.style.display!=='none'; if(v&&!vis){ o.classList.remove('st-ov-entra'); void o.offsetWidth; o.classList.add('st-ov-entra'); } vis=!!v; }).observe(o,{attributes:true,attributeFilter:['style']});
   });
@@ -10726,6 +10749,7 @@ button[id^="ov"][id$="Fechar"]:hover{transform:translateY(-1px);box-shadow:0 6px
     crm:['📇 CRM de Vendas','Orçamentos, carteira, pós-venda e pintores — cada contato fica registrado.'],
     contatos:['📞 Contatos das Lojas','Filial, gerente, telefone e e-mail de toda a rede, com um toque para o WhatsApp.'],
     bonus:['💰 Bonificações','Quanto vale cada nível e o que falta para o próximo.'],
+    bonusger:['🏪 Bônus do Gerente','O bônus do gerente no mês: quanto já garantiu, quanto o ritmo entrega e o que falta em cada item.'],
     simulador:['🧮 Simulador de Bônus','Preencha os seus números e veja quanto já garantiu e o que ainda paga no mês.'],
     agenda:['🗓️ Agenda','Os seus compromissos da semana, reuniões e visitas.'],
     agendar:['➕ Agendar','Marque uma reunião, uma visita ou uma tarefa em poucos toques.'],
