@@ -1,0 +1,139 @@
+/* ============================================================================
+   INVENTÁRIO DO SUPERVISOR — servidor (contagem por loja, com evidência)
+   Só Tintas App · novembro/2026 (tela bonus-gerente.html, aba Supervisor)
+
+   Para o SERVIDOR DE DADOS ST (projeto "Servidor PDI"), no padrão da Escala.
+   No Código.gs, dentro do doPost, logo abaixo da linha da Escala:
+
+      if (/^invsup/.test(d.acao || '')) return invsupAcao_(d, c);
+
+   REGRA (Bruno, 18/11/2026)
+   O supervisor conta 50 itens por loja e lança os itens contados e os erros,
+   com a foto da última divergência mostrando data e horário. A coordenação
+   valida. Só contagem VALIDADA com 95% ou mais de assertividade paga o bônus
+   de R$ 100 por loja.
+
+   AÇÕES
+   invsupListar  contagens do mês (supervisor: só as lojas da carteira)
+   invsupLancar  supervisor (ou coordenação) lança itens, erros e a foto
+   invsupValidar coordenação valida, recusa (com motivo) ou reabre
+   invsupFoto    devolve a foto de uma contagem, para quem pode vê-la
+
+   As contagens ficam na aba INV_SUP da planilha do servidor e as fotos numa
+   pasta do Drive da conta do servidor. Nada é apagado: lançar de novo grava a
+   foto nova e a antiga continua na pasta.
+   ========================================================================== */
+var INV_ABA = 'INV_SUP', INV_PASTA = 'Só Tintas App - Inventário (evidências)';
+var INV_CAB = ['MES', 'LOJA', 'ITENS', 'ERROS', 'FOTO_ID', 'STATUS', 'POR', 'QUANDO', 'VAL_POR', 'VAL_QUANDO', 'MOTIVO'];
+
+function invsupAcao_(d, quem) {
+  try {
+    var nome = '', pf = '', leitura = false, lj = [];
+    if (quem && typeof quem === 'object') { nome = quem.nome || quem.n || ''; pf = String(quem.perfil || quem.pf || ''); leitura = !!quem.vc; lj = quem.lojas || quem.lj || []; }
+    if (!nome) return invResp_({ ok: false, erro: 'Crachá inválido.', cracha: true });
+    if (['coord', 'anl', 'sup'].indexOf(pf) < 0) return invResp_({ ok: false, erro: 'Esta área é do supervisor e da coordenação.' });
+    var coord = pf === 'coord';
+    var minhas = pf === 'sup' ? (lj instanceof Array ? lj : [lj]).map(invLoja_) : null;
+    var mes = String(d.mes || '');
+    if (!/^\d{4}-\d{2}$/.test(mes)) return invResp_({ ok: false, erro: 'Mês inválido.' });
+    if (d.acao === 'invsupListar') return invResp_({ ok: true, mes: mes, pf: pf, inv: invListar_(mes, minhas) });
+    var loja = invLoja_(d.loja);
+    if (loja === '000') return invResp_({ ok: false, erro: 'Loja inválida.' });
+    if (minhas && minhas.indexOf(loja) < 0) return invResp_({ ok: false, erro: 'Esta loja não é da sua carteira.' });
+    if (d.acao === 'invsupFoto') return invResp_(invFoto_(mes, loja));
+    if (leitura || pf === 'anl') return invResp_({ ok: false, erro: 'Este acesso é só de leitura.' });
+    if (d.acao === 'invsupLancar') return invResp_(invLancar_(d, mes, loja, nome, coord));
+    if (!coord) return invResp_({ ok: false, erro: 'Só a coordenação valida a contagem.' });
+    if (d.acao === 'invsupValidar') return invResp_(invValidar_(d, mes, loja, nome));
+    return invResp_({ ok: false, erro: 'Ação do inventário desconhecida.' });
+  } catch (err) {
+    return invResp_({ ok: false, erro: String(err && err.message || err) });
+  }
+}
+function invResp_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+function invLoja_(c) { var m = String(c == null ? '' : c).match(/\d+/); return ('00' + (m ? Number(m[0]) : '')).slice(-3); }
+function invAgora_() { return Utilities.formatDate(new Date(), 'America/Sao_Paulo', 'dd/MM/yyyy HH:mm'); }
+function invAba_() {
+  var ss = SpreadsheetApp.getActive(), ab = ss.getSheetByName(INV_ABA);
+  if (!ab) { ab = ss.insertSheet(INV_ABA); ab.setFrozenRows(1); ab.getRange(1, 1, ab.getMaxRows(), Math.max(INV_CAB.length, ab.getMaxColumns())).setNumberFormat('@'); }
+  ab.getRange(1, 1, 1, INV_CAB.length).setValues([INV_CAB]).setFontWeight('bold');
+  return ab;
+}
+function invPasta_() {
+  var p = PropertiesService.getScriptProperties(), id = p.getProperty('PASTA_INV_ID');
+  if (id) { try { return DriveApp.getFolderById(id); } catch (e) {} }
+  var it = DriveApp.getFoldersByName(INV_PASTA), f = it.hasNext() ? it.next() : DriveApp.createFolder(INV_PASTA);
+  p.setProperty('PASTA_INV_ID', f.getId());
+  return f;
+}
+/* linha da contagem (mês + loja): devolve { lin, v } ou null */
+function invAcha_(ab, mes, loja) {
+  var n = ab.getLastRow(); if (n < 2) return null;
+  var v = ab.getRange(2, 1, n - 1, INV_CAB.length).getValues();
+  for (var i = 0; i < v.length; i++) if (String(v[i][0]) === mes && invLoja_(v[i][1]) === loja) return { lin: i + 2, v: v[i] };
+  return null;
+}
+function invObj_(v) {
+  return { ic: Number(v[2]) || 0, ie: Number(v[3]) || 0, foto: !!String(v[4] || ''), st: String(v[5] || 'pendente'),
+    por: String(v[6] || ''), em: String(v[7] || ''), vpor: String(v[8] || ''), vem: String(v[9] || ''), motivo: String(v[10] || '') };
+}
+function invListar_(mes, minhas) {
+  var ab = SpreadsheetApp.getActive().getSheetByName(INV_ABA), out = {};
+  if (!ab || ab.getLastRow() < 2) return out;
+  ab.getRange(2, 1, ab.getLastRow() - 1, INV_CAB.length).getValues().forEach(function (v) {
+    var loja = invLoja_(v[1]);
+    if (String(v[0]) !== mes || (minhas && minhas.indexOf(loja) < 0)) return;
+    out[loja] = invObj_(v);
+  });
+  return out;
+}
+function invLancar_(d, mes, loja, nome, coord) {
+  var ic = Math.round(Number(d.itens)), ie = Math.round(Number(d.erros));
+  if (!(ic >= 1 && ic <= 999)) return { ok: false, erro: 'Informe quantos itens foram contados.' };
+  if (!(ie >= 0 && ie <= ic)) return { ok: false, erro: 'Os erros não podem passar dos itens contados.' };
+  var b64 = String(d.b64 || '').replace(/^data:[^;]+;base64,/, ''), mime = String(d.mime || '').toLowerCase();
+  if (!b64 && !coord) return { ok: false, erro: 'Anexe a foto da última divergência, mostrando data e horário.' };
+  var bytes = null;
+  if (b64) {
+    if (!/^image\/(png|jpeg|webp)$/.test(mime)) return { ok: false, erro: 'A evidência precisa ser uma foto (JPG, PNG ou WEBP).' };
+    bytes = Utilities.base64Decode(b64);
+    if (!bytes.length) return { ok: false, erro: 'Foto vazia.' };
+    if (bytes.length > 3500000) return { ok: false, erro: 'Foto grande demais. Tire outra ou reduza.' };
+  }
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var ab = invAba_(), a = invAcha_(ab, mes, loja);
+    if (a && String(a.v[5]) === 'validado' && !coord) return { ok: false, erro: 'Esta contagem já foi validada. Peça à coordenação para reabrir.' };
+    var fotoId = a ? String(a.v[4] || '') : '';
+    if (bytes) {
+      var ext = mime === 'image/png' ? '.png' : mime === 'image/webp' ? '.webp' : '.jpg';
+      var nomeArq = 'INV ' + mes + ' loja ' + loja + ' ' + Utilities.formatDate(new Date(), 'America/Sao_Paulo', 'yyyyMMdd-HHmmss') + ext;
+      fotoId = invPasta_().createFile(Utilities.newBlob(bytes, mime, nomeArq)).getId();
+    }
+    var linha = [mes, loja, String(ic), String(ie), fotoId, 'pendente', nome, invAgora_(), '', '', ''];
+    ab.getRange(a ? a.lin : ab.getLastRow() + 1, 1, 1, linha.length).setValues([linha]);
+    return { ok: true, loja: loja, reg: invObj_(linha) };
+  } finally { lock.releaseLock(); }
+}
+function invValidar_(d, mes, loja, nome) {
+  var st = d.st === 'validado' || d.st === 'recusado' || d.st === 'pendente' ? d.st : '';
+  if (!st) return { ok: false, erro: 'Decisão inválida.' };
+  var motivo = String(d.motivo || '').slice(0, 300);
+  if (st === 'recusado' && !motivo.trim()) return { ok: false, erro: 'Diga o motivo da recusa.' };
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var ab = invAba_(), a = invAcha_(ab, mes, loja);
+    if (!a) return { ok: false, erro: 'Ainda não há contagem lançada para esta loja.' };
+    var v = a.v.map(String);
+    v[5] = st; v[8] = st === 'pendente' ? '' : nome; v[9] = st === 'pendente' ? '' : invAgora_(); v[10] = st === 'recusado' ? motivo : '';
+    ab.getRange(a.lin, 1, 1, v.length).setValues([v]);
+    return { ok: true, loja: loja, reg: invObj_(v) };
+  } finally { lock.releaseLock(); }
+}
+function invFoto_(mes, loja) {
+  var ab = SpreadsheetApp.getActive().getSheetByName(INV_ABA), a = ab ? invAcha_(ab, mes, loja) : null;
+  var id = a ? String(a.v[4] || '') : '';
+  if (!id) return { ok: false, erro: 'Esta contagem não tem foto.' };
+  var blob = DriveApp.getFileById(id).getBlob();
+  return { ok: true, mime: blob.getContentType(), b64: Utilities.base64Encode(blob.getBytes()) };
+}

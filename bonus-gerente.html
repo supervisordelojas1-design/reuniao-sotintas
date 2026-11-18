@@ -92,6 +92,15 @@ html[data-theme="dark"] .st.rit{color:#9db8ff}
 
 .ni{width:84px;font:700 14px var(--f-body);padding:7px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);text-align:right}
 .ni:focus-visible{outline:2px solid var(--navy);outline-offset:1px}
+.invg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.invl{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.invh{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.invn{display:flex;gap:6px 18px;flex-wrap:wrap;font-size:13px;color:var(--muted)}.invn b{color:var(--ink);font-variant-numeric:tabular-nums}
+.invf{display:flex;gap:8px 12px;flex-wrap:wrap;align-items:flex-end;border-top:1px dashed var(--line);padding-top:8px}
+.invf label{display:flex;flex-direction:column;gap:3px;font:800 11px var(--f-body);color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.invf input[type=file]{font:500 12.5px var(--f-body);color:var(--ink);max-width:100%;text-transform:none;letter-spacing:0}
+.invimg{max-width:100%;border-radius:10px;border:1px solid var(--line);margin-top:6px}
+@media(max-width:820px){.invg{grid-template-columns:1fr}}
 .tw{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px}
 table{width:100%;border-collapse:collapse;font-size:13.5px}
 th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:800;text-align:right;padding:10px 12px;background:var(--surface2);white-space:nowrap}
@@ -167,11 +176,13 @@ var tc=function(t){return String(t||'').toLowerCase().replace(/(^|\s)(\S)/g,func
  $('btnTema').onclick=function(){H.dataset.theme=H.dataset.theme==='light'?'dark':'light'};
  window.addEventListener('message',function(ev){var d=ev&&ev.data;if(d&&(d.st_tema==='light'||d.st_tema==='dark'))H.dataset.theme=d.st_tema});})();
 
-var BASE=null, NIV=null, CONF={}, GER={}, LOJAS=[], TODAS=[], SUPS=[], ABAS=[], EU=null, ST={tab:'ger',sup:null,loja:null,vend:null,fl:''}, PODE=false, MESK='', UT=0, UD=0, UR=0, FECH=false, SALVANDO=false;
+var BASE=null, NIV=null, CONF={}, GER={}, LOJAS=[], TODAS=[], SUPS=[], ABAS=[], EU=null, ST={tab:'ger',sup:null,loja:null,vend:null,fl:''}, PODE=false, INV={}, INV_OK=false, LANCA=false, MESK='', UT=0, UD=0, UR=0, FECH=false, SALVANDO=false;
 
 function faixa(p){return p>=1.3?2:p>=1?1:p>=0.95?0:-1}
-function conf(cod){var m=CONF[MESK]||{},c=m[cod]||{};return{inv:c.inv===1||c.inv===true,cont:!(c.cont===0||c.cont===false),por:c.por||'',em:c.em||'',
-  ic:c.ic>0?+c.ic:0,ie:c.ic>0?Math.max(+c.ie||0,0):0,ass:c.ic>0?Math.max(+c.ic-(+c.ie||0),0)/+c.ic:null,ipor:c.ipor||'',iem:c.iem||''}}
+function conf(cod){var m=CONF[MESK]||{},c=m[cod]||{};return{inv:c.inv===1||c.inv===true,cont:!(c.cont===0||c.cont===false),por:c.por||'',em:c.em||''}}
+/* contagem de inventário do supervisor (servidor: aba INV_SUP). st: pendente | validado | recusado */
+function invDe(cod){var r=INV[cod]; if(!r||!(r.ic>0)) return null; return {ic:+r.ic,ie:+r.ie||0,ass:Math.max(r.ic-(+r.ie||0),0)/r.ic,st:r.st||'pendente',foto:!!r.foto,por:r.por||'',em:r.em||'',vpor:r.vpor||'',vem:r.vem||'',motivo:r.motivo||''}}
+function contDe(t){return Array.isArray(t)?(t[0]||{}):(t||{})}   /* o servidor só aceita tabela em lista: guardamos [ {mes:{loja:{}}} ] */
 
 /* ===== CÁLCULO de uma loja =====
    garantido = já travado pelos números de hoje · proj = no ritmo dos dias úteis · alvo = fechando 100% em tudo */
@@ -364,13 +375,14 @@ function calcSup(nome){
   it.push({k:'seuc',n:'Eucatex',qd:'por loja da carteira',gar:gar,prj:prj,alvo:B.seuc*com,chk:chk,st:gar&&gar>=prj?'ok':prj?'rit':'risco',stT:(prj/B.seuc)+' de '+com+(com===1?' loja':' lojas')+' no ritmo de 100%',
    falta:'Cada loja que fechar a litragem vale <b>'+R(B.seuc)+'</b>.',regra:R(B.seuc)+' por loja que bater 100% da meta de litragem Eucatex.'})})();
 
- (function(){var ok=0,com=0,chk='';
-  X.forEach(function(q){var c=q.cf; if(c.ass==null){chk+='<span>'+q.cod+' '+esc(q.nome)+': sem contagem</span>';return} com++; var bate=c.ass>=B.sinvMin; if(bate) ok++;
-   chk+='<span class="'+(bate?'s':'n')+'">'+q.cod+' '+esc(q.nome)+': '+N(c.ic-c.ie)+' de '+N(c.ic)+' · '+P(c.ass)+'</span>'});
-  it.push({k:'sinv',n:'Inventário',qd:'por loja da carteira',gar:ok*B.sinv,prj:ok*B.sinv,alvo:X.length*B.sinv,chk:chk,st:!com?'pend':ok===X.length?'ok':ok?'rit':'risco',
-   stT:!com?'nenhuma loja com contagem lançada':ok+' de '+X.length+' lojas com 95% ou mais',
-   falta:com<X.length?('Faltam as contagens de <b>'+(X.length-com)+'</b> '+(X.length-com===1?'loja':'lojas')+'. Com '+B.sinvItens+' itens contados, a loja passa com até <b>2 erros</b>.'):(ok<X.length?'Com '+B.sinvItens+' itens contados, a loja passa com até <b>2 erros</b>.':''),
-   regra:R(B.sinv)+' por loja com 95% ou mais de assertividade na contagem de '+B.sinvItens+' itens feita pelo supervisor. As contagens e os erros são lançados na tabela abaixo.'})})();
+ (function(){var val=0,pen=0,com=0,chk='';
+  X.forEach(function(q){var c=invDe(q.cod); if(!c){chk+='<span>'+q.cod+' '+esc(q.nome)+': sem contagem</span>';return} com++;
+   var bate=c.ass>=B.sinvMin, v=c.st==='validado', r=c.st==='recusado'; if(bate&&v) val++; else if(bate&&!r) pen++;
+   chk+='<span class="'+(bate&&v?'s':(!bate||r)?'n':'')+'">'+q.cod+' '+esc(q.nome)+': '+N(c.ic-c.ie)+' de '+N(c.ic)+' · '+P(c.ass)+' · '+(v?'validada':r?'recusada':'aguarda validação')+'</span>'});
+  it.push({k:'sinv',n:'Inventário',qd:'por loja da carteira',gar:val*B.sinv,prj:(val+pen)*B.sinv,alvo:X.length*B.sinv,chk:chk,st:!com?'pend':val===X.length?'ok':val?'rit':pen?'pend':'risco',
+   stT:!com?'nenhuma loja com contagem lançada':val+' de '+X.length+' lojas validadas'+(pen?' · '+pen+' aguardando':''),
+   falta:(com<X.length?'Faltam as contagens de <b>'+(X.length-com)+'</b> '+(X.length-com===1?'loja':'lojas')+'. ':'')+'Com '+B.sinvItens+' itens contados, a loja passa com até <b>2 erros</b>. Só entra no garantido depois da validação da coordenação.',
+   regra:R(B.sinv)+' por loja com 95% ou mais de assertividade na contagem de '+B.sinvItens+' itens. O supervisor lança itens, erros e a foto da última divergência (com data e horário); a coordenação valida.'})})();
  return soma_(x,it);
 }
 function soma_(x,it){x.it=it;x.gar=0;x.prj=0;x.alvo=0;it.forEach(function(i){x.gar+=i.gar;x.prj+=i.prj;x.alvo+=i.alvo});return x}
@@ -430,46 +442,54 @@ function telaSup(x){
   'Na super meta (130%) a meta regional paga <b>'+R(B.sreg[2])+'</b> e cada loja <b>'+R(B.sfat[2])+'</b>.')+
   '<div class="grid">'+x.it.map(cardItem).join('')+invHtml(x)+'</div>';
 }
-/* contagem de inventário do supervisor: itens contados e erros por loja -> assertividade */
+/* contagem de inventário do supervisor: o supervisor lança (com foto), a coordenação valida */
 function invHtml(x){
- var h='<div class="card full" id="invArea"><h3>Inventário do supervisor · contagem por loja <span class="qd">'+esc(rotMes())+' · passa com 95% ou mais</span></h3><div class="tw" style="border:0"><table><tr><th>Loja</th><th>Itens contados</th><th>Erros</th><th>Assertividade</th><th class="e">Resultado</th><th class="e">Lançado por</th></tr>';
- x.lojas.forEach(function(q){var c=q.cf,tem=c.ass!=null,ok=tem&&c.ass>=B.sinvMin;
-  h+='<tr data-inv="'+q.cod+'"><td>'+q.cod+' · '+esc(q.nome)+'</td>'+
-   (PODE?'<td><input type="number" inputmode="numeric" min="0" max="999" class="ni" data-f="ic" aria-label="Itens contados na loja '+q.cod+'" value="'+(tem?c.ic:'')+'" placeholder="'+B.sinvItens+'"></td><td><input type="number" inputmode="numeric" min="0" max="999" class="ni" data-f="ie" aria-label="Erros na loja '+q.cod+'" value="'+(tem?c.ie:'')+'" placeholder="—"></td>'
-        :'<td>'+(tem?N(c.ic):'—')+'</td><td>'+(tem?N(c.ie):'—')+'</td>')+
-   '<td data-ass>'+(tem?P(c.ass):'—')+'</td><td class="e" data-res><span class="st '+(tem?(ok?'ok':'trava'):'pend')+'">'+(tem?(ok?'bateu · '+R(B.sinv):'não bateu'):'sem contagem')+'</span></td><td class="e mut">'+(c.ipor?esc(c.ipor)+(c.iem?' · '+esc(c.iem):''):'—')+'</td></tr>'});
- h+='</table></div>'+(PODE?'<div class="sn"><button type="button" class="btn pri" id="invSalvar"'+(SALVANDO?' disabled':'')+'>Salvar contagens</button><span class="falta" id="invMsg" role="status"></span></div><div class="regra">Preencha os erros de cada loja contada; os itens contados valem '+B.sinvItens+' quando ficam em branco. Deixe os erros em branco na loja que ainda não foi contada.</div>':'<div class="regra">As contagens são lançadas pela coordenação.</div>')+'</div>';
- return h;
+ var h='<div class="card full" id="invArea"><h3>Inventário do supervisor · contagem por loja <span class="qd">'+esc(rotMes())+' · passa com 95% ou mais</span></h3>';
+ if(!INV_OK) return h+'<div class="falta">A área de contagem ainda não respondeu no servidor. Tente de novo em instantes; se continuar, avise a coordenação.</div></div>';
+ h+='<div class="invg">';
+ x.lojas.forEach(function(q){var c=invDe(q.cod),tem=!!c,bate=tem&&c.ass>=B.sinvMin,val=tem&&c.st==='validado',rec=tem&&c.st==='recusado';
+  var edita=LANCA&&(PODE||!val);
+  h+='<div class="invl" data-inv="'+q.cod+'"><div class="invh"><b>'+q.cod+' · '+esc(q.nome)+'</b><span class="st '+(!tem?'pend':val?(bate?'ok':'trava'):rec?'trava':'pend')+'">'+(!tem?'sem contagem':val?(bate?'validada · '+R(B.sinv):'validada · não bateu'):rec?'recusada':'aguarda validação')+'</span></div>'+
+   '<div class="invn"><span>Itens contados <b>'+(tem?N(c.ic):'—')+'</b></span><span>Erros <b>'+(tem?N(c.ie):'—')+'</b></span><span>Assertividade <b data-ass>'+(tem?P(c.ass):'—')+'</b></span></div>'+
+   (tem?'<div class="regra" style="border:0;padding:0">Lançado por '+esc(c.por||'—')+(c.em?' · '+esc(c.em):'')+(c.vpor?' · '+(rec?'recusado':'validado')+' por '+esc(c.vpor)+(c.vem?' · '+esc(c.vem):''):'')+(rec&&c.motivo?'<br><b>Motivo:</b> '+esc(c.motivo):'')+'</div>':'')+
+   (tem&&c.foto?'<div><button type="button" class="btn" data-ia="foto">Ver foto da evidência</button></div><div data-fotobox></div>':(tem?'<div class="regra" style="border:0;padding:0">Sem foto anexada.</div>':''))+
+   (edita?'<div class="invf"><label>Itens contados<input type="number" inputmode="numeric" min="1" max="999" class="ni" data-f="ic" value="'+(tem?c.ic:B.sinvItens)+'"></label><label>Erros<input type="number" inputmode="numeric" min="0" max="999" class="ni" data-f="ie" value="'+(tem?c.ie:'')+'" placeholder="0"></label>'+
+     '<label class="invfoto">Foto da última divergência (com data e horário)<input type="file" accept="image/*" capture="environment" data-f="foto"></label>'+
+     '<button type="button" class="btn pri" data-ia="lancar">'+(tem?'Lançar de novo':'Lançar contagem')+'</button></div>':'')+
+   (PODE&&tem?'<div class="invf">'+(val||rec?'<button type="button" class="btn" data-ia="reabrir">Reabrir</button>':'<button type="button" class="btn pri" data-ia="validar">Validar</button><label>Motivo da recusa<input type="text" class="ni" style="width:220px;text-align:left" maxlength="300" data-f="motivo"></label><button type="button" class="btn" data-ia="recusar">Recusar</button>')+'</div>':'')+
+   '<div class="falta" data-msg role="status"></div></div>'});
+ return h+'</div><div class="regra">'+(LANCA&&!PODE?'Lance os itens contados e os erros de cada loja e anexe a foto da última divergência, mostrando data e horário. A coordenação valida; depois de validada, a contagem só muda se a coordenação reabrir.':PODE?'O supervisor lança a contagem com a foto; confira a evidência e valide ou recuse com o motivo. Só contagem validada entra no bônus.':'O supervisor lança a contagem com a foto e a coordenação valida.')+'</div></div>';
 }
-function invLer(){var o={},erro='';
- Array.prototype.forEach.call(document.querySelectorAll('tr[data-inv]'),function(tr){var a=tr.querySelector('[data-f=ic]'),b=tr.querySelector('[data-f=ie]'); if(!a||!b) return;
-  if(b.value===''){ o[tr.dataset.inv]=null; return; }
-  var ic=a.value===''?B.sinvItens:Math.round(+a.value),ie=Math.round(+b.value);
-  if(!(ic>0)||!(ie>=0)||ie>ic){ erro='Confira a loja '+tr.dataset.inv+': os erros não podem passar dos itens contados.'; return; }
-  o[tr.dataset.inv]={ic:ic,ie:ie}});
- return erro?{erro:erro}:{v:o}}
-function invPrev(){Array.prototype.forEach.call(document.querySelectorAll('tr[data-inv]'),function(tr){var a=tr.querySelector('[data-f=ic]'),b=tr.querySelector('[data-f=ie]'); if(!a||!b) return;
-  var ic=a.value===''?B.sinvItens:+a.value,ie=+b.value,tem=b.value!==''&&ic>0&&ie>=0&&ie<=ic,as=tem?(ic-ie)/ic:null,ok=tem&&as>=B.sinvMin;
-  tr.querySelector('[data-ass]').textContent=tem?P(as):'—';
-  tr.querySelector('[data-res]').innerHTML='<span class="st '+(tem?(ok?'ok':'trava'):'pend')+'">'+(tem?(ok?'bateu · '+R(B.sinv):'não bateu'):'sem contagem')+'</span>'})}
-function invSalvar(){
- if(!PODE||SALVANDO) return; var L=invLer(),msg=function(t){var m=$('invMsg'); if(m) m.textContent=t};
- if(L.erro){ msg(L.erro); return; }
- SALVANDO=true; $('invSalvar').disabled=true; msg('Salvando…');
- STDados.chamar('conteudoLer').then(function(r){
-  var T=(r&&r.ok&&r.cont&&r.cont[TAB])||CONF||{}; T=JSON.parse(JSON.stringify(T));
-  var ms=Object.keys(T).sort(); while(ms.length>6) delete T[ms.shift()];
-  T[MESK]=T[MESK]||{}; var s=null; try{s=JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null')}catch(e){}
-  var quem=(s&&s.nome)||'', em=new Date().toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-  Object.keys(L.v).forEach(function(cod){var c=T[MESK][cod]||{},n=L.v[cod];
-   if(!n){ if(c.ic==null) return; delete c.ic; delete c.ie; c.ipor=quem; c.iem=em; }
-   else { if(c.ic===n.ic&&c.ie===n.ie) return; c.ic=n.ic; c.ie=n.ie; c.ipor=quem; c.iem=em; }
-   T[MESK][cod]=c});
-  var env={}; env[TAB]=T;
-  return STDados.chamar('conteudoSalvar',{tabelas:env}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não confirmou.'); CONF=T; });
- }).then(function(){SALVANDO=false;render();msg('✓ Contagens salvas. O supervisor já vê o resultado.')})
-  .catch(function(e){SALVANDO=false;var b=$('invSalvar'); if(b) b.disabled=false; msg('Não consegui salvar: '+((e&&e.message)||e))});
+function invMsg(box,t){var m=box.querySelector('[data-msg]'); if(m) m.textContent=t}
+function invReduz(file){return new Promise(function(ok,ruim){var fr=new FileReader();
+ fr.onerror=function(){ruim(new Error('Não consegui ler a foto.'))};
+ fr.onload=function(){var im=new Image(); im.onerror=function(){ruim(new Error('Arquivo não é uma imagem.'))};
+  im.onload=function(){var mx=1600,w=im.naturalWidth,h=im.naturalHeight,k=Math.min(1,mx/Math.max(w,h)),c=document.createElement('canvas');
+   c.width=Math.round(w*k);c.height=Math.round(h*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',0.82))};
+  im.src=fr.result};
+ fr.readAsDataURL(file)})}
+function invAcao(box,ac){
+ if(SALVANDO) return; var cod=box.dataset.inv, q=function(f){return box.querySelector('[data-f='+f+']')};
+ var fim=function(p,okMsg){SALVANDO=true;invMsg(box,'Enviando…');
+  p.then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não confirmou.'); INV[cod]=j.reg; SALVANDO=false; render();
+    var b=document.querySelector('.invl[data-inv="'+cod+'"]'); if(b) invMsg(b,okMsg); })
+   .catch(function(e){SALVANDO=false;invMsg(box,'Não consegui: '+((e&&e.message)||e))})};
+ if(ac==='foto'){ var fb=box.querySelector('[data-fotobox]'); if(fb.firstChild){fb.innerHTML='';return} invMsg(box,'Abrindo a foto…');
+  STDados.chamar('invsupFoto',{mes:MESK,loja:cod}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'Sem foto.');
+   var im=document.createElement('img'); im.alt='Foto da última divergência da loja '+cod; im.className='invimg'; im.src='data:'+j.mime+';base64,'+j.b64; fb.appendChild(im); invMsg(box,''); })
+   .catch(function(e){invMsg(box,'Não consegui abrir a foto: '+((e&&e.message)||e))}); return; }
+ if(ac==='lancar'){ var ic=Math.round(+q('ic').value), ie=q('ie').value===''?NaN:Math.round(+q('ie').value), f=q('foto').files[0];
+  if(!(ic>=1)){invMsg(box,'Informe quantos itens foram contados.');return}
+  if(!(ie>=0)||ie>ic){invMsg(box,'Informe os erros (0 se não houve); eles não podem passar dos itens contados.');return}
+  if(!f&&!PODE){invMsg(box,'Anexe a foto da última divergência, mostrando data e horário.');return}
+  fim((f?invReduz(f):Promise.resolve('')).then(function(d){return STDados.chamar('invsupLancar',{mes:MESK,loja:cod,itens:ic,erros:ie,mime:d?'image/jpeg':'',b64:d?d.replace(/^data:[^;]+;base64,/,''):''})}),'✓ Contagem enviada. Aguarda a validação da coordenação.'); return; }
+ if(ac==='validar'){ fim(STDados.chamar('invsupValidar',{mes:MESK,loja:cod,st:'validado'}),'✓ Contagem validada.'); return; }
+ if(ac==='recusar'){ var m=(q('motivo').value||'').trim(); if(!m){invMsg(box,'Escreva o motivo da recusa.');return}
+  fim(STDados.chamar('invsupValidar',{mes:MESK,loja:cod,st:'recusado',motivo:m}),'Contagem recusada. O supervisor vê o motivo.'); return; }
+ if(ac==='reabrir'){ fim(STDados.chamar('invsupValidar',{mes:MESK,loja:cod,st:'pendente'}),'Contagem reaberta.'); return; }
 }
+function invPrev(box){var a=box.querySelector('[data-f=ic]'),b=box.querySelector('[data-f=ie]'),o=box.querySelector('[data-ass]'); if(!a||!b||!o) return;
+ var ic=+a.value,ie=+b.value; o.textContent=(b.value!==''&&ic>0&&ie>=0&&ie<=ic)?P((ic-ie)/ic)+' (prévia)':'—'}
 function tabela(cab,linhas,tot,dica){
  return '<div class="tw"><table><caption class="sub" style="text-align:left;padding:10px 12px;caption-side:top">'+dica+'</caption><tr>'+cab+'<th>% meta</th><th>'+(FECH?'Fechou':'Projeta')+'</th><th>Garantido</th><th>'+(FECH?'Fechamento':'No ritmo')+'</th><th>Em 100%</th></tr>'+linhas+
   '<tr class="tt"><td colspan="'+((cab.match(/<th/g)||[]).length+2)+'">'+tot.n+'</td><td>'+R(tot.gar)+'</td><td>'+R(tot.prj)+'</td><td>'+R(tot.alvo)+'</td></tr></table></div>';
@@ -522,8 +542,9 @@ function render(){
  Array.prototype.forEach.call(document.querySelectorAll('tr.lk'),function(tr){var go=function(){ST[tr.dataset.go]=tr.dataset.id;render();window.scrollTo(0,0)};tr.onclick=go;tr.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}}});
  Array.prototype.forEach.call(document.querySelectorAll('[data-sn]'),function(b){b.onclick=function(){marcar(ATUAL&&ATUAL._a,b.dataset.sn,+b.dataset.v)}});
  var f=$('fLoja'); if(f) f.onchange=function(){ST.fl=f.value;render()};
- var bs=$('invSalvar'); if(bs) bs.onclick=invSalvar;
- Array.prototype.forEach.call(document.querySelectorAll('.ni'),function(i){i.oninput=invPrev});
+ Array.prototype.forEach.call(document.querySelectorAll('.invl'),function(box){
+  Array.prototype.forEach.call(box.querySelectorAll('[data-ia]'),function(b){b.onclick=function(){invAcao(box,b.dataset.ia)}});
+  Array.prototype.forEach.call(box.querySelectorAll('.ni[type=number]'),function(i){i.oninput=function(){invPrev(box)}})});
 }
 $('btnVoltar').onclick=function(){ST[ST.tab==='ger'?'loja':ST.tab]=null;render()};
 $('btnZap').onclick=function(){
@@ -539,12 +560,12 @@ function marcar(a,k,v){
  if(!PODE||SALVANDO||!a) return; var cod=code3(a[0]), msg=function(t){var m=$('snMsg'); if(m) m.textContent=t};
  SALVANDO=true; render(); msg('Salvando…');
  STDados.chamar('conteudoLer').then(function(r){
-  var T=(r&&r.ok&&r.cont&&r.cont[TAB])||CONF||{}; T=JSON.parse(JSON.stringify(T));
+  var T=(r&&r.ok&&r.cont&&r.cont[TAB])?contDe(r.cont[TAB]):(CONF||{}); T=JSON.parse(JSON.stringify(T));
   var ms=Object.keys(T).sort(); while(ms.length>6) delete T[ms.shift()];   /* guarda os 6 últimos meses */
   T[MESK]=T[MESK]||{}; var c=T[MESK][cod]||{}; c[k]=v?1:0;
   var s=null; try{s=JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null')}catch(e){}
   c.por=(s&&s.nome)||''; c.em=new Date().toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-  T[MESK][cod]=c; var env={}; env[TAB]=T;
+  T[MESK][cod]=c; var env={}; env[TAB]=[T];
   return STDados.chamar('conteudoSalvar',{tabelas:env}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não confirmou.'); CONF=T; });
  }).then(function(){SALVANDO=false;render();msg('✓ Salvo. O gerente já vê a mudança.')})
   .catch(function(e){SALVANDO=false;render();msg('Não consegui salvar: '+((e&&e.message)||e))});
@@ -552,7 +573,8 @@ function marcar(a,k,v){
 
 function aviso(t){var a=$('aviso');a.innerHTML=t||'';a.hidden=!t}
 /* pf: coord | anl | sup | ger | vend · lock: o recorte que o servidor do Painel devolve */
-function iniciar(dados,lock,pf,pode,nomeEu){
+function iniciar(dados,lock,pf,pode,nomeEu,lanca){
+ LANCA=!!lanca;
  BASE=dados; UT=+dados.p[3]||0; UD=+dados.p[4]||0; UR=+dados.p[5]||0; FECH=!!dados.f||(!UR&&UD>=UT&&UT>0); MESK=String(dados.p[2]||'').slice(0,7); PODE=!!pode;
  var L=(dados.L||[]).filter(function(l){return +l[3]>0}); lock=String(lock||'');
  var g=/^(loja|vend):(\d+)/.exec(lock);
@@ -581,15 +603,15 @@ if(q.get('demo')){ /* prévia sem login */
    [vd("PATRICK MARINHEIRO",150000,104000,152000,[60000,44000,220,120,6,70,700,0.82,2.55,240,0.066,3000,2100]),vd("CARLA SOUZA",90000,48000,71000,[30000,14000,120,70,2,22,500,0.75,2.3,205,0.08,1800,900])]],
   ["35","Taquara","Bruno",120000,120000,52000,0,98000,[20000,6000,90,40,1,12,500,0.86,2.7,189,0.05,0,0],
    [vd("JOAO PEDRO",70000,30000,41000,[12000,4000,60,30,1,8,300,0.86,2.7,189,0.05,0,0])]]]};
- CONF={'2026-11':{'002':{inv:1,cont:1,por:'Bruno',em:'17/11 09:10',ic:50,ie:2,ipor:'Bruno',iem:'17/11 09:12'},'035':{ic:50,ie:4,ipor:'Bruno',iem:'17/11 09:15'}}}; GER={'030':'JOANA CARLA','002':'PAULO RAMOS'};
+ CONF={'2026-11':{'002':{inv:1,cont:1,por:'Bruno',em:'17/11 09:10'}}}; INV_OK=true; INV={'002':{ic:50,ie:2,st:'validado',foto:true,por:'Bruno',em:'17/11 09:12',vpor:'Coordenação',vem:'17/11 10:00'},'035':{ic:50,ie:1,st:'pendente',foto:true,por:'Bruno',em:'17/11 09:15'}}; GER={'030':'JOANA CARLA','002':'PAULO RAMOS'};
  var dm=q.get('demo');
- iniciar(D,dm==='ger'?'loja:030':dm==='sup'?'Bruno':dm==='vend'?'vend:030':null,dm,dm==='coord','Luan Pinto');
+ iniciar(D,dm==='ger'?'loja:030':dm==='sup'?'Bruno':dm==='vend'?'vend:030':null,dm,dm==='coord','Luan Pinto',dm==='coord'||dm==='sup');
 } else if(!window.STDados||!STDados.crachaGuardado){ aviso('Abra este painel pelo <b>Só Tintas App</b>, já com o seu login.'); }
 else {
  $('app').innerHTML='<div class="aviso">Carregando os números do mês…</div>';
  STDados.cracha().then(function(tk){
   var pN=STDados.chamar('niveis').then(function(j){NIV=j&&j.ok&&j.data||null}).catch(function(){});
-  var pC=STDados.chamar('conteudoLer').then(function(j){CONF=(j&&j.ok&&j.cont&&j.cont[TAB])||{}}).catch(function(){});
+  var pC=STDados.chamar('conteudoLer').then(function(j){CONF=contDe(j&&j.ok&&j.cont&&j.cont[TAB])}).catch(function(){});
   var pE=fetch(API_EQUIPE).then(function(r){return r.json()}).then(function(j){var g=(j&&j.gerentes)||{};Object.keys(g).forEach(function(k){var c=code3(g[k].loja);if(c&&g[k].gerente)GER[c]=g[k].gerente})}).catch(function(){});
   var pD=fetch(API_PAINEL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({tipo:'dados',u:'cracha',p:tk})}).then(function(r){return r.json()});
   return Promise.all([pD,pN,pC,pE]).then(function(a){var r=a[0];
@@ -597,8 +619,10 @@ else {
    var lock=r.lock||null, c=STDados.crachaGuardado(), pf=c&&c.perfil, vis=null, s=null; try{vis=STDados.visao&&STDados.visao()}catch(e){} try{s=STDados.sessaoVisao()}catch(e){}
    if(!lock&&pf==='vend') lock='vend:'+(c.lojas&&c.lojas[0]||'');
    if(!lock&&pf==='ger') lock='loja:'+(c.lojas&&c.lojas[0]||'');
-   $('app').innerHTML='';
-   iniciar(r.dados,lock,pf,pf==='coord'&&!vis,(s&&s.nome)||(c&&c.nome)||'');
+   var mesk=String((r.dados&&r.dados.p&&r.dados.p[2])||'').slice(0,7), lider=pf==='coord'||pf==='anl'||pf==='sup';
+   var pI=lider?STDados.chamar('invsupListar',{mes:mesk}).then(function(j){ if(j&&j.ok){INV=j.inv||{};INV_OK=true} }).catch(function(){}):Promise.resolve();
+   return pI.then(function(){ $('app').innerHTML='';
+    iniciar(r.dados,lock,pf,pf==='coord'&&!vis,(s&&s.nome)||(c&&c.nome)||'',(pf==='coord'||pf==='sup')&&!vis); });
   });
  }).catch(function(e){$('app').innerHTML='';aviso(esc((e&&e.message)||'Sem conexão com o servidor.'))});
 }
