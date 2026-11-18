@@ -2,6 +2,18 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v244",
+      "data": "18/11/2026",
+      "hora": "01:15",
+      "itens": [
+        {
+          "painel": "PDI Semanal",
+          "o_que": "Cascata de segunda: o PDI com os gerentes sai às 7h45, com o ritual conferido pela semana passada. Tudo fecha às 18h de segunda (Fiz o PDI e provas) e às 18h05 sai o placar da semana para a coordenação e para cada supervisor. A coordenação pode ajustar o prazo de um gerente, de todos os gerentes, de um supervisor ou de todos.",
+          "para": ["coord", "anl", "sup", "ger"]
+        }
+      ]
+    },
+    {
       "v": "ast-v243",
       "data": "18/11/2026",
       "hora": "00:10",

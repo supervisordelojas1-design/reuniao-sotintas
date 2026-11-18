@@ -295,7 +295,7 @@ h3{font-size:14px;margin:0 0 6px}
   function fichaGer(f,aberto){
     if(!f) return '';
     var h=numerosAte(f.dadosAte,aberto)+'<div class="kpis"><div class="kpi"><span>Meta do mês</span><b>'+brl(f.meta)+'</b></div><div class="kpi"><span>Realizado</span><b>'+brl(f.fat)+'</b></div><div class="kpi"><span>Projeção</span><b>'+pct(f.pp)+'</b></div><div class="kpi"><span>Precisa por dia útil</span><b>'+brl(f.dia)+'</b></div>'+
-      kpiEuc(f)+'<div class="kpi"><span>PDI feito (vendedores)</span><b>'+f.feitos+'/'+f.nV+'</b></div><div class="kpi"><span>Respondido</span><b>'+f.resp+'/'+f.nV+(f.media!=null?' · média '+String(f.media).replace('.',','):'')+'</b></div></div>';
+      kpiEuc(f)+'<div class="kpi"><span>PDI feito na semana passada (vendedores)</span><b>'+f.feitos+'/'+f.nV+'</b></div><div class="kpi"><span>Respondido (semana passada)</span><b>'+f.resp+'/'+f.nV+(f.media!=null?' · média '+String(f.media).replace('.',','):'')+'</b></div></div>';
     h+='<ul class="lista">'+
       '<li><span>Abaixo do ritmo</span><span>'+(f.abaixo&&f.abaixo.length?esc(f.abaixo.join(', ')):'ninguém')+'</span></li>'+
       '<li><span>Não fizeram / não responderam o PDI</span><span>'+(f.naoResp&&f.naoResp.length?esc(f.naoResp.join(', ')):'ninguém')+'</span></li>'+
@@ -353,7 +353,7 @@ h3{font-size:14px;margin:0 0 6px}
   function blocoGerLoja(cod,ro){
     var x=gerAtual(cod)[0]; if(!x) return '';
     /* a semana dos gerentes nasce no dia e horário escolhidos pela coordenação (padrão 12h15): antes disso, o que existe é a semana passada */
-    if(GERD&&D.atual&&GERD.atual<D.atual) return '<div class="vend" style="border-color:var(--navy)"><b>PDI semanal com o gerente</b><p class="sub" style="margin:4px 0 0">O PDI desta semana com o gerente é gerado '+quandoGer()+' às '+horaGer()+'. A partir daí aparece aqui o botão <b>✓ Fiz o PDI com o gerente</b>, que vale por '+prazoGerH()+' horas.</p></div>';
+    if(GERD&&D.atual&&GERD.atual<D.atual) return '<div class="vend" style="border-color:var(--navy)"><b>PDI semanal com o gerente</b><p class="sub" style="margin:4px 0 0">O PDI desta semana com o gerente é gerado '+quandoGer()+' às '+horaGer()+'. A partir daí aparece aqui o botão <b>✓ Fiz o PDI com o gerente</b>, que vale até as 18h de segunda.</p></div>';
     var ab=ABERTOS['g:'+x.chave], f=x.ficha||{};
     var h='<div class="vend" style="border-color:var(--navy)"><div class="vend-top"><div><b>PDI semanal com o gerente · '+esc(nm(x.gerente||f.gerente||''))+'</b><div class="sub">'+esc(f.orient||'')+'</div></div><div class="linha">'+chip(x.situacao)+(x.aval?'<span class="chip c-respondido">'+x.aval.nota+'/'+x.aval.total+'</span>':'')+'</div></div>';
     h+='<div class="linha" style="margin-top:8px">'+(x.situacao==='aguardando'&&!ro?'<button class="btn azul" type="button" data-gerfeito="'+esc(x.chave)+'">✓ Fiz o PDI com o gerente</button>':'')+
@@ -366,7 +366,7 @@ h3{font-size:14px;margin:0 0 6px}
   /* topo da tela do supervisor/coordenação: todos os gerentes da carteira, com o botão "Fiz o PDI" à vista */
   function topoGer(cods,ro){
     if(!GERD) return '';
-    if(D.atual&&GERD.atual<D.atual) return '<section class="card"><h2 style="margin:0">PDI semanal com os gerentes</h2><p class="sub" style="margin:6px 0 0">O PDI desta semana com os gerentes é gerado '+quandoGer()+' às '+horaGer()+'. Depois disso, o botão <b>✓ Fiz o PDI</b> de cada gerente aparece aqui e no card de cada loja, por '+prazoGerH()+' horas. Ao marcar, a avaliação do gerente é liberada.</p>'+cfgHoraGer(ro)+'</section>';
+    if(D.atual&&GERD.atual<D.atual) return '<section class="card"><h2 style="margin:0">PDI semanal com os gerentes</h2><p class="sub" style="margin:6px 0 0">O PDI desta semana com os gerentes é gerado '+quandoGer()+' às '+horaGer()+'. Depois disso, o botão <b>✓ Fiz o PDI</b> de cada gerente aparece aqui e no card de cada loja, até as 18h de segunda. Ao marcar, a avaliação do gerente é liberada.</p>'+cfgHoraGer(ro)+'</section>';
     var G=cods.map(function(c){return gerAtual(c)[0];}).filter(Boolean); if(!G.length) return '';
     var feitos=G.filter(function(x){return x.situacao!=='aguardando'&&x.situacao!=='nao_feito';}).length;
     var ag=G.filter(function(x){return x.situacao==='aguardando';}).length, padT=SECPAD==null?D.perfil==='sup':SECPAD, abT=secAb('topo',padT);   /* supervisor: abre aberto, é onde ele marca o PDI */
@@ -398,11 +398,21 @@ h3{font-size:14px;margin:0 0 6px}
     if(D.perfil!=='coord'||ro) return '';
     var g=GERHORA, h=(g&&g.hora)||'12:15', dn=diaGerNum();
     var ops=['1','2','3','4','5','6'].map(function(n){ var t=DIASGER[n]; return '<option value="'+n+'"'+(n===dn?' selected':'')+'>'+t.charAt(0).toUpperCase()+t.slice(1)+'</option>'; }).join('');
-    return '<div class="comp" style="margin-top:10px"><b>Dia e horário da geração (coordenação)</b><div class="sub">Toda semana, no dia e horário escolhidos, o servidor gera o PDI com os gerentes e as questões dos supervisores, e o botão ✓ Fiz o PDI aparece e vale por '+prazoGerH()+' horas. Só gera se o Painel já estiver atualizado no dia.</div>'+
+    return '<div class="comp" style="margin-top:10px"><b>Dia e horário da geração (coordenação)</b><div class="sub">Toda semana, no dia e horário escolhidos, o servidor gera o PDI com os gerentes e as questões dos supervisores, e o botão ✓ Fiz o PDI aparece e vale até as 18h. Tudo fecha às 18h de segunda (Fiz o PDI e provas); às 18h05 sai o placar da semana para a coordenação e para cada supervisor. Só gera se o Painel já estiver atualizado no dia.</div>'+
       '<div class="linha" style="margin-top:8px;flex-wrap:wrap;gap:8px"><label class="sub">Dia <select id="gerDia" style="font:inherit;padding:6px 8px;border-radius:8px">'+ops+'</select></label><label class="sub">às <input type="time" id="gerHora" value="'+esc(h)+'" min="06:00" max="18:00" step="900" style="font:inherit;padding:6px 8px;border-radius:8px"></label>'+
       '<button class="btn" type="button" data-gerhora="1">Salvar dia e horário</button>'+
       (g&&g.gerada?'<span class="sub">Semana já gerada'+(g.geradaEm?' em '+esc(prazoTxt(g.geradaEm)):'')+'</span>':'<button class="btn azul" type="button" data-gergerar="1">Gerar agora</button>')+'</div>'+
-      (g?'<div class="sub" style="margin-top:6px">'+(g.por?'Último ajuste: '+esc(g.por)+'.':'Dia e horário padrão.')+(g.agendador?'':' O agendador é ligado ao salvar.')+'</div>':'<div class="sub" style="margin-top:6px">Não consegui ler o horário no servidor.</div>')+'</div>';
+      (g?'<div class="sub" style="margin-top:6px">'+(g.por?'Último ajuste: '+esc(g.por)+'.':'Dia e horário padrão.')+(g.agendador?'':' O agendador é ligado ao salvar.')+'</div>':'<div class="sub" style="margin-top:6px">Não consegui ler o horário no servidor.</div>')+'</div>'+cfgPrazoLider();
+  }
+  /* 18/11/2026 (Bruno): a coordenação ajusta o prazo do PDI semanal de gerentes e supervisores (um ou todos); vale para o Fiz o PDI e, se já liberada, para a prova */
+  function cfgPrazoLider(){
+    var G=(GERD&&GERD.linhas||[]).filter(function(x){return x.semana===GERD.atual&&x.situacao!=='respondido';}), S=(SUPD&&SUPD.linhas||[]).filter(function(x){return x.semana===SUPD.atual&&x.situacao!=='respondido';});
+    if(!G.length&&!S.length) return '';
+    var d=new Date(), am=new Date(d.getTime()+864e5), dv=am.toISOString().slice(0,10)+'T12:00';
+    var ops='<option value="ger|">Todos os gerentes ('+G.length+')</option>'+G.map(function(x){return '<option value="ger|'+esc(x.chave)+'">Gerente · '+esc(x.loja)+' '+esc(nm(x.gerente||''))+' ('+esc(SIT[x.situacao]||x.situacao)+')</option>';}).join('')+
+      '<option value="sup|">Todos os supervisores ('+S.length+')</option>'+S.map(function(x){return '<option value="sup|'+esc(x.chave)+'">Supervisor · '+esc(x.supervisor)+' ('+esc(SIT[x.situacao]||x.situacao)+')</option>';}).join('');
+    return '<div class="comp" style="margin-top:10px"><b>Ajustar prazo do PDI de gerentes e supervisores (coordenação)</b><div class="sub">Exceção ao prazo das 18h de segunda. Vale para o ✓ Fiz o PDI e, se a prova já estiver liberada, para a resposta. Quem já respondeu não muda.</div>'+
+      '<div class="linha" style="margin-top:8px;flex-wrap:wrap;gap:8px"><select id="lpAlvo" style="font:inherit;padding:6px 8px;border-radius:8px;max-width:100%">'+ops+'</select><input type="datetime-local" id="lpData" value="'+dv+'" style="font:inherit;padding:6px 8px;border-radius:8px"><button class="btn" type="button" data-lidprazo="1">Salvar prazo</button></div></div>';
   }
   function blocoGerFech(cod,ro){
     var x=gerAnt(cod)[0]; if(!x) return '';
@@ -562,6 +572,14 @@ h3{font-size:14px;margin:0 0 6px}
       t.disabled=true; t.textContent='Liberando…';
       STDados.chamar('semanaFeito',{chave:t.dataset.feito}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não confirmou.'); toast('Avaliação liberada para o vendedor.'); return carregar(); })
         .catch(function(err){ t.disabled=false; t.textContent='✓ Fiz o PDI semanal'; toast(err.message); });
+      return;
+    }
+    if(t.dataset.lidprazo){
+      var al=(($('lpAlvo')||{}).value||'ger|').split('|'), pv=(($('lpData')||{}).value||'').replace('T',' ').slice(0,16), sem=al[0]==='ger'?(GERD&&GERD.atual):(SUPD&&SUPD.atual);
+      if(!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(pv)){ toast('Informe a data e a hora.'); return; }
+      t.disabled=true; t.textContent='Salvando…';
+      STDados.chamar('liderPrazoAjustar',{nivel:al[0],chave:al[1]||'',semana:sem,prazo:pv}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não confirmou.'); toast(j.alterados===1?'Prazo alterado para 1 PDI.':'Prazo alterado para '+j.alterados+' PDIs.'); return carregar(); })
+        .catch(function(e){ toast('Não salvou: '+(e.message||e)); t.disabled=false; t.textContent='Salvar prazo'; });
       return;
     }
     if(t.dataset.gerhora){
