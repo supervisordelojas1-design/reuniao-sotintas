@@ -530,18 +530,17 @@
     x.fillStyle = '#E31E24'; cabe(String(u.nome || '').toUpperCase(), 'bold', 64, W - 240); x.fillText(String(u.nome || '').toUpperCase(), W / 2, 500);
     const lj = String(u.loja == null ? '' : u.loja).trim(), temLoja = lj && lj !== '—' && lj !== '-';
     x.fillStyle = '#5B6472'; x.font = '30px Poppins, Arial'; x.fillText(`${u.cargo || 'Colaborador(a)'}${temLoja ? ' · Loja ' + lj : ''}`, W / 2, 555);
-    x.fillStyle = '#1E2430'; x.font = '34px Poppins, Arial'; x.fillText('concluiu com aprovação o treinamento', W / 2, 640);
-    x.fillStyle = '#1B4DA1'; cabe(ct.fornecedor, 'bold', 58, W - 240); x.fillText(ct.fornecedor, W / 2, 720);
-    let y = 720;
-    if (ct.modulo) { y = 790; x.fillStyle = '#1E2430'; cabe('Módulo: ' + ct.modulo, 'bold', 40, W - 240); x.fillText('Módulo: ' + ct.modulo, W / 2, y); }
-    x.fillStyle = '#1E2430'; x.font = '34px Poppins, Arial'; x.fillText(`com nota ${fmtNum(ct.nota)} na prova de conhecimento.`, W / 2, y + 70);
+    x.fillStyle = '#1E2430'; x.font = '34px Poppins, Arial'; x.fillText('concluiu com aprovação o treinamento', W / 2, 650);
+    x.fillStyle = '#1B4DA1'; cabe(ct.fornecedor, 'bold', 62, W - 240); x.fillText(ct.fornecedor, W / 2, ct.modulo ? 730 : 760);
+    /* 18/11/2026: o certificado não mostra a nota (pedido do Bruno); a nota continua valendo só como régua para emitir */
+    if (ct.modulo) { x.fillStyle = '#1E2430'; cabe('Módulo: ' + ct.modulo, 'bold', 40, W - 240); x.fillText('Módulo: ' + ct.modulo, W / 2, 800); }
     x.fillStyle = '#5B6472'; x.font = '28px Poppins, Arial'; x.fillText(`Rio de Janeiro, ${fmtData(ct.data)}`, W / 2, 960);
     x.font = '24px Poppins, Arial'; x.fillText('Diretoria Só Tintas · Rafael Borba · Fred Borba · Thiago Borba', W / 2, 1015);
     const quando = ct.data ? new Date(ct.data).getTime().toString(36).toUpperCase() : '';
     x.fillStyle = '#fff'; x.font = '22px Poppins, Arial'; x.fillText(`Código: ${String(u.login || '').toUpperCase()}-${String(ct.id).toUpperCase()}-${quando}`, W / 2, H - 22);
     const slug = certNucleo(ct.fornecedor + (ct.modulo ? ' ' + ct.modulo.split('—')[0] : '')).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     c.dataset.nome = `certificado-${slug}-${(u.login || 'colaborador')}.png`;
-    c.dataset.texto = `Concluí o treinamento ${ct.fornecedor}${ct.modulo ? ' — ' + ct.modulo : ''} no MENTOR ST PRO com nota ${fmtNum(ct.nota)}! 🎓`;
+    c.dataset.texto = `Concluí o treinamento ${ct.fornecedor}${ct.modulo ? ' — ' + ct.modulo : ''} no MENTOR ST PRO! 🎓`;
     const img = $('#cert-img'); if (img) img.src = c.toDataURL('image/png');
   };
 
