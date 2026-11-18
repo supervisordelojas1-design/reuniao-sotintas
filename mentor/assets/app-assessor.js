@@ -506,7 +506,7 @@
       ${u.usos.length || u.cond.length ? `<div class="card info"><h3>🎯 Quando indicar</h3>${u.usos.length ? `<div class="pequeno"><b>Entra no sistema de:</b> ${esc(u.usos.join(' · '))}</div>` : ''}${u.cond.length ? `<div class="pequeno mt-1"><b>Tratamento para:</b> ${esc(u.cond.join(' · '))}</div>` : ''}</div>` : ''}
       <div class="botoes"><button class="btn" onclick="App.calc.novoComProduto('${p.id}')">🧮 Calcular quantidade</button><a class="btn verde" href="${zap(textoFichaProduto(p))}" target="_blank" rel="noopener">📲 Enviar ficha</a></div>
       <button class="btn link bloco mt-1" onclick="App.chat.perguntar('Quando indicar ${esc(p.marca)} ${esc(p.nome).replace(/'/g, '')} e como aplicar?')">💬 Perguntar ao chat sobre este produto</button>
-      <p class="mini texto-3 centro">Dados do catálogo do fabricante (${p.marca === 'Coral' ? 'Coral 2025/2' : 'Eucatex 2026'}). Confira sempre a embalagem e a ficha técnica atual.</p>`;
+      <p class="mini texto-3 centro">Dados do catálogo do fabricante (${({ 'Coral': 'Coral 2025/2', 'Eucatex': 'Eucatex 2026', 'Coral Mactra': 'Tudo sobre Coral Mactra', 'ST Paint': 'Catálogo Tintas ST', 'ST Design': 'Catálogo Textura ST, ago/2025' })[p.marca] || esc(p.marca)}). Confira sempre a embalagem e a ficha técnica atual.</p>`;
   }
   function textoFichaProduto(p) { return [`*${p.marca} ${p.nome}* — Só Tintas`, '', Assessor.fichaProduto(p, App.cont), '', '_Dados do catálogo do fabricante. Confira sempre a embalagem._'].join('\n'); }
 

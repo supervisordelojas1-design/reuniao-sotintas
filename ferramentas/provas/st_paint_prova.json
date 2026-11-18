@@ -1,0 +1,319 @@
+{
+ "modulos": [
+  {
+   "id": "p06",
+   "ordem": 14,
+   "titulo": "Linha ST Paint (marca própria)",
+   "subtitulo": "Prova de treinamento",
+   "icone": "📝",
+   "cor": "azul",
+   "paginas": 0,
+   "pdf": "",
+   "fonte": "Catálogo Tintas ST",
+   "descricao": "Responda o quiz para concluir este módulo.",
+   "xp_bonus": 50
+  }
+ ],
+ "questoes": [
+  {
+   "id": "p06q01",
+   "modulo_id": "p06",
+   "ordem": 1,
+   "enunciado": "A ST Paint Tinta Emborrachada é a equivalente de qual produto?",
+   "opcoes": [
+    "Eucatex Eucaflex Tinta Emborrachada",
+    "Eucatex Extra Piso",
+    "Tecryl D3 Manta Líquida",
+    "Eucatex Due Pró"
+   ],
+   "correta": 0,
+   "explicacao": "No catálogo, ST Paint Tinta Emborrachada x Eucatex Eucaflex Tinta Emborrachada.",
+   "final": true
+  },
+  {
+   "id": "p06q02",
+   "modulo_id": "p06",
+   "ordem": 2,
+   "enunciado": "Qual produto ST Paint é o equivalente do Eucatex Extra Piso?",
+   "opcoes": [
+    "ST Paint Acrílico Standard",
+    "ST Paint Pisos e Fachadas Premium",
+    "ST Paint Impermeabilizante",
+    "ST Paint Função 2x1"
+   ],
+   "correta": 1,
+   "explicacao": "ST Paint Pisos e Fachadas Premium x Eucatex Extra Piso.",
+   "final": true
+  },
+  {
+   "id": "p06q03",
+   "modulo_id": "p06",
+   "ordem": 3,
+   "enunciado": "O ST Paint Acrílico Standard é comparado a qual produto da Eucatex?",
+   "opcoes": [
+    "Acrílico Profissional Eucatex",
+    "Eucatex Due Pró",
+    "Eucatex Standard Super Pró",
+    "Eucatex Liquibrilho"
+   ],
+   "correta": 2,
+   "explicacao": "ST Paint Acrílico Standard x Eucatex Standard Super Pró.",
+   "final": true
+  },
+  {
+   "id": "p06q04",
+   "modulo_id": "p06",
+   "ordem": 4,
+   "enunciado": "O ST Paint Acrílico Econômico é o equivalente de qual marca/produto?",
+   "opcoes": [
+    "Eucatex Standard Super Pró",
+    "Tecryl D3",
+    "Eucatex Eucaflex",
+    "Peg & Pinte Acrílico Econômico"
+   ],
+   "correta": 3,
+   "explicacao": "ST Paint Acrílico Econômico x Peg & Pinte Acrílico Econômico.",
+   "final": true
+  },
+  {
+   "id": "p06q05",
+   "modulo_id": "p06",
+   "ordem": 5,
+   "enunciado": "O cliente procura uma manta líquida como a Tecryl D3. Qual ST Paint oferecer?",
+   "opcoes": [
+    "ST Paint Impermeabilizante",
+    "ST Paint Tinta Emborrachada",
+    "ST Paint Liquibrilho",
+    "ST Paint Pisos e Fachadas Premium"
+   ],
+   "correta": 0,
+   "explicacao": "ST Paint Impermeabilizante x Tecryl D3 Manta Líquida.",
+   "final": true
+  },
+  {
+   "id": "p06q06",
+   "modulo_id": "p06",
+   "ordem": 6,
+   "enunciado": "Qual ST Paint é o equivalente do Eucatex Due Pró?",
+   "opcoes": [
+    "ST Paint Fundo Preparador",
+    "ST Paint Função 2x1",
+    "ST Paint Acrílico Profissional",
+    "ST Paint Liquibrilho"
+   ],
+   "correta": 1,
+   "explicacao": "ST Paint Função 2x1 x Eucatex Due Pró.",
+   "final": true
+  },
+  {
+   "id": "p06q07",
+   "modulo_id": "p06",
+   "ordem": 7,
+   "enunciado": "Em qual embalagem o ST Paint Acrílico Profissional está disponível?",
+   "opcoes": [
+    "15 L e 3 L",
+    "15 L, 3 L e 800 ml",
+    "Somente 15 L",
+    "18 kg e 3 kg"
+   ],
+   "correta": 2,
+   "explicacao": "O catálogo mostra o Acrílico Profissional só em 15 L.",
+   "final": true
+  },
+  {
+   "id": "p06q08",
+   "modulo_id": "p06",
+   "ordem": 8,
+   "enunciado": "Quais as embalagens da ST Paint Tinta Emborrachada?",
+   "opcoes": [
+    "15 L e 3 L",
+    "15 kg e 3 kg",
+    "15 L, 3 L e 800 ml",
+    "18 kg, 15 kg, 3 kg e 1 kg"
+   ],
+   "correta": 3,
+   "explicacao": "Tinta Emborrachada: 18 kg, 15 kg, 3 kg e 1 kg.",
+   "final": true
+  },
+  {
+   "id": "p06q09",
+   "modulo_id": "p06",
+   "ordem": 9,
+   "enunciado": "Qual produto ST Paint tem a embalagem pequena de 800 ml?",
+   "opcoes": [
+    "Pisos e Fachadas Premium",
+    "Fundo Preparador",
+    "Liquibrilho",
+    "Acrílico Econômico"
+   ],
+   "correta": 0,
+   "explicacao": "Pisos e Fachadas Premium: 15 L, 3 L e 800 ml.",
+   "final": true
+  },
+  {
+   "id": "p06q10",
+   "modulo_id": "p06",
+   "ordem": 10,
+   "enunciado": "O ST Paint Impermeabilizante vem em quais embalagens?",
+   "opcoes": [
+    "15 L e 3 L",
+    "15 kg e 3 kg",
+    "18 kg e 1 kg",
+    "Somente 15 kg"
+   ],
+   "correta": 1,
+   "explicacao": "ST Paint Impermeabilizante: 15 kg e 3 kg.",
+   "final": true
+  },
+  {
+   "id": "p06q11",
+   "modulo_id": "p06",
+   "ordem": 11,
+   "enunciado": "Quantas cores o catálogo mostra para os acrílicos ST Paint (Standard, Econômico e Profissional)?",
+   "opcoes": [
+    "5 cores",
+    "12 cores",
+    "18 cores",
+    "4 cores"
+   ],
+   "correta": 2,
+   "explicacao": "Os três acrílicos aparecem com a mesma cartela de 18 cores, do Branco ao Noite.",
+   "final": true
+  },
+  {
+   "id": "p06q12",
+   "modulo_id": "p06",
+   "ordem": 12,
+   "enunciado": "Quais cores tem a ST Paint Tinta Emborrachada?",
+   "opcoes": [
+    "Branco, Cinza, Preto e Azul",
+    "Branco, Gelo, Palha, Marfim e Areia",
+    "Somente Branco",
+    "Branco, Prata, Grafite, Gelo Ártico e Areia do Deserto"
+   ],
+   "correta": 3,
+   "explicacao": "Emborrachada: Branco, Prata, Grafite, Gelo Ártico e Areia do Deserto.",
+   "final": true
+  },
+  {
+   "id": "p06q13",
+   "modulo_id": "p06",
+   "ordem": 13,
+   "enunciado": "Quais cores tem o ST Paint Impermeabilizante?",
+   "opcoes": [
+    "Branco, Cinza, Preto e Azul",
+    "Branco, Prata e Grafite",
+    "Branco e Incolor",
+    "Vermelho, Azul e Concreto"
+   ],
+   "correta": 0,
+   "explicacao": "Impermeabilizante: Branco, Cinza, Preto e Azul.",
+   "final": true
+  },
+  {
+   "id": "p06q14",
+   "modulo_id": "p06",
+   "ordem": 14,
+   "enunciado": "Qual destas cores é do ST Paint Pisos e Fachadas Premium (e não dos acrílicos)?",
+   "opcoes": [
+    "Pêssego",
+    "Verde Quadra",
+    "Kiwi",
+    "Canário"
+   ],
+   "correta": 1,
+   "explicacao": "Verde Quadra, Laranja Basquete e Amarelo Demarcação são cores do Pisos e Fachadas Premium.",
+   "final": true
+  },
+  {
+   "id": "p06q15",
+   "modulo_id": "p06",
+   "ordem": 15,
+   "enunciado": "Em que cor vem o ST Paint Liquibrilho?",
+   "opcoes": [
+    "Branco",
+    "Cinza",
+    "Incolor",
+    "Preto"
+   ],
+   "correta": 2,
+   "explicacao": "O Liquibrilho aparece no catálogo como Incolor.",
+   "final": true
+  },
+  {
+   "id": "p06q16",
+   "modulo_id": "p06",
+   "ordem": 16,
+   "enunciado": "O ST Paint Função 2x1 é vendido em qual cor?",
+   "opcoes": [
+    "Incolor",
+    "Gelo",
+    "Concreto",
+    "Branco"
+   ],
+   "correta": 3,
+   "explicacao": "Função 2x1: Branco, em 15 L e 3 L.",
+   "final": true
+  },
+  {
+   "id": "p06q17",
+   "modulo_id": "p06",
+   "ordem": 17,
+   "enunciado": "O ST Paint Fundo Preparador é o equivalente de qual produto?",
+   "opcoes": [
+    "Eucatex Fundo Preparador",
+    "Eucatex Due Pró",
+    "Peg & Pinte Acrílico Econômico",
+    "Tecryl D3"
+   ],
+   "correta": 0,
+   "explicacao": "ST Paint Fundo Preparador x Eucatex Fundo Preparador.",
+   "final": true
+  },
+  {
+   "id": "p06q18",
+   "modulo_id": "p06",
+   "ordem": 18,
+   "enunciado": "Quais atributos aparecem em todas as embalagens ST Paint?",
+   "opcoes": [
+    "Secagem em 1 hora, sem cheiro e lavável",
+    "Maior rendimento, fácil aplicação, leve odor e antimofo",
+    "Anticorrosivo, brilho intenso e alta dureza",
+    "Hidrorrepelente, 20 cores e acabamento acetinado"
+   ],
+   "correta": 1,
+   "explicacao": "Todas as latas trazem: maior rendimento, fácil aplicação, leve odor e antimofo.",
+   "final": true
+  },
+  {
+   "id": "p06q19",
+   "modulo_id": "p06",
+   "ordem": 19,
+   "enunciado": "Qual certificação aparece nas embalagens ST Paint?",
+   "opcoes": [
+    "ISO 14001",
+    "Selo PBQP-H",
+    "ISO 9001",
+    "Inmetro A+"
+   ],
+   "correta": 2,
+   "explicacao": "As embalagens mostram o selo Empresa ISO 9001.",
+   "final": true
+  },
+  {
+   "id": "p06q20",
+   "modulo_id": "p06",
+   "ordem": 20,
+   "enunciado": "O ST Paint Liquibrilho é comparado a qual produto?",
+   "opcoes": [
+    "Eucatex Fundo Preparador",
+    "Eucatex Due Pró",
+    "Eucatex Extra Piso",
+    "Eucatex Liquibrilho"
+   ],
+   "correta": 3,
+   "explicacao": "ST Paint Liquibrilho x Eucatex Liquibrilho.",
+   "final": true
+  }
+ ]
+}
