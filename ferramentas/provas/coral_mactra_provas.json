@@ -1,0 +1,1395 @@
+{
+ "modulos": [
+  {
+   "id": "p03",
+   "ordem": 11,
+   "titulo": "Coral Mactra · Etapa 1 — Impermeabilizar",
+   "subtitulo": "Prova de treinamento",
+   "icone": "📝",
+   "cor": "azul",
+   "paginas": 0,
+   "pdf": "",
+   "fonte": "Catálogo Tudo sobre Coral Mactra",
+   "descricao": "Responda o quiz para concluir este módulo.",
+   "xp_bonus": 50
+  },
+  {
+   "id": "p04",
+   "ordem": 12,
+   "titulo": "Coral Mactra · Etapa 2 — Aditivar e Bloquear Umidade",
+   "subtitulo": "Prova de treinamento",
+   "icone": "📝",
+   "cor": "azul",
+   "paginas": 0,
+   "pdf": "",
+   "fonte": "Catálogo Tudo sobre Coral Mactra",
+   "descricao": "Responda o quiz para concluir este módulo.",
+   "xp_bonus": 50
+  },
+  {
+   "id": "p05",
+   "ordem": 13,
+   "titulo": "Coral Mactra · Etapa 3 — Colar, Vedar, Complementar e Indicação",
+   "subtitulo": "Prova de treinamento",
+   "icone": "📝",
+   "cor": "azul",
+   "paginas": 0,
+   "pdf": "",
+   "fonte": "Catálogo Tudo sobre Coral Mactra",
+   "descricao": "Responda o quiz para concluir este módulo.",
+   "xp_bonus": 50
+  }
+ ],
+ "questoes": [
+  {
+   "id": "p03q01",
+   "modulo_id": "p03",
+   "ordem": 1,
+   "enunciado": "Cliente vai impermeabilizar a fundação/alicerce e quer uma solução econômica, à base de água e pronta para uso. Qual a primeira opção do portfólio?",
+   "opcoes": [
+    "Betol",
+    "Vedbem Parede",
+    "Vedmur",
+    "Acquafort"
+   ],
+   "correta": 0,
+   "explicacao": "O catálogo traz o Betol como primeira opção de impermeabilizante para fundação/alicerce, baldrame e mourão.",
+   "final": true
+  },
+  {
+   "id": "p03q02",
+   "modulo_id": "p03",
+   "ordem": 2,
+   "enunciado": "Quantas demãos de Betol o catálogo recomenda?",
+   "opcoes": [
+    "3 demãos",
+    "6 demãos",
+    "1 demão bem carregada",
+    "2 demãos"
+   ],
+   "correta": 0,
+   "explicacao": "Betol é pronto para uso e deve ser aplicado em 3 demãos.",
+   "final": true
+  },
+  {
+   "id": "p03q03",
+   "modulo_id": "p03",
+   "ordem": 3,
+   "enunciado": "Qual o rendimento do Betol na embalagem de 18 L?",
+   "opcoes": [
+    "Até 15 m²",
+    "De 36 até 144 m² (uma demão)",
+    "De 45 até 90 m² final",
+    "De 30 até 75 m² final"
+   ],
+   "correta": 2,
+   "explicacao": "O catálogo informa: Betol 18 L equivale a 45 até 90 m² final.",
+   "final": true
+  },
+  {
+   "id": "p03q04",
+   "modulo_id": "p03",
+   "ordem": 4,
+   "enunciado": "Além de fundação e muro de arrimo, o Betol também serve como:",
+   "opcoes": [
+    "Primer para mantas asfálticas e fita asfáltica",
+    "Fundo preparador para massa corrida",
+    "Aditivo para argamassa de chapisco",
+    "Selador para tinta acrílica"
+   ],
+   "correta": 0,
+   "explicacao": "Entre as aplicações do Betol está o uso como primer para mantas asfálticas e fita asfáltica.",
+   "final": true
+  },
+  {
+   "id": "p03q05",
+   "modulo_id": "p03",
+   "ordem": 5,
+   "enunciado": "O Mactraset 1.000 (rígido) é indicado para qual situação?",
+   "opcoes": [
+    "Lajes sem trânsito e marquises",
+    "Telhas de fibrocimento",
+    "Fundação, rodapé, banheiros e cozinhas, somente em área térrea",
+    "Piscinas elevadas e reservatórios"
+   ],
+   "correta": 2,
+   "explicacao": "O catálogo diz que o Mactraset 1.000 é indicado somente para área térrea (fundação, rodapé, banheiros e cozinhas térreas).",
+   "final": true
+  },
+  {
+   "id": "p03q06",
+   "modulo_id": "p03",
+   "ordem": 6,
+   "enunciado": "Qual o rendimento do Mactraset 1.000 na caixa de 18 kg aplicado em alicerces?",
+   "opcoes": [
+    "Até 4,5 m²",
+    "Até 9 m²",
+    "Até 5 m² final",
+    "Até 4 m² final"
+   ],
+   "correta": 1,
+   "explicacao": "Mactraset 1.000 rende até 4,5 m² (9 kg) e até 9 m² (18 kg) para alicerces.",
+   "final": true
+  },
+  {
+   "id": "p03q07",
+   "modulo_id": "p03",
+   "ordem": 7,
+   "enunciado": "Para impermeabilizar uma área que vai receber mármore ou granito, qual versão do Mactraset 1.000 indicar?",
+   "opcoes": [
+    "Mactraset 1.000 Tradicional, só na caixa de 9 kg",
+    "Mactraset Flexível Fibras 7.000",
+    "Mactraset 1.000 com componente B Branco, só na caixa de 18 kg",
+    "Mactraset 1.000 Tradicional com 20% de água"
+   ],
+   "correta": 2,
+   "explicacao": "O componente B Branco é indicado para áreas que receberão mármores e granitos e só existe na embalagem de 18 kg.",
+   "final": true
+  },
+  {
+   "id": "p03q08",
+   "modulo_id": "p03",
+   "ordem": 8,
+   "enunciado": "Como se prepara corretamente a família Mactraset?",
+   "opcoes": [
+    "Despejar o componente A de uma vez sobre o pó",
+    "Acrescentar o componente B (pó) aos poucos no componente A (“leitinho”) e misturar",
+    "Usar só o componente A, que é pronto para uso",
+    "Diluir o pó em 20% de água limpa"
+   ],
+   "correta": 1,
+   "explicacao": "O catálogo orienta acrescentar o componente B aos poucos no componente A e misturar, sempre umedecendo a superfície.",
+   "final": true
+  },
+  {
+   "id": "p03q09",
+   "modulo_id": "p03",
+   "ordem": 9,
+   "enunciado": "Quantas demãos cruzadas do Mactraset Flexível 5.000 o catálogo recomenda?",
+   "opcoes": [
+    "De 3 a 4 demãos",
+    "6 demãos",
+    "1 demão",
+    "De 4 a 5 demãos"
+   ],
+   "correta": 0,
+   "explicacao": "Mactraset Flexível 5.000: aplicar de 3 a 4 demãos cruzadas, sempre umedecendo.",
+   "final": true
+  },
+  {
+   "id": "p03q10",
+   "modulo_id": "p03",
+   "ordem": 10,
+   "enunciado": "Cliente vai impermeabilizar uma piscina e um reservatório de água potável. Qual produto é o foco para essa obra?",
+   "opcoes": [
+    "Acquafort",
+    "Vedbem Manta Líquida Branca",
+    "Mactraset Flexível Fibras 7.000",
+    "Mactraset 1.000"
+   ],
+   "correta": 2,
+   "explicacao": "O Mactraset Flexível Fibras 7.000 tem foco em piscinas e reservatórios e não altera a potabilidade da água.",
+   "final": true
+  },
+  {
+   "id": "p03q11",
+   "modulo_id": "p03",
+   "ordem": 11,
+   "enunciado": "Quantas demãos cruzadas do Mactraset Flexível Fibras 7.000?",
+   "opcoes": [
+    "De 3 a 4 demãos",
+    "3 demãos",
+    "2 demãos",
+    "De 4 a 5 demãos"
+   ],
+   "correta": 3,
+   "explicacao": "Mactraset Flexível Fibras 7.000: aplicar de 4 a 5 demãos cruzadas, sempre umedecendo.",
+   "final": true
+  },
+  {
+   "id": "p03q12",
+   "modulo_id": "p03",
+   "ordem": 12,
+   "enunciado": "Qual Mactraset precisa ser aplicado junto com a Vedatrinca Tela?",
+   "opcoes": [
+    "Mactraset Flexível 5.000",
+    "Nenhum da família",
+    "Mactraset 1.000",
+    "Mactraset Flexível Fibras 7.000"
+   ],
+   "correta": 0,
+   "explicacao": "No quadro de diferenças, o 5.000 precisa da Vedatrinca Tela, enquanto o 7.000 a dispensa.",
+   "final": true
+  },
+  {
+   "id": "p03q13",
+   "modulo_id": "p03",
+   "ordem": 13,
+   "enunciado": "O Mactraset Flexível Fibras 7.000 dispensa a Vedatrinca Tela, exceto em quais pontos?",
+   "opcoes": [
+    "Áreas com incidência de sol",
+    "Fundações e alicerces",
+    "Paredes e pisos lisos",
+    "Ralos, cantos, trincas e juntas de concretagem"
+   ],
+   "correta": 3,
+   "explicacao": "O catálogo ressalva que a tela continua necessária em ralos, cantos, trincas e juntas de concretagem.",
+   "final": true
+  },
+  {
+   "id": "p03q14",
+   "modulo_id": "p03",
+   "ordem": 14,
+   "enunciado": "Qual o rendimento do Mactraset Flexível Fibras 7.000 (caixa de 18 kg)?",
+   "opcoes": [
+    "Até 15 m²",
+    "Até 4 m² final",
+    "Até 5 m² final",
+    "Até 9 m²"
+   ],
+   "correta": 1,
+   "explicacao": "O 7.000 rende até 4 m² final; o 5.000 rende até 5 m² final.",
+   "final": true
+  },
+  {
+   "id": "p03q15",
+   "modulo_id": "p03",
+   "ordem": 15,
+   "enunciado": "Cliente pede “Sikatop Flex” para o banheiro. Qual o equivalente Coral Mactra?",
+   "opcoes": [
+    "Mactraset 1.000",
+    "Mactraset Flexível 5.000",
+    "Vedbem Manta Líquida Rápida",
+    "Mactraset Flexível Fibras 7.000"
+   ],
+   "correta": 1,
+   "explicacao": "O catálogo lista o Sikatop Flex como similar do Mactraset Flexível 5.000.",
+   "final": true
+  },
+  {
+   "id": "p03q16",
+   "modulo_id": "p03",
+   "ordem": 16,
+   "enunciado": "O produto que antigamente se chamava “Vedbem Fibras” hoje é o:",
+   "opcoes": [
+    "Mactraset Flexível Fibras 7.000",
+    "Vedatrinca Tela",
+    "Vedbem Manta Líquida Branca",
+    "Mactraset Flexível 5.000"
+   ],
+   "correta": 0,
+   "explicacao": "O catálogo indica o 7.000 como “Antigo Vedbem Fibras” (o 5.000 é o antigo Vedbem Piscina).",
+   "final": true
+  },
+  {
+   "id": "p03q17",
+   "modulo_id": "p03",
+   "ordem": 17,
+   "enunciado": "Na primeira demão do Vedbem Parede, qual a diluição máxima?",
+   "opcoes": [
+    "1:1 (uma parte de produto para uma de água)",
+    "Até 20% de água limpa",
+    "Não dilui, é pronto para uso",
+    "Até 10% de água limpa"
+   ],
+   "correta": 3,
+   "explicacao": "Vedbem Parede: diluir a primeira demão com até 10% de água; as demais são puras.",
+   "final": true
+  },
+  {
+   "id": "p03q18",
+   "modulo_id": "p03",
+   "ordem": 18,
+   "enunciado": "Quantas cores tem o Vedbem Imperall?",
+   "opcoes": [
+    "Mais de 2.079 cores",
+    "20 cores do leque Coral",
+    "5 cores prontas",
+    "Só branco"
+   ],
+   "correta": 1,
+   "explicacao": "O Vedbem Imperall está disponível em 20 cores do leque Coral.",
+   "final": true
+  },
+  {
+   "id": "p03q19",
+   "modulo_id": "p03",
+   "ordem": 19,
+   "enunciado": "No Vedbem Parede, o balde de 3,6 kg vem em quais cores?",
+   "opcoes": [
+    "Branco e cinza",
+    "20 cores do leque",
+    "5 cores prontas",
+    "Somente branco"
+   ],
+   "correta": 3,
+   "explicacao": "As 5 cores prontas são do balde de 18 kg; o balde de 3,6 kg vem somente na cor branca.",
+   "final": true
+  },
+  {
+   "id": "p03q20",
+   "modulo_id": "p03",
+   "ordem": 20,
+   "enunciado": "Antes de pintar uma parede tratada com Vedbem Imperall ou Vedbem Parede, o que deve ser aplicado?",
+   "opcoes": [
+    "Acquafort",
+    "Vedatrinca Selante",
+    "Uma demão de Betol",
+    "O fundo preparador da Coral"
+   ],
+   "correta": 3,
+   "explicacao": "Os dois produtos pedem que se aplique o fundo preparador da Coral antes de qualquer pintura.",
+   "final": true
+  },
+  {
+   "id": "p03q21",
+   "modulo_id": "p03",
+   "ordem": 21,
+   "enunciado": "Para galpões, barracões e imóveis alugados, onde o cliente quer baixo custo, qual impermeabilizante de parede indicar?",
+   "opcoes": [
+    "Vedbem Parede",
+    "Vedbem Imperall",
+    "Vedbem Telhafria",
+    "Acquafort"
+   ],
+   "correta": 0,
+   "explicacao": "O Vedbem Parede é econômico, de baixo desembolso e ideal para áreas de menor visibilidade, como galpões e imóveis alugados.",
+   "final": true
+  },
+  {
+   "id": "p03q22",
+   "modulo_id": "p03",
+   "ordem": 22,
+   "enunciado": "Na tabela “Paredes Exteriores – O que usar?”, em qual quesito o Vedbem Imperall e o Vedbem Parede recebem a mesma nota (ótima)?",
+   "opcoes": [
+    "Proteção antimofo",
+    "Durabilidade",
+    "Resistência à chuva",
+    "Rendimento"
+   ],
+   "correta": 0,
+   "explicacao": "Os dois têm proteção antimofo ÓTIMA; nos outros quesitos o Imperall é melhor (boa/ótimo contra média/bom).",
+   "final": true
+  },
+  {
+   "id": "p03q23",
+   "modulo_id": "p03",
+   "ordem": 23,
+   "enunciado": "Cliente quer proteger da chuva um muro de tijolo à vista sem mudar a aparência. Qual produto indicar?",
+   "opcoes": [
+    "Vedbem Parede",
+    "Acquafort",
+    "Betol",
+    "Vedbem Imperall"
+   ],
+   "correta": 1,
+   "explicacao": "O Acquafort é hidrorrepelente com acabamento incolor e mantém a aparência natural de tijolo à vista, concreto aparente e pedras.",
+   "final": true
+  },
+  {
+   "id": "p03q24",
+   "modulo_id": "p03",
+   "ordem": 24,
+   "enunciado": "Quantas demãos de Acquafort e qual o rendimento do balde de 18 L?",
+   "opcoes": [
+    "3 demãos, de 45 até 90 m²",
+    "1 demão bem carregada, de 36 até 144 m²",
+    "2 demãos, de 30 até 75 m²",
+    "4 demãos, de 30 a 40 m²"
+   ],
+   "correta": 1,
+   "explicacao": "Acquafort: aplicar apenas 1 demão bem carregada; 18 L rende de 36 até 144 m² (uma demão).",
+   "final": true
+  },
+  {
+   "id": "p03q25",
+   "modulo_id": "p03",
+   "ordem": 25,
+   "enunciado": "Como diluir a primeira demão da Vedbem Manta Líquida Rápida?",
+   "opcoes": [
+    "Até 20% de água",
+    "1:10 com água",
+    "1:1 (uma parte de produto para uma parte de água limpa)",
+    "Até 10% de água"
+   ],
+   "correta": 2,
+   "explicacao": "Manta Líquida Rápida: a primeira demão é diluída 1:1; as demais são puras, em 3 a 4 demãos.",
+   "final": true
+  },
+  {
+   "id": "p03q26",
+   "modulo_id": "p03",
+   "ordem": 26,
+   "enunciado": "Quantas demãos de Vedbem Manta Líquida Branca o catálogo recomenda?",
+   "opcoes": [
+    "De 3 a 4 demãos",
+    "1 demão",
+    "3 demãos",
+    "6 demãos"
+   ],
+   "correta": 3,
+   "explicacao": "Vedbem Manta Líquida Branca: diluir a primeira demão com 50% de água e aplicar 6 demãos.",
+   "final": true
+  },
+  {
+   "id": "p03q27",
+   "modulo_id": "p03",
+   "ordem": 27,
+   "enunciado": "Qual manta líquida aceita proteção mecânica para depois receber revestimento cerâmico e dispensa maçarico?",
+   "opcoes": [
+    "Vedbem Imperall",
+    "Vedbem Manta Líquida Branca",
+    "Vedbem Telhado",
+    "Vedbem Manta Líquida Rápida"
+   ],
+   "correta": 1,
+   "explicacao": "Estes são argumentos da Manta Líquida Branca: membrana sem emendas, sem maçarico e que aceita proteção mecânica.",
+   "final": true
+  },
+  {
+   "id": "p03q28",
+   "modulo_id": "p03",
+   "ordem": 28,
+   "enunciado": "Cliente quer impermeabilizar telhas galvanizadas e também diminuir o calor dentro do galpão. Qual produto indicar?",
+   "opcoes": [
+    "Vedbem Telhado",
+    "Vedbem Manta Líquida Rápida",
+    "Vedbem Telhafria",
+    "Acquafort"
+   ],
+   "correta": 2,
+   "explicacao": "O Telhafria tem microesferas cerâmicas que dão mais conforto térmico; o Vedbem Telhado só impermeabiliza.",
+   "final": true
+  },
+  {
+   "id": "p03q29",
+   "modulo_id": "p03",
+   "ordem": 29,
+   "enunciado": "Quantas demãos de Vedbem Telhafria e quanto rende o balde de 18 kg?",
+   "opcoes": [
+    "3 demãos, de 30 até 75 m² final",
+    "6 demãos, até 7,5 m²",
+    "3 demãos, de 34 a 40 m² final",
+    "4 demãos, de 30 a 40 m² final"
+   ],
+   "correta": 3,
+   "explicacao": "Vedbem Telhafria: aplicar 4 demãos; rendimento de 30 a 40 m² final.",
+   "final": true
+  },
+  {
+   "id": "p03q30",
+   "modulo_id": "p03",
+   "ordem": 30,
+   "enunciado": "O Vedmur é um produto multifunção. Quais são suas duas funções?",
+   "opcoes": [
+    "Selante e cola estrutural",
+    "Aditivo de reboco e chapisco",
+    "Impermeabilizante e fundo preparador, para área interna e externa",
+    "Hidrorrepelente incolor e verniz"
+   ],
+   "correta": 2,
+   "explicacao": "O Vedmur é impermeabilizante e fundo preparador, com poder antimofo, e prepara a parede para massa corrida e pintura.",
+   "final": true
+  },
+  {
+   "id": "p04q01",
+   "modulo_id": "p04",
+   "ordem": 1,
+   "enunciado": "Qual aditivo é um líquido de cor azul usado para impermeabilizar reboco e concreto?",
+   "opcoes": [
+    "Mactracol",
+    "Ligmassa",
+    "Mactra 2.000",
+    "Fixmassa"
+   ],
+   "correta": 2,
+   "explicacao": "O Mactra 2.000 é um líquido azul diluído na água de amassamento (o Ligmassa é castanho, o Mactracol branco e o Fixmassa bege).",
+   "final": true
+  },
+  {
+   "id": "p04q02",
+   "modulo_id": "p04",
+   "ordem": 2,
+   "enunciado": "Qual a dosagem de Mactra 2.000 para reboco?",
+   "opcoes": [
+    "2 L para cada 50 kg de cimento",
+    "500 mL para cada 50 kg de cimento",
+    "10 mL por kg de cimento",
+    "50 a 100 mL para cada 25 kg de cimento"
+   ],
+   "correta": 0,
+   "explicacao": "O catálogo indica 2 L/50 kg de cimento para reboco.",
+   "final": true
+  },
+  {
+   "id": "p04q03",
+   "modulo_id": "p04",
+   "ordem": 3,
+   "enunciado": "E para concreto, qual a dosagem de Mactra 2.000?",
+   "opcoes": [
+    "500 mL para cada 50 kg de cimento",
+    "2 L para cada 50 kg de cimento",
+    "1 L para cada 50 kg de cimento",
+    "500 mL para cada 25 kg de cimento"
+   ],
+   "correta": 0,
+   "explicacao": "Para concreto, o catálogo indica 500 mL/50 kg de cimento.",
+   "final": true
+  },
+  {
+   "id": "p04q04",
+   "modulo_id": "p04",
+   "ordem": 4,
+   "enunciado": "Em quais embalagens o Mactra 2.000 é vendido?",
+   "opcoes": [
+    "Apenas tambor de 200 L",
+    "1 L, 5 L, 18 L (caixa com 9 sachês de 2 L) e 200 L",
+    "500 mL e 1 kg",
+    "900 mL, 3,6 L, 18 L e 200 L"
+   ],
+   "correta": 1,
+   "explicacao": "Mactra 2.000: garrafa 1 L, galão 5 L, caixa 18 L com 9 sachês de 2 L e tambor 200 L.",
+   "final": true
+  },
+  {
+   "id": "p04q05",
+   "modulo_id": "p04",
+   "ordem": 5,
+   "enunciado": "Qual o rendimento aproximado do Mactra 2.000 na caixa de 18 L?",
+   "opcoes": [
+    "De 72 a 100 m² por cm de argamassa impermeável",
+    "Média de 60 m²",
+    "De 45 até 90 m² final",
+    "De 180 a 360 porções"
+   ],
+   "correta": 0,
+   "explicacao": "O catálogo informa 72 a 100 m²/cm de argamassa impermeável para 18 L.",
+   "final": true
+  },
+  {
+   "id": "p04q06",
+   "modulo_id": "p04",
+   "ordem": 6,
+   "enunciado": "Onde o Mactra 2.000 é aplicado?",
+   "opcoes": [
+    "Fôrmas de madeira e metálicas",
+    "Chapisco e gesso",
+    "Pisos intertravados e tubos de concreto",
+    "Alicerces, rebocos, revestimentos e pisos em contato com o solo"
+   ],
+   "correta": 3,
+   "explicacao": "Aplicação do Mactra 2.000: alicerces, rebocos, revestimentos e pisos em contato com o solo.",
+   "final": true
+  },
+  {
+   "id": "p04q07",
+   "modulo_id": "p04",
+   "ordem": 7,
+   "enunciado": "O pedreiro pede “Sika 1”. Qual o equivalente Coral Mactra?",
+   "opcoes": [
+    "Megablock",
+    "Ligmassa",
+    "Mactra 2.000",
+    "Mactracol"
+   ],
+   "correta": 2,
+   "explicacao": "O Sika 1 (e o Vedacit Aditivo Impermeabilizante) aparece como similar do Mactra 2.000.",
+   "final": true
+  },
+  {
+   "id": "p04q08",
+   "modulo_id": "p04",
+   "ordem": 8,
+   "enunciado": "Qual é a principal função do Ligmassa no reboco?",
+   "opcoes": [
+    "Garantir a aderência do chapisco",
+    "Evitar que o concreto grude na fôrma",
+    "Impermeabilizar a argamassa em contato com o solo",
+    "Dar mais plasticidade e evitar microfissuras, deixando a massa leve e cremosa"
+   ],
+   "correta": 3,
+   "explicacao": "O Ligmassa dá maior plasticidade ao reboco, evitando microfissuras, e deixa a massa mais leve e cremosa.",
+   "final": true
+  },
+  {
+   "id": "p04q09",
+   "modulo_id": "p04",
+   "ordem": 9,
+   "enunciado": "Qual a dosagem do Ligmassa?",
+   "opcoes": [
+    "500 mL para cada 25 kg de cimento",
+    "1 parte para 2 de água",
+    "2 L para cada 50 kg de cimento",
+    "De 50 a 100 mL para cada 25 kg de cimento"
+   ],
+   "correta": 3,
+   "explicacao": "O catálogo indica 50 a 100 mL/25 kg de cimento para o Ligmassa.",
+   "final": true
+  },
+  {
+   "id": "p04q10",
+   "modulo_id": "p04",
+   "ordem": 10,
+   "enunciado": "A caixa de 9 L de Ligmassa vem com:",
+   "opcoes": [
+    "180 sachês de 50 mL",
+    "90 sachês de 100 mL",
+    "9 sachês de 2 L",
+    "2 galões de 4,5 L"
+   ],
+   "correta": 0,
+   "explicacao": "Ligmassa: caixa de 9 L com 180 sachês de 50 mL.",
+   "final": true
+  },
+  {
+   "id": "p04q11",
+   "modulo_id": "p04",
+   "ordem": 11,
+   "enunciado": "Como o catálogo expressa o rendimento do Ligmassa de 18 L?",
+   "opcoes": [
+    "Média de 60 m²",
+    "De 180 a 360 porções",
+    "Até 9 m²",
+    "De 72 a 100 m²/cm"
+   ],
+   "correta": 1,
+   "explicacao": "O rendimento do Ligmassa 18 L é de 180 a 360 porções.",
+   "final": true
+  },
+  {
+   "id": "p04q12",
+   "modulo_id": "p04",
+   "ordem": 12,
+   "enunciado": "O cliente pede “Vedalit” (Vedacit). Qual Coral Mactra oferecer?",
+   "opcoes": [
+    "Fixmassa",
+    "Mactracol",
+    "Ligmassa",
+    "Mactra 2.000"
+   ],
+   "correta": 2,
+   "explicacao": "Vedalit e Alvenarit (Vedacit) estão listados como similares do Ligmassa.",
+   "final": true
+  },
+  {
+   "id": "p04q13",
+   "modulo_id": "p04",
+   "ordem": 13,
+   "enunciado": "Como diluir o Mactracol para chapisco?",
+   "opcoes": [
+    "1:1 com água",
+    "Não dilui, é pronto para uso",
+    "1:10 com água",
+    "1:2 (uma parte de Mactracol para duas partes de água limpa)"
+   ],
+   "correta": 3,
+   "explicacao": "O catálogo orienta diluir o Mactracol em água limpa na proporção 1:2 para chapiscos.",
+   "final": true
+  },
+  {
+   "id": "p04q14",
+   "modulo_id": "p04",
+   "ordem": 14,
+   "enunciado": "Qual o rendimento médio do Mactracol de 18 L?",
+   "opcoes": [
+    "De 72 a 100 m²/cm",
+    "60 m²",
+    "Até 15 m²",
+    "90 m²"
+   ],
+   "correta": 1,
+   "explicacao": "O catálogo informa rendimento médio de 60 m² para 18 L de Mactracol.",
+   "final": true
+  },
+  {
+   "id": "p04q15",
+   "modulo_id": "p04",
+   "ordem": 15,
+   "enunciado": "Além do chapisco, em quais serviços o Mactracol também é aplicado?",
+   "opcoes": [
+    "Pisos intertravados e tubos de concreto",
+    "Fôrmas de concreto",
+    "Colagem estrutural de azulejos",
+    "Estucagem, recomposição de pisos e gesso em geral"
+   ],
+   "correta": 3,
+   "explicacao": "As aplicações do Mactracol são chapiscos, estucagem, recomposição de pisos e gesso em geral; faz parte da cesta do pedreiro e do gesseiro.",
+   "final": true
+  },
+  {
+   "id": "p04q16",
+   "modulo_id": "p04",
+   "ordem": 16,
+   "enunciado": "O cliente pede “Bianco” (Vedacit). Qual Coral Mactra oferecer?",
+   "opcoes": [
+    "Mcol Cola Branca",
+    "Ligmassa",
+    "Mactracol",
+    "Fixmassa"
+   ],
+   "correta": 2,
+   "explicacao": "O Bianco (Vedacit) e o Chapix Blanco (Quartzolit) aparecem como similares do Mactracol.",
+   "final": true
+  },
+  {
+   "id": "p04q17",
+   "modulo_id": "p04",
+   "ordem": 17,
+   "enunciado": "Qual o grande diferencial do Fixmassa no reboco?",
+   "opcoes": [
+    "Deixa o reboco com acabamento incolor",
+    "Dispensa o uso de cimento",
+    "Substitui o fundo preparador da pintura",
+    "Elimina a necessidade de chapisco em superfícies porosas"
+   ],
+   "correta": 3,
+   "explicacao": "O Fixmassa é o aditivo que elimina a necessidade de chapisco para reboco em superfícies porosas, economizando tempo e dinheiro.",
+   "final": true
+  },
+  {
+   "id": "p04q18",
+   "modulo_id": "p04",
+   "ordem": 18,
+   "enunciado": "Qual aditivo é o único que permite usar areia fina na argamassa sem os “pés de galinha” (fissuras de retração)?",
+   "opcoes": [
+    "Mactra 2.000",
+    "Ligmassa",
+    "Fixmassa",
+    "Megablock"
+   ],
+   "correta": 2,
+   "explicacao": "Segundo o catálogo, o Fixmassa é o único aditivo que permite uso em areia fina, sem fissuras de retração.",
+   "final": true
+  },
+  {
+   "id": "p04q19",
+   "modulo_id": "p04",
+   "ordem": 19,
+   "enunciado": "Qual o consumo e a embalagem do Fixmassa?",
+   "opcoes": [
+    "2 L para cada 50 kg de cimento, em caixa de 18 L",
+    "50 mL por saco, em caixa com 180 sachês",
+    "500 mL para cada 25 kg de cimento, em garrafa de 500 mL",
+    "10 mL por kg de cimento, em tambor de 200 L"
+   ],
+   "correta": 2,
+   "explicacao": "O Fixmassa vem em garrafa de 500 mL e o consumo é de 500 mL/25 kg de cimento.",
+   "final": true
+  },
+  {
+   "id": "p04q20",
+   "modulo_id": "p04",
+   "ordem": 20,
+   "enunciado": "O que o catálogo diz sobre os concorrentes do Fixmassa?",
+   "opcoes": [
+    "O similar é o Vedacit Bianco",
+    "É um produto diferenciado que não possui concorrentes",
+    "O similar é o Sika 1",
+    "O similar é o Quartzolit Tecplus 1"
+   ],
+   "correta": 1,
+   "explicacao": "Todas as marcas aparecem como “não tem” e o catálogo diz que o Fixmassa não possui concorrentes.",
+   "final": true
+  },
+  {
+   "id": "p04q21",
+   "modulo_id": "p04",
+   "ordem": 21,
+   "enunciado": "Uma pequena fábrica de pisos intertravados e tubos de concreto usa detergente na massa. Qual produto oferecer no lugar?",
+   "opcoes": [
+    "Mactra 2.000",
+    "Megablock",
+    "Ligmassa",
+    "Desformactra"
+   ],
+   "correta": 1,
+   "explicacao": "O Megablock é a solução correta de aditivo para concreto em vez do detergente, ideal para peças pré-moldadas.",
+   "final": true
+  },
+  {
+   "id": "p04q22",
+   "modulo_id": "p04",
+   "ordem": 22,
+   "enunciado": "Qual a dosagem e a embalagem do Megablock?",
+   "opcoes": [
+    "10 mL por kg de cimento, em tambor de 200 L",
+    "500 mL para cada 25 kg, em garrafa de 500 mL",
+    "1:10 com água, em balde de 18 L",
+    "2 L para cada 50 kg, em caixa de 18 L"
+   ],
+   "correta": 0,
+   "explicacao": "Megablock: proporção de 10 mL/kg de cimento, vendido em tambor de 200 L (200 L para 500 sacos de 40 kg).",
+   "final": true
+  },
+  {
+   "id": "p04q23",
+   "modulo_id": "p04",
+   "ordem": 23,
+   "enunciado": "No quadro “Aditivos – Onde e como usar”, como o Megablock é classificado?",
+   "opcoes": [
+    "Aditivo colante, adicionado na argamassa",
+    "Aditivo incorporador de ar e plastificante, adicionado no concreto",
+    "Aditivo fixante, adicionado no chapisco",
+    "Aditivo impermeabilizante, adicionado na tinta"
+   ],
+   "correta": 1,
+   "explicacao": "No quadro, o 5º passo (peças de concreto) é o Megablock, aditivo incorporador de ar e plastificante, adicionado no concreto.",
+   "final": true
+  },
+  {
+   "id": "p04q24",
+   "modulo_id": "p04",
+   "ordem": 24,
+   "enunciado": "O Mactra 2.000 costuma ser comprado junto com quais produtos?",
+   "opcoes": [
+    "Antiferrugem e Fita Multiuso",
+    "Mactracol e Mactraset",
+    "Spumix e Mcol Cola Branca",
+    "Acquafort e Vedmur"
+   ],
+   "correta": 1,
+   "explicacao": "O catálogo diz que o Mactra 2.000 geralmente é comprado com Mactracol e Mactraset e faz parte da cesta básica do pedreiro.",
+   "final": true
+  },
+  {
+   "id": "p04q25",
+   "modulo_id": "p04",
+   "ordem": 25,
+   "enunciado": "Cliente tem umidade subindo no rodapé (umidade ascendente) e não quer quebrar a parede. Qual a solução?",
+   "opcoes": [
+    "Vedbem Telhado",
+    "Acquafort em 1 demão",
+    "Sistema Secaparede (Spray Secaparede + Massa Secaparede)",
+    "Mactra 2.000 na tinta"
+   ],
+   "correta": 2,
+   "explicacao": "O Spray e a Massa Secaparede são um reparo paliativo e rápido para umidade ascendente, sem precisar quebrar a parede.",
+   "final": true
+  },
+  {
+   "id": "p04q26",
+   "modulo_id": "p04",
+   "ordem": 26,
+   "enunciado": "No Sistema Secaparede, qual a ordem correta de aplicação?",
+   "opcoes": [
+    "Só a Massa, o Spray é opcional",
+    "1º Spray Secaparede (bloqueia a umidade), 2º Massa Secaparede (recupera e dá acabamento)",
+    "1º Vedmur, 2º Spray Secaparede",
+    "1º Massa Secaparede, 2º Spray Secaparede"
+   ],
+   "correta": 1,
+   "explicacao": "O quadro do sistema mostra: 1º Spray (prepara e bloqueia a umidade), 2º Massa (recupera a parede e dá acabamento).",
+   "final": true
+  },
+  {
+   "id": "p04q27",
+   "modulo_id": "p04",
+   "ordem": 27,
+   "enunciado": "Qual a embalagem e o rendimento do Spray Secaparede?",
+   "opcoes": [
+    "Spray de 500 mL, de 3 a 4 L",
+    "Balde de 18 kg, até 9 m²",
+    "Garrafa de 900 mL, de 2 a 6 m²/L",
+    "Spray de 750 mL, de 2 a 4 m²"
+   ],
+   "correta": 3,
+   "explicacao": "Spray Secaparede: embalagem de 750 mL, rende de 2 a 4 m², em 1 a 2 demãos.",
+   "final": true
+  },
+  {
+   "id": "p04q28",
+   "modulo_id": "p04",
+   "ordem": 28,
+   "enunciado": "Como aplicar a Massa Secaparede?",
+   "opcoes": [
+    "De 1 a 2 camadas de no máximo 2 mm, com espátula e desempenadeira de aço",
+    "3 demãos cruzadas com broxa",
+    "Diluída 1:1 com rolo de lã",
+    "Uma demão bem carregada com pulverizador"
+   ],
+   "correta": 0,
+   "explicacao": "A Massa Secaparede é pronta para uso e se aplica em 1 a 2 camadas de no máximo 2 mm.",
+   "final": true
+  },
+  {
+   "id": "p04q29",
+   "modulo_id": "p04",
+   "ordem": 29,
+   "enunciado": "Qual a embalagem e o rendimento da Massa Secaparede?",
+   "opcoes": [
+    "Balde de 18 kg, até 9 m²",
+    "Spray de 750 mL, de 2 a 4 m²",
+    "Balde de 25 kg, não se aplica",
+    "Balde de 18 kg, até 15 m²"
+   ],
+   "correta": 0,
+   "explicacao": "Massa Secaparede: balde de 18 kg, rendimento até 9 m².",
+   "final": true
+  },
+  {
+   "id": "p04q30",
+   "modulo_id": "p04",
+   "ordem": 30,
+   "enunciado": "O cliente pede “Vedatop Rodapé” (Vedacit). Qual Coral Mactra oferecer?",
+   "opcoes": [
+    "Massa Secaparede",
+    "Mactraset 1.000",
+    "Spray Secaparede",
+    "Vedatrinca Massa"
+   ],
+   "correta": 0,
+   "explicacao": "O Vedatop Rodapé aparece como similar da Massa Secaparede; já o Spray Secaparede não tem similar nas marcas listadas.",
+   "final": true
+  },
+  {
+   "id": "p05q01",
+   "modulo_id": "p05",
+   "ordem": 1,
+   "enunciado": "Trinca pequena e superficial no reboco ou no gesso. Qual Vedatrinca indicar?",
+   "opcoes": [
+    "Vedatrinca Tela 1 m x 50 m",
+    "Vedatrinca Fita",
+    "Vedatrinca Massa",
+    "Vedatrinca Selante"
+   ],
+   "correta": 1,
+   "explicacao": "A Vedatrinca Fita é a solução rápida e sem sujeira para trincas e fissuras pequenas (superficiais) em reboco e gesso.",
+   "final": true
+  },
+  {
+   "id": "p05q02",
+   "modulo_id": "p05",
+   "ordem": 2,
+   "enunciado": "Em quais tamanhos a Vedatrinca Fita é vendida?",
+   "opcoes": [
+    "3 m, 5 m e 10 m, todos com 5 cm de largura",
+    "10 cm, 20 cm e 30 cm x 10 m",
+    "Só rolo de 10 m x 10 cm",
+    "10 cm x 3 m, 25 cm x 5 m e 1 m x 50 m"
+   ],
+   "correta": 0,
+   "explicacao": "Vedatrinca Fita: pacote 3 m x 5 cm e rolos 5 m x 5 cm e 10 m x 5 cm.",
+   "final": true
+  },
+  {
+   "id": "p05q03",
+   "modulo_id": "p05",
+   "ordem": 3,
+   "enunciado": "Para trincas e fissuras médias não estruturais, o que vender e como aplicar?",
+   "opcoes": [
+    "Elastique PU 40 com pistola, sem diluir",
+    "Vedatrinca Massa pura, em camada única",
+    "Vedatrinca Selante: 1ª demão diluída 1:1 e, após 3 horas, o produto puro",
+    "Vedatrinca Fita com 3 demãos de tinta"
+   ],
+   "correta": 2,
+   "explicacao": "O Vedatrinca Selante é a solução para trincas médias; a primeira demão é diluída 1:1 e após 3 horas aplica-se puro.",
+   "final": true
+  },
+  {
+   "id": "p05q04",
+   "modulo_id": "p05",
+   "ordem": 4,
+   "enunciado": "Qual o rendimento do Vedatrinca Selante?",
+   "opcoes": [
+    "Aproximadamente 1,5 kg/m²/mm",
+    "De 2 a 6 m²/L",
+    "Aproximadamente 3 m lineares em juntas de 1 x 1 cm",
+    "Aproximadamente 30 g por metro linear em juntas de 5 x 10 mm"
+   ],
+   "correta": 3,
+   "explicacao": "O catálogo informa cerca de 30 g/m linear em juntas de 5 x 10 mm para o Vedatrinca Selante.",
+   "final": true
+  },
+  {
+   "id": "p05q05",
+   "modulo_id": "p05",
+   "ordem": 5,
+   "enunciado": "Trinca grande (mais profunda) já estabilizada na alvenaria. Qual combinação o catálogo indica?",
+   "opcoes": [
+    "Vedatrinca Massa + Vedatrinca Tela 10 cm x 3 m (com bandagem)",
+    "Vedatrinca Fita + tinta",
+    "Vedatrinca Selante sem tela",
+    "Elastique PU 40 + Spumix"
+   ],
+   "correta": 0,
+   "explicacao": "No quadro da família Vedatrinca, o 3º caso (trincas grandes estabilizadas) usa Vedatrinca Massa e Vedatrinca Tela com bandagem.",
+   "final": true
+  },
+  {
+   "id": "p05q06",
+   "modulo_id": "p05",
+   "ordem": 6,
+   "enunciado": "A Vedatrinca Massa aceita pintura?",
+   "opcoes": [
+    "Sim, mas só tinta impermeabilizante",
+    "Só depois de uma demão de Betol",
+    "Não, nunca aceita pintura",
+    "Sim, desde que seja usado o fundo preparador antes"
+   ],
+   "correta": 3,
+   "explicacao": "O catálogo diz que a Vedatrinca Massa aceita pintura desde que se use o fundo preparador antes.",
+   "final": true
+  },
+  {
+   "id": "p05q07",
+   "modulo_id": "p05",
+   "ordem": 7,
+   "enunciado": "Qual Vedatrinca Tela geralmente acompanha a Vedbem Manta Líquida Rápida?",
+   "opcoes": [
+    "Rolo de 1 m x 50 m",
+    "Pacote de 10 cm x 3 m com bandagem",
+    "Pacote de 3 m x 5 cm",
+    "Rolo de 25 cm x 5 m"
+   ],
+   "correta": 3,
+   "explicacao": "A Manta Líquida Rápida geralmente é comprada com a Vedatrinca Tela 25 cm x 5 m (a Branca e o Mactraset 5.000 com a de 1 m x 50 m).",
+   "final": true
+  },
+  {
+   "id": "p05q08",
+   "modulo_id": "p05",
+   "ordem": 8,
+   "enunciado": "Em que momento a Vedatrinca Tela é colocada num sistema de impermeabilização flexível?",
+   "opcoes": [
+    "Só depois da última demão",
+    "Antes de qualquer demão, direto no reboco seco",
+    "Após a primeira demão ou camada, para estruturar o tratamento",
+    "Misturada no componente A"
+   ],
+   "correta": 2,
+   "explicacao": "O catálogo diz que a tela de poliéster é usada após a primeira demão ou camada para estruturar o tratamento.",
+   "final": true
+  },
+  {
+   "id": "p05q09",
+   "modulo_id": "p05",
+   "ordem": 9,
+   "enunciado": "Para colagem estrutural (concreto, azulejo, chumbamento de pia), qual produto indicar?",
+   "opcoes": [
+    "Mcol Cola Branca",
+    "Compóxi Adesivo MF",
+    "Elastique PU 40",
+    "Spumix"
+   ],
+   "correta": 1,
+   "explicacao": "O Compóxi Adesivo MF é a solução para colagem estrutural de concreto, cerâmica, metal, pedra e madeira.",
+   "final": true
+  },
+  {
+   "id": "p05q10",
+   "modulo_id": "p05",
+   "ordem": 10,
+   "enunciado": "Qual vantagem do Compóxi Adesivo MF numa piscina com pastilhas soltas?",
+   "opcoes": [
+    "Dispensa a mistura dos componentes A e B",
+    "Cola as pastilhas sem precisar esvaziar a piscina, pois não se mistura na água",
+    "Seca transparente e é à base de água",
+    "Substitui o Mactraset 7.000"
+   ],
+   "correta": 1,
+   "explicacao": "O catálogo diz que o Compóxi pode colar pastilhas de piscina sem esvaziá-las, pois o material não se mistura em água.",
+   "final": true
+  },
+  {
+   "id": "p05q11",
+   "modulo_id": "p05",
+   "ordem": 11,
+   "enunciado": "Qual a embalagem e o consumo do Compóxi Adesivo MF?",
+   "opcoes": [
+    "1 kg (A+B), cerca de 1,5 kg/m²/mm de espessura",
+    "500 g e 1 kg, não se aplica",
+    "Cartucho de 400 g, cerca de 3 m lineares",
+    "Balde de 4,5 kg, 30 g/m linear"
+   ],
+   "correta": 0,
+   "explicacao": "Compóxi Adesivo MF: embalagem de 1 kg (A+B), consumo aproximado de 1,5 kg/m²/mm de espessura.",
+   "final": true
+  },
+  {
+   "id": "p05q12",
+   "modulo_id": "p05",
+   "ordem": 12,
+   "enunciado": "O cliente pede “Tecbond MF” (Quartzolit). Qual Coral Mactra oferecer?",
+   "opcoes": [
+    "Elastique PU 40",
+    "Vedatrinca Selante",
+    "Compóxi Adesivo MF",
+    "Mactracol"
+   ],
+   "correta": 2,
+   "explicacao": "O Tecbond MF aparece como similar do Compóxi Adesivo MF.",
+   "final": true
+  },
+  {
+   "id": "p05q13",
+   "modulo_id": "p05",
+   "ordem": 13,
+   "enunciado": "Para vedar junta de piso, junta flexível ou fixar mármore leve (colagem não estrutural), qual produto?",
+   "opcoes": [
+    "Mcol Cola Branca",
+    "Elastique PU 40",
+    "Vedatrinca Massa",
+    "Compóxi Adesivo MF"
+   ],
+   "correta": 1,
+   "explicacao": "O Elastique PU 40 é a pasta selante e elástica para colagem não estrutural e vedação de juntas flexíveis.",
+   "final": true
+  },
+  {
+   "id": "p05q14",
+   "modulo_id": "p05",
+   "ordem": 14,
+   "enunciado": "Qual o rendimento do cartucho de 400 g de Elastique PU 40?",
+   "opcoes": [
+    "Aproximadamente 1,5 kg/m²/mm",
+    "De 3 a 4 L para cada 100 g",
+    "Aproximadamente 3 m lineares em juntas de 1 x 1 cm",
+    "Aproximadamente 30 g por metro linear"
+   ],
+   "correta": 2,
+   "explicacao": "Elastique PU 40: cartucho de 400 g com cerca de 3 m lineares em juntas de 1 x 1 cm.",
+   "final": true
+  },
+  {
+   "id": "p05q15",
+   "modulo_id": "p05",
+   "ordem": 15,
+   "enunciado": "Cliente pede “Sikaflex Universal”. Qual Coral Mactra oferecer?",
+   "opcoes": [
+    "Elastique PU 40",
+    "Compóxi Adesivo MF",
+    "Spumix",
+    "Vedatrinca Selante"
+   ],
+   "correta": 0,
+   "explicacao": "O Sikaflex Universal está listado como similar do Elastique PU 40.",
+   "final": true
+  },
+  {
+   "id": "p05q16",
+   "modulo_id": "p05",
+   "ordem": 16,
+   "enunciado": "O instalador de ar-condicionado precisa fixar dutos e preencher batentes de portas. Qual produto?",
+   "opcoes": [
+    "Fita Multiuso",
+    "Spumix",
+    "Vedatrinca Massa",
+    "Elastique PU 40"
+   ],
+   "correta": 1,
+   "explicacao": "O Spumix é a espuma expansiva para fixação de dutos e aparelhos de ar-condicionado e preenchimento de batentes.",
+   "final": true
+  },
+  {
+   "id": "p05q17",
+   "modulo_id": "p05",
+   "ordem": 17,
+   "enunciado": "Qual o rendimento informado para o Spumix (500 mL/340 g)?",
+   "opcoes": [
+    "10 m²/L/demão",
+    "Aproximadamente 3 m lineares",
+    "De 2 a 4 m²",
+    "De 3 a 4 L para cada 100 g"
+   ],
+   "correta": 3,
+   "explicacao": "O catálogo informa rendimento de 3 a 4 L/100 g para o Spumix.",
+   "final": true
+  },
+  {
+   "id": "p05q18",
+   "modulo_id": "p05",
+   "ordem": 18,
+   "enunciado": "Para colar madeira de média e baixa densidade, laminados e papelão, qual produto?",
+   "opcoes": [
+    "Mactracol",
+    "Mcol Cola Branca",
+    "Elastique PU 40",
+    "Compóxi Adesivo MF"
+   ],
+   "correta": 1,
+   "explicacao": "A Mcol Cola Branca é indicada para colagens de alto desempenho em madeiras de média e baixa densidade, laminados, papel e papelão.",
+   "final": true
+  },
+  {
+   "id": "p05q19",
+   "modulo_id": "p05",
+   "ordem": 19,
+   "enunciado": "Qual característica da Mcol Cola Branca está no catálogo?",
+   "opcoes": [
+    "Pasta cinza que aceita pintura",
+    "Efeito transparente após a secagem e é à base de água",
+    "Espuma expansiva com isolamento acústico",
+    "Bicomponente epóxi"
+   ],
+   "correta": 1,
+   "explicacao": "A Mcol tem efeito transparente após secar, é à base de água e tem alto poder de colagem e flexibilidade.",
+   "final": true
+  },
+  {
+   "id": "p05q20",
+   "modulo_id": "p05",
+   "ordem": 20,
+   "enunciado": "Quantas demãos de Antiferrugem e qual o rendimento?",
+   "opcoes": [
+    "2 demãos, 10 m² por litro por demão",
+    "3 demãos, 45 m² por litro",
+    "1 demão, 2 a 6 m²/L",
+    "2 demãos, 36 m² por litro"
+   ],
+   "correta": 0,
+   "explicacao": "Antiferrugem: líquido verde, pronto para uso; aplicar 2 demãos, rendimento de 10 m²/L/demão.",
+   "final": true
+  },
+  {
+   "id": "p05q21",
+   "modulo_id": "p05",
+   "ordem": 21,
+   "enunciado": "Na comparação de produtos para metais, como o Antiferrugem se posiciona em relação ao Hammerite?",
+   "opcoes": [
+    "Antiferrugem é o de melhor custo-benefício; Hammerite é o de máximo desempenho",
+    "Os dois são o mesmo produto",
+    "Hammerite é só para madeira",
+    "Antiferrugem é o de máximo desempenho"
+   ],
+   "correta": 0,
+   "explicacao": "No quadro “Metais – Principais diferenças”, o Antiferrugem tem melhor custo-benefício e o Hammerite máximo desempenho.",
+   "final": true
+  },
+  {
+   "id": "p05q22",
+   "modulo_id": "p05",
+   "ordem": 22,
+   "enunciado": "O que oferecer junto com o Antiferrugem?",
+   "opcoes": [
+    "A linha de esmaltes e o Telhafria",
+    "Mactracol e Ligmassa",
+    "Desformactra",
+    "Vedatrinca Selante"
+   ],
+   "correta": 0,
+   "explicacao": "O catálogo orienta oferecer o Antiferrugem junto com a linha de esmaltes e o Telhafria.",
+   "final": true
+  },
+  {
+   "id": "p05q23",
+   "modulo_id": "p05",
+   "ordem": 23,
+   "enunciado": "Época de chuva, cliente com goteira no telhado precisa de um reparo pontual. Qual produto?",
+   "opcoes": [
+    "Fita Multiuso",
+    "Spumix",
+    "Vedbem Telhafria",
+    "Vedatrinca Fita"
+   ],
+   "correta": 0,
+   "explicacao": "A Fita Multiuso é uma fita asfáltica autoadesiva para corrigir goteiras, com alta resistência a sol e chuva.",
+   "final": true
+  },
+  {
+   "id": "p05q24",
+   "modulo_id": "p05",
+   "ordem": 24,
+   "enunciado": "A Fita Multiuso é ideal para venda complementar junto com qual produto?",
+   "opcoes": [
+    "Megablock",
+    "Acquafort",
+    "Mcol Cola Branca",
+    "Betol"
+   ],
+   "correta": 3,
+   "explicacao": "O catálogo diz que a Fita Multiuso é ideal para venda complementar junto com o Betol.",
+   "final": true
+  },
+  {
+   "id": "p05q25",
+   "modulo_id": "p05",
+   "ordem": 25,
+   "enunciado": "Para que serve o Desformactra e como se dilui?",
+   "opcoes": [
+    "Aditivo de concreto; 10 mL/kg de cimento",
+    "Impermeabilizante de fundação; pronto para uso",
+    "Evita que o concreto grude na fôrma; diluir 1:10",
+    "Aditivo para chapisco; diluir 1:2"
+   ],
+   "correta": 2,
+   "explicacao": "O Desformactra evita a aderência do concreto nas fôrmas, facilitando a desforma, e é diluído na proporção 1:10.",
+   "final": true
+  },
+  {
+   "id": "p05q26",
+   "modulo_id": "p05",
+   "ordem": 26,
+   "enunciado": "Para impermeabilizar banheiro, qual combinação aparece no portfólio para esse ambiente?",
+   "opcoes": [
+    "Acquafort + Vedmur",
+    "Vedbem Telhado + Antiferrugem",
+    "Mactraset Flexível 5.000 + Elastique PU 40 + Vedatrinca Tela",
+    "Betol + Fita Multiuso"
+   ],
+   "correta": 2,
+   "explicacao": "No mapa de ambientes, Banheiros traz Mactraset Flexível 5.000, Elastique PU 40, Vedatrinca Tela e Tintas Coral.",
+   "final": true
+  },
+  {
+   "id": "p05q27",
+   "modulo_id": "p05",
+   "ordem": 27,
+   "enunciado": "O cliente pede “Tecplus Top” (Quartzolit) para o alicerce. Qual Coral Mactra é o equivalente?",
+   "opcoes": [
+    "Betol",
+    "Mactraset Flexível 5.000",
+    "Mactraset 1.000",
+    "Mactra 2.000"
+   ],
+   "correta": 2,
+   "explicacao": "O Tecplus Top (Quartzolit) aparece como similar do Mactraset 1.000.",
+   "final": true
+  },
+  {
+   "id": "p05q28",
+   "modulo_id": "p05",
+   "ordem": 28,
+   "enunciado": "O cliente pede “Neutrol à base de água” (Vedacit). Qual Coral Mactra oferecer?",
+   "opcoes": [
+    "Mactraset 1.000",
+    "Acquafort",
+    "Vedmur",
+    "Betol"
+   ],
+   "correta": 3,
+   "explicacao": "O Neutrol à base de água (Vedacit) está listado como similar do Betol.",
+   "final": true
+  },
+  {
+   "id": "p05q29",
+   "modulo_id": "p05",
+   "ordem": 29,
+   "enunciado": "O cliente pede “Repele Água 40W” (Quartzolit) para um concreto aparente. Qual Coral Mactra oferecer?",
+   "opcoes": [
+    "Vedbem Parede",
+    "Vedmur",
+    "Vedbem Imperall",
+    "Acquafort"
+   ],
+   "correta": 3,
+   "explicacao": "O Repele Água 40W (Quartzolit) é similar do Acquafort, hidrorrepelente incolor.",
+   "final": true
+  },
+  {
+   "id": "p05q30",
+   "modulo_id": "p05",
+   "ordem": 30,
+   "enunciado": "Qual produto Vedbem tem bom custo-benefício para telhas de fibrocimento e cimento e oportunidade de venda junto com as telhas?",
+   "opcoes": [
+    "Vedbem Imperall",
+    "Vedbem Telhado",
+    "Vedbem Parede",
+    "Vedbem Manta Líquida Branca"
+   ],
+   "correta": 1,
+   "explicacao": "O Vedbem Telhado dá acabamento, tem excelente custo-benefício, evita mofo na telha e pode ser vendido junto com telhas.",
+   "final": true
+  }
+ ]
+}

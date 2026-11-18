@@ -471,8 +471,11 @@
   }
   function prodListaHtml() {
     const q = normP(P.busca).trim();
-    const lista = Assessor.listaProdutos(App.cont).filter(p => Assessor.mesmaMarca(p.marca, P.marca) && (!P.classe || p.classe === P.classe) && (!q || normP([p.nome, p.linha, Assessor.classeNome(p.classe, App.cont), (p.superficies || []).join(' '), p.destaque, p.obs, (p.acabamento || []).join(' ')].join(' ')).includes(q)));
-    if (!lista.length) return '<p class="pequeno texto-3">Nenhum produto encontrado. Tente outra palavra ou troque o filtro.</p>';
+    /* nov/2026: produto com "fornecedor" (id da tabela fornecedores) entra só no chip daquele fornecedor; sem ele, vale a marca */
+    const fs = P.marca ? (App.cont.fornecedores || []).find(f => f && f.nome === P.marca) : null;
+    const doForn = (p) => !P.marca || (p.fornecedor ? !!fs && p.fornecedor === fs.id : Assessor.mesmaMarca(p.marca, P.marca));
+    const lista = Assessor.listaProdutos(App.cont).filter(p => doForn(p) && (!P.classe || p.classe === P.classe) && (!q || normP([p.nome, p.linha, Assessor.classeNome(p.classe, App.cont), (p.superficies || []).join(' '), p.destaque, p.obs, (p.acabamento || []).join(' ')].join(' ')).includes(q)));
+    if (!lista.length) return fs && !q && !P.classe ? '<p class="pequeno texto-3">O portfólio item a item deste fornecedor ainda não foi cadastrado. Consulte o catálogo acima.</p>' : '<p class="pequeno texto-3">Nenhum produto encontrado. Tente outra palavra ou troque o filtro.</p>';
     return lista.map(p => `<div class="item-lista" onclick="App.prod.abrir('${p.id}')">${thumb(p)}<div class="cresce" style="margin-left:8px"><div class="titulo">${esc(p.nome)}</div><div class="desc"><span class="etiqueta ${marcaCor(p.marca)} mini">${esc(p.marca)}</span> ${esc(Assessor.classeNome(p.classe, App.cont))}${Assessor.resumoRendimento(p) ? ' · ' + esc(Assessor.resumoRendimento(p)) : ''}</div></div><span class="seta">›</span></div>`).join('');
   }
   App.prod.filtrar = () => { const el = $('#prod-lista'); if (el) { el.innerHTML = prodListaHtml(); if (window.STDados && STDados.preencherArquivos) STDados.preencherArquivos(el); } };
