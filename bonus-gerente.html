@@ -90,6 +90,8 @@ html[data-theme="dark"] .st.rit{color:#9db8ff}
 .sn button[aria-pressed="true"]{background:var(--navy);color:#fff}
 .sn button:disabled{opacity:.5;cursor:default}
 
+.ni{width:84px;font:700 14px var(--f-body);padding:7px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);text-align:right}
+.ni:focus-visible{outline:2px solid var(--navy);outline-offset:1px}
 .tw{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px}
 table{width:100%;border-collapse:collapse;font-size:13.5px}
 th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:800;text-align:right;padding:10px 12px;background:var(--surface2);white-space:nowrap}
@@ -137,7 +139,7 @@ var B={
  regua:{3:[50000,70000,100000,150000],2:[40000,60000,90000,110000],1:[30000,50000,65000,85000]},
  vcpf:20, veuc:50,
  /* supervisor */
- sfat:[150,300,500], sreg:[500,1000,2000], scnpj:500, seuc:200, sinv:100
+ sfat:[150,300,500], sreg:[500,1000,2000], scnpj:500, seuc:200, sinv:100, sinvItens:50, sinvMin:0.95
 };
 var FX=[0.95,1,1.3], FXR=['95%','100%','130%'];
 var NL={1:['N1','Bronze'],2:['N2','Prata'],3:['N3','Ouro']};
@@ -168,7 +170,8 @@ var tc=function(t){return String(t||'').toLowerCase().replace(/(^|\s)(\S)/g,func
 var BASE=null, NIV=null, CONF={}, GER={}, LOJAS=[], TODAS=[], SUPS=[], ABAS=[], EU=null, ST={tab:'ger',sup:null,loja:null,vend:null,fl:''}, PODE=false, MESK='', UT=0, UD=0, UR=0, FECH=false, SALVANDO=false;
 
 function faixa(p){return p>=1.3?2:p>=1?1:p>=0.95?0:-1}
-function conf(cod){var m=CONF[MESK]||{},c=m[cod]||{};return{inv:c.inv===1||c.inv===true,cont:!(c.cont===0||c.cont===false),por:c.por||'',em:c.em||''}}
+function conf(cod){var m=CONF[MESK]||{},c=m[cod]||{};return{inv:c.inv===1||c.inv===true,cont:!(c.cont===0||c.cont===false),por:c.por||'',em:c.em||'',
+  ic:c.ic>0?+c.ic:0,ie:c.ic>0?Math.max(+c.ie||0,0):0,ass:c.ic>0?Math.max(+c.ic-(+c.ie||0),0)/+c.ic:null,ipor:c.ipor||'',iem:c.iem||''}}
 
 /* ===== CÁLCULO de uma loja =====
    garantido = já travado pelos números de hoje · proj = no ritmo dos dias úteis · alvo = fechando 100% em tudo */
@@ -285,18 +288,19 @@ function calcVend(a,v){
 
  (function(){var f=+C[1]||0,at=+C[3]||0,nv=+C[4]||0,po=+C[5]||0;
   var tf=function(q){return q>=120000?200:q>=80000?100:q>=50000?75:q>=30000?50:0},tp=function(q){return q>=20?150:q>=15?100:q>=10?50:0},tn=function(q){return q>=10?100:q>=8?75:q>=4?50:0};
-  var soma=function(F,Pq,Nq){return Math.min(tf(F)+tp(Pq)+tn(Nq),500)};
+  var dc=C[13]==null||C[13]===''?null:+C[13],td=dc!=null&&dc<0.17?50:0;
+  var soma=function(F,Pq,Nq){return Math.min(tf(F)+tp(Pq)+tn(Nq)+td,500)};
   var fj=pjN(f),pj=Math.floor(pjN(po)),nj=Math.floor(pjN(nv));
   var pre=po>=10&&at>0&&po/at>=0.5,preJ=pj>=10&&at>0&&pj/at>=0.5;
   var gar=pre&&pct>=0.95?soma(f,po,nv):0,prj=preJ&&pp>=0.95?soma(fj,pj,nj):0,alvo=preJ?soma(fj,pj,nj):0;
   var fN=f<30000?30000:f<50000?50000:f<80000?80000:f<120000?120000:null,pN=po<10?10:po<15?15:po<20?20:null,nN=nv<4?4:nv<8?8:nv<10?10:null;
-  var chk='<span class="'+(tf(f)?'s':'n')+'">Faturamento CNPJ: '+R(f)+' → '+R(tf(f))+'</span><span class="'+(tp(po)?'s':'n')+'">Positivados: '+N(po)+(at?' de '+N(at)+' ativos':'')+' → '+R(tp(po))+'</span><span class="'+(tn(nv)?'s':'n')+'">Clientes novos: '+N(nv)+' → '+R(tn(nv))+'</span>';
+  var chk='<span class="'+(tf(f)?'s':'n')+'">Faturamento CNPJ: '+R(f)+' → '+R(tf(f))+'</span><span class="'+(tp(po)?'s':'n')+'">Positivados: '+N(po)+(at?' de '+N(at)+' ativos':'')+' → '+R(tp(po))+'</span><span class="'+(tn(nv)?'s':'n')+'">Clientes novos: '+N(nv)+' → '+R(tn(nv))+'</span>'+(dc==null?'':'<span class="'+(td?'s':'n')+'">Desconto CNPJ: '+(dc*100).toFixed(1).replace('.',',')+'% → '+R(td)+'</span>');
   var tr=[]; if(po<10) tr.push('chegar a 10 positivados (faltam '+(10-po)+')'); if(at>0&&po/at<0.5) tr.push('positivar 50% da carteira (está em '+P(po/at)+')'); if(pct<0.95) tr.push('bater 95% da meta');
   var px2=[]; if(fN) px2.push('<b>'+R(fN-f)+'</b> em CNPJ'); if(pN) px2.push('<b>'+(pN-po)+'</b> positivado(s)'); if(nN) px2.push('<b>'+(nN-nv)+'</b> cliente(s) novo(s)');
   it.push({k:'icnpj',n:'Indicadores CNPJ',qd:'pago no dia 10',gar:gar,prj:prj,alvo:alvo,chk:chk,
-   st:gar?'ok':prj?'rit':(tf(f)+tp(po)+tn(nv))?'trava':'risco',stT:gar?'garantido até aqui':prj?'no ritmo':(tf(f)+tp(po)+tn(nv))?'faixa batida · falta o pré-requisito':'sem faixa batida',
+   st:gar?'ok':prj?'rit':(tf(f)+tp(po)+tn(nv)+td)?'trava':'risco',stT:gar?'garantido até aqui':prj?'no ritmo':(tf(f)+tp(po)+tn(nv)+td)?'faixa batida · falta o pré-requisito':'sem faixa batida',
    falta:(tr.length?'Para liberar: '+tr.join(' · ')+'. ':'')+(px2.length?'Próxima faixa: '+px2.join(' · ')+'.':'Todas as faixas no máximo.'),
-   regra:'Faturamento CNPJ 30 mil = 50 · 50 mil = 75 · 80 mil = 100 · 120 mil = 200. Positivados 10 = 50 · 15 = 100 · 20 = 150. Novos 4 = 50 · 8 = 75 · 10 = 100. Teto de R$ 500. Exige 95% da meta, 10 positivados e 50% da carteira. O desconto CNPJ abaixo de 17% (R$ 50) não entra aqui: o app não recebe esse número.'})})();
+   regra:'Faturamento CNPJ 30 mil = 50 · 50 mil = 75 · 80 mil = 100 · 120 mil = 200. Positivados 10 = 50 · 15 = 100 · 20 = 150. Novos 4 = 50 · 8 = 75 · 10 = 100. Teto de R$ 500. Desconto CNPJ abaixo de 17% = 50. Exige 95% da meta, 10 positivados e 50% da carteira.'+(dc==null?' O desconto CNPJ ainda não chega ao app e fica fora desta conta.':' O desconto é média do mês e pode mudar até o fechamento.')})})();
 
  (function(){var m=+C[0]||0,f=+C[1]||0;
   if(!m){ it.push({k:'cnpj',n:'Meta CNPJ',qd:'pago no dia 10',gar:0,prj:0,alvo:0,st:'na',stT:'sem meta CNPJ no mês',falta:'',regra:R(B.cnpj)+' com 100% da sua meta CNPJ e pelo menos 95% da meta de faturamento.'}); return; }
@@ -360,10 +364,13 @@ function calcSup(nome){
   it.push({k:'seuc',n:'Eucatex',qd:'por loja da carteira',gar:gar,prj:prj,alvo:B.seuc*com,chk:chk,st:gar&&gar>=prj?'ok':prj?'rit':'risco',stT:(prj/B.seuc)+' de '+com+(com===1?' loja':' lojas')+' no ritmo de 100%',
    falta:'Cada loja que fechar a litragem vale <b>'+R(B.seuc)+'</b>.',regra:R(B.seuc)+' por loja que bater 100% da meta de litragem Eucatex.'})})();
 
- (function(){var ok=X.filter(function(q){return q.cf.inv}).length;
-  it.push({k:'sinv',n:'Inventário',qd:'por loja da carteira',gar:ok*B.sinv,prj:ok*B.sinv,alvo:X.length*B.sinv,st:ok===X.length?'ok':ok?'rit':'pend',
-   stT:ok+' de '+X.length+' lojas confirmadas',falta:ok<X.length?'Conta as lojas com o inventário confirmado pela coordenação.':'',
-   regra:R(B.sinv)+' por loja com pelo menos 95% de assertividade no inventário, confirmada pela coordenação.'})})();
+ (function(){var ok=0,com=0,chk='';
+  X.forEach(function(q){var c=q.cf; if(c.ass==null){chk+='<span>'+q.cod+' '+esc(q.nome)+': sem contagem</span>';return} com++; var bate=c.ass>=B.sinvMin; if(bate) ok++;
+   chk+='<span class="'+(bate?'s':'n')+'">'+q.cod+' '+esc(q.nome)+': '+N(c.ic-c.ie)+' de '+N(c.ic)+' · '+P(c.ass)+'</span>'});
+  it.push({k:'sinv',n:'Inventário',qd:'por loja da carteira',gar:ok*B.sinv,prj:ok*B.sinv,alvo:X.length*B.sinv,chk:chk,st:!com?'pend':ok===X.length?'ok':ok?'rit':'risco',
+   stT:!com?'nenhuma loja com contagem lançada':ok+' de '+X.length+' lojas com 95% ou mais',
+   falta:com<X.length?('Faltam as contagens de <b>'+(X.length-com)+'</b> '+(X.length-com===1?'loja':'lojas')+'. Com '+B.sinvItens+' itens contados, a loja passa com até <b>2 erros</b>.'):(ok<X.length?'Com '+B.sinvItens+' itens contados, a loja passa com até <b>2 erros</b>.':''),
+   regra:R(B.sinv)+' por loja com 95% ou mais de assertividade na contagem de '+B.sinvItens+' itens feita pelo supervisor. As contagens e os erros são lançados na tabela abaixo.'})})();
  return soma_(x,it);
 }
 function soma_(x,it){x.it=it;x.gar=0;x.prj=0;x.alvo=0;it.forEach(function(i){x.gar+=i.gar;x.prj+=i.prj;x.alvo+=i.alvo});return x}
@@ -385,7 +392,7 @@ function snHtml(x){
  return '<div class="card full"><h3>Confirmações da coordenação <span class="qd">'+(cf.por?'última alteração: '+esc(cf.por)+(cf.em?' · '+esc(cf.em):''):'ainda sem alteração neste mês')+'</span></h3>'+
   '<div class="sn"><span>Inventário batido</span><span class="g">'+b('inv',1,'SIM',cf.inv)+b('inv',0,'NÃO',!cf.inv)+'</span>'+
   '<span>Contagem de estoque em dia</span><span class="g">'+b('cont',1,'SIM',cf.cont)+b('cont',0,'NÃO',!cf.cont)+'</span></div>'+
-  '<div class="regra">Inventário nasce NÃO e libera o bônus de inventário do gerente e do supervisor quando vira SIM. Contagem nasce SIM; em NÃO, zera a performance do gerente e dos vendedores da loja. Vale para '+esc(rotMes())+'.</div><div class="falta" id="snMsg" role="status"></div></div>';
+  '<div class="regra">Inventário nasce NÃO e libera o bônus de inventário do gerente quando vira SIM. Contagem nasce SIM; em NÃO, zera a performance do gerente e dos vendedores da loja. Vale para '+esc(rotMes())+'.</div><div class="falta" id="snMsg" role="status"></div></div>';
 }
 function rotMes(){return BASE?(tc(BASE.p[0])+'/'+BASE.p[1]):''}
 function rotBase(){var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(BASE.p[2]||''));
@@ -421,7 +428,47 @@ function telaSup(x){
  x.zap='Supervisor '+tc(x.nome)+' · '+x.n+' lojas'; x.zapT='BÔNUS DO SUPERVISOR';
  return hero(x,'Supervisor · '+x.n+(x.n===1?' loja':' lojas')+' na carteira',esc(tc(x.nome)),'',
   'Na super meta (130%) a meta regional paga <b>'+R(B.sreg[2])+'</b> e cada loja <b>'+R(B.sfat[2])+'</b>.')+
-  '<div class="grid">'+x.it.map(cardItem).join('')+'</div>';
+  '<div class="grid">'+x.it.map(cardItem).join('')+invHtml(x)+'</div>';
+}
+/* contagem de inventário do supervisor: itens contados e erros por loja -> assertividade */
+function invHtml(x){
+ var h='<div class="card full" id="invArea"><h3>Inventário do supervisor · contagem por loja <span class="qd">'+esc(rotMes())+' · passa com 95% ou mais</span></h3><div class="tw" style="border:0"><table><tr><th>Loja</th><th>Itens contados</th><th>Erros</th><th>Assertividade</th><th class="e">Resultado</th><th class="e">Lançado por</th></tr>';
+ x.lojas.forEach(function(q){var c=q.cf,tem=c.ass!=null,ok=tem&&c.ass>=B.sinvMin;
+  h+='<tr data-inv="'+q.cod+'"><td>'+q.cod+' · '+esc(q.nome)+'</td>'+
+   (PODE?'<td><input type="number" inputmode="numeric" min="0" max="999" class="ni" data-f="ic" aria-label="Itens contados na loja '+q.cod+'" value="'+(tem?c.ic:'')+'" placeholder="'+B.sinvItens+'"></td><td><input type="number" inputmode="numeric" min="0" max="999" class="ni" data-f="ie" aria-label="Erros na loja '+q.cod+'" value="'+(tem?c.ie:'')+'" placeholder="—"></td>'
+        :'<td>'+(tem?N(c.ic):'—')+'</td><td>'+(tem?N(c.ie):'—')+'</td>')+
+   '<td data-ass>'+(tem?P(c.ass):'—')+'</td><td class="e" data-res><span class="st '+(tem?(ok?'ok':'trava'):'pend')+'">'+(tem?(ok?'bateu · '+R(B.sinv):'não bateu'):'sem contagem')+'</span></td><td class="e mut">'+(c.ipor?esc(c.ipor)+(c.iem?' · '+esc(c.iem):''):'—')+'</td></tr>'});
+ h+='</table></div>'+(PODE?'<div class="sn"><button type="button" class="btn pri" id="invSalvar"'+(SALVANDO?' disabled':'')+'>Salvar contagens</button><span class="falta" id="invMsg" role="status"></span></div><div class="regra">Preencha os erros de cada loja contada; os itens contados valem '+B.sinvItens+' quando ficam em branco. Deixe os erros em branco na loja que ainda não foi contada.</div>':'<div class="regra">As contagens são lançadas pela coordenação.</div>')+'</div>';
+ return h;
+}
+function invLer(){var o={},erro='';
+ Array.prototype.forEach.call(document.querySelectorAll('tr[data-inv]'),function(tr){var a=tr.querySelector('[data-f=ic]'),b=tr.querySelector('[data-f=ie]'); if(!a||!b) return;
+  if(b.value===''){ o[tr.dataset.inv]=null; return; }
+  var ic=a.value===''?B.sinvItens:Math.round(+a.value),ie=Math.round(+b.value);
+  if(!(ic>0)||!(ie>=0)||ie>ic){ erro='Confira a loja '+tr.dataset.inv+': os erros não podem passar dos itens contados.'; return; }
+  o[tr.dataset.inv]={ic:ic,ie:ie}});
+ return erro?{erro:erro}:{v:o}}
+function invPrev(){Array.prototype.forEach.call(document.querySelectorAll('tr[data-inv]'),function(tr){var a=tr.querySelector('[data-f=ic]'),b=tr.querySelector('[data-f=ie]'); if(!a||!b) return;
+  var ic=a.value===''?B.sinvItens:+a.value,ie=+b.value,tem=b.value!==''&&ic>0&&ie>=0&&ie<=ic,as=tem?(ic-ie)/ic:null,ok=tem&&as>=B.sinvMin;
+  tr.querySelector('[data-ass]').textContent=tem?P(as):'—';
+  tr.querySelector('[data-res]').innerHTML='<span class="st '+(tem?(ok?'ok':'trava'):'pend')+'">'+(tem?(ok?'bateu · '+R(B.sinv):'não bateu'):'sem contagem')+'</span>'})}
+function invSalvar(){
+ if(!PODE||SALVANDO) return; var L=invLer(),msg=function(t){var m=$('invMsg'); if(m) m.textContent=t};
+ if(L.erro){ msg(L.erro); return; }
+ SALVANDO=true; $('invSalvar').disabled=true; msg('Salvando…');
+ STDados.chamar('conteudoLer').then(function(r){
+  var T=(r&&r.ok&&r.cont&&r.cont[TAB])||CONF||{}; T=JSON.parse(JSON.stringify(T));
+  var ms=Object.keys(T).sort(); while(ms.length>6) delete T[ms.shift()];
+  T[MESK]=T[MESK]||{}; var s=null; try{s=JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null')}catch(e){}
+  var quem=(s&&s.nome)||'', em=new Date().toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  Object.keys(L.v).forEach(function(cod){var c=T[MESK][cod]||{},n=L.v[cod];
+   if(!n){ if(c.ic==null) return; delete c.ic; delete c.ie; c.ipor=quem; c.iem=em; }
+   else { if(c.ic===n.ic&&c.ie===n.ie) return; c.ic=n.ic; c.ie=n.ie; c.ipor=quem; c.iem=em; }
+   T[MESK][cod]=c});
+  var env={}; env[TAB]=T;
+  return STDados.chamar('conteudoSalvar',{tabelas:env}).then(function(j){ if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não confirmou.'); CONF=T; });
+ }).then(function(){SALVANDO=false;render();msg('✓ Contagens salvas. O supervisor já vê o resultado.')})
+  .catch(function(e){SALVANDO=false;var b=$('invSalvar'); if(b) b.disabled=false; msg('Não consegui salvar: '+((e&&e.message)||e))});
 }
 function tabela(cab,linhas,tot,dica){
  return '<div class="tw"><table><caption class="sub" style="text-align:left;padding:10px 12px;caption-side:top">'+dica+'</caption><tr>'+cab+'<th>% meta</th><th>'+(FECH?'Fechou':'Projeta')+'</th><th>Garantido</th><th>'+(FECH?'Fechamento':'No ritmo')+'</th><th>Em 100%</th></tr>'+linhas+
@@ -475,6 +522,8 @@ function render(){
  Array.prototype.forEach.call(document.querySelectorAll('tr.lk'),function(tr){var go=function(){ST[tr.dataset.go]=tr.dataset.id;render();window.scrollTo(0,0)};tr.onclick=go;tr.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}}});
  Array.prototype.forEach.call(document.querySelectorAll('[data-sn]'),function(b){b.onclick=function(){marcar(ATUAL&&ATUAL._a,b.dataset.sn,+b.dataset.v)}});
  var f=$('fLoja'); if(f) f.onchange=function(){ST.fl=f.value;render()};
+ var bs=$('invSalvar'); if(bs) bs.onclick=invSalvar;
+ Array.prototype.forEach.call(document.querySelectorAll('.ni'),function(i){i.oninput=invPrev});
 }
 $('btnVoltar').onclick=function(){ST[ST.tab==='ger'?'loja':ST.tab]=null;render()};
 $('btnZap').onclick=function(){
@@ -532,7 +581,7 @@ if(q.get('demo')){ /* prévia sem login */
    [vd("PATRICK MARINHEIRO",150000,104000,152000,[60000,44000,220,120,6,70,700,0.82,2.55,240,0.066,3000,2100]),vd("CARLA SOUZA",90000,48000,71000,[30000,14000,120,70,2,22,500,0.75,2.3,205,0.08,1800,900])]],
   ["35","Taquara","Bruno",120000,120000,52000,0,98000,[20000,6000,90,40,1,12,500,0.86,2.7,189,0.05,0,0],
    [vd("JOAO PEDRO",70000,30000,41000,[12000,4000,60,30,1,8,300,0.86,2.7,189,0.05,0,0])]]]};
- CONF={'2026-11':{'002':{inv:1,cont:1,por:'Bruno',em:'17/11 09:10'}}}; GER={'030':'JOANA CARLA','002':'PAULO RAMOS'};
+ CONF={'2026-11':{'002':{inv:1,cont:1,por:'Bruno',em:'17/11 09:10',ic:50,ie:2,ipor:'Bruno',iem:'17/11 09:12'},'035':{ic:50,ie:4,ipor:'Bruno',iem:'17/11 09:15'}}}; GER={'030':'JOANA CARLA','002':'PAULO RAMOS'};
  var dm=q.get('demo');
  iniciar(D,dm==='ger'?'loja:030':dm==='sup'?'Bruno':dm==='vend'?'vend:030':null,dm,dm==='coord','Luan Pinto');
 } else if(!window.STDados||!STDados.crachaGuardado){ aviso('Abra este painel pelo <b>Só Tintas App</b>, já com o seu login.'); }
