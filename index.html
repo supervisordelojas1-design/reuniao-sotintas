@@ -9321,9 +9321,9 @@ syncNav();
 <div id="ovBonusGer" style="position:fixed;inset:0;z-index:99999;background:#0f1522;display:none;flex-direction:column">
  <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;color:#fff;font:600 14px system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
   <button id="ovBgFechar" style="border:0;border-radius:8px;padding:9px 13px;background:#FFD100;color:#0F2B46;font:inherit;cursor:pointer">&larr; Voltar ao início</button>
-  <span style="opacity:.85">Bônus do Gerente</span>
+  <span style="opacity:.85">Bônus do Mês</span>
  </div>
- <iframe id="ifrBonusGer" title="Bônus do Gerente" style="flex:1;width:100%;border:0;background:#0f1522"></iframe>
+ <iframe id="ifrBonusGer" title="Bônus do Mês" style="flex:1;width:100%;border:0;background:#0f1522"></iframe>
 </div>
 <div id="ovBonus" style="position:fixed;inset:0;z-index:99999;background:#0f1522;display:none;flex-direction:column">
  <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;color:#fff;font:600 14px system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
@@ -9446,9 +9446,9 @@ syncNav();
         <span class="ini-txt"><span class="ini-nm">Simulador de Bônus</span><span class="ini-ds">Quanto já garantiu e o que mais paga no mês</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
-      <button type="button" class="ini-card feat" data-act="bonusger" data-gate="1" data-ger="1">
+      <button type="button" class="ini-card feat" data-act="bonusger" data-gate="1" data-vend="1" data-ger="1">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-store"/></svg></span>
-        <span class="ini-txt"><span class="ini-nm">Bônus do Gerente</span><span class="ini-ds">Garantido, no ritmo e o que falta no mês</span></span>
+        <span class="ini-txt"><span class="ini-nm">Bônus do Mês</span><span class="ini-ds">Supervisor, gerente e vendedor: garantido e o que falta</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
       <button type="button" class="ini-card feat" data-act="proposta" data-gate="1">
@@ -10242,7 +10242,7 @@ body.foco .wrap{padding-bottom:40px}
     ['verProvas','Central de Provas','provas'],['verMinhasProvas','Minhas Provas','avulsas'],
     ['verUso','Acessos ao App','uso'],['verCRM','CRM de Vendas','crm'],['verEscala','Escala & Folgas','escala'],
     ['verContatos','Contatos das Lojas','contatos'],
-    ['verBonus','Bonificações','bonus'],['verSimulador','Simulador de Bônus','simulador'],['verBonusGer','Bônus do Gerente','bonusger'],
+    ['verBonus','Bonificações','bonus'],['verSimulador','Simulador de Bônus','simulador'],['verBonusGer','Bônus do Mês','bonusger'],
     ['verProposta','Proposta de Vendedor','proposta'],['verMentor','Mentor','mentor'],
     ['verEspecialista','Especialista ST','especialista'],
     ['gerirCadastro','Cadastro da Equipe','cadastro'],['gerirAcessos','Acesso de usuários','acessos'],
@@ -10749,7 +10749,7 @@ button[id^="ov"][id$="Fechar"]:hover{transform:translateY(-1px);box-shadow:0 6px
     crm:['📇 CRM de Vendas','Orçamentos, carteira, pós-venda e pintores — cada contato fica registrado.'],
     contatos:['📞 Contatos das Lojas','Filial, gerente, telefone e e-mail de toda a rede, com um toque para o WhatsApp.'],
     bonus:['💰 Bonificações','Quanto vale cada nível e o que falta para o próximo.'],
-    bonusger:['🏪 Bônus do Gerente','O bônus do gerente no mês: quanto já garantiu, quanto o ritmo entrega e o que falta em cada item.'],
+    bonusger:['🏪 Bônus do Mês','O seu bônus no mês: quanto já garantiu, quanto o ritmo entrega e o que falta em cada item. Líderes veem supervisor, gerente e vendedor em abas.'],
     simulador:['🧮 Simulador de Bônus','Preencha os seus números e veja quanto já garantiu e o que ainda paga no mês.'],
     agenda:['🗓️ Agenda','Os seus compromissos da semana, reuniões e visitas.'],
     agendar:['➕ Agendar','Marque uma reunião, uma visita ou uma tarefa em poucos toques.'],

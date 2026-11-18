@@ -357,7 +357,7 @@ function calcSup(nome){
   Ls.forEach(function(l,j){var C=l[8]||[],m=C[11]?+C[11]:0,lt=+C[12]||0; if(!m) return; com++; var pj=FECH?lt:(UD?lt/UD*UT:lt);
    if(lt>=m) gar+=B.seuc; if(pj>=m) prj+=B.seuc; chk+='<span class="'+(pj>=m?'s':'n')+'">'+X[j].cod+' '+esc(X[j].nome)+': '+P(lt/m)+(FECH?'':' → '+P(pj/m))+'</span>'});
   if(!com){ it.push({k:'seuc',n:'Eucatex',qd:'por loja da carteira',gar:0,prj:0,alvo:0,st:'na',stT:'meta de litragem ainda não publicada',falta:'',regra:R(B.seuc)+' por loja que bater 100% da litragem Eucatex.'}); return; }
-  it.push({k:'seuc',n:'Eucatex',qd:'por loja da carteira',gar:gar,prj:prj,alvo:B.seuc*com,chk:chk,st:gar&&gar>=prj?'ok':prj?'rit':'risco',stT:(prj/B.seuc)+' de '+com+' lojas no ritmo de 100%',
+  it.push({k:'seuc',n:'Eucatex',qd:'por loja da carteira',gar:gar,prj:prj,alvo:B.seuc*com,chk:chk,st:gar&&gar>=prj?'ok':prj?'rit':'risco',stT:(prj/B.seuc)+' de '+com+(com===1?' loja':' lojas')+' no ritmo de 100%',
    falta:'Cada loja que fechar a litragem vale <b>'+R(B.seuc)+'</b>.',regra:R(B.seuc)+' por loja que bater 100% da meta de litragem Eucatex.'})})();
 
  (function(){var ok=X.filter(function(q){return q.cf.inv}).length;
@@ -419,7 +419,7 @@ function telaVend(x){
 }
 function telaSup(x){
  x.zap='Supervisor '+tc(x.nome)+' · '+x.n+' lojas'; x.zapT='BÔNUS DO SUPERVISOR';
- return hero(x,'Supervisor · '+x.n+' lojas na carteira',esc(tc(x.nome)),'',
+ return hero(x,'Supervisor · '+x.n+(x.n===1?' loja':' lojas')+' na carteira',esc(tc(x.nome)),'',
   'Na super meta (130%) a meta regional paga <b>'+R(B.sreg[2])+'</b> e cada loja <b>'+R(B.sfat[2])+'</b>.')+
   '<div class="grid">'+x.it.map(cardItem).join('')+'</div>';
 }
@@ -446,7 +446,7 @@ function listaVends(){
 function listaSups(){
  var t={gar:0,prj:0,alvo:0},h='';
  SUPS.forEach(function(s){var x=calcSup(s);acum(t,x);
-  h+='<tr class="lk" tabindex="0" role="button" data-go="sup" data-id="'+esc(s)+'"><td>'+esc(tc(s))+'</td><td class="e">'+x.n+' lojas</td>'+nums(x)+'</tr>'});
+  h+='<tr class="lk" tabindex="0" role="button" data-go="sup" data-id="'+esc(s)+'"><td>'+esc(tc(s))+'</td><td class="e">'+x.n+(x.n===1?' loja':' lojas')+'</td>'+nums(x)+'</tr>'});
  t.n=SUPS.length+' supervisores'; return tabela('<th>Supervisor</th><th class="e">Carteira</th>',h,t,'Toque num supervisor para abrir o bônus dele.');
 }
 var ATUAL=null;
