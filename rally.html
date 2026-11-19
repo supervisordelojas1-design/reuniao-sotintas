@@ -559,6 +559,11 @@ function pista(){
  var card=function(ic,cor,t,s,cod){return '<button class="glass hlc"'+(cod?' data-cod="'+cod+'"':'')+'><svg style="color:'+cor+'" aria-hidden="true"><use href="#'+ic+'"/></svg><span><b>'+t+'</b><small>'+s+'</small></span></button>'};
  $('hl').innerHTML=card('i-trofeu','#b78cff','Pole: '+esc(pole.curto),'termina em '+Math.round(pole.proj)+'% no ritmo atual',pole.cod)+card('i-flag','#FFD100',cheg+' de '+ls.length+' cruzam a chegada','terminam em 100% ou mais no ritmo atual')+(eu?card('i-balde','#6f95f5','Eucatex: '+esc(eu.curto),pc(eu.euc,0)+'% dos litros da meta',eu.cod):'')+card('i-fogo','#ff3b47','Pit stop: '+esc(ult.curto),'o ritmo leva a '+Math.round(ult.proj)+'%',ult.cod);
  var h=escala();
+ /* gerente e vendedor: ranking geral da rede, do 1º ao último, como o dos pilotos (19/11/2026, Bruno). Supervisão e coordenação seguem por equipe. */
+ if(ESCOPO==='loja'||ESCOPO==='vend'){
+  var minha=function(l){return EU?l.cod===EU.cod:(ESCOPO==='loja'&&!!DET[l.cod])};
+  $('race').innerHTML=h+ls.slice().sort(function(a,b){return b.alc-a.alc}).map(function(l){var eu=minha(l);return '<button class="lane'+(eu?' eu':'')+'" style="--c:'+l.c+'" data-cod="'+l.cod+'" aria-label="'+l.pos+'º, '+esc(l.curto)+', '+pc(l.alc)+'% da meta"><span class="lm" style="font-family:var(--f-disp);font-weight:800;font-size:16px">'+l.pos+'º</span><span class="who"><b>'+esc(l.curto)+(eu?' · sua loja':'')+'</b><span>'+esc(l.cidade||l.eq)+' · '+l.cod+'</span></span>'+road(l.alc,l.proj,l.c)+'<span class="pct"><b class="num">'+pc(l.alc)+'%</b><span>vai a '+Math.round(l.proj)+'%</span></span></button>'}).join('');
+  return}
  E.filter(function(e){return filtro==='Todas'||e.n===filtro}).forEach(function(e){
   h+='<div class="grp" style="--c:'+e.c+'">Equipe '+esc(e.n)+' <span class="num">'+pc(e.alc)+'%</span></div>';
   e.L.slice().sort(function(a,b){return b.alc-a.alc}).forEach(function(l){h+='<button class="lane" style="--c:'+l.c+'" data-cod="'+l.cod+'" aria-label="'+esc(l.curto)+', '+pc(l.alc)+'% da meta"><span class="lm">'+use(l.icone)+'</span><span class="who"><b>'+esc(l.curto)+'</b><span>'+esc(l.cidade||l.eq)+' · '+l.cod+'</span></span>'+road(l.alc,l.proj,l.c)+'<span class="pct"><b class="num">'+pc(l.alc)+'%</b><span>vai a '+Math.round(l.proj)+'%</span></span></button>'})});
