@@ -127,6 +127,16 @@ dialog::backdrop{background:rgba(5,9,18,.65)}
 .campo input[type=datetime-local],.campo select{background:var(--surface2);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:10px;font:inherit;font-size:16px;min-height:44px;width:100%}
 fieldset{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
 .opc{display:flex;align-items:center;gap:8px;min-height:36px;font-size:14px;cursor:pointer}
+.pzgrade{display:grid;grid-template-columns:1fr 1fr;gap:2px 14px}
+.pzn{color:var(--muted);font-size:12px;font-weight:400;margin-left:auto;white-space:nowrap}
+.pzgrade .pzn{margin-left:2px;background:var(--surface2);border-radius:999px;padding:1px 7px}
+.pz-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.pzlk{background:transparent;border:0;color:var(--navy);font:inherit;font-size:13px;font-weight:700;cursor:pointer;padding:6px 8px;min-height:32px}
+.pzbusca{background:var(--surface2);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px 10px;font:inherit;font-size:16px;min-height:40px;width:100%}
+.pzlista{max-height:230px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:4px 10px;display:flex;flex-direction:column}
+.pzlista .opc[hidden]{display:none}
+.opc input:disabled+*{opacity:.5}
+@media(max-width:520px){.pzgrade{grid-template-columns:1fr}.pzlista .pzn{display:none}}
 .m-pe{display:flex;justify-content:flex-end;gap:8px;align-items:center;flex-wrap:wrap}
 .btn2{border:1px solid var(--line);background:transparent;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;min-height:44px}
 .m-pe .btn{margin-top:0;min-height:44px}
@@ -408,7 +418,7 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
     if(quando()==='atual'){ var ant=validos(cru(TIPO,'anterior')).filter(function(r){return (!F.sup||r.sup===F.sup)&&(!F.loja||r.loja===F.loja);});
       if(ant.length){ var ca=conta(ant), ma=media(ant); compara='<span class="compara">Semana passada fechou em <b>'+Math.round(ca.respondido/ant.length*100)+'%</b>'+(ma!=null?' · média <b>'+virg(ma)+'</b>':'')+'</span>'; } }
     h+='<section class="card hero"><div class="anel">'+anel(cBase,n||1)+'<div class="cen"><b><span data-n="'+pct+'">'+pct+'</span>%</b><small>'+cBase.respondido+' de '+n+'</small></div></div>'+
-       '<div><p class="frase">'+frase(cBase,n)+'</p><div class="hero-l">'+(pz.t?'<span class="prazo'+(pz.q?' quente':'')+'" id="contagem">'+esc(pz.t)+'</span>':'')+(podePrazo()&&TIPO==='vend'&&n?'<button type="button" class="ajustar" data-abrirprazo="1">Ajustar prazo</button>':'')+compara+'</div></div></section>';
+       '<div><p class="frase">'+frase(cBase,n)+'</p><div class="hero-l">'+(pz.t?'<span class="prazo'+(pz.q?' quente':'')+'" id="contagem">'+esc(pz.t)+'</span>':'')+(podePrazo()&&n?'<button type="button" class="ajustar" data-abrirprazo="1">Ajustar prazo</button>':'')+compara+'</div></div></section>';
     h+='<section class="placas" aria-label="Filtrar por situação">'+
       placa('respondido',cBase.respondido,'Fizeram a prova',med!=null?'média '+virg(med):'sem notas ainda')+
       /* Atalho de cobrança: junta num só lugar todo mundo que ainda não fez —
@@ -507,7 +517,7 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
     if(!resp&&!perdeu&&r.sit!=='sem_pdi') h+='<div class="alerta">Próximo passo: '+esc(passoSit(r.sit,r.tipo))+'.</div>';
     if(r.app) h+='<p class="sub" style="margin:0">App: <span class="'+r.app.c+'">'+r.app.t+'</span></p>';
     var pe=(temProva(r)?'<button type="button" class="btn" data-'+(r.tipo==='vend'?'prova="'+esc(r.chave)+'"':'revisao="'+r.i+'"')+'>Ver prova</button>':'')+
-           (r.tipo==='vend'&&r.chave&&podePrazo()&&!resp?'<button type="button" class="btn2" data-prazochave="'+esc(r.chave)+'">Ajustar prazo</button>':'');
+           (r.chave&&podePrazo()&&!resp&&r.sit!=='sem_pdi'?'<button type="button" class="btn2" data-prazotipo="'+r.tipo+'" data-prazochave="'+esc(r.chave)+'">Ajustar prazo</button>':'');
     if(pe) h+='<div class="m-pe">'+pe+'</div>';
     abrirDlg(r.nome,(r.loja?'Loja '+r.loja+(r.lojaNome?' · '+r.lojaNome:''):r.lojaNome)+' · '+rotSit(r.sit,r.tipo),h);
   }
@@ -1031,37 +1041,76 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
     }).catch(function(e){ var c=$('dlgCorpo'); if(c) c.innerHTML='<p class="erro-m">'+esc(e.message||e)+'</p>'; });
   }
 
-  /* ── ajustar prazo: um vendedor, uma loja ou a semana toda (só coordenação) ── */
+  /* ── ajustar prazo (só coordenação): rede toda, supervisores, gerentes, vendedores (todos ou marcados) ou uma loja ── */
   function valorPadrao(){ var a=String(S.agora||''), d=new Date(a.slice(0,10)+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+1); return d.toISOString().slice(0,10)+'T18:00'; }
-  function alvos(){ return TUDO_ATUAL.filter(function(r){return r.chave&&r.sit!=='respondido';}); }
-  function abrirPrazo(chave){
-    var A=alvos(), lj={}, r=chave?A.filter(function(x){return x.chave===chave;})[0]:null;
-    A.forEach(function(x){ lj[x.loja]=x.lojaNome||''; });
-    var esc0=chave?'vendedor':F.loja?'loja':'rede', ks=Object.keys(lj).sort(), vs=A.slice().sort(function(a,b){return (a.loja<b.loja?-1:a.loja>b.loja?1:0)||(norm(a.nome)<norm(b.nome)?-1:1);});
-    var op=function(v,t){return '<label class="opc"><input type="radio" name="esc" value="'+v+'"'+(esc0===v?' checked':'')+'> '+t+'</label>';};
+  var PZ_T={sup:['supervisor','supervisores'],ger:['gerente','gerentes'],vend:['vendedor','vendedores']}, PZ_ORD=['sup','ger','vend'];
+  function alvosT(t){ return cru(t,quando()).filter(function(r){return r.chave&&r.sit!=='respondido'&&r.sit!=='sem_pdi'&&r.sit!=='fora';}); }
+  function pzTexto(n){ var P=PZ_ORD.filter(function(t){return n[t];}).map(function(t){return n[t]+' '+PZ_T[t][n[t]===1?0:1];}); return P.length>1?P.slice(0,-1).join(', ')+' e '+P[P.length-1]:(P[0]||''); }
+  function abrirPrazo(chave,tipo){
+    var A={sup:alvosT('sup'),ger:alvosT('ger'),vend:alvosT('vend')}, lj={};
+    tipo=tipo||(chave?'vend':TIPO); if(!A[tipo]) tipo='vend';
+    var r=chave?A[tipo].filter(function(x){return x.chave===chave;})[0]:null;
+    A.vend.concat(A.ger).forEach(function(x){ if(x.loja) lj[x.loja]=lj[x.loja]||x.lojaNome||''; });
+    var ks=Object.keys(lj).sort(), ord=function(L){ return L.slice().sort(function(a,b){return (a.loja<b.loja?-1:a.loja>b.loja?1:0)||(norm(a.nome)<norm(b.nome)?-1:1);}); };
+    var esc0=r?tipo+'E':(F.loja&&tipo!=='sup'&&lj[F.loja]!=null)?'loja':A[tipo].length?tipo+'T':'rede';
+    var op=function(v,t,n){return '<label class="opc"><input type="radio" name="esc" value="'+v+'"'+(esc0===v?' checked':'')+(n===0?' disabled':'')+'> '+t+(n!=null?' <small class="pzn">'+n+'</small>':'')+'</label>';};
+    var lista=function(t){ var L=ord(A[t]);
+      return '<div class="campo" id="c_'+t+'" hidden><div class="pz-top"><label>Marque os '+PZ_T[t][1]+'</label><span><button type="button" class="pzlk" data-pzmarca="'+t+'">Marcar todos</button><button type="button" class="pzlk" data-pzlimpa="'+t+'">Limpar</button></span></div>'+
+        (L.length>12?'<input type="search" class="pzbusca" data-pzbusca="'+t+'" placeholder="Buscar por nome ou loja" aria-label="Buscar '+PZ_T[t][1]+'">':'')+
+        '<div class="pzlista">'+(L.length?L.map(function(x){ return '<label class="opc" data-b="'+esc(norm((x.loja||'')+' '+x.nome+' '+(x.lojaNome||'')))+'"><input type="checkbox" name="pzk" data-t="'+t+'" value="'+esc(x.chave)+'"'+(r&&x.chave===chave?' checked':'')+'> <span>'+(x.loja?esc(x.loja)+' · ':'')+esc(x.nome)+'</span><small class="pzn">'+esc(rotSit(x.sit,t))+'</small></label>'; }).join(''):'<p class="sub" style="margin:0">Ninguém com prova pendente.</p>')+'</div></div>'; };
+    var tot=A.sup.length+A.ger.length+A.vend.length;
     abrirDlg('Ajustar prazo da avaliação','Semana de '+dBr(SEM),
       '<div class="campo"><label for="pzData">Novo prazo</label><input id="pzData" type="datetime-local" value="'+valorPadrao()+'"></div>'+
-      '<fieldset class="campo"><legend>Para quem</legend>'+op('vendedor','Um vendedor')+op('loja','Uma loja')+op('rede','Semana toda')+'</fieldset>'+
-      '<div class="campo" id="cVend"><label for="pzVend">Vendedor</label><select id="pzVend">'+vs.map(function(x){return '<option value="'+esc(x.chave)+'"'+(x.chave===chave?' selected':'')+'>'+esc(x.loja+' · '+x.nome)+'</option>';}).join('')+'</select></div>'+
-      '<div class="campo" id="cLoja"><label for="pzLoja">Loja</label><select id="pzLoja">'+ks.map(function(k){return '<option value="'+esc(k)+'"'+((r?r.loja:F.loja)===k?' selected':'')+'>'+esc(k+(lj[k]?' · '+lj[k]:''))+'</option>';}).join('')+'</select></div>'+
-      '<p class="sub" id="pzRes" style="margin:0"></p><p class="sub" style="margin:0">Quem já fez a prova não muda. Quem perdeu o prazo volta a ficar aberto, e quem responder dentro do novo prazo ganha os pontos normais.</p><p class="erro-m" id="pzErr" hidden></p>'+
+      '<fieldset class="campo"><legend>Para quem</legend><div class="pzgrade">'+
+        op('rede','Rede toda',tot)+op('loja','Uma loja')+
+        op('supT','Todos os supervisores',A.sup.length)+op('supE','Escolher supervisores',A.sup.length?null:0)+
+        op('gerT','Todos os gerentes',A.ger.length)+op('gerE','Escolher gerentes',A.ger.length?null:0)+
+        op('vendT','Todos os vendedores',A.vend.length)+op('vendE','Escolher vendedores',A.vend.length?null:0)+
+      '</div></fieldset>'+
+      lista('sup')+lista('ger')+lista('vend')+
+      '<div class="campo" id="cLoja" hidden><label for="pzLoja">Loja (gerente e vendedores)</label><select id="pzLoja">'+ks.map(function(k){return '<option value="'+esc(k)+'"'+((r?r.loja:F.loja)===k?' selected':'')+'>'+esc(k+(lj[k]?' · '+lj[k]:''))+'</option>';}).join('')+'</select></div>'+
+      '<p class="sub" id="pzRes" style="margin:0;font-weight:700"></p><p class="sub" style="margin:0">Quem já fez a prova não muda. Quem perdeu o prazo volta a ficar aberto, e quem responder dentro do novo prazo ganha os pontos normais. Gerente ou supervisor com a prova ainda fechada: o novo prazo passa a valer para fazer o PDI e liberar a prova.</p><p class="erro-m" id="pzErr" hidden></p>'+
       '<div class="m-pe"><button type="button" class="btn2" data-fechar="1">Cancelar</button><button type="button" class="btn" id="pzOk" data-salvarprazo="1">Salvar prazo</button></div>');
-    pzAtualiza();
+    PZ_A=A; pzAtualiza();
   }
+  var PZ_A={sup:[],ger:[],vend:[]};
   function pzEscopo(){ var e=document.querySelector('input[name=esc]:checked'); return e?e.value:'rede'; }
-  function pzAlvos(){ var e=pzEscopo(), A=alvos(); if(e==='vendedor') return A.filter(function(x){return x.chave===$('pzVend').value;}); if(e==='loja') return A.filter(function(x){return x.loja===$('pzLoja').value;}); return A; }
-  function pzAtualiza(){ if(!$('pzRes')) return; var e=pzEscopo(); $('cVend').hidden=e!=='vendedor'; $('cLoja').hidden=e!=='loja'; var n=pzAlvos().length; $('pzRes').textContent=n===1?'Vai alterar 1 vendedor.':'Vai alterar '+n+' vendedores.'; $('pzOk').disabled=!n; }
+  function pzSel(){
+    var e=pzEscopo(), o={sup:[],ger:[],vend:[]}, ch=function(L){return L.map(function(x){return x.chave;});};
+    if(e==='rede'){ PZ_ORD.forEach(function(t){ o[t]=ch(PZ_A[t]); }); }
+    else if(e==='loja'){ var k=$('pzLoja').value; ['ger','vend'].forEach(function(t){ o[t]=ch(PZ_A[t].filter(function(x){return x.loja===k;})); }); }
+    else { var t=e.slice(0,-1); if(e.slice(-1)==='T') o[t]=ch(PZ_A[t]); else o[t]=[].map.call(document.querySelectorAll('input[name=pzk][data-t='+t+']:checked'),function(i){return i.value;}); }
+    return o;
+  }
+  function pzAtualiza(){ if(!$('pzRes')) return; var e=pzEscopo();
+    PZ_ORD.forEach(function(t){ $('c_'+t).hidden=e!==t+'E'; }); $('cLoja').hidden=e!=='loja';
+    var o=pzSel(), n={sup:o.sup.length,ger:o.ger.length,vend:o.vend.length}, tot=n.sup+n.ger+n.vend;
+    $('pzRes').textContent=tot?'Vai alterar '+pzTexto(n)+'.':(e.slice(-1)==='E'?'Marque pelo menos um nome.':'Ninguém com prova pendente nessa escolha.'); $('pzOk').disabled=!tot; }
+  function pzBusca(t,q){ q=norm(q); [].forEach.call(document.querySelectorAll('#c_'+t+' .pzlista label'),function(l){ l.hidden=!!q&&l.dataset.b.indexOf(q)<0; }); }
+  function pzMarca(t,v){ [].forEach.call(document.querySelectorAll('#c_'+t+' .pzlista label'),function(l){ if(!l.hidden||!v) l.querySelector('input').checked=v; }); pzAtualiza(); }
   function salvarPrazo(){
     var v=$('pzData').value, er=$('pzErr'), bt=$('pzOk'); er.hidden=true;
     var mostra=function(m){ er.textContent=m; er.hidden=false; bt.disabled=false; bt.textContent='Salvar prazo'; };
     if(!v) return mostra('Informe a data e a hora.');
-    var prazo=v.replace('T',' ').slice(0,16), e=pzEscopo(), x={semana:SEM,prazo:prazo,escopo:e};
+    var prazo=v.replace('T',' ').slice(0,16), o=pzSel();
     if(prazo<=String(S.agora||'')) return mostra('O novo prazo precisa ser depois de agora.');
-    if(e==='vendedor') x.chave=$('pzVend').value; if(e==='loja') x.loja=$('pzLoja').value;
+    if(!(o.sup.length+o.ger.length+o.vend.length)) return mostra('Escolha para quem vale o novo prazo.');
     bt.disabled=true; bt.textContent='Salvando…';
-    STDados.chamar('semanaPrazoAjustar',x).then(function(j){
+    STDados.chamar('semanaPrazoAjustar',{semana:SEM,prazo:prazo,escopo:'lista',alvos:o}).then(function(j){
+      /* servidor ainda na versão antiga (só vendedor, loja ou semana toda): vendedores seguem pelo caminho antigo; gerente e supervisor esperam a versão nova */
+      if(j&&!j.ok&&/vendedor, loja ou semana toda/i.test(j.erro||'')){
+        if(o.sup.length||o.ger.length) throw new Error('O prazo de gerentes e supervisores depende da nova versão do Servidor PDI, que ainda não foi implantada. Para vendedores já funciona.');
+        if(o.vend.length===PZ_A.vend.length) return STDados.chamar('semanaPrazoAjustar',{semana:SEM,prazo:prazo,escopo:'rede'});
+        var tot=0, fila=o.vend.slice(), prox=function(){ if(!fila.length) return {ok:true,alterados:tot,porTipo:{vend:tot}};
+          bt.textContent='Salvando… '+(o.vend.length-fila.length+1)+' de '+o.vend.length;
+          return STDados.chamar('semanaPrazoAjustar',{semana:SEM,prazo:prazo,escopo:'vendedor',chave:fila.shift()}).then(function(k){ if(!k||!k.ok) throw new Error((k&&k.erro)||'O servidor não confirmou.'); tot+=k.alterados||0; return prox(); }); };
+        return prox();
+      }
+      return j;
+    }).then(function(j){
       if(!j||!j.ok) throw new Error((j&&j.erro)||'O servidor não confirmou.');
-      fecharDlg(); toast(j.alterados===1?'Prazo alterado para 1 vendedor.':'Prazo alterado para '+j.alterados+' vendedores.'); return carregar();
+      var n=j.porTipo||{vend:j.alterados||0};
+      fecharDlg(); toast(j.alterados?'Prazo alterado para '+pzTexto(n)+'.':'Ninguém precisou de alteração (já estavam com esse prazo).'); return carregar();
     }).catch(function(err){ mostra(err.message||String(err)); });
   }
 
@@ -1114,7 +1163,9 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
     if(b.dataset.mod){ F.mod=F.mod===b.dataset.mod?'':b.dataset.mod; montar(); if(window.innerWidth<=640&&F.mod){ var ll=$('lista'); if(ll) ll.scrollIntoView({behavior:'smooth',block:'start'}); } return; }
     if(b.dataset.nota!=null){ var nv=Number(b.dataset.nota); F.nota=F.nota===nv?null:nv; montar(); rolarLista(); return; }
     if(b.dataset.prova){ verProva(b.dataset.prova); return; }
-    if(b.dataset.prazochave){ abrirPrazo(b.dataset.prazochave); return; }
+    if(b.dataset.prazochave){ abrirPrazo(b.dataset.prazochave,b.dataset.prazotipo); return; }
+    if(b.dataset.pzmarca){ pzMarca(b.dataset.pzmarca,true); return; }
+    if(b.dataset.pzlimpa){ pzMarca(b.dataset.pzlimpa,false); return; }
     if(b.dataset.abrirprazo){ abrirPrazo(''); return; }
     if(b.dataset.salvarprazo){ salvarPrazo(); return; }
     if(b.dataset.sem){ SEM=b.dataset.sem; F.g=''; F.nota=null; ENTRA=true; semanas(); montar(); return; }
@@ -1126,7 +1177,8 @@ circle.arco{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
   });
   function rolarLista(){ if(F.nota==null) return; var l=$('lista'); if(l&&l.scrollIntoView&&window.innerWidth<=640) l.scrollIntoView({behavior:'smooth',block:'start'}); }
   function rolar(){ if(!F.g) return; var l=$('lista'); if(l&&l.scrollIntoView&&window.innerWidth<=640) l.scrollIntoView({behavior:'smooth',block:'start'}); }
-  document.addEventListener('change',function(e){ if(e.target.id==='hSup'){ HF.sup=e.target.value; ENTRA=true; montar(); return; } if(e.target.name==='esc'||e.target.id==='pzVend'||e.target.id==='pzLoja') pzAtualiza(); });
+  document.addEventListener('change',function(e){ if(e.target.id==='hSup'){ HF.sup=e.target.value; ENTRA=true; montar(); return; } if(e.target.name==='esc'||e.target.name==='pzk'||e.target.id==='pzLoja') pzAtualiza(); });
+  document.addEventListener('input',function(e){ var t=e.target; if(t&&t.dataset&&t.dataset.pzbusca) pzBusca(t.dataset.pzbusca,t.value); });
   var tB=null;
   document.addEventListener('input',function(e){ if(e.target.id!=='busca') return; clearTimeout(tB); var v=e.target.value; tB=setTimeout(function(){ F.q=v; lista(); },200); });
 

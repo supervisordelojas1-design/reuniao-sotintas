@@ -1,0 +1,54 @@
+/* Servidor PDI — substitui a função semanaPrazoAjustar_ inteira (19/11/2026, Bruno).
+   Novo: escopo 'lista' com alvos {sup:[chaves], ger:[chaves], vend:[chaves]} — a tela Provas manda a lista de quem muda
+   (rede toda, todos ou alguns supervisores, gerentes, vendedores, ou uma loja).
+   Vendedor: muda dados.prazo (como antes). Gerente e supervisor: com a prova liberada muda prazo_aval;
+   com a prova ainda fechada muda dados.prazoFeito (prazo para fazer o PDI e liberar). Quem já respondeu não muda.
+   Os escopos antigos (vendedor, loja, rede) continuam valendo. */
+function semanaPrazoAjustar_(c, d) {
+  soCoord_(c);
+  var semana = String(d.semana || '').slice(0, 10), prazo = String(d.prazo || '').trim(), escopo = String(d.escopo || ''), chave = String(d.chave || ''), loja = pad3_(d.loja);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(semana)) throw new Error('Semana inválida.');
+  if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(prazo)) throw new Error('Prazo inválido.');
+  if (prazo <= agoraSP_()) throw new Error('O novo prazo precisa ser depois de agora.');
+  if (escopo === 'lista') return semanaPrazoLista_(d.alvos || {}, prazo, semana);
+  if (escopo !== 'rede' && escopo !== 'loja' && escopo !== 'vendedor') throw new Error('Escolha vendedor, loja ou semana toda.');
+  if (escopo === 'loja' && !loja) throw new Error('Escolha a loja.');
+  if (escopo === 'vendedor' && !chave) throw new Error('Escolha o vendedor.');
+  var S = semanaLinhas_(), iD = SEMANA_CAB.indexOf('dados'), n = 0;
+  S.v.forEach(function (r, i) {
+    var o = semanaObj_(r);
+    if (!o.chave || o.semana !== semana || o.status === 'fora' || o.status === 'respondido') return;
+    if (escopo === 'vendedor' && o.chave !== chave) return;
+    if (escopo === 'loja' && o.loja !== loja) return;
+    var dd = o.dados || {}; if (dd.prazo === prazo) return;
+    dd.prazo = prazo; S.sh.getRange(i + 2, iD + 1, 1, 1).setValues([[JSON.stringify(dd)]]); n++;
+  });
+  return { ok: true, semana: semana, prazo: prazo, escopo: escopo, alterados: n };
+}
+function semanaPrazoLista_(al, prazo, semana) {
+  var conj = function (L) { var o = {}, n = 0; (Array.isArray(L) ? L : []).slice(0, 2000).forEach(function (k) { k = String(k || ''); if (k && !o[k]) { o[k] = 1; n++; } }); return n ? o : null; };
+  var V = conj(al.vend), G = conj(al.ger), P = conj(al.sup), n = { sup: 0, ger: 0, vend: 0 };
+  if (!V && !G && !P) throw new Error('Escolha para quem vale o novo prazo.');
+  if (V) {
+    var S = semanaLinhas_(), iD = SEMANA_CAB.indexOf('dados');
+    S.v.forEach(function (r, i) {
+      var o = semanaObj_(r);
+      if (!o.chave || !V[o.chave] || o.status === 'fora' || o.status === 'respondido') return;
+      var dd = o.dados || {}; if (dd.prazo === prazo) return;
+      dd.prazo = prazo; S.sh.getRange(i + 2, iD + 1, 1, 1).setValues([[JSON.stringify(dd)]]); n.vend++;
+    });
+  }
+  var lider = function (S, CAB, obj, K, t) {
+    var iD = CAB.indexOf('dados'), iP = CAB.indexOf('prazo_aval'), iA = CAB.indexOf('atualizado_em');
+    S.v.forEach(function (r, i) {
+      var o = obj(r);
+      if (!o.chave || !K[o.chave] || o.status === 'respondido') return;
+      if (o.status === 'liberado') { if (o.prazo_aval === prazo) return; S.sh.getRange(i + 2, iP + 1, 1, 1).setValues([[prazo]]); }
+      else { var dd = o.dados || {}; if (dd.prazoFeito === prazo) return; dd.prazoFeito = prazo; S.sh.getRange(i + 2, iD + 1, 1, 1).setValues([[JSON.stringify(dd)]]); }
+      S.sh.getRange(i + 2, iA + 1, 1, 1).setValues([[new Date()]]); n[t]++;
+    });
+  };
+  if (G) lider(gerLinhas_(), GER_CAB, gerObj_, G, 'ger');
+  if (P) lider(supLinhas_(), SUP_CAB, supObj_, P, 'sup');
+  return { ok: true, semana: semana, prazo: prazo, escopo: 'lista', alterados: n.sup + n.ger + n.vend, porTipo: n };
+}
