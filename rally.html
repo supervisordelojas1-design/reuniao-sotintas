@@ -468,6 +468,9 @@ function montar(R,P,cr){
 }
 var geral=function(){return LOJAS.slice().sort(function(a,b){return b.alc-a.alc})};
 var lista=function(){return geral().filter(function(l){return filtro==='Todas'||l.eq===filtro})};
+/* gerente e vendedor: corrida geral, sem placar das regionais, e ficha só da própria loja (19/11/2026, Bruno) */
+function restrito(){return ESCOPO==='loja'||ESCOPO==='vend'}
+function minhaLoja(cod){return EU?cod===EU.cod:(ESCOPO==='loja'&&!!DET[cod])}
 function equipes(){var E={};LOJAS.forEach(function(l){(E[l.eq]=E[l.eq]||{n:l.eq,c:l.c,L:[]}).L.push(l)});
  return Object.keys(E).map(function(k){var e=E[k];e.alc=e.L.reduce(function(a,l){return a+l.alc},0)/e.L.length;e.proj=e.L.reduce(function(a,l){return a+l.proj},0)/e.L.length;
   var ds=e.L.map(function(l){return DET[l.cod]}).filter(Boolean);if(ds.length===e.L.length){var M=ds.reduce(function(a,x){return a+x.meta},0),F=ds.reduce(function(a,x){return a+x.fat},0);if(M)e.alc=F/M*100}
@@ -560,8 +563,8 @@ function pista(){
  $('hl').innerHTML=card('i-trofeu','#b78cff','Pole: '+esc(pole.curto),'termina em '+Math.round(pole.proj)+'% no ritmo atual',pole.cod)+card('i-flag','#FFD100',cheg+' de '+ls.length+' cruzam a chegada','terminam em 100% ou mais no ritmo atual')+(eu?card('i-balde','#6f95f5','Eucatex: '+esc(eu.curto),pc(eu.euc,0)+'% dos litros da meta',eu.cod):'')+card('i-fogo','#ff3b47','Pit stop: '+esc(ult.curto),'o ritmo leva a '+Math.round(ult.proj)+'%',ult.cod);
  var h=escala();
  /* gerente e vendedor: ranking geral da rede, do 1º ao último, como o dos pilotos (19/11/2026, Bruno). Supervisão e coordenação seguem por equipe. */
- if(ESCOPO==='loja'||ESCOPO==='vend'){
-  var minha=function(l){return EU?l.cod===EU.cod:(ESCOPO==='loja'&&!!DET[l.cod])};
+ if(restrito()){
+  var minha=function(l){return minhaLoja(l.cod)};
   $('race').innerHTML=h+ls.slice().sort(function(a,b){return b.alc-a.alc}).map(function(l){var eu=minha(l);return '<button class="lane'+(eu?' eu':'')+'" style="--c:'+l.c+'" data-cod="'+l.cod+'" aria-label="'+l.pos+'º, '+esc(l.curto)+', '+pc(l.alc)+'% da meta"><span class="lm" style="font-family:var(--f-disp);font-weight:800;font-size:16px">'+l.pos+'º</span><span class="who"><b>'+esc(l.curto)+(eu?' · sua loja':'')+'</b><span>'+esc(l.cidade||l.eq)+' · '+l.cod+'</span></span>'+road(l.alc,l.proj,l.c)+'<span class="pct"><b class="num">'+pc(l.alc)+'%</b><span>vai a '+Math.round(l.proj)+'%</span></span></button>'}).join('');
   return}
  E.filter(function(e){return filtro==='Todas'||e.n===filtro}).forEach(function(e){
@@ -619,11 +622,19 @@ function vivo(){
 function duelos(){
  var ord=LOJAS.slice().sort(function(a,b){return a.porte-b.porte}),pares=[];for(var i=0;i+1<ord.length;i+=2)pares.push([ord[i],ord[i+1]]);
  if(!pares.length){$('score').innerHTML='';$('duels').innerHTML='<p class="note">Os duelos aparecem assim que o ranking da rede estiver disponível.</p>';return}
+ var CRIT=''; /* a explicação do critério já fica fixa embaixo da tela */
+ if(restrito()){var meus=pares.filter(function(p){return minhaLoja(p[0].cod)||minhaLoja(p[1].cod)});
+  $('score').innerHTML='';$('score').hidden=true;
+  $('duels').innerHTML=(meus.length?meus.map(function(p){var a=minhaLoja(p[0].cod)?p[0]:p[1],b=a===p[0]?p[1]:p[0],wa=a.alc>=b.alc,w=wa?a:b;
+   var ld=function(l,r,v,eu){return '<div class="sd'+(r?' r':'')+(v?'':' lose')+'" style="--c:'+l.c+'"><span class="ic">'+use(l.icone)+'</span><b>'+esc(l.curto)+'</b><small>'+(eu?'Sua loja':esc(l.cidade||'Adversária'))+'</small><span class="pv num">'+pc(l.alc)+'%</span></div>'};
+   return '<div class="glass duel"><div class="vs">'+ld(a,false,wa,true)+'<span class="mid">VS</span>'+ld(b,true,!wa,false)+'</div><div class="tug"><span class="l" style="--c:'+a.c+'"><i style="width:'+Math.min(100,a.alc)+'%"></i></span><span class="rr" style="--c:'+b.c+'"><i style="width:'+Math.min(100,b.alc)+'%"></i></span></div><span class="note">'+(wa?'<b style="color:'+a.c+'">Sua loja</b> está na frente por ':'<b style="color:'+b.c+'">'+esc(b.curto)+'</b> está na frente por ')+pc(Math.abs(a.alc-b.alc))+' p.p. · no ritmo atual: '+Math.round(a.proj)+'% contra '+Math.round(b.proj)+'%</span></div>'}).join(''):'<p class="note">Sua loja ficou sem adversária nesta rodada (número ímpar de lojas).</p>')+CRIT;
+  return}
+ $('score').hidden=false;
  var win={};pares.forEach(function(p){var w=p[0].alc>=p[1].alc?p[0]:p[1];win[w.eq]=(win[w.eq]||0)+1});
  $('score').innerHTML='<span class="eye">Duelos vencendo hoje</span>'+equipes().sort(function(a,b){return (win[b.n]||0)-(win[a.n]||0)}).map(function(e){return '<span style="color:'+e.c+'"><b>'+(win[e.n]||0)+'</b><span style="color:var(--tinta);font-size:13px">'+esc(e.n)+'</span></span>'}).join('');
  var lado=function(l,r,w){return '<button class="sd'+(r?' r':'')+(w?'':' lose')+'" style="--c:'+l.c+'" data-cod="'+l.cod+'"><span class="ic">'+use(l.icone)+'</span><b>'+esc(l.curto)+'</b><small>Equipe '+esc(l.eq)+'</small><span class="pv num">'+pc(l.alc)+'%</span></button>'};
  $('duels').innerHTML=pares.filter(function(p){return filtro==='Todas'||p[0].eq===filtro||p[1].eq===filtro}).map(function(p){var a=p[0],b=p[1],wa=a.alc>=b.alc,w=wa?a:b;
-  return '<div class="glass duel"><div class="vs">'+lado(a,false,wa)+'<span class="mid">VS</span>'+lado(b,true,!wa)+'</div><div class="tug"><span class="l" style="--c:'+a.c+'"><i style="width:'+Math.min(100,a.alc)+'%"></i></span><span class="rr" style="--c:'+b.c+'"><i style="width:'+Math.min(100,b.alc)+'%"></i></span></div><span class="note"><b style="color:'+w.c+'">'+esc(w.curto)+'</b> na frente por '+pc(Math.abs(a.alc-b.alc))+' p.p. · no ritmo: '+Math.round(a.proj)+'% contra '+Math.round(b.proj)+'%</span></div>'}).join('');
+  return '<div class="glass duel"><div class="vs">'+lado(a,false,wa)+'<span class="mid">VS</span>'+lado(b,true,!wa)+'</div><div class="tug"><span class="l" style="--c:'+a.c+'"><i style="width:'+Math.min(100,a.alc)+'%"></i></span><span class="rr" style="--c:'+b.c+'"><i style="width:'+Math.min(100,b.alc)+'%"></i></span></div><span class="note"><b style="color:'+w.c+'">'+esc(w.curto)+'</b> na frente por '+pc(Math.abs(a.alc-b.alc))+' p.p. · no ritmo: '+Math.round(a.proj)+'% contra '+Math.round(b.proj)+'%</span></div>'}).join('')+CRIT;
 }
 
 /* ---------- ficha da loja ---------- */
@@ -642,7 +653,7 @@ var VIEWS=['meudia','pista','mapa','vivo','duelos','pilotos'];
 /* Direitos de Acesso: cada tela tem a sua chave na régua do app (verRallyMeuDia, verRallyPista…). Quem decide é o app (window.parent.podeRally);
    aberto fora do app vale o padrão: vendedor vê Meu dia e Pilotos, os demais veem tudo. */
 function podeTela(a){try{if(window.parent&&window.parent!==window&&typeof window.parent.podeRally==='function')return !!window.parent.podeRally(a)}catch(e){}return PF==='vend'?(a==='meudia'||a==='pilotos'):true}
-function teams(){var E=equipes();$('teams').innerHTML=E.length>1?['<button class="tchip" style="--c:#eef2fb" aria-pressed="'+(filtro==='Todas')+'" data-f="Todas"><i>'+LOJAS.length+'</i>Todas</button>'].concat(E.map(function(e,i){return '<button class="tchip" style="--c:'+e.c+'" aria-pressed="'+(filtro===e.n)+'" data-f="'+esc(e.n)+'"><i>'+(i+1)+'º</i>'+esc(e.n)+' <span class="num">'+pc(e.alc)+'%</span></button>'})).join(''):''}
+function teams(){if(restrito()){filtro='Todas';$('teams').innerHTML='';return}var E=equipes();$('teams').innerHTML=E.length>1?['<button class="tchip" style="--c:#eef2fb" aria-pressed="'+(filtro==='Todas')+'" data-f="Todas"><i>'+LOJAS.length+'</i>Todas</button>'].concat(E.map(function(e,i){return '<button class="tchip" style="--c:'+e.c+'" aria-pressed="'+(filtro===e.n)+'" data-f="'+esc(e.n)+'"><i>'+(i+1)+'º</i>'+esc(e.n)+' <span class="num">'+pc(e.alc)+'%</span></button>'})).join(''):''}
 function render(){
  view=(location.hash||'#meudia').slice(1);if(VIEWS.indexOf(view)<0||EMBED)view='meudia';
  var LIB=VIEWS.filter(podeTela);if(LIB.indexOf(view)<0)view=EMBED?'':(LIB[0]||'');
@@ -650,7 +661,7 @@ function render(){
  var nav=document.querySelector('.tabs');if(nav)nav.hidden=LIB.length<2;
  [].forEach.call(document.querySelectorAll('.view'),function(v){v.hidden=v.id!=='v-'+view});
  var sa=$('semAcesso');if(sa)sa.hidden=!!view;
- teams();$('teams').hidden=view==='meudia'||!view;
+ teams();$('teams').hidden=view==='meudia'||!view||restrito();
  if(view==='meudia')meudia();if(view==='pista')pista();if(view==='pilotos')pilotos();if(view==='mapa')mapa();if(view==='vivo')vivo();if(view==='duelos')duelos();
 }
 function iniciar(R,P,cr){
@@ -664,7 +675,7 @@ function iniciar(R,P,cr){
   var t=ev.target.closest('[data-f],[data-cod],[data-close]');if(!t)return;
   if(t.dataset.close!==undefined){sheet(false);return}
   if(t.dataset.f){filtro=t.dataset.f;render();return}
-  if(t.dataset.cod){sel=cod3(t.dataset.cod);sheet(true)}});
+  if(t.dataset.cod){var cd=cod3(t.dataset.cod);if(restrito()&&!minhaLoja(cd))return; /* ficha só da própria loja */ sel=cd;sheet(true)}});
  document.addEventListener('keydown',function(ev){if(ev.key==='Escape')sheet(false)});
  document.addEventListener('submit',function(ev){if(ev.target.id!=='simF')return;ev.preventDefault();if(EU){simGravar(simNum($('simV').value),EU.fat);meudia()}});
  document.addEventListener('click',function(ev){if(ev.target.closest('[data-simx]')){simGravar(0);meudia()}});

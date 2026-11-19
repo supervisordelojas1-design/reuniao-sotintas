@@ -2,6 +2,20 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v267",
+      "data": "19/11/2026",
+      "hora": "18:02",
+      "itens": [
+        {
+          "painel": "Rally Só Tintas",
+          "o_que": "Para o gerente: a Pista mostra só a corrida geral das lojas, os Duelos mostram só o duelo da sua loja e a ficha detalhada abre apenas para a própria loja.",
+          "para": [
+            "ger"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v266",
       "data": "19/11/2026",
       "hora": "17:16",
