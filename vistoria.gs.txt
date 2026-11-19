@@ -1,0 +1,93 @@
+/* ═══════════════════════════════════════════════════════════════
+   VISTORIAS DE OBRA (Mentor ST PRO) — cópia na nuvem · 19/11/2026 (Bruno)
+   Colar no fim do Código.gs do Servidor PDI e, no doPost, logo depois da linha do invsup:
+       if (/^vistoria/.test(d.acao || '')) return json_(vistoriaAcao_(d, c));
+   Cada pessoa lê e grava só as próprias vistorias (o dono é o login do crachá, nunca o que vem no pedido).
+   Aba VISTORIAS: uma linha por vistoria (o conteúdo vai em JSON, em até 4 pedaços). Fotos: pasta do Drive
+   "Só Tintas App - Vistorias (fotos)", arquivos privados; o app pede a foto pelo servidor, com o crachá.
+   Excluir só marca a linha (EXCLUIDA): nada é apagado da planilha nem do Drive.
+   ═══════════════════════════════════════════════════════════════ */
+var VIS_ABA = 'VISTORIAS', VIS_PASTA = 'Só Tintas App - Vistorias (fotos)', VIS_PEDACO = 45000, VIS_MAX = 180000, VIS_FOTO_MAX = 2800000;
+var VIS_CAB = ['ID', 'LOGIN', 'NOME', 'NUMERO', 'CLIENTE', 'STATUS', 'ATUALIZADO', 'EXCLUIDA', 'FOTOS', 'J1', 'J2', 'J3', 'J4'];
+function visAba_() {
+  var ss = SpreadsheetApp.getActive(), ab = ss.getSheetByName(VIS_ABA);
+  if (!ab) { ab = ss.insertSheet(VIS_ABA); ab.getRange(1, 1, ab.getMaxRows(), Math.max(VIS_CAB.length, ab.getMaxColumns())).setNumberFormat('@'); ab.getRange(1, 1, 1, VIS_CAB.length).setValues([VIS_CAB]); ab.setFrozenRows(1); }
+  return ab;
+}
+function visLinhas_(ab) { var n = ab.getLastRow(); return n < 2 ? [] : ab.getRange(2, 1, n - 1, VIS_CAB.length).getValues(); }
+function visPasta_() {
+  var p = PropertiesService.getScriptProperties(), id = p.getProperty('PASTA_VIS_ID');
+  if (id) { try { return DriveApp.getFolderById(id); } catch (e) {} }
+  var it = DriveApp.getFoldersByName(VIS_PASTA), f = it.hasNext() ? it.next() : DriveApp.createFolder(VIS_PASTA);
+  p.setProperty('PASTA_VIS_ID', f.getId());
+  return f;
+}
+function visJson_(t) { try { return t ? JSON.parse(t) : null; } catch (e) { return null; } }
+function visId_(x) { x = String(x || ''); if (!/^[A-Za-z0-9_-]{6,80}$/.test(x)) throw new Error('Identificador inválido.'); return x; }
+/* acha a linha da vistoria e confere o dono */
+function visAchar_(ab, id, eu) {
+  var L = visLinhas_(ab);
+  for (var i = 0; i < L.length; i++) if (String(L[i][0]) === id) { if (String(L[i][1]) !== eu) throw new Error('Esta vistoria é de outra pessoa.'); return { lin: i + 2, r: L[i] }; }
+  return null;
+}
+function vistoriaAcao_(d, c) {
+  var eu = loginDe_(c.n), acao = String(d.acao || '');
+  var grava = /^(vistoriaSalvar|vistoriaExcluir|vistoriaFotoSalvar)$/.test(acao);
+  if (c.vc) { if (grava) throw new Error('Modo "Ver como": só leitura.'); return { ok: true, lista: [] }; }   // as vistorias são de quem as fez
+  var lock = grava ? LockService.getScriptLock() : null; if (lock) lock.waitLock(20000);
+  try {
+    var ab = visAba_();
+    if (acao === 'vistoriaListar') {
+      var lista = [];
+      visLinhas_(ab).forEach(function (r) {
+        if (!r[0] || String(r[1]) !== eu) return;
+        if (r[7]) { lista.push({ id: String(r[0]), excluida: true }); return; }
+        var v = visJson_(String(r[9] || '') + String(r[10] || '') + String(r[11] || '') + String(r[12] || '')); if (!v) return;
+        lista.push({ id: String(r[0]), v: v, fotos: Object.keys(visJson_(r[8]) || {}) });
+      });
+      return { ok: true, lista: lista };
+    }
+    if (acao === 'vistoriaSalvar') {
+      var v = d.v || {}, id = visId_(v.id);
+      v.atualizado_em = String(v.atualizado_em || new Date().toISOString());
+      var txt = JSON.stringify(v); if (txt.length > VIS_MAX) throw new Error('Vistoria grande demais para salvar.');
+      var a = visAchar_(ab, id, eu);
+      if (a && a.r[7]) return { ok: true, excluida: true };
+      if (a && String(a.r[6]) > v.atualizado_em) {   // outro aparelho gravou depois: devolve a versão mais nova e não sobrescreve
+        return { ok: true, maisNovo: true, v: visJson_(String(a.r[9] || '') + String(a.r[10] || '') + String(a.r[11] || '') + String(a.r[12] || '')), fotos: Object.keys(visJson_(a.r[8]) || {}) };
+      }
+      var cab = (v.respostas && v.respostas._cab) || {}, ped = []; for (var i = 0; i < 4; i++) ped.push(txt.substr(i * VIS_PEDACO, VIS_PEDACO));
+      var row = [id, eu, c.n, String(v.numero || ''), String(cab.cliente || '').slice(0, 120), String(v.status || ''), v.atualizado_em, '', a ? String(a.r[8] || '') : ''].concat(ped);
+      if (a) ab.getRange(a.lin, 1, 1, VIS_CAB.length).setValues([row]);
+      else { var lin = ab.getLastRow() + 1; ab.getRange(lin, 1, 1, VIS_CAB.length).setNumberFormat('@').setValues([row]); }
+      return { ok: true, atualizado_em: v.atualizado_em };
+    }
+    if (acao === 'vistoriaExcluir') {
+      var e = visAchar_(ab, visId_(d.id), eu);
+      if (e && !e.r[7]) ab.getRange(e.lin, 8, 1, 1).setValues([[new Date().toISOString()]]);
+      return { ok: true };
+    }
+    if (acao === 'vistoriaFotoSalvar') {
+      var idv = visId_(d.id), fid = visId_(d.fid), f = visAchar_(ab, idv, eu);
+      if (!f || f.r[7]) throw new Error('Salve a vistoria antes de enviar as fotos.');
+      var b64 = String(d.b64 || '').replace(/^data:[^;]+;base64,/, '');
+      if (!b64) throw new Error('Foto vazia.'); if (b64.length > VIS_FOTO_MAX) throw new Error('Foto grande demais.');
+      var mapa = visJson_(f.r[8]) || {};
+      if (!mapa[fid]) {
+        var nome = [String(f.r[3] || 'V'), c.n, fid.slice(0, 8)].join(' - ').replace(/[\\/:*?"<>|]+/g, '-') + '.jpg';
+        var arq = visPasta_().createFile(Utilities.newBlob(Utilities.base64Decode(b64), 'image/jpeg', nome));
+        arq.setDescription('Vistoria ' + idv + ' · ' + eu);
+        mapa[fid] = arq.getId();
+        ab.getRange(f.lin, 9, 1, 1).setValues([[JSON.stringify(mapa)]]);
+      }
+      return { ok: true, fid: fid };
+    }
+    if (acao === 'vistoriaFotoLer') {
+      var g = visAchar_(ab, visId_(d.id), eu), m = g ? (visJson_(g.r[8]) || {}) : {}, did = m[visId_(d.fid)];
+      if (!did) throw new Error('Foto não encontrada na nuvem.');
+      var blob = DriveApp.getFileById(did).getBlob();
+      return { ok: true, mime: blob.getContentType(), b64: Utilities.base64Encode(blob.getBytes()) };
+    }
+    throw new Error('Ação de vistoria desconhecida.');
+  } finally { if (lock) { try { lock.releaseLock(); } catch (x) {} } }
+}

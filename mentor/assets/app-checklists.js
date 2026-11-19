@@ -228,9 +228,14 @@
   function vInit() { if (V.carregado && V.login === loginAtual()) return; try { const d = JSON.parse(localStorage.getItem(VKEY())) || {}; V.lista = Array.isArray(d.vistorias) ? d.vistorias : []; } catch (e) { V.lista = []; } for (const v of V.lista) { v.fotos = Array.isArray(v.fotos) ? v.fotos : []; v.respostas = v.respostas || {}; } V.carregado = true; V.login = loginAtual(); }
   function vSalvar() {
     const v = K.vistoriaId ? vPorId(K.vistoriaId) : null;
-    if (v) { v.respostas = K.resp; v.atualizado_em = agora(); const c = porId('vistoria'); if (c) v.semaforo = avaliar(c, v.respostas).semaforo; }
-    try { localStorage.setItem(VKEY(), JSON.stringify({ vistorias: V.lista })); } catch (e) { App.toast('Não foi possível guardar a vistoria neste navegador'); }
+    if (v) { v.respostas = K.resp; const c = porId('vistoria'); if (c) v.semaforo = avaliar(c, v.respostas).semaforo;
+      /* a data de alteração só anda quando algo mudou de fato: é ela que decide qual aparelho tem a versão mais nova */
+      const a = assinatura(v); if (ASS[v.id] !== a) { v.atualizado_em = agora(); ASS[v.id] = a; } }
+    vGravarLocal(); nuvemAgendar();
   }
+  const ASS = {};
+  function assinatura(v) { const o = paraNuvem(v); delete o.atualizado_em; return JSON.stringify(o); }
+  function vGravarLocal() { try { localStorage.setItem(VKEY(), JSON.stringify({ vistorias: V.lista })); } catch (e) { App.toast('Não foi possível guardar a vistoria neste navegador'); } }
   const vPorId = (id) => V.lista.find(v => v.id === id) || null;
   const statusBadge = (v) => v.status === 'concluida' ? '<span class="etiqueta verde mini">✔ Concluída</span>' : '<span class="etiqueta azul mini">⏳ Em andamento</span>';
   const sitDe = (v) => (App.cont.checklists_situacoes || {})[v.semaforo || 'verde'] || {};
@@ -262,20 +267,104 @@
   }
   async function carregarFotos(v) {
     if (V.fotosCarregadas.has(v.id)) return;
-    for (const f of v.fotos) { if (FBLOB[f.id]) continue; try { const reg = await fotoLer(f.id); if (reg && reg.blob) { FBLOB[f.id] = reg.blob; FURL[f.id] = URL.createObjectURL(reg.blob); } } catch (e) {} }
-    V.fotosCarregadas.add(v.id);
+    let faltou = false;
+    for (const f of v.fotos) { if (FBLOB[f.id]) continue; try { const reg = await fotoLer(f.id); if (reg && reg.blob) { FBLOB[f.id] = reg.blob; FURL[f.id] = URL.createObjectURL(reg.blob); } } catch (e) {}
+      if (!FBLOB[f.id] && f.nuvem && nuvemOk()) { // foto tirada em outro aparelho: vem da nuvem e fica guardada aqui
+        try { const j = await pedir('vistoriaFotoLer', { id: v.id, fid: f.id }); const blob = b64Blob(j.b64, j.mime); FBLOB[f.id] = blob; FURL[f.id] = URL.createObjectURL(blob); try { await fotoGravar({ id: f.id, vistoria_id: v.id, blob, criado_em: f.criado_em || agora() }); } catch (e) {} } catch (e) { faltou = true; } } }
+    if (!faltou) V.fotosCarregadas.add(v.id);
   }
   const naVistoria = (v) => App.rota.view === 'assessor' && App.rota.params[0] === 'vistoria' && App.rota.params[1] === v.id;
+
+  /* nuvem: cópia das vistorias no Servidor de Dados ST (planilha + fotos no Drive) -----
+     Cada pessoa vê só as próprias (o servidor grava pelo crachá). O aparelho continua sendo a cópia de trabalho:
+     funciona sem internet e envia quando a conexão voltar. Em conflito vale a edição mais recente. */
+  const N = { enviando: false, denovo: false, timer: null, baixando: null, baixouEm: 0, erro: '', ultima: '' };
+  const nuvemOk = () => !!(global.STDados && typeof STDados.chamar === 'function' && global.ST_PONTE && ST_PONTE.ok && !(STDados.visao && STDados.visao()));
+  const SKEY = () => 'mentorst_vist_sync_' + loginAtual();
+  function sLer() { try { const o = JSON.parse(localStorage.getItem(SKEY())) || {}; return { env: o.env || {}, del: Array.isArray(o.del) ? o.del : [] }; } catch (e) { return { env: {}, del: [] }; } }
+  function sGravar(o) { try { localStorage.setItem(SKEY(), JSON.stringify(o)); } catch (e) {} }
+  const paraNuvem = (v) => ({ id: v.id, numero: v.numero, status: v.status, criado_em: v.criado_em, atualizado_em: v.atualizado_em, concluido_em: v.concluido_em || '', enviado_em: v.enviado_em || '', semaforo: v.semaforo, origem_hist: v.origem_hist || '', respostas: v.respostas || {}, fotos: (v.fotos || []).map(f => ({ id: f.id, local: f.local || '', problema: f.problema || '', criado_em: f.criado_em || '' })) });
+  const pedir = (acao, extra) => STDados.chamar(acao, extra).then(j => { if (!j || !j.ok) throw new Error((j && j.erro) || 'O servidor não confirmou.'); return j; });
+  const blobB64 = (b) => new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1] || ''); fr.onerror = () => rej(fr.error); fr.readAsDataURL(b); });
+  function b64Blob(b64, mime) { const bin = atob(b64), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new Blob([u], { type: mime || 'image/jpeg' }); }
+  function nuvemPendentes() { if (!nuvemOk()) return { vist: 0, fotos: 0 }; const S = sLer(); let a = S.del.length, f = 0; for (const v of V.lista) { if (S.env[v.id] !== v.atualizado_em) a++; f += v.fotos.filter(x => !x.nuvem).length; } return { vist: a, fotos: f }; }
+  function nuvemHtml() {
+    if (!nuvemOk()) return 'As vistorias ficam guardadas neste aparelho. Gere o PDF para arquivar ou enviar.';
+    const p = nuvemPendentes();
+    if (N.enviando || N.baixando) return '☁️ Sincronizando com a nuvem…';
+    if (p.vist || p.fotos) return `⚠️ ${[p.vist ? p.vist + ' vistoria(s)' : '', p.fotos ? p.fotos + ' foto(s)' : ''].filter(Boolean).join(' e ')} ainda só neste aparelho${N.erro ? ' (' + esc(N.erro) + ')' : ''}. <button class="btn link pequeno" onclick="App.vist.sincronizar()">Enviar agora</button>`;
+    return `☁️ Vistorias salvas na nuvem${N.ultima ? ' · ' + esc(N.ultima) : ''}. Abra no celular ou no computador com o seu login. <button class="btn link pequeno" onclick="App.vist.sincronizar()">Atualizar</button>`;
+  }
+  function nuvemPintar() { const el = $('#vp-nuvem'); if (el) el.innerHTML = nuvemHtml(); }
+  function nuvemAgendar(ms) { if (!nuvemOk()) return; clearTimeout(N.timer); N.timer = setTimeout(nuvemEnviar, ms == null ? 2500 : ms); nuvemPintar(); }
+  function adotar(sv, fotosNuvem) { // versão do servidor entra no aparelho
+    const nv = sv || {}; nv.fotos = Array.isArray(nv.fotos) ? nv.fotos : []; nv.respostas = nv.respostas || {};
+    const tem = {}; (fotosNuvem || []).forEach(k => { tem[k] = 1; }); nv.fotos.forEach(f => { if (tem[f.id]) f.nuvem = true; });
+    const i = V.lista.findIndex(x => x.id === nv.id); if (i >= 0) V.lista[i] = nv; else V.lista.push(nv);
+    V.fotosCarregadas.delete(nv.id); return nv;
+  }
+  async function nuvemBaixar(forcar) {
+    if (!nuvemOk()) return; if (N.baixando) return N.baixando; if (!forcar && Date.now() - N.baixouEm < 60000) return;
+    N.baixando = (async () => {
+      try {
+        const j = await pedir('vistoriaListar'), S = sLer(); let mudou = false;
+        for (const r of (j.lista || [])) {
+          const loc = vPorId(r.id);
+          if (r.excluida) { if (loc && S.env[r.id] === loc.atualizado_em && K.vistoriaId !== r.id) { V.lista = V.lista.filter(x => x.id !== r.id); delete S.env[r.id]; mudou = true; } continue; }
+          if (S.del.indexOf(r.id) >= 0 || !r.v) continue;
+          const tem = {}; (r.fotos || []).forEach(k => { tem[k] = 1; });
+          if (!loc) { adotar(r.v, r.fotos); S.env[r.id] = r.v.atualizado_em; mudou = true; continue; }
+          loc.fotos.forEach(f => { if (tem[f.id] && !f.nuvem) { f.nuvem = true; mudou = true; } });
+          if (String(r.v.atualizado_em || '') > String(loc.atualizado_em || '') && K.vistoriaId !== r.id) { adotar(r.v, r.fotos); S.env[r.id] = r.v.atualizado_em; mudou = true; }
+          else if (r.v.atualizado_em === loc.atualizado_em) S.env[r.id] = loc.atualizado_em;
+        }
+        sGravar(S); N.baixouEm = Date.now(); N.erro = '';
+        if (mudou) { vGravarLocal(); if (App.rota && App.rota.view === 'assessor' && App.rota.params[0] === 'vistoria' && !App.rota.params[1]) App.render(); }
+      } catch (e) { N.erro = /Failed to fetch|NetworkError|Load failed/i.test((e && e.message) || '') ? 'sem internet' : 'a nuvem não respondeu agora'; N.baixando = null; nuvemPintar(); return; }
+      N.baixando = null; nuvemPintar(); nuvemEnviar();
+    })();
+    nuvemPintar(); return N.baixando;
+  }
+  async function nuvemEnviar() {
+    if (!nuvemOk()) return; if (N.enviando) { N.denovo = true; return; }
+    N.enviando = true; N.denovo = false; nuvemPintar(); let falhou = '';
+    try {
+      const S = sLer();
+      for (const id of S.del.slice()) { await pedir('vistoriaExcluir', { id }); S.del = S.del.filter(x => x !== id); delete S.env[id]; sGravar(S); }
+      for (const v of V.lista.slice()) {
+        if (S.env[v.id] !== v.atualizado_em) {
+          const quando = v.atualizado_em, j = await pedir('vistoriaSalvar', { v: paraNuvem(v) });
+          if (j.maisNovo && j.v && K.vistoriaId !== v.id) { adotar(j.v, j.fotos); S.env[v.id] = j.v.atualizado_em; vGravarLocal(); }
+          else S.env[v.id] = quando;
+          sGravar(S);
+        }
+        const atual = vPorId(v.id); if (!atual) continue; let gravou = false;
+        for (const f of atual.fotos) {
+          if (f.nuvem) continue;
+          let blob = FBLOB[f.id]; if (!blob) { try { const reg = await fotoLer(f.id); blob = reg && reg.blob; } catch (e) {} }
+          if (!blob) continue; // a foto não está neste aparelho: quem a tem envia
+          await pedir('vistoriaFotoSalvar', { id: atual.id, fid: f.id, b64: await blobB64(blob) }); f.nuvem = true; gravou = true; vGravarLocal(); nuvemPintar();
+        }
+        if (gravou) vGravarLocal();
+      }
+      const d = new Date(); N.ultima = 'sincronizado às ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); N.erro = '';
+    } catch (e) { falhou = (e && e.message) || 'falha no envio'; N.erro = /Failed to fetch|NetworkError|Load failed/i.test(falhou) ? 'sem internet' : falhou; }
+    N.enviando = false; nuvemPintar();
+    if (N.denovo && !falhou) nuvemEnviar();
+  }
+  App.vist.sincronizar = () => { if (!nuvemOk()) return; N.erro = ''; nuvemBaixar(true); };
+  global.addEventListener('online', () => { if (V.carregado) nuvemAgendar(500); });
 
   /* abrir / navegar ------------------------------------------------------------------- */
   function vAbrirSilencioso(v) {
     if (K.vistoriaId && K.vistoriaId !== v.id) salvar();
     K.aberto = 'vistoria'; K.vistoriaId = v.id; K.resp = v.respostas || (v.respostas = {});
     if (!K.resp._cab) K.resp._cab = {}; if (!K.resp._cab.data) K.resp._cab.data = hoje();
+    ASS[v.id] = assinatura(v);
     App.cache.abaAssessor = 'vistoria';
   }
   function telaVistoria(resto) {
-    init(); vInit(); const id = resto && resto[0];
+    init(); vInit(); nuvemBaixar(); const id = resto && resto[0];
     if (!id) { if (K.vistoriaId) { salvar(); K.aberto = null; K.vistoriaId = null; } return telaPainel(); }
     const v = vPorId(id);
     if (!v) return `<div class="card erro"><h3>Vistoria não encontrada</h3><p class="pequeno">Ela pode ter sido excluída ou registrada em outro aparelho.</p><button class="btn" onclick="location.hash='#/assessor/vistoria'">Voltar ao painel</button></div>`;
@@ -302,9 +391,10 @@
   App.vist.filtrar = (f) => { V.filtro = f; App.render(); };
   App.vist.excluir = (id) => {
     const v = vPorId(id); if (!v) return; const cab = v.respostas._cab || {};
-    App.confirmar(`Excluir a vistoria ${esc(v.numero)}${cab.cliente ? ' de ' + esc(cab.cliente) : ''}? As fotos também serão apagadas deste aparelho.`, async () => {
+    App.confirmar(`Excluir a vistoria ${esc(v.numero)}${cab.cliente ? ' de ' + esc(cab.cliente) : ''}? As fotos também saem deste aparelho e a vistoria deixa de aparecer nos seus outros aparelhos.`, async () => {
       for (const f of v.fotos) { try { await fotoApagar(f.id); } catch (e) {} if (FURL[f.id]) URL.revokeObjectURL(FURL[f.id]); delete FURL[f.id]; delete FBLOB[f.id]; }
       V.lista = V.lista.filter(x => x.id !== id); if (K.vistoriaId === id) { K.vistoriaId = null; K.aberto = null; }
+      if (nuvemOk()) { const S = sLer(); if (S.del.indexOf(id) < 0) S.del.push(id); sGravar(S); }
       vSalvar(); App.toast('Vistoria excluída'); irPara('#/assessor/vistoria');
     }, 'Excluir');
   };
@@ -336,7 +426,7 @@
     K.resp.fotos = v.fotos.length ? 'Sim' : 'Não'; if (v.fotos.length) K.resp.res3 = true;
     vSalvar(); atualizarFotos(v); atualizarItem('res3');
     if (!ok) App.toast('Não foi possível ler as fotos escolhidas');
-    else if (V.semBanco) App.toast('⚠️ Este navegador não guarda fotos entre sessões — gere o PDF antes de fechar');
+    else if (V.semBanco) App.toast('⚠️ Este navegador não guarda fotos entre sessões — mantenha a tela aberta até o envio para a nuvem terminar');
     else App.toast(`${ok} foto(s) adicionada(s) ✔`);
     const ultima = v.fotos[v.fotos.length - 1]; const campo = ultima && $('#vf-local-' + ultima.id); if (campo && files.length === 1) campo.focus();
   };
@@ -357,7 +447,7 @@
   function atualizarFotos(v) { const el = $('#ck-fotos-card'); if (el) el.outerHTML = fotosCardHtml(v, (porId('vistoria').secoes || []).find(s => s.id === 'fotos')); }
   function acoesVistoriaHtml(v) {
     return `<div class="card info"><h3>📄 Relatório da vistoria</h3><p class="pequeno texto-2" style="margin:0 0 10px">Relatório com identificação, respostas, resultado e as fotos legendadas — para enviar ao cliente ou ao pintor, imprimir ou guardar em PDF.</p>
-      <div class="botoes"><button class="btn azul" onclick="App.vist.relatorio('${v.id}')">📄 Ver relatório / PDF</button>${global.navigator && navigator.share ? `<button class="btn contorno azul" onclick="App.vist.compartilhar('${v.id}')">📤 Compartilhar com fotos</button>` : ''}</div>
+      <div class="botoes"><button class="btn azul" onclick="App.vist.pdf('${v.id}')">📤 Compartilhar PDF</button><button class="btn contorno azul" onclick="App.vist.relatorio('${v.id}')">📄 Ver relatório</button>${global.navigator && navigator.share ? `<button class="btn contorno azul" onclick="App.vist.compartilhar('${v.id}')">💬 Enviar texto e fotos</button>` : ''}</div>
       <div class="botoes mt-1">${v.status === 'concluida' ? `<button class="btn contorno" onclick="App.vist.reabrirStatus()">🔓 Reabrir vistoria</button>` : `<button class="btn verde" onclick="App.vist.concluir()">✔ Concluir vistoria</button>`}</div></div>`;
   }
 
@@ -370,7 +460,7 @@
       <div class="vp-tiles"><div class="vp-tile"><b>${cont.abertas}</b><span>Em andamento</span></div><div class="vp-tile verde"><b>${cont.verde}</b><span>🟢 Liberadas</span></div><div class="vp-tile amarelo"><b>${cont.amarelo}</b><span>🟡 Com ressalvas</span></div><div class="vp-tile vermelho"><b>${cont.vermelho}</b><span>🔴 Aguardando</span></div></div>
       ${todas.length ? `<div class="campo" style="margin-bottom:8px"><input type="search" placeholder="🔎 Buscar por cliente, endereço ou nº" value="${esc(V.busca)}" oninput="App.vist.buscar(this.value)"></div><div class="chips mb-2">${[['todas', 'Todas'], ['abertas', 'Em andamento'], ['concluidas', 'Concluídas']].map(([k, l]) => `<button class="chip ${V.filtro === k ? 'ativo' : ''}" onclick="App.vist.filtrar('${k}')">${l}</button>`).join('')}</div>` : ''}
       <div id="vp-lista">${listaPainelHtml()}</div>
-      <p class="mini texto-3 centro mt-2">As vistorias ficam guardadas neste aparelho. Gere o PDF para arquivar ou enviar.</p>`;
+      <p class="mini texto-3 centro mt-2" id="vp-nuvem">${nuvemHtml()}</p>`;
   }
   function listaPainelHtml() {
     const todas = V.lista.slice().sort((a, b) => String(b.atualizado_em || '').localeCompare(String(a.atualizado_em || '')));
@@ -384,10 +474,88 @@
   /* relatório (tela + impressão/PDF) ---------------------------------------------------- */
   App.vist.relatorio = (id) => { App.cache.abaAssessor = 'vistoria'; irPara('#/assessor/vistoria/' + id + '/relatorio'); };
   /* nome do PDF: Ficha de Vistoria - cliente - quem fez (cargo) - data */
-  App.vist.imprimir = () => {
-    const id = (location.hash.match(/vistoria\/([^/]+)\/relatorio/) || [])[1], v = (V.lista || []).find(x => String(x.id) === String(id)), cab = (v && v.respostas && v.respostas._cab) || {};
+  function nomePdf(v) {
+    const cab = (v && v.respostas && v.respostas._cab) || {};
     const u = App.user || {}, d = new Date(), dt = ('0' + d.getDate()).slice(-2) + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + d.getFullYear();
-    const nome = ['Ficha de Vistoria', cab.cliente || '', u.nome ? u.nome + (u.cargo ? ' (' + u.cargo + ')' : '') : '', dt].filter(Boolean).join(' - ').replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim();
+    return ['Ficha de Vistoria', cab.cliente || '', u.nome ? u.nome + (u.cargo ? ' (' + u.cargo + ')' : '') : '', dt].filter(Boolean).join(' - ').replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim();
+  }
+  /* PDF em arquivo (não depende da impressão do aparelho): o relatório é desenhado numa folha A4 fora da tela,
+     fotografado e fatiado em páginas sem cortar linha nem foto. Depois de pronto, um toque compartilha ou baixa:
+     o compartilhamento precisa de um toque "fresco", por isso não sai direto no fim da geração. */
+  const LIB_H2C = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', LIB_PDF = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', LIBS = {};
+  function lib(src) {
+    if (src === LIB_H2C && typeof global.html2canvas !== 'undefined') return Promise.resolve(); if (src === LIB_PDF && global.jspdf && global.jspdf.jsPDF) return Promise.resolve();
+    return LIBS[src] || (LIBS[src] = new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = src; sc.onload = () => res(); sc.onerror = () => { delete LIBS[src]; rej(new Error('sem internet para montar o PDF')); }; document.head.appendChild(sc); }));
+  }
+  /* onde virar a página: sobe a partir do limite até achar uma faixa em branco de ponta a ponta (o vão entre linhas, fotos e
+     quadros), para não cortar texto nem foto. Olha a imagem pronta, e não as medidas da tela, porque as duas não batem ao pixel. */
+  function quebraLimpa(cv, y, fim) {
+    const faixa = Math.min(fim - y - 40, Math.floor((fim - y) * 0.45)); if (faixa < 20) return fim;
+    const y0 = fim - faixa, W = cv.width, d = cv.getContext('2d').getImageData(0, y0, W, faixa).data;
+    const branca = (r) => { const o = r * W * 4; for (let x = 0; x < W; x += 3) { const i = o + x * 4; if (d[i] < 247 || d[i + 1] < 247 || d[i + 2] < 247) return false; } return true; };
+    let seq = 0, fina = -1;
+    for (let r = faixa - 1; r >= -1; r--) {
+      if (r >= 0 && branca(r)) { seq++; continue; }
+      if (seq >= 10) return y0 + r + 1 + Math.floor(seq / 2);            // vão entre blocos
+      if (seq >= 3 && fina < 0) fina = y0 + r + 1 + Math.floor(seq / 2);  // vão entre linhas: serve se não houver melhor
+      seq = 0;
+    }
+    return fina > 0 ? fina : fim;
+  }
+  const PDF = { file: null, url: '', id: '' };
+  async function gerarPdf(v) {
+    await carregarFotos(v); await Promise.all([lib(LIB_H2C), lib(LIB_PDF)]);
+    const cx = document.createElement('div'); cx.style.cssText = 'position:fixed;left:-12000px;top:0;width:794px;background:#fff;padding:26px 30px;box-sizing:border-box;z-index:-1';
+    cx.innerHTML = telaRelatorio(v); document.body.appendChild(cx);
+    try {
+      cx.querySelectorAll('.nao-imprimir').forEach(e => e.remove());
+      const rel = cx.querySelector('.rel'); if (rel) { rel.style.border = '0'; rel.style.padding = '0'; rel.style.borderRadius = '0'; }
+      await Promise.all(Array.from(cx.querySelectorAll('img')).map(im => im.complete ? null : new Promise(r => { im.onload = im.onerror = r; })));
+      const cv = await global.html2canvas(cx, { scale: 2, backgroundColor: '#ffffff', logging: false, useCORS: true, scrollX: 0, scrollY: 0 }); // sem windowWidth: a cópia precisa ter o mesmo desenho medido acima
+      const MT = 9, altMm = 297 - 2 * MT, altPx = Math.floor(cv.width * altMm / 210);
+      const pdf = new global.jspdf.jsPDF({ unit: 'mm', format: 'a4', compress: true });
+      let y = 0, pag = 0;
+      while (y < cv.height - 2) {
+        let fim = Math.min(cv.height, y + altPx);
+        if (fim < cv.height) fim = quebraLimpa(cv, y, fim);
+        const h = fim - y, fatia = document.createElement('canvas'); fatia.width = cv.width; fatia.height = h;
+        const g = fatia.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, fatia.width, h); g.drawImage(cv, 0, y, cv.width, h, 0, 0, cv.width, h);
+        if (pag) pdf.addPage(); pdf.addImage(fatia.toDataURL('image/jpeg', 0.86), 'JPEG', 0, MT, 210, h * 210 / cv.width); pag++; y = fim;
+        if (pag > 40) break;
+      }
+      const total = pdf.getNumberOfPages(); pdf.setFontSize(8); pdf.setTextColor(140);
+      for (let i = 1; i <= total; i++) { pdf.setPage(i); pdf.text('Vistoria ' + v.numero + ' · página ' + i + ' de ' + total, 105, 292, { align: 'center' }); }
+      return pdf.output('blob');
+    } finally { cx.remove(); }
+  }
+  App.vist.pdf = async (id) => {
+    const v = vPorId(id || K.vistoriaId); if (!v) return;
+    if (PDF.gerando) return; PDF.gerando = true;
+    App.modal('<div class="modal"><h3>📄 Montando o PDF…</h3><p class="pequeno texto-2" style="margin:6px 0 0">Leva alguns segundos, principalmente com fotos. Não feche esta tela.</p></div>');
+    try {
+      if (K.vistoriaId === v.id) salvar();
+      const blob = await gerarPdf(v), nome = nomePdf(v) + '.pdf';
+      if (PDF.url) URL.revokeObjectURL(PDF.url);
+      PDF.file = new File([blob], nome, { type: 'application/pdf' }); PDF.url = URL.createObjectURL(blob); PDF.id = v.id;
+      const pode = !!(navigator.canShare && navigator.share && navigator.canShare({ files: [PDF.file] }));
+      App.modal(`<div class="modal"><h3>📄 PDF pronto</h3><p class="pequeno texto-2" style="margin:6px 0 10px;word-break:break-word">${esc(nome)} · ${Math.max(1, Math.round(blob.size / 1024))} KB</p>
+        <div class="botoes">${pode ? `<button class="btn azul" onclick="App.vist.pdfEnviar()">📤 Compartilhar PDF</button>` : ''}<a class="btn ${pode ? 'contorno azul' : 'azul'}" href="${PDF.url}" download="${esc(nome)}" onclick="App.toast('PDF baixado ✔')">⬇️ Baixar PDF</a><a class="btn contorno" href="${PDF.url}" target="_blank" rel="noopener">👁️ Abrir</a></div>
+        ${pode ? '' : '<p class="mini texto-3 mt-1" style="margin-bottom:0">Este navegador não compartilha arquivos direto: baixe o PDF e anexe no WhatsApp ou no e-mail.</p>'}
+        <button class="btn link bloco mt-1" onclick="App.fecharModal()">Fechar</button></div>`);
+    } catch (e) { App.fecharModal(); App.toast('Não consegui montar o PDF: ' + esc((e && e.message) || e)); }
+    PDF.gerando = false;
+  };
+  App.vist.pdfEnviar = async () => {
+    const v = vPorId(PDF.id); if (!PDF.file || !v) return; const cab = (v.respostas && v.respostas._cab) || {};
+    try {
+      await navigator.share({ files: [PDF.file], title: PDF.file.name.replace(/\.pdf$/, ''), text: `Ficha de Vistoria ${v.numero}${cab.cliente ? ' · ' + cab.cliente : ''} · Só Tintas` });
+      v.enviado_em = agora(); v.atualizado_em = agora(); vSalvar(); App.fecharModal();
+      if (!App.feito('checklist', 'vistoria')) { try { await App.concluir('checklist', 'vistoria', 'Vistoria enviada ao cliente!', { semaforo: v.semaforo, fotos: v.fotos.length }); } catch (e) {} } else App.toast('PDF enviado ✔');
+    } catch (e) { if (!e || e.name !== 'AbortError') App.toast('Não foi possível compartilhar (' + esc((e && e.message) || e) + '). Use Baixar PDF.'); }
+  };
+  App.vist.imprimir = () => {
+    const id = (location.hash.match(/vistoria\/([^/]+)\/relatorio/) || [])[1], v = (V.lista || []).find(x => String(x.id) === String(id));
+    const nome = nomePdf(v);
     const t0 = document.title; let tp = null;
     try { if (window.top && window.top !== window) { tp = window.top.document.title; window.top.document.title = nome; } } catch (e) {}
     document.title = nome;
@@ -404,7 +572,7 @@
         else if (it.tipo === 'check') out.push(`<li>${vv ? '☑' : '☐'} ${esc(it.texto)}</li>`);
         else if (it.tipo === 'texto' && vv && String(vv).trim()) out.push(`<li>• ${esc(it.texto)}: <b>${esc(String(vv).trim())}</b></li>`);
       } return out; };
-    return `<div class="nao-imprimir botoes" style="margin-bottom:12px"><button class="btn contorno" onclick="App.vist.abrir('${v.id}')">‹ Voltar</button><button class="btn" onclick="App.vist.imprimir()">🖨️ Imprimir / Salvar PDF</button>${global.navigator && navigator.share ? `<button class="btn azul" onclick="App.vist.compartilhar('${v.id}')">📤 Compartilhar</button>` : ''}</div>
+    return `<div class="nao-imprimir botoes" style="margin-bottom:12px"><button class="btn contorno" onclick="App.vist.abrir('${v.id}')">‹ Voltar</button><button class="btn azul" onclick="App.vist.pdf('${v.id}')">📤 Compartilhar PDF</button><button class="btn contorno" onclick="App.vist.imprimir()">🖨️ Imprimir</button></div>
       <div class="rel" id="rel-vistoria">
         <div class="rel-topo"><div class="rel-marca">SÓ TINTAS</div><div><div class="rel-titulo">Ficha de Vistoria de Obra</div><div class="rel-sub">Nº ${esc(v.numero)} · ${fmtData(cab.data) || fmtData(v.criado_em)} · ${v.status === 'concluida' ? 'Concluída' : 'Em andamento'}</div></div><div class="rel-sem ${av.semaforo}">${sit.emoji || ''} ${esc((sit.rotulo || '').split(' — ')[0])}</div></div>
         <table class="rel-tab">${c.cabecalho.map(f => `<tr><td>${esc(f.l)}</td><td>${esc(f.tipo === 'date' ? fmtData(cab[f.k]) : (cab[f.k] || '—'))}</td></tr>`).join('')}${App.user ? `<tr><td>Atendimento</td><td>${esc(App.user.nome)}${App.user.loja ? ' · ' + esc(App.user.loja) : ''}</td></tr>` : ''}</table>
