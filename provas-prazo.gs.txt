@@ -1,8 +1,8 @@
 /* Servidor PDI — substitui a função semanaPrazoAjustar_ inteira (19/11/2026, Bruno).
    Novo: escopo 'lista' com alvos {sup:[chaves], ger:[chaves], vend:[chaves]} — a tela Provas manda a lista de quem muda
    (rede toda, todos ou alguns supervisores, gerentes, vendedores, ou uma loja).
-   Vendedor: muda dados.prazo (como antes). Gerente e supervisor: com a prova liberada muda prazo_aval;
-   com a prova ainda fechada muda dados.prazoFeito (prazo para fazer o PDI e liberar). Quem já respondeu não muda.
+   Vendedor: muda dados.prazo (como antes). Gerente e supervisor (mesma regra do liderPrazoAjustar_): muda dados.prazoFeito
+   (prazo para fazer o PDI e liberar) e, com a prova liberada, também prazo_aval. Quem já respondeu não muda.
    Os escopos antigos (vendedor, loja, rede) continuam valendo. */
 function semanaPrazoAjustar_(c, d) {
   soCoord_(c);
@@ -42,9 +42,11 @@ function semanaPrazoLista_(al, prazo, semana) {
     var iD = CAB.indexOf('dados'), iP = CAB.indexOf('prazo_aval'), iA = CAB.indexOf('atualizado_em');
     S.v.forEach(function (r, i) {
       var o = obj(r);
-      if (!o.chave || !K[o.chave] || o.status === 'respondido') return;
-      if (o.status === 'liberado') { if (o.prazo_aval === prazo) return; S.sh.getRange(i + 2, iP + 1, 1, 1).setValues([[prazo]]); }
-      else { var dd = o.dados || {}; if (dd.prazoFeito === prazo) return; dd.prazoFeito = prazo; S.sh.getRange(i + 2, iD + 1, 1, 1).setValues([[JSON.stringify(dd)]]); }
+      if (!o.chave || !K[o.chave] || o.status === 'respondido' || o.aval) return;
+      /* mesma regra do liderPrazoAjustar_: vale para o "Fiz o PDI" (dados.prazoFeito) e, com a avaliação liberada, para a resposta (prazo_aval) */
+      var dd = o.dados || {}, lib = o.status === 'liberado'; if (dd.prazoFeito === prazo && (!lib || o.prazo_aval === prazo)) return;
+      dd.prazoFeito = prazo; S.sh.getRange(i + 2, iD + 1, 1, 1).setValues([[JSON.stringify(dd)]]);
+      if (lib) S.sh.getRange(i + 2, iP + 1, 1, 1).setValues([[prazo]]);
       S.sh.getRange(i + 2, iA + 1, 1, 1).setValues([[new Date()]]); n[t]++;
     });
   };
