@@ -413,8 +413,10 @@ var hojeSP=function(d){try{return (d||new Date()).toLocaleDateString('sv-SE',{ti
 var LOJAS=[],VEND=[],DET={},EU=null,REDE=false,PF='',NOME='',UT=0,UD=0,UR=0,ESP=0,QUANDO='',MESANO='',CRM=null,ESCOPO='';
 var filtro='Todas',sel=null,view='meudia',PINS=null;
 var EMBED=new URLSearchParams(location.search).get('embed')==='1';
-function avisaAltura(){try{if(EMBED&&window.parent&&window.parent!==window)window.parent.postMessage({stRallyH:Math.ceil(document.querySelector('.wrap').getBoundingClientRect().height)},location.origin)}catch(e){}}
-if(EMBED)document.documentElement.classList.add('embed');
+function avisaAltura(){try{if(window.innerWidth<200)return;if(EMBED&&window.parent&&window.parent!==window)window.parent.postMessage({stRallyH:Math.ceil(document.querySelector('.wrap').getBoundingClientRect().height)},location.origin)}catch(e){}}
+if(EMBED){document.documentElement.classList.add('embed');
+ /* a tela inicial pode estar escondida quando o card carrega: mede de novo sempre que o tamanho mudar */
+ window.addEventListener('resize',avisaAltura);try{new ResizeObserver(avisaAltura).observe(document.documentElement)}catch(e){}}
 var MAXP=140,px=function(v){return Math.min(Math.max(+v||0,0),MAXP)/MAXP*100};
 
 /* ---------- leitura do pacote do Painel (já recortado pelo perfil) ---------- */
