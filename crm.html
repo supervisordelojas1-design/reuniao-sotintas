@@ -78,6 +78,8 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
 .plc thead th{border-top:0;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .plc th:first-child{text-align:left}
 .mot{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) auto;align-items:center;gap:8px;font-size:12.5px}
+.motb{width:100%;background:none;border:0;padding:6px 4px;margin:0;font:inherit;color:inherit;text-align:left;cursor:pointer;border-radius:8px}.motb:hover,.motb[aria-expanded=true]{background:var(--surface2)}.motb small{color:var(--muted);font-weight:400}.motb b{white-space:nowrap}
+.motl{list-style:none;margin:2px 0 8px;padding:0 4px;display:grid;gap:6px}.motl li{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:8px;background:var(--surface2);font-size:12.5px}.motl li div{min-width:0}.motl li b{display:block}.motl li span{color:var(--muted);font-size:11.5px}.motl li strong{white-space:nowrap}
 .barra{height:10px;background:var(--surface2);border-radius:10px;overflow:hidden}.barra i{display:block;height:100%;background:var(--bad)}
 .marca{display:flex;align-items:center;gap:8px;min-height:40px;font-weight:600}.marca input{width:20px;height:20px;accent-color:var(--navy)}
 .obra{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px}.obra legend{padding:0 6px}
@@ -158,7 +160,7 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
   var CHANCE={alta:['Alta',.7],media:['Média',.4],baixa:['Baixa',.15]};
   var TIPO={
     orc:{sit:[['neg','Em negociação'],['fechado','Fechado'],['perdido','Perdido'],['prorrogado','Prorrogado']],def:'neg',
-         motivos:['Preço','Comprou no concorrente','Sem estoque','Prazo de entrega','Cliente adiou a obra','Cliente não responde','Outro']},
+         motivos:['Preço','Comprou no concorrente','Sem estoque','Prazo de entrega','Faturado não liberado','Cliente adiou a obra','Cliente não responde','Outro']},
     cart:{sit:[['contato','Em conversa'],['pedido','Vai comprar'],['semint','Sem compra agora']],def:'contato',
          motivos:['Sem obra no momento','Comprou no concorrente','Preço','Problema com entrega ou atendimento','Outro']},
     pos:{sit:[['feito','Pós-venda feito'],['venda','Gerou nova venda'],['naoquer','Não quer contato']],def:'feito'},
@@ -461,9 +463,14 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
     if(!tem) h+='<p class="sub" style="margin:0">Nada pendente agora.</p>';
     h+='</section>';
     /* por que perdemos (mês) */
-    var M={}, tot=0; orc.forEach(function(o){ var u=o.e.u; if(u&&u.status==='perdido'&&String(u.em).slice(0,7)===mes){ M[u.motivo||'Outro']=(M[u.motivo||'Outro']||0)+o.valor; tot+=o.valor; } });
+    /* nov/2026: cada motivo abre a lista dos orçamentos perdidos por ele (cliente, valor, número, quem marcou e quando) */
+    var M={}, ML={}, tot=0; orc.forEach(function(o){ var u=o.e.u; if(u&&u.status==='perdido'&&String(u.em).slice(0,7)===mes){ var k=u.motivo||'Outro'; M[k]=(M[k]||0)+o.valor; (ML[k]=ML[k]||[]).push(o); tot+=o.valor; } });
     var ms=Object.keys(M).sort(function(a,b){return M[b]-M[a];});
-    h+='<section class="card"><h2 style="margin:0">Por que perdemos (mês)</h2>'+(ms.length?ms.map(function(k){ return '<div class="mot"><span>'+esc(k)+'</span><div class="barra"><i style="width:'+Math.round(M[k]/M[ms[0]]*100)+'%"></i></div><b>'+mil(M[k])+'</b></div>'; }).join('')+'<div class="sub">Total perdido no mês: '+brl(tot)+'</div>':'<p class="sub" style="margin:0">Nenhum orçamento marcado como perdido neste mês.</p>')+'</section>';
+    h+='<section class="card"><h2 style="margin:0">Por que perdemos (mês)</h2>'+(ms.length?'<div class="sub">Toque em um motivo para ver os orçamentos perdidos.</div>'+ms.map(function(k){
+      var ab=!!ABERTO['mot:'+k], L=ML[k].slice().sort(function(a,b){return b.valor-a.valor;});
+      return '<button type="button" class="mot motb" data-mot="'+esc(k)+'" aria-expanded="'+ab+'"><span>'+esc(k)+' <small>('+L.length+')</small></span><div class="barra"><i style="width:'+Math.round(M[k]/M[ms[0]]*100)+'%"></i></div><b>'+mil(M[k])+'</b></button>'+
+        (ab?'<ul class="motl">'+L.map(function(o){ var u=o.e.u; return '<li><div><b>'+esc(o.cli)+'</b><span>Nº '+esc(o.doc)+' · '+esc(nm(u.por||o.vend||''))+' · '+dBr(u.em)+(u.obs?' · '+esc(u.obs):'')+'</span></div><strong>'+brl(o.valor)+'</strong></li>'; }).join('')+'</ul>':'');
+    }).join('')+'<div class="sub">Total perdido no mês: '+brl(tot)+'</div>':'<p class="sub" style="margin:0">Nenhum orçamento marcado como perdido neste mês.</p>')+'</section>';
     if(SERVIDOR===false) h+='<p class="sub">Os contatos dos vendedores só aparecem aqui depois que o servidor do CRM estiver ligado.</p>';
     return {h:h,sub:'Visão do gerente · semana de '+dBr(segISO)};
   }
@@ -490,6 +497,7 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
     else if(d.f){ FIL[TAB]=d.f; montar(); }
     else if(d.ir){ TAB=d.ir; FIL[TAB]=d.fil; VEND=''; montar(); window.scrollTo(0,0); }
     else if(d.hist){ ABERTO[d.hist]=!ABERTO[d.hist]; montar(); }
+    else if(d.mot){ ABERTO['mot:'+d.mot]=!ABERTO['mot:'+d.mot]; var yM=window.scrollY; montar(); window.scrollTo(0,yM); }
     else if(d.reg){ abrirRegistro(d.reg); }
     else if(d.ficha){ abrirPintor(d.ficha); }
     else if(b.id==='novoPin'){ abrirPintor(null); }

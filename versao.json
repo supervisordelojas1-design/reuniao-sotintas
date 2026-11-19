@@ -2,6 +2,30 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v262",
+      "data": "19/11/2026",
+      "hora": "10:30",
+      "itens": [
+        {
+          "painel": "CRM de Vendas",
+          "o_que": "Em Por que perdemos, toque em um motivo para ver os orçamentos perdidos por ele. Entrou o motivo novo Faturado não liberado.",
+          "para": [
+            "ger",
+            "sup",
+            "anl",
+            "coord"
+          ]
+        },
+        {
+          "painel": "CRM de Vendas",
+          "o_que": "Motivo novo ao marcar um orçamento como perdido: Faturado não liberado.",
+          "para": [
+            "vend"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v261",
       "data": "19/11/2026",
       "hora": "08:50",
