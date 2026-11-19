@@ -2,6 +2,21 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v255",
+      "data": "19/11/2026",
+      "hora": "07:43",
+      "itens": [
+        {
+          "painel": "Painel de Metas",
+          "o_que": "Ao subir pela tela só os arquivos de Eucatex ou de orçamentos, o Painel mantém a data e a hora da última atualização do Solcast.",
+          "para": [
+            "coord",
+            "anl"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v254",
       "data": "18/11/2026",
       "hora": "13:10",

@@ -619,7 +619,7 @@ button.b{border:none;border-radius:9px;padding:11px 17px;font:inherit;font-size:
   <div class="hdtop">
    <div class="brand">
     <div class="logo">ST</div>
-    <div><h1 id="hTit">Coordenação de Supervisão</h1><span id="hSub">Só Tintas · Painel de Performance · <b style="color:#FFD100">v44</b></span></div>
+    <div><h1 id="hTit">Coordenação de Supervisão</h1><span id="hSub">Só Tintas · Painel de Performance · <b style="color:#FFD100">v45</b></span></div>
    </div>
    <div class="per"><select class="mes" id="selMes" style="display:none" title="Escolher o mês"></select><b id="hPer">—</b><span id="hDias">—</span><span id="btnUp" style="display:none" onclick="abrirUpload()"> · ⚙️ atualizar dados</span><span id="lnkSair" style="display:none" onclick="sairPainel()"> · sair</span></div>
   </div>
@@ -3322,6 +3322,13 @@ function enviarUpload(){
  }else{
   var corpo={tipo:'upload64',u:s.u,p:s.p,arquivos:UPK}; if(mesSel) corpo.mes=mesSel;
   if(!mesSel&&window.__ST_ULT) corpo.ult=String(window.__ST_ULT).trim();   /* v42: data e hora do Solcast, enviada pela rotina */
+  /* v45: carga manual só de Eucatex e/ou orçamentos (sem META, INDICADORES nem carteira) não mexe no faturamento,
+     então mantém a data e a hora do Solcast que o Painel já mostrava em vez de apagá-las */
+  else if(!mesSel){ try{
+    var temFat=UPK.some(function(a){var n=String(a.nome||'').toUpperCase(); return /INDICADORES|EVOLU[CÇ][AÃ]O/.test(n)||(/META/.test(n)&&!/EUCATEX/.test(n));});
+    var mSol=/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.exec(String(ATZ.sol||''));
+    if(!temFat&&mSol) corpo.ult=mSol[0];
+  }catch(eSol){} }
   postAPI(corpo,fim,
    function(m){st.textContent='✕ '+m;bt.disabled=false});
  }
