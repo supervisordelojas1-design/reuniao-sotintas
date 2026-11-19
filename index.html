@@ -9738,8 +9738,8 @@ body.foco .wrap{padding-bottom:40px}
     (function(){
       var corpo=document.getElementById('iniBody'); if(!corpo) return;
       var f=document.getElementById('iniRallyDia'), s=sessao();
-      /* vendedor (a meta dele) e coordenação (a meta da rede) */
-      var coordCard=false; try{ coordCard=!ehVend() && ehCoordenador(); }catch(e){ coordCard=false; }
+      /* vendedor (a meta dele), supervisor (a regional) e coordenação (a rede) */
+      var coordCard=false; try{ coordCard=!ehVend() && (ehCoordenador() || /supervisor/i.test(String(s&&s.papel||''))); }catch(e){ coordCard=false; }   /* coordenação (rede) e supervisor (a regional dele) */
       var ok=!!(s && (ehVend() || coordCard) && (typeof podePainel==='function'?podePainel('verRally',true):true));
       if(!ok){ if(f) f.remove(); return; }
       var k=String(s.nome||'')+'|'+String(s.loja||'')+'|'+String(s.papel||'');
