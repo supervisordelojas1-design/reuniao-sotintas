@@ -289,6 +289,19 @@ body{font-size:15px}
 .simres{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
 .simres b{font-family:var(--f-disp);font-size:22px}
 #carga{padding:40px 0;text-align:center;color:var(--mute)}
+/* card da tela inicial do app (rally.html?embed=1): só a saudação, a meta do dia, o Eucatex e a loja */
+html.embed,html.embed body{background:#0f1522}
+html.embed body{background-image:none}
+html.embed .head,html.embed #aviso,html.embed #teams,html.embed .sheet{display:none!important}
+html.embed .wrap{padding:12px!important;gap:0;max-width:none}
+html.embed #app{gap:0!important}
+html.embed .md{max-width:none;gap:10px}
+html.embed .md .hi{padding:14px 16px}html.embed .md .hi h2{font-size:22px}
+html.embed .md .goal{padding:14px 16px;gap:10px}html.embed .md .goal .big{font-size:38px}
+html.embed .md .mcard{padding:12px 14px}html.embed .md .mcard b{font-size:22px}
+html.embed .md .two{grid-template-columns:1fr 1fr!important}
+html.embed #carga{padding:18px 0}
+button.go{border:0;font:inherit;font-weight:700;cursor:pointer}
 </style>
 </head>
 <body>
@@ -399,6 +412,9 @@ var hojeSP=function(d){try{return (d||new Date()).toLocaleDateString('sv-SE',{ti
 
 var LOJAS=[],VEND=[],DET={},EU=null,REDE=false,PF='',NOME='',UT=0,UD=0,UR=0,ESP=0,QUANDO='',MESANO='',CRM=null,ESCOPO='';
 var filtro='Todas',sel=null,view='meudia',PINS=null;
+var EMBED=new URLSearchParams(location.search).get('embed')==='1';
+function avisaAltura(){try{if(EMBED&&window.parent&&window.parent!==window)window.parent.postMessage({stRallyH:Math.ceil(document.querySelector('.wrap').getBoundingClientRect().height)},location.origin)}catch(e){}}
+if(EMBED)document.documentElement.classList.add('embed');
 var MAXP=140,px=function(v){return Math.min(Math.max(+v||0,0),MAXP)/MAXP*100};
 
 /* ---------- leitura do pacote do Painel (já recortado pelo perfil) ---------- */
@@ -507,7 +523,9 @@ function meudia(){
   h+='<div class="glass goal" style="--c:'+c+'"><div class="row"><span class="eye">Sua meta de hoje</span><span class="note">faltam '+UR+' dias úteis</span></div><span class="big num">'+rs(dia)+'</span>'+road(v.alc,(function(){var s=simLer();return s&&Math.abs(v.fat-s.base)<=1&&v.meta?(v.fat+s.v)/v.meta*100:null})(),c)+'<div class="row"><span class="note">Mês: <b style="color:var(--tinta)">'+pc(v.alc)+'%</b> da sua meta · esperado hoje '+pc(ESP)+'%</span><span class="note">faltam '+rs(falta)+'</span></div></div>';
   h+='<div class="two"><div class="glass mcard"><span class="eye" style="color:var(--azul)">Eucatex hoje</span>'+(v.eM?'<b class="num">'+(fl>0?bd+(bd===1?' balde':' baldes'):'Batido')+'</b><span class="note">'+(fl>0?'de 18 L por dia ('+fmt(fl/Math.max(1,UR))+' L)':'você já passou da meta de litros')+'</span><div class="meter"><i style="width:'+Math.min(100,ep)+'%"></i><u style="left:'+Math.min(100,ESP)+'%"></u></div><span class="note">'+fmt(v.eL)+' L de '+fmt(v.eM)+' L ('+pc(ep,0)+'%)</span>':'<b>—</b><span class="note">sem meta Eucatex neste mês</span>')+'</div>';
   h+=l?'<button class="glass mcard" data-cod="'+l.cod+'" style="text-align:left"><span class="eye" style="color:'+c+'">Sua loja na corrida</span><b class="num">'+l.pos+'º <span class="mute" style="font-size:15px">de '+LOJAS.length+'</span></b><span class="note">'+pc(l.alc)+'% da meta · vai a '+Math.round(l.proj)+'%</span><div class="meter"><i style="width:'+Math.min(100,l.alc)+'%;background:'+c+'"></i><u style="left:'+Math.min(100,ESP)+'%"></u></div>'+(v.pos?'<span class="note">Você: '+v.pos+'º de '+VEND.length+' pilotos da rede</span>':'')+'</button>':'<div class="glass mcard"><span class="eye">Sua loja na corrida</span><b>—</b><span class="note">O ranking da rede aparece assim que o servidor for atualizado.</span></div>';
-  h+='</div>'+simCard(v,dia)+pint(2);
+  h+='</div>';
+  if(EMBED){el.innerHTML=h+'<button class="go" data-abrir style="width:100%">Ver minhas dicas e a corrida das lojas</button>';avisaAltura();return}
+  h+=simCard(v,dia)+pint(2);
   h+='<div class="glass tip"><span class="eye" style="color:var(--faixa)">Sua jogada de hoje</span><div class="miss">'+dicas(v.orc,v.par,v.eM,v.eL).join('')+fixas()+'</div><span class="note">Meta de hoje = o que falta no mês ÷ dias úteis restantes. As dicas vêm dos seus orçamentos em aberto, da sua carteira CNPJ e do Eucatex. Pintores e contatos são metas de todo dia.</span></div>';
  } else {
   var ds=Object.keys(DET).map(function(k){return DET[k]});
@@ -520,6 +538,7 @@ function meudia(){
   h+='<div class="glass goal" style="--c:'+c2+'"><div class="row"><span class="eye">Meta de hoje · '+rot.toLowerCase()+'</span><span class="note">faltam '+UR+' dias úteis</span></div><span class="big num">'+rs(falta2/Math.max(1,UR))+'</span>'+road(alc,null,c2)+'<div class="row"><span class="note">Mês: <b style="color:var(--tinta)">'+pc(alc)+'%</b> da meta · esperado hoje '+pc(ESP)+'%</span><span class="note">faltam '+rs(falta2)+'</span></div></div>';
   h+='<div class="two"><div class="glass mcard"><span class="eye" style="color:var(--azul)">Eucatex hoje</span>'+(eM?'<b class="num">'+(eL<eM?bd2+(bd2===1?' balde':' baldes'):'Batido')+'</b><span class="note">de 18 L por dia</span><div class="meter"><i style="width:'+Math.min(100,ep2)+'%"></i><u style="left:'+Math.min(100,ESP)+'%"></u></div><span class="note">'+fmt(eL)+' L de '+fmt(eM)+' L ('+pc(ep2,0)+'%)</span>':'<b>—</b><span class="note">sem meta Eucatex</span>')+'</div>';
   h+='<div class="glass mcard"><span class="eye" style="color:var(--verde)">CRM hoje</span>'+(cr?'<b class="num">'+cr.cont+' <span class="mute" style="font-size:15px">'+(cr.cont===1?'contato':'contatos')+'</span></b><span class="note">'+cr.comp+' de '+(nv*2)+' pintores completos (meta: 2 por vendedor)</span>':'<b>—</b><span class="note">Meta: todos os contatos lançados e 2 pintores completos por vendedor</span>')+'</div></div>';
+  if(EMBED){el.innerHTML=h+'<button class="go" data-abrir style="width:100%">Ver as dicas e a corrida das lojas</button>';avisaAltura();return}
   h+='<div class="glass tip"><span class="eye" style="color:var(--faixa)">Jogada de hoje com o time</span><div class="miss">'+dicas(orc,par,eM,eL,true).join('')+mi('i-cli','Cobrar 2 pintores completos por vendedor','Dados do pintor e pelo menos uma obra, na aba Pintores do CRM','+25 cada')+mi('i-orc','Cobrar todos os contatos lançados no CRM','Só pontua o que estiver lançado','+10 cada')+'</div></div>';
   var linhas=ds.length===1?ds[0].vs.map(function(v){return {n:v.n,alc:v.alc,dia:Math.max(0,v.meta-v.fat)/Math.max(1,UR),cod:ds[0].cod}}):ds.map(function(x){var l=LOJAS.filter(function(z){return z.cod===x.cod})[0];return {n:l?l.curto:x.cod,alc:x.meta?x.fat/x.meta*100:0,dia:x.falta/Math.max(1,UR),cod:x.cod,c:l&&l.c}});
   linhas.sort(function(a,b){return b.dia-a.dia});
@@ -614,7 +633,7 @@ function sheet(open){var s=$('sheet');if(!open){s.hidden=true;return}
 var VIEWS=['meudia','pista','mapa','vivo','duelos','pilotos'];
 function teams(){var E=equipes();$('teams').innerHTML=E.length>1?['<button class="tchip" style="--c:#eef2fb" aria-pressed="'+(filtro==='Todas')+'" data-f="Todas"><i>'+LOJAS.length+'</i>Todas</button>'].concat(E.map(function(e,i){return '<button class="tchip" style="--c:'+e.c+'" aria-pressed="'+(filtro===e.n)+'" data-f="'+esc(e.n)+'"><i>'+(i+1)+'º</i>'+esc(e.n)+' <span class="num">'+pc(e.alc)+'%</span></button>'})).join(''):''}
 function render(){
- view=(location.hash||'#meudia').slice(1);if(VIEWS.indexOf(view)<0)view='meudia';
+ view=(location.hash||'#meudia').slice(1);if(VIEWS.indexOf(view)<0||EMBED)view='meudia';
  [].forEach.call(document.querySelectorAll('.tabs a'),function(a){a.setAttribute('aria-current',a.dataset.v===view?'page':'false')});
  [].forEach.call(document.querySelectorAll('.view'),function(v){v.hidden=v.id!=='v-'+view});
  teams();$('teams').hidden=view==='meudia';
@@ -627,7 +646,8 @@ function iniciar(R,P,cr){
  $('aviso').hidden=REDE;if(!REDE)$('aviso').textContent=EU?'O ranking da rede inteira entra assim que o servidor do Painel for atualizado. Por enquanto você vê o seu dia.':'O ranking da rede inteira entra assim que o servidor do Painel for atualizado. Por enquanto a corrida mostra só o seu recorte.';
  $('app').hidden=false;$('carga').hidden=true;
  window.addEventListener('hashchange',render);
- document.addEventListener('click',function(ev){var t=ev.target.closest('[data-f],[data-cod],[data-close]');if(!t)return;
+ document.addEventListener('click',function(ev){if(EMBED){if(ev.target.closest('[data-abrir],[data-cod]')){try{window.parent.postMessage({stRally:'abrir'},location.origin)}catch(e){}}return}
+  var t=ev.target.closest('[data-f],[data-cod],[data-close]');if(!t)return;
   if(t.dataset.close!==undefined){sheet(false);return}
   if(t.dataset.f){filtro=t.dataset.f;render();return}
   if(t.dataset.cod){sel=cod3(t.dataset.cod);sheet(true)}});
@@ -639,7 +659,7 @@ function iniciar(R,P,cr){
  var lj=EU?[EU.cod]:(ESCOPO==='loja'?Object.keys(DET):[]);
  if(lj.length&&window.STDados&&STDados.chamar)STDados.chamar('crmListar',{lojas:lj}).then(function(r){if(r&&r.ok){CRM=r;if(view==='meudia')meudia()}}).catch(function(){});
 }
-function falha(m){$('carga').innerHTML='<div class="glass hi"><h2>Rally Só Tintas</h2><p class="mute">'+m+'</p></div>'}
+function falha(m){setTimeout(avisaAltura,50);$('carga').innerHTML='<div class="glass hi"><h2>Rally Só Tintas</h2><p class="mute">'+m+'</p></div>'}
 var q=new URLSearchParams(location.search);
 if(q.get('demo')&&window.RALLY_DEMO){var D=window.RALLY_DEMO(q.get('demo'));CRM=D.crm||null;iniciar(D.R,D.P,D.cr)}
 else if(!window.STDados||!STDados.crachaGuardado){falha('Abra este painel pelo <b>Só Tintas App</b>, já com o seu login.')}

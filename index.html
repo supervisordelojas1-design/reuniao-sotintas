@@ -9733,6 +9733,25 @@ body.foco .wrap{padding-bottom:40px}
     });
     /* nov/2026: Rally Só Tintas — todo mundo logado; a régua (verRally) abre ou fecha por cargo */
     Array.prototype.forEach.call(grid.querySelectorAll('[data-rally]'),function(c){ c.style.display = sessao() ? '' : 'none'; });
+    /* nov/2026: card "Sua meta de hoje" na própria tela inicial do vendedor (meta do dia, Eucatex e a loja na corrida).
+       É o rally.html em modo embutido; não abre o painel sozinho. Ouve a régua (verRally). */
+    (function(){
+      var corpo=document.getElementById('iniBody'); if(!corpo) return;
+      var f=document.getElementById('iniRallyDia'), s=sessao();
+      var ok=!!(s && ehVend() && (typeof podePainel==='function'?podePainel('verRally',true):true));
+      if(!ok){ if(f) f.remove(); return; }
+      var k=String(s.nome||'')+'|'+String(s.loja||'');
+      if(f && f.getAttribute('data-k')===k) return;
+      if(!f){ f=document.createElement('iframe'); f.id='iniRallyDia'; f.title='Sua meta de hoje';
+        f.style.cssText='display:block;width:100%;height:300px;border:0;border-radius:22px;margin:0 0 12px;background:#0f1522;box-shadow:0 14px 30px -14px rgba(10,25,60,.55)';
+        var car=document.getElementById('iniBanners');
+        if(car && car.parentNode===corpo) corpo.insertBefore(f, car.nextSibling); else corpo.insertBefore(f, corpo.firstChild); }
+      f.setAttribute('data-k',k); f.setAttribute('src','rally.html?embed=1&v='+Date.now());
+      if(!window.__stRallyMsg){ window.__stRallyMsg=true;
+        window.addEventListener('message',function(e){ if(e.origin!==location.origin) return; var d=e.data||{}, q=document.getElementById('iniRallyDia');
+          if(d.stRallyH && q) q.style.height=Math.max(120,Math.min(900,Number(d.stRallyH)||0))+'px';
+          if(d.stRally==='abrir'){ try{ abrirRally('meudia'); }catch(x){} } }); }
+    })();
     /* nov/2026: Contatos das Lojas — todo mundo que não é vendedor; a régua (verContatos) abre ou fecha por cargo */
     Array.prototype.forEach.call(grid.querySelectorAll('[data-contatos]'),function(c){ c.style.display = (sessao() && !vend) ? '' : 'none'; });
     Array.prototype.forEach.call(grid.querySelectorAll('[data-direitos]'),function(c){
@@ -10250,9 +10269,7 @@ body.foco .wrap{padding-bottom:40px}
   var jaMostrou=false;
   var t=setInterval(function(){
     if(jaMostrou) return;
-    if(logado()){ jaMostrou=true; abrirInicio();
-      /* nov/2026: para o vendedor, o Rally abre no "Meu dia" assim que ele entra (meta do dia, Eucatex e a dica) */
-      setTimeout(function(){ try{ if(ehVend()) abrirRally('meudia'); }catch(e){} }, 900); }
+    if(logado()){ jaMostrou=true; abrirInicio(); }
   }, 400);
   setTimeout(function(){ clearInterval(t); }, 20000);
 })();

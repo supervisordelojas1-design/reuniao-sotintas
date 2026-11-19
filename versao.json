@@ -2,6 +2,21 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v258",
+      "data": "19/11/2026",
+      "hora": "08:38",
+      "itens": [
+        {
+          "painel": "Tela inicial",
+          "o_que": "O vendedor vê na própria tela inicial o card Sua meta de hoje, com a meta de faturamento do dia, os baldes de Eucatex e a posição da loja. O Rally não abre mais sozinho.",
+          "para": [
+            "vend",
+            "coord"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v257",
       "data": "19/11/2026",
       "hora": "08:06",
