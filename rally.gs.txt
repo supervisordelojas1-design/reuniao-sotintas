@@ -1,0 +1,30 @@
+/* ===== RALLY SÓ TINTAS: resumo da rede para qualquer pessoa logada (19/11/2026) =====
+   Colar no fim do Código.gs do Servidor de Dados ST (BANCO) e acrescentar no doPost, junto das outras rotas:
+     if (d.tipo === 'rally') return jsonOut_(rallyResumo_(d.u, d.p));
+   Regra do Bruno (19/11/2026): o RANKING é da rede inteira; as INFORMAÇÕES CRÍTICAS vão em cascata.
+   Por isso este resumo só leva PERCENTUAIS (meta, projeção e Eucatex) de lojas e vendedores.
+   Valores em reais, carteira, orçamentos e missões continuam saindo só pelo pacote 'dados',
+   que já é recortado pelo perfil (vendedor: a linha dele; gerente: a loja; supervisor: a região; coordenação: tudo). */
+function rallyResumo_(u, p) {
+  var a = autenticar_(u, p);
+  if (!a.ok) return { ok: false, erro: a.erro, cracha: !!a.cracha };
+  var d;
+  try { d = montarDados(); } catch (x) { return { ok: false, erro: 'Erro ao ler o banco: ' + x.message }; }
+  var UT = Number(d.p[3]) || 0, UD = Number(d.p[4]) || 0;
+  var pct = function (num, den) { return den > 0 ? Math.round(num / den * 1000) / 10 : null; };
+  var lojas = [], vend = [];
+  /* lojas em ordem de porte (meta do mês, da maior para a menor): é a ordem que o app usa para montar os duelos */
+  d.L.slice().sort(function (x, y) { return (Number(y[3]) || 0) - (Number(x[3]) || 0); }).forEach(function (l) {
+    var ind = l[8] || [], metaE = Number(ind[11]) || 0, litE = Number(ind[12]) || 0;
+    lojas.push([cod3Painel_(l[0]), String(l[1]), String(l[2]), pct(l[5], l[3]), pct(l[6], l[3]), pct(litE, metaE)]);
+    (l[9] || []).forEach(function (v) {
+      if ((Number(v[1]) || 0) < 1000) return;   /* meta simbólica (gerente) fica fora do ranking */
+      var proj = UD ? v[2] / UD * UT : v[2];
+      vend.push([cod3Painel_(l[0]), String(v[0]), pct(v[2], v[1]), pct(proj, v[1]), pct(Number(v[16]) || 0, Number(v[15]) || 0)]);
+    });
+  });
+  return { ok: true, nome: a.nome, papel: a.papel, escopo: a.escopo,
+           p: d.p, t: d.t,               /* período, dias úteis e carimbos de atualização */
+           lojas: lojas,                 /* [cod, nome, região, % meta, % projeção, % Eucatex] */
+           vend: vend };                 /* [cod da loja, vendedor, % meta, % projeção, % Eucatex] */
+}

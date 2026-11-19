@@ -9476,6 +9476,11 @@ syncNav();
         <span class="ini-txt"><span class="ini-nm">CRM de Vendas</span><span class="ini-ds">Orçamentos, carteira, pós-venda e pintores: registrar cada contato </span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
+      <button type="button" class="ini-card feat" data-act="rally" data-rally="1" data-vend="1" style="display:none">
+        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-flag"/></svg></span>
+        <span class="ini-txt"><span class="ini-nm">Rally Só Tintas</span><span class="ini-ds">Sua meta do dia, a corrida das lojas, mapa, duelos e pilotos</span></span>
+        <span class="ini-go" aria-hidden="true">&rarr;</span>
+      </button>
       <button type="button" class="ini-card feat" data-act="contatos" data-contatos="1">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg></span>
         <span class="ini-txt"><span class="ini-nm">Contatos das Lojas</span><span class="ini-ds">Filial, gerente, telefone e e-mail · um toque para falar com a loja</span></span>
@@ -9726,6 +9731,8 @@ body.foco .wrap{padding-bottom:40px}
     Array.prototype.forEach.call(grid.querySelectorAll('[data-coordonly]'),function(c){
       var s=sessao(); c.style.display = (s&&!ehVend()&&s.escopo==='todos'&&String(s.papel||'').toLowerCase()!=='analista') ? '' : 'none';
     });
+    /* nov/2026: Rally Só Tintas — todo mundo logado; a régua (verRally) abre ou fecha por cargo */
+    Array.prototype.forEach.call(grid.querySelectorAll('[data-rally]'),function(c){ c.style.display = sessao() ? '' : 'none'; });
     /* nov/2026: Contatos das Lojas — todo mundo que não é vendedor; a régua (verContatos) abre ou fecha por cargo */
     Array.prototype.forEach.call(grid.querySelectorAll('[data-contatos]'),function(c){ c.style.display = (sessao() && !vend) ? '' : 'none'; });
     Array.prototype.forEach.call(grid.querySelectorAll('[data-direitos]'),function(c){
@@ -9752,7 +9759,7 @@ body.foco .wrap{padding-bottom:40px}
     pontos:'verRanking', ranking:'verRanking', provas:'verProvas', avulsas:'verMinhasProvas',
     uso:'verUso', crm:'verCRM', bonus:'verBonus', bonusger:'verBonusGer', simulador:'verSimulador', proposta:'verProposta',
     mentor:'verMentor', especialista:'verEspecialista', cadastro:'gerirCadastro',
-    acessos:'gerirAcessos', conteudo:'gerirConteudo', central:'gerirCentral', escala:'verEscala', contatos:'verContatos',
+    acessos:'gerirAcessos', conteudo:'gerirConteudo', central:'gerirCentral', escala:'verEscala', contatos:'verContatos', rally:'verRally',
     /* nov/2026: blocos da Operação também entram na régua */
     agenda:'verAgenda', agendar:'verAgendar', agora:'verReuniao', rotina:'verRotina', despesas:'verDespesas' };
   function aplicarRegua(){
@@ -9923,6 +9930,17 @@ body.foco .wrap{padding-bottom:40px}
     var tema=(window.STtema?window.STtema.get():'light');
     ifrD.setAttribute('src','contatos.html?tema='+tema+(ed?'&ed=1':'')+'&v='+Date.now());
     ovD.style.display='flex'; document.body.style.overflow='hidden';
+  }
+  /* Rally Só Tintas (nov/2026): meta do dia do vendedor, corrida das lojas, mapa, duelos e pilotos.
+     Ouve a régua (verRally): o padrão é todo mundo logado. */
+  function abrirRally(aba){
+    var padrao=!!sessao();
+    if(!(typeof podePainel==='function'?podePainel('verRally',padrao):padrao)) return false;
+    if(!ovD||!ifrD) return false; titOv('Rally Só Tintas');
+    var tema=(window.STtema?window.STtema.get():'light');
+    ifrD.setAttribute('src','rally.html?tema='+tema+'&v='+Date.now()+'#'+(aba||'meudia'));
+    ovD.style.display='flex'; document.body.style.overflow='hidden';
+    return true;
   }
   function abrirCentral(){
     if(!(typeof podePainel==='function'?podePainel('gerirCentral',!ehAnl()):!ehAnl())) return;
@@ -10198,6 +10216,7 @@ body.foco .wrap{padding-bottom:40px}
     if(act==='central'){ abrirCentral(); return; }
     if(act==='escala'){ abrirEscala(); return; }
     if(act==='contatos'){ abrirContatos(); return; }
+    if(act==='rally'){ abrirRally(); return; }
     if(act==='conteudo'){ abrirConteudo(); return; }
     if(act==='mentor'){ abrirMentor(); return; }
     if(act==='especialista'){ abrirMentor('#/assessor'); return; }
@@ -10231,7 +10250,9 @@ body.foco .wrap{padding-bottom:40px}
   var jaMostrou=false;
   var t=setInterval(function(){
     if(jaMostrou) return;
-    if(logado()){ jaMostrou=true; abrirInicio(); }
+    if(logado()){ jaMostrou=true; abrirInicio();
+      /* nov/2026: para o vendedor, o Rally abre no "Meu dia" assim que ele entra (meta do dia, Eucatex e a dica) */
+      setTimeout(function(){ try{ if(ehVend()) abrirRally('meudia'); }catch(e){} }, 900); }
   }, 400);
   setTimeout(function(){ clearInterval(t); }, 20000);
 })();
@@ -10253,7 +10274,7 @@ body.foco .wrap{padding-bottom:40px}
     ['verPDISemanal','PDI Semanal','semana'],['verRanking','Ranking ST','pontos'],
     ['verProvas','Central de Provas','provas'],['verMinhasProvas','Minhas Provas','avulsas'],
     ['verUso','Acessos ao App','uso'],['verCRM','CRM de Vendas','crm'],['verEscala','Escala & Folgas','escala'],
-    ['verContatos','Contatos das Lojas','contatos'],
+    ['verContatos','Contatos das Lojas','contatos'],['verRally','Rally Só Tintas','rally'],
     ['verBonus','Bonificações','bonus'],['verSimulador','Simulador de Bônus','simulador'],['verBonusGer','Bônus do Mês','bonusger'],
     ['verProposta','Proposta de Vendedor','proposta'],['verMentor','Mentor','mentor'],
     ['verEspecialista','Especialista ST','especialista'],
@@ -11061,7 +11082,7 @@ body.modo-vendedor #iniFaixa{margin-top:2px}
   f.innerHTML='<div class="fx-varre"></div><span class="fx-tag">Só Tintas</span><h2>Colorindo Vidas e Realizando Sonhos</h2><p>Cada atendimento pinta um sonho. Bom trabalho hoje!</p>'+LATA;
   /* carrossel: a faixa principal é o 1º slide; depois as campanhas (troca a cada 3 s).
      nov/2026: a lista vem do Painel de Conteúdo (tabela "banners"); esta é a reserva até o servidor responder */
-  var BANNERS=[['rally-so-tintas','Rally Só Tintas · em breve no app · 30 lojas, 4 equipes e uma chegada: a meta do mês'],['acelera-coral','Acelera Coral · Copa Só Tintas de Kart · 01/10 a 22/11/26'],/* ['venda-direta-coral','Venda Direta Coral · novos CNPJs · R$ 500 por venda acima de R$ 10 mil'] — fora do ar por enquanto (06/11/2026) */
+  var BANNERS=[['rally-so-tintas','Rally Só Tintas · 30 lojas, 4 equipes e uma chegada: a meta do mês'],['acelera-coral','Acelera Coral · Copa Só Tintas de Kart · 01/10 a 22/11/26'],/* ['venda-direta-coral','Venda Direta Coral · novos CNPJs · R$ 500 por venda acima de R$ 10 mil'] — fora do ar por enquanto (06/11/2026) */
     ['pintor-cadastrado','Pintor cadastrado, prêmio garantido · R$ 5 por cadastro Citel, R$ 10 a partir do 11º'],['pix-semanal','Pix Semanal · bônus extra por antecipação'],
     ['elite-das-vendas','Elite das Vendas · premiação mensal e trimestral'],['trinca-de-ouro','Trinca de Ouro · maior venda CNPJ da semana'],
     ['boca-de-caixa-suvinil','Boca de Caixa Suvinil · balde R$ 10, galão R$ 5, bônus liberado ao acumular R$ 20']];

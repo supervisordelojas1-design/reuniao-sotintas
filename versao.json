@@ -2,6 +2,32 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v257",
+      "data": "19/11/2026",
+      "hora": "08:06",
+      "itens": [
+        {
+          "painel": "Rally Só Tintas",
+          "o_que": "Painel novo: a corrida das lojas pela meta do mês, com mapa do Rio, ao vivo, duelos e ranking de pilotos. O ranking mostra percentuais; valores em reais aparecem só para cada um e para a liderança."
+        },
+        {
+          "painel": "Rally · Meu dia",
+          "o_que": "Ao entrar no app, o vendedor vê a meta de faturamento do dia, os baldes de Eucatex, a dica do que fazer, a meta de 2 pintores completos e os contatos lançados no CRM. Dá para simular o faturamento do dia.",
+          "para": [
+            "vend",
+            "ger"
+          ]
+        },
+        {
+          "painel": "Direitos de Acesso",
+          "o_que": "O Rally Só Tintas entrou na grade (chave verRally): dá para liberar ou bloquear por cargo.",
+          "para": [
+            "coord"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v256",
       "data": "19/11/2026",
       "hora": "07:49",
