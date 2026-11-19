@@ -7016,6 +7016,17 @@ function podePainel(chave, padrao){
   return (chave in m) ? m[chave] : padrao;
 }
 window.podePainel=podePainel;
+/* Rally Só Tintas: cada tela do painel tem a sua chave na régua (Direitos de Acesso, faixa "Rally Só Tintas").
+   Padrão (19/11/2026, Bruno): a família do vendedor vê Meu dia e Pilotos; os demais cargos veem todas as telas.
+   O rally.html pergunta aqui (window.parent.podeRally) antes de mostrar cada aba. */
+var RALLY_TELAS={meudia:'verRallyMeuDia',pista:'verRallyPista',mapa:'verRallyMapa',vivo:'verRallyVivo',duelos:'verRallyDuelos',pilotos:'verRallyPilotos'};
+function rallyPadrao(vend, tela){ return vend ? (tela==='meudia'||tela==='pilotos') : true; }
+function podeRally(tela){
+  if(!RALLY_TELAS[tela]) return false;
+  var n=String(papelVigente()||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  return podePainel(RALLY_TELAS[tela], rallyPadrao(/vendedor|operador|caixa|assistente/.test(n), tela));
+}
+window.podeRally=podeRally; window.rallyPadrao=rallyPadrao;
 function podeVerEquipe(){       return pode('verEquipe', ehCoordenador()); }
 function podeVerCumprimento(){  return pode('verCumprimento', !ehGerente()); }
 function podeRegistrarVisita(){ return pode('registrarVisita', !ehGerente()); }
@@ -9740,7 +9751,7 @@ body.foco .wrap{padding-bottom:40px}
       var f=document.getElementById('iniRallyDia'), s=sessao();
       /* vendedor (a meta dele), supervisor (a regional) e coordenação (a rede) */
       var coordCard=false; try{ coordCard=!ehVend() && (ehCoordenador() || /supervisor/i.test(String(s&&s.papel||''))); }catch(e){ coordCard=false; }   /* coordenação (rede) e supervisor (a regional dele) */
-      var ok=!!(s && (ehVend() || coordCard) && (typeof podePainel==='function'?podePainel('verRally',true):true));
+      var ok=!!(s && (ehVend() || coordCard) && (typeof podePainel==='function'?podePainel('verRally',true):true) && (typeof podeRally==='function'?podeRally('meudia'):true));
       if(!ok){ if(f) f.remove(); return; }
       var k=String(s.nome||'')+'|'+String(s.loja||'')+'|'+String(s.papel||'');
       if(f && f.getAttribute('data-k')===k) return;
@@ -10302,7 +10313,13 @@ body.foco .wrap{padding-bottom:40px}
     /* subárea Operação: os blocos de baixo da tela inicial */
     ['#','Operação'],
     ['verAgenda','Agenda','agenda'],['verAgendar','Agendar','agendar'],['verReuniao','Reunião','agora'],
-    ['verRotina','Rotina','rotina'],['verDespesas','Despesas','despesas']
+    ['verRotina','Rotina','rotina'],['verDespesas','Despesas','despesas'],
+    /* subárea Rally: as telas de dentro do painel (o card inteiro é a linha "Rally Só Tintas" da Gestão) */
+    ['#','Rally Só Tintas · telas do painel'],
+    ['verRallyMeuDia','Meu dia (meta, missões e card da tela inicial)','rally:meudia'],
+    ['verRallyPista','Pista (ranking das lojas)','rally:pista'],['verRallyMapa','Mapa das lojas','rally:mapa'],
+    ['verRallyVivo','Ao vivo','rally:vivo'],['verRallyDuelos','Duelos entre lojas','rally:duelos'],
+    ['verRallyPilotos','Pilotos (ranking dos vendedores)','rally:pilotos']
   ];
   PAINEIS.unshift(['#','Gestão']);
   var CICLO={'':'1','1':'0','0':''};
@@ -10353,6 +10370,8 @@ body.foco .wrap{padding-bottom:40px}
       else v = !vend || c.hasAttribute('data-vend');   /* Operação: agenda, rotina, despesas — todos, menos o vendedor */
       out[a]=!!v;
     });
+    /* telas do Rally: valem dentro do painel, então dependem do card e do padrão de cada família */
+    ['meudia','pista','mapa','vivo','duelos','pilotos'].forEach(function(t){ out['rally:'+t]=!!out.rally && window.rallyPadrao(vend,t); });
     return out;
   }
   /* Encurta só o que não distingue cargo. NÃO tirar "de Loja": existem

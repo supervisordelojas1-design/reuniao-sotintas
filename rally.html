@@ -358,6 +358,7 @@ button.go{border:0;font:inherit;font-weight:700;cursor:pointer}
   <div id="aviso" role="status" hidden></div>
   <div class="teams" id="teams" role="group" aria-label="Filtrar equipe"></div>
 
+  <p class="note" id="semAcesso" role="status" hidden>Nenhuma tela do Rally está liberada para o seu cargo. Fale com a coordenação.</p>
   <section class="view" id="v-meudia" aria-label="Meu dia"><div class="md" id="md"></div></section>
 
   <section class="view" id="v-pista" aria-label="Pista" hidden>
@@ -597,7 +598,7 @@ function vivo(){
  var E=function(l,t,d,tag,ic){ev.push('<button class="ev" style="--c:'+l.c+'" data-cod="'+l.cod+'"><span class="ic">'+use(ic||l.icone)+'</span><span style="min-width:0"><b>'+t+'<span class="tag '+(tag==='pit'?'pit':tag==='chegada'?'turbo':'')+'" style="'+(tag==='pit'||tag==='chegada'?'':'background:var(--vidro2);color:var(--mute)')+'">'+tag+'</span></b><span class="d">'+d+'</span></span></button>')};
  E(ls[0],esc(ls[0].curto)+' lidera '+(filtro==='Todas'?'a corrida':'a equipe')+' com '+pc(ls[0].alc)+'%','No ritmo atual termina em '+Math.round(ls[0].proj)+'%','líder');
  ls.filter(function(l){return l.alc>=100}).forEach(function(l){E(l,esc(l.curto)+' cruzou a chegada',pc(l.alc)+'% da meta do mês','chegada','i-flag')});
- VEND.filter(function(v){return v.alc>=100&&(filtro==='Todas'||v.loja.eq===filtro)}).slice(0,5).forEach(function(v){E(v.loja,esc(v.n)+' bateu a meta do mês',esc(v.loja.curto)+' · '+pc(v.alc)+'% da meta individual','chegada','i-trofeu')});
+ (podeTela('pilotos')?VEND:[]).filter(function(v){return v.alc>=100&&(filtro==='Todas'||v.loja.eq===filtro)}).slice(0,5).forEach(function(v){E(v.loja,esc(v.n)+' bateu a meta do mês',esc(v.loja.curto)+' · '+pc(v.alc)+'% da meta individual','chegada','i-trofeu')});
  var orcs=[];ls.forEach(function(l){var d=DET[l.cod];if(d&&d.orc[0])orcs.push({l:l,o:d.orc[0]})});
  orcs.sort(function(a,b){return b.o.v-a.o.v}).slice(0,4).forEach(function(x){E(x.l,esc(x.l.curto)+' tem '+rs(x.o.v)+' na mesa','Maior orçamento em aberto, com '+esc(x.o.vend),'missão','i-orc')});
  ls.filter(function(l){return l.euc!=null&&l.euc>=100}).forEach(function(l){E(l,esc(l.curto)+' bateu o Eucatex',pc(l.euc,0)+'% dos litros da meta','Eucatex','i-balde')});
@@ -628,17 +629,23 @@ function sheet(open){var s=$('sheet');if(!open){s.hidden=true;return}
  var h='<button class="x" data-close aria-label="Fechar">×</button><div class="sh-top"><span class="sh-art">'+use(l.icone)+'</span><div><span class="eye" style="color:'+l.c+'">Equipe '+esc(l.eq)+' · '+l.pos+'º na geral</span><h2 style="font-size:26px">'+esc(l.curto)+'</h2><p class="mute" style="font-size:13px">'+esc([l.cidade,l.ref].filter(Boolean).join(' · '))+'</p></div></div><div class="rings">'+ring(l.alc,92,8,l.c,'meta')+ring(l.proj,92,8,'#eef2fb','no ritmo')+ring(l.euc,92,8,'#6f95f5','Eucatex')+'</div><div class="lap" style="--c:'+l.c+'"><i class="fill" style="width:'+Math.min(l.alc,130)/1.3+'%"></i><i class="rit" style="left:'+Math.min(ESP,130)/1.3+'%"></i><i class="fin" style="left:'+100/1.3+'%"></i><span class="k" style="left:'+Math.min(l.alc,130)/1.3+'%">'+use('carro')+'</span></div>';
  if(d){h+='<p class="note">Faltam '+rs(d.falta)+' para a chegada, '+rs(d.falta/Math.max(1,UR))+' por dia útil.</p><span class="eye">Missões de hoje</span><div class="miss">'+dicas(d.orc,d.par,d.eM,d.eL,true).join('')+'</div>'}
  else h+='<p class="note">Valores em reais, orçamentos e carteira desta loja aparecem só para a própria loja e para a liderança dela.</p>';
- if(vs.length)h+='<span class="eye">Pilotos da loja</span><div class="miss">'+vs.map(function(v){return '<div class="dbar" style="--c:'+l.c+'"><span class="n">'+esc(v.n)+'</span><span class="t"><i style="width:'+Math.min(100,v.alc)+'%"></i><u style="left:'+Math.min(100,ESP)+'%"></u></span><span class="p">'+pc(v.alc)+'%</span></div>'}).join('')+'<span class="note">O traço branco é o ritmo esperado hoje ('+pc(ESP)+'%).</span></div>';
+ if(vs.length&&podeTela('pilotos'))h+='<span class="eye">Pilotos da loja</span><div class="miss">'+vs.map(function(v){return '<div class="dbar" style="--c:'+l.c+'"><span class="n">'+esc(v.n)+'</span><span class="t"><i style="width:'+Math.min(100,v.alc)+'%"></i><u style="left:'+Math.min(100,ESP)+'%"></u></span><span class="p">'+pc(v.alc)+'%</span></div>'}).join('')+'<span class="note">O traço branco é o ritmo esperado hoje ('+pc(ESP)+'%).</span></div>';
  s.innerHTML=h;s.hidden=false}
 
 /* ---------- navegação ---------- */
 var VIEWS=['meudia','pista','mapa','vivo','duelos','pilotos'];
+/* Direitos de Acesso: cada tela tem a sua chave na régua do app (verRallyMeuDia, verRallyPista…). Quem decide é o app (window.parent.podeRally);
+   aberto fora do app vale o padrão: vendedor vê Meu dia e Pilotos, os demais veem tudo. */
+function podeTela(a){try{if(window.parent&&window.parent!==window&&typeof window.parent.podeRally==='function')return !!window.parent.podeRally(a)}catch(e){}return PF==='vend'?(a==='meudia'||a==='pilotos'):true}
 function teams(){var E=equipes();$('teams').innerHTML=E.length>1?['<button class="tchip" style="--c:#eef2fb" aria-pressed="'+(filtro==='Todas')+'" data-f="Todas"><i>'+LOJAS.length+'</i>Todas</button>'].concat(E.map(function(e,i){return '<button class="tchip" style="--c:'+e.c+'" aria-pressed="'+(filtro===e.n)+'" data-f="'+esc(e.n)+'"><i>'+(i+1)+'º</i>'+esc(e.n)+' <span class="num">'+pc(e.alc)+'%</span></button>'})).join(''):''}
 function render(){
  view=(location.hash||'#meudia').slice(1);if(VIEWS.indexOf(view)<0||EMBED)view='meudia';
- [].forEach.call(document.querySelectorAll('.tabs a'),function(a){a.setAttribute('aria-current',a.dataset.v===view?'page':'false')});
+ var LIB=VIEWS.filter(podeTela);if(LIB.indexOf(view)<0)view=EMBED?'':(LIB[0]||'');
+ [].forEach.call(document.querySelectorAll('.tabs a'),function(a){a.hidden=LIB.indexOf(a.dataset.v)<0;a.setAttribute('aria-current',a.dataset.v===view?'page':'false')});
+ var nav=document.querySelector('.tabs');if(nav)nav.hidden=LIB.length<2;
  [].forEach.call(document.querySelectorAll('.view'),function(v){v.hidden=v.id!=='v-'+view});
- teams();$('teams').hidden=view==='meudia';
+ var sa=$('semAcesso');if(sa)sa.hidden=!!view;
+ teams();$('teams').hidden=view==='meudia'||!view;
  if(view==='meudia')meudia();if(view==='pista')pista();if(view==='pilotos')pilotos();if(view==='mapa')mapa();if(view==='vivo')vivo();if(view==='duelos')duelos();
 }
 function iniciar(R,P,cr){
