@@ -9738,9 +9738,11 @@ body.foco .wrap{padding-bottom:40px}
     (function(){
       var corpo=document.getElementById('iniBody'); if(!corpo) return;
       var f=document.getElementById('iniRallyDia'), s=sessao();
-      var ok=!!(s && ehVend() && (typeof podePainel==='function'?podePainel('verRally',true):true));
+      /* vendedor (a meta dele) e coordenação (a meta da rede) */
+      var coordCard=false; try{ coordCard=!ehVend() && ehCoordenador(); }catch(e){ coordCard=false; }
+      var ok=!!(s && (ehVend() || coordCard) && (typeof podePainel==='function'?podePainel('verRally',true):true));
       if(!ok){ if(f) f.remove(); return; }
-      var k=String(s.nome||'')+'|'+String(s.loja||'');
+      var k=String(s.nome||'')+'|'+String(s.loja||'')+'|'+String(s.papel||'');
       if(f && f.getAttribute('data-k')===k) return;
       if(!f){ f=document.createElement('iframe'); f.id='iniRallyDia'; f.title='Sua meta de hoje';
         f.style.cssText='display:block;width:100%;height:300px;border:0;border-radius:22px;margin:0 0 12px;background:#0f1522;box-shadow:0 14px 30px -14px rgba(10,25,60,.55)';
