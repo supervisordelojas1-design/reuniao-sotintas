@@ -7017,9 +7017,9 @@ function podePainel(chave, padrao){
 }
 window.podePainel=podePainel;
 /* Rally Só Tintas: cada tela do painel tem a sua chave na régua (Direitos de Acesso, faixa "Rally Só Tintas").
-   Padrão (19/11/2026, Bruno): a família do vendedor vê Meu dia e Pilotos; os demais cargos veem todas as telas.
+   Padrão (19/11/2026, Bruno): a família do vendedor vê Meu dia e Pilotos Vendedores; os demais cargos veem todas as telas (Pilotos Gerentes é só de gerente, supervisão e coordenação).
    O rally.html pergunta aqui (window.parent.podeRally) antes de mostrar cada aba. */
-var RALLY_TELAS={meudia:'verRallyMeuDia',pista:'verRallyPista',mapa:'verRallyMapa',vivo:'verRallyVivo',duelos:'verRallyDuelos',pilotos:'verRallyPilotos'};
+var RALLY_TELAS={meudia:'verRallyMeuDia',pista:'verRallyPista',mapa:'verRallyMapa',vivo:'verRallyVivo',duelos:'verRallyDuelos',pilotos:'verRallyPilotos',gerentes:'verRallyGerentes'};
 function rallyPadrao(vend, tela){ return vend ? (tela==='meudia'||tela==='pilotos') : true; }
 function podeRally(tela){
   if(!RALLY_TELAS[tela]) return false;
@@ -10319,7 +10319,8 @@ body.foco .wrap{padding-bottom:40px}
     ['verRallyMeuDia','Meu dia (meta, missões e card da tela inicial)','rally:meudia'],
     ['verRallyPista','Pista (ranking das lojas)','rally:pista'],['verRallyMapa','Mapa das lojas','rally:mapa'],
     ['verRallyVivo','Ao vivo','rally:vivo'],['verRallyDuelos','Duelos entre lojas','rally:duelos'],
-    ['verRallyPilotos','Pilotos (ranking dos vendedores)','rally:pilotos']
+    ['verRallyPilotos','Pilotos Vendedores (ranking dos vendedores)','rally:pilotos'],
+    ['verRallyGerentes','Pilotos Gerentes (ranking dos gerentes)','rally:gerentes']
   ];
   PAINEIS.unshift(['#','Gestão']);
   var CICLO={'':'1','1':'0','0':''};
@@ -10371,7 +10372,7 @@ body.foco .wrap{padding-bottom:40px}
       out[a]=!!v;
     });
     /* telas do Rally: valem dentro do painel, então dependem do card e do padrão de cada família */
-    ['meudia','pista','mapa','vivo','duelos','pilotos'].forEach(function(t){ out['rally:'+t]=!!out.rally && window.rallyPadrao(vend,t); });
+    ['meudia','pista','mapa','vivo','duelos','pilotos','gerentes'].forEach(function(t){ out['rally:'+t]=!!out.rally && window.rallyPadrao(vend,t); });
     return out;
   }
   /* Encurta só o que não distingue cargo. NÃO tirar "de Loja": existem

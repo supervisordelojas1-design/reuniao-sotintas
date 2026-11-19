@@ -2,6 +2,30 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v268",
+      "data": "19/11/2026",
+      "hora": "18:12",
+      "itens": [
+        {
+          "painel": "Rally Só Tintas",
+          "o_que": "Nova tela Pilotos Gerentes, ao lado de Pilotos Vendedores: o ranking dos gerentes pelo resultado da loja. Aparece para gerentes, supervisão e coordenação.",
+          "para": [
+            "ger",
+            "sup",
+            "anl",
+            "coord"
+          ]
+        },
+        {
+          "painel": "Direitos de Acesso",
+          "o_que": "A faixa do Rally ganhou a linha Pilotos Gerentes.",
+          "para": [
+            "coord"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v267",
       "data": "19/11/2026",
       "hora": "18:02",

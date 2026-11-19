@@ -350,7 +350,8 @@ button.go{border:0;font:inherit;font-weight:700;cursor:pointer}
    <a href="#mapa" data-v="mapa">Mapa</a>
    <a href="#vivo" data-v="vivo">Ao vivo</a>
    <a href="#duelos" data-v="duelos">Duelos</a>
-   <a href="#pilotos" data-v="pilotos">Pilotos</a>
+   <a href="#pilotos" data-v="pilotos">Pilotos Vendedores</a>
+   <a href="#gerentes" data-v="gerentes">Pilotos Gerentes</a>
   </nav>
  </header>
  <div id="carga">Buscando os números do mês…</div>
@@ -382,10 +383,16 @@ button.go{border:0;font:inherit;font-weight:700;cursor:pointer}
    <p class="note">Duplas montadas por tamanho de meta parecido, para o duelo ser justo. Vence quem estiver com o maior % da meta no fim do mês.</p>
   </section>
 
-  <section class="view" id="v-pilotos" aria-label="Pilotos" hidden>
+  <section class="view" id="v-pilotos" aria-label="Pilotos Vendedores" hidden>
    <div class="glass panel" style="display:flex;flex-wrap:wrap;gap:8px 22px;align-items:center" id="pres"></div>
    <div class="glass race" id="pil"></div>
    <p class="note">Pilotos são os vendedores com meta própria no mês. O ranking mostra só percentuais; valores em reais ficam com cada vendedor e com a liderança dele.</p>
+  </section>
+
+  <section class="view" id="v-gerentes" aria-label="Pilotos Gerentes" hidden>
+   <div class="glass panel" style="display:flex;flex-wrap:wrap;gap:8px 22px;align-items:center" id="gres"></div>
+   <div class="glass race" id="gpil"></div>
+   <p class="note">Cada gerente corre com o resultado da sua loja: percentual da meta do mês e onde termina no ritmo atual. Este ranking aparece só para gerentes, supervisão e coordenação.</p>
   </section>
  </div>
 </div>
@@ -453,7 +460,7 @@ function montar(R,P,cr){
   EU={n:nomeV(v[0]||NOME),k:chave(v[0]||NOME),cod:c,meta:+l[3]||0,fat:+l[5]||0,eM:+v[15]||0,eL:+v[16]||0,orc:orcDe(d,c),par:parDe(d,c)};EU.alc=EU.meta?EU.fat/EU.meta*100:0;
  } else L.forEach(function(l){DET[cod3(l[0])]=detalhe(l,d)});
  if(R&&R.ok&&R.lojas){REDE=true;
-  LOJAS=R.lojas.map(function(r){return {cod:cod3(r[0]),nome:String(r[1]),reg:String(r[2]),alc:+r[3]||0,proj:+r[4]||0,euc:r[5]}});
+  LOJAS=R.lojas.map(function(r){return {cod:cod3(r[0]),nome:String(r[1]),reg:String(r[2]),alc:+r[3]||0,proj:+r[4]||0,euc:r[5],ger:nomeV(String(r[6]||''))}});
   VEND=(R.vend||[]).map(function(r){return {cod:cod3(r[0]),n:nomeV(r[1]),k:chave(r[1]),alc:+r[2]||0,proj:+r[3]||0,euc:r[4]}});
  } else if(!mV){
   LOJAS=L.slice().sort(function(a,b){return b[3]-a[3]}).map(function(l){var ind=l[8]||[],pj=+l[6]||(UD?l[5]/UD*UT:+l[5]);return {cod:cod3(l[0]),nome:String(l[1]),reg:String(l[2]),alc:l[5]/l[3]*100,proj:pj/l[3]*100,euc:(+ind[11]>0)?(+ind[12]||0)/(+ind[11])*100:null}});
@@ -550,7 +557,6 @@ function meudia(){
   linhas.sort(function(a,b){return b.dia-a.dia});
   h+='<div class="glass panel"><span class="eye">Meta de hoje de cada '+(ds.length===1?'vendedor':'loja')+'</span>'+linhas.map(function(x){return '<button class="dbar" style="--c:'+(x.c||c2)+'" data-cod="'+x.cod+'"><span class="n">'+esc(x.n)+'</span><span class="t"><i style="width:'+Math.min(100,x.alc)+'%"></i><u style="left:'+Math.min(100,ESP)+'%"></u></span><span class="p">'+rs(x.dia)+'</span></button>'}).join('')+'<span class="note">A barra é o % da meta do mês; o traço branco é o ritmo esperado hoje.</span></div>';
  }
- h+='<a class="go" href="#pista">Ver a corrida das lojas</a>';
  el.innerHTML=h;
 }
 
@@ -578,6 +584,15 @@ function pilotos(){
  var ok=vs.filter(function(v){return v.alc>=ESP}).length,ch=vs.filter(function(v){return v.alc>=100}).length;
  $('pres').innerHTML='<span class="eye">'+(filtro==='Todas'?(REDE?'Rede':'Seu recorte'):'Equipe '+esc(filtro))+' · '+vs.length+' pilotos</span><span><b style="font-family:var(--f-disp);font-size:22px;color:var(--verde)">'+ok+'</b> no ritmo ou acima</span><span><b style="font-family:var(--f-disp);font-size:22px;color:var(--faixa)">'+ch+'</b> já cruzaram a chegada</span><span><b style="font-family:var(--f-disp);font-size:22px">'+(vs.length-ok)+'</b> abaixo do ritmo</span>';
  $('pil').innerHTML=escala()+vs.map(function(v,i){var eu=EU&&v.cod===EU.cod&&v.k===EU.k;return '<button class="lane'+(eu?' eu':'')+'" style="--c:'+v.c+'" data-cod="'+v.cod+'" aria-label="'+esc(v.n)+', '+pc(v.alc)+'%"><span class="lm" style="font-family:var(--f-disp);font-weight:800;font-size:16px">'+(i+1)+'º</span><span class="who"><b>'+esc(v.n)+(eu?' · você':'')+'</b><span>'+esc(v.loja.curto)+' · '+v.cod+'</span></span>'+road(v.alc,null,v.c)+'<span class="pct"><b class="num">'+pc(v.alc)+'%</b><span>vai a '+Math.round(v.proj)+'%</span></span></button>'}).join('');
+}
+
+/* ---------- Pilotos Gerentes: o mesmo ranking, com o gerente à frente de cada loja (só gerente, supervisão e coordenação) ---------- */
+function gerentes(){
+ var ls=lista().slice().sort(function(a,b){return b.alc-a.alc});
+ if(!ls.length){$('gres').innerHTML='';$('gpil').innerHTML='<p class="note" style="padding:16px">O ranking dos gerentes aparece assim que o servidor do Painel for atualizado.</p>';return}
+ var ok=ls.filter(function(l){return l.alc>=ESP}).length,ch=ls.filter(function(l){return l.alc>=100}).length,n=function(v,c){return '<b style="font-family:var(--f-disp);font-size:22px'+(c?';color:'+c:'')+'">'+v+'</b>'};
+ $('gres').innerHTML='<span class="eye">'+(filtro==='Todas'?'Rede':'Equipe '+esc(filtro))+' · '+ls.length+' gerentes</span><span>'+n(ok,'var(--verde)')+' no ritmo ou acima</span><span>'+n(ch,'var(--faixa)')+' já cruzaram a chegada</span><span>'+n(ls.length-ok)+' abaixo do ritmo</span>';
+ $('gpil').innerHTML=escala()+ls.map(function(l){var eu=minhaLoja(l.cod)&&restrito();return '<button class="lane'+(eu?' eu':'')+'" style="--c:'+l.c+'" data-cod="'+l.cod+'" aria-label="'+l.pos+'º, '+esc(l.ger||l.curto)+', '+pc(l.alc)+'%"><span class="lm" style="font-family:var(--f-disp);font-weight:800;font-size:16px">'+l.pos+'º</span><span class="who"><b>'+esc(l.ger||l.curto)+(eu?' · você':'')+'</b><span>'+esc(l.curto)+' · '+l.cod+'</span></span>'+road(l.alc,l.proj,l.c)+'<span class="pct"><b class="num">'+pc(l.alc)+'%</b><span>vai a '+Math.round(l.proj)+'%</span></span></button>'}).join('');
 }
 
 /* ---------- Mapa ---------- */
@@ -649,10 +664,10 @@ function sheet(open){var s=$('sheet');if(!open){s.hidden=true;return}
  s.innerHTML=h;s.hidden=false}
 
 /* ---------- navegação ---------- */
-var VIEWS=['meudia','pista','mapa','vivo','duelos','pilotos'];
+var VIEWS=['meudia','pista','mapa','vivo','duelos','pilotos','gerentes'];
 /* Direitos de Acesso: cada tela tem a sua chave na régua do app (verRallyMeuDia, verRallyPista…). Quem decide é o app (window.parent.podeRally);
    aberto fora do app vale o padrão: vendedor vê Meu dia e Pilotos, os demais veem tudo. */
-function podeTela(a){try{if(window.parent&&window.parent!==window&&typeof window.parent.podeRally==='function')return !!window.parent.podeRally(a)}catch(e){}return PF==='vend'?(a==='meudia'||a==='pilotos'):true}
+function podeTela(a){try{if(window.parent&&window.parent!==window&&typeof window.parent.podeRally==='function')return !!window.parent.podeRally(a)}catch(e){}return PF==='vend'?(a==='meudia'||a==='pilotos'):true} /* Pilotos Gerentes: só gerente, supervisão e coordenação */
 function teams(){if(restrito()){filtro='Todas';$('teams').innerHTML='';return}var E=equipes();$('teams').innerHTML=E.length>1?['<button class="tchip" style="--c:#eef2fb" aria-pressed="'+(filtro==='Todas')+'" data-f="Todas"><i>'+LOJAS.length+'</i>Todas</button>'].concat(E.map(function(e,i){return '<button class="tchip" style="--c:'+e.c+'" aria-pressed="'+(filtro===e.n)+'" data-f="'+esc(e.n)+'"><i>'+(i+1)+'º</i>'+esc(e.n)+' <span class="num">'+pc(e.alc)+'%</span></button>'})).join(''):''}
 function render(){
  view=(location.hash||'#meudia').slice(1);if(VIEWS.indexOf(view)<0||EMBED)view='meudia';
@@ -662,7 +677,7 @@ function render(){
  [].forEach.call(document.querySelectorAll('.view'),function(v){v.hidden=v.id!=='v-'+view});
  var sa=$('semAcesso');if(sa)sa.hidden=!!view;
  teams();$('teams').hidden=view==='meudia'||!view||restrito();
- if(view==='meudia')meudia();if(view==='pista')pista();if(view==='pilotos')pilotos();if(view==='mapa')mapa();if(view==='vivo')vivo();if(view==='duelos')duelos();
+ if(view==='meudia')meudia();if(view==='pista')pista();if(view==='pilotos')pilotos();if(view==='gerentes')gerentes();if(view==='mapa')mapa();if(view==='vivo')vivo();if(view==='duelos')duelos();
 }
 function iniciar(R,P,cr){
  NOME=(cr&&cr.nome)||P.nome||'';PF=(cr&&cr.perfil)||'';
