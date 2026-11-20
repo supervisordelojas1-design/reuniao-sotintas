@@ -1,0 +1,81 @@
+/* ===== RALLY · DUELOS POR PERFIL DE ATENDIMENTO (20/11/2026, Bruno) =====
+   Colar no Código.gs do Servidor do Painel - BANCO, junto do rallyResumo_, e no retorno do rallyResumo_ acrescentar:
+       duelos: rallyDuelos_(d),
+   Cada loja enfrenta a de perfil mais parecido, olhando cinco pontos:
+     porte (média de 90 dias), atendimentos no mês, % do faturamento em CNPJ, ticket do balcão (CPF)
+     e oportunidade na carteira CNPJ (clientes ativos que não compraram no mês).
+   As duplas são montadas com o MÊS ANTERIOR FECHADO (histórico PAINEL_MESES) e ficam TRAVADAS o mês inteiro
+   (propriedade RALLY_DUELOS). Sem mês anterior no histórico, usa o mês em andamento e trava do mesmo jeito.
+   Só sai daqui o código das lojas e um motivo em palavras ou percentuais: nenhum valor em reais. */
+var RALLY_DUELOS_PROP = 'RALLY_DUELOS';
+function rallyPerfil_(l) {
+  var ind = l[8] || [], fat = Number(l[5]) || 0, porte = Number(l[7]) || fat, at = Number(ind[6]) || 0, tk = Number(ind[9]) || 0;
+  var ativos = Number(ind[3]) || 0, pos = Number(ind[5]) || 0;
+  return { porte: porte > 0 ? Math.log(porte) : null, atend: at > 0 ? Math.log(at) : null,
+           cnpj: fat > 0 ? Math.max(0, Math.min(1, (Number(ind[1]) || 0) / fat)) : null,
+           ticket: tk > 0 ? Math.log(tk) : null,
+           oport: ativos > 0 ? Math.max(0, Math.min(1, 1 - pos / ativos)) : null };
+}
+function rallyMontarDuelos_(Latual, Lbase) {
+  var CAMPOS = ['porte', 'cnpj', 'atend', 'oport', 'ticket'], PESO = { porte: 3, cnpj: 3, atend: 1.5, oport: 1.5, ticket: 1 };
+  var base = {}; (Lbase || []).forEach(function (l) { base[cod3Painel_(l[0])] = l; });
+  var N = [];
+  Latual.forEach(function (l) { var c = cod3Painel_(l[0]); if (!c) return; N.push({ cod: c, f: rallyPerfil_(base[c] || l) }); });
+  /* padroniza cada ponto (média 0, desvio 1); loja sem o dado fica na média */
+  CAMPOS.forEach(function (k) {
+    var v = N.map(function (n) { return n.f[k]; }).filter(function (x) { return x != null; });
+    var m = v.length ? v.reduce(function (a, b) { return a + b; }, 0) / v.length : 0;
+    var dp = v.length > 1 ? Math.sqrt(v.reduce(function (a, b) { return a + (b - m) * (b - m); }, 0) / v.length) : 0;
+    N.forEach(function (n) { n[k] = (n.f[k] == null || !dp) ? 0 : (n.f[k] - m) / dp; });
+  });
+  var dist = function (a, b) { if (!a || !b) return 0; var s = 0; CAMPOS.forEach(function (k) { var d = a[k] - b[k]; s += PESO[k] * d * d; }); return Math.sqrt(s); };
+  if (N.length % 2) N.push(null);   /* número ímpar: quem cair com o "vazio" fica de fora */
+  /* começa pelas duplas mais parecidas e depois troca parceiros enquanto a soma das distâncias cair */
+  var livres = N.map(function (_, i) { return i; }), todas = [];
+  for (var i = 0; i < N.length; i++) for (var j = i + 1; j < N.length; j++) todas.push([dist(N[i], N[j]), i, j]);
+  todas.sort(function (a, b) { return a[0] - b[0]; });
+  var usado = {}, P = [];
+  todas.forEach(function (t) { if (usado[t[1]] || usado[t[2]]) return; usado[t[1]] = usado[t[2]] = 1; P.push([t[1], t[2]]); });
+  for (var volta = 0, mudou = true; mudou && volta < 60; volta++) {
+    mudou = false;
+    for (var x = 0; x < P.length; x++) for (var y = x + 1; y < P.length; y++) {
+      var a = P[x][0], b = P[x][1], c = P[y][0], e = P[y][1];
+      var atual = dist(N[a], N[b]) + dist(N[c], N[e]), o1 = dist(N[a], N[c]) + dist(N[b], N[e]), o2 = dist(N[a], N[e]) + dist(N[b], N[c]);
+      if (o1 < atual - 1e-9 && o1 <= o2) { P[x] = [a, c]; P[y] = [b, e]; mudou = true; }
+      else if (o2 < atual - 1e-9) { P[x] = [a, e]; P[y] = [b, c]; mudou = true; }
+    }
+  }
+  var ROT = { porte: 'porte parecido', atend: 'volume de atendimentos parecido', ticket: 'ticket de balcão parecido', oport: 'oportunidade parecida na carteira CNPJ' };
+  var pares = [], fora = [];
+  P.forEach(function (p) {
+    var A = N[p[0]], B = N[p[1]];
+    if (!A || !B) { fora.push((A || B).cod); return; }
+    var ordem = CAMPOS.map(function (k) { return [Math.abs(A[k] - B[k]), k]; }).sort(function (u, v) { return u[0] - v[0]; });
+    var txt = [];
+    ordem.slice(0, 3).forEach(function (o) {
+      if (o[0] > 0.9) return;   /* só entra no motivo o que é mesmo parecido */
+      if (o[1] === 'cnpj') { if (A.f.cnpj != null && B.f.cnpj != null && Math.abs(A.f.cnpj - B.f.cnpj) <= 0.08) txt.push('cerca de ' + (Math.round((A.f.cnpj + B.f.cnpj) / 2 * 20) * 5) + '% do faturamento em CNPJ'); }
+      else txt.push(ROT[o[1]]);
+    });
+    if (!txt.length) txt.push('perfil mais próximo disponível');
+    pares.push([A.cod, B.cod, txt.join(' · '), Math.round(dist(A, B) * 100) / 100]);
+  });
+  pares.sort(function (u, v) { return u[3] - v[3]; });
+  return { pares: pares, fora: fora };
+}
+function rallyDuelos_(d, refazer) {
+  try {
+    var base = String((d.p || [])[2] || ''), k = base.slice(0, 7); if (!/^\d{4}-\d{2}$/.test(k)) return null;
+    var prop = PropertiesService.getScriptProperties(), atuais = d.L.map(function (l) { return cod3Painel_(l[0]); }).filter(Boolean).sort().join(',');
+    if (!refazer) { try { var g = JSON.parse(prop.getProperty(RALLY_DUELOS_PROP) || 'null'); if (g && g.mes === k && g.lojas === atuais) return g; } catch (e0) {} }
+    var a = Number(k.slice(0, 4)), m = Number(k.slice(5, 7)), dA = new Date(a, m - 2, 1), kA = dA.getFullYear() + '-' + ('0' + (dA.getMonth() + 1)).slice(-2);
+    var ant = null; try { ant = pmLer_(kA); } catch (e1) {}
+    var usaAnt = !!(ant && ant.L && ant.L.length >= d.L.length * 0.6);
+    var r = rallyMontarDuelos_(d.L, usaAnt ? ant.L : null);
+    var out = { mes: k, lojas: atuais, base: usaAnt ? pmRotulo_(kA) : 'mês em andamento', feito: Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm'), pares: r.pares, fora: r.fora };
+    try { prop.setProperty(RALLY_DUELOS_PROP, JSON.stringify(out)); } catch (e2) {}
+    return out;
+  } catch (e) { return null; }
+}
+/* rodar à mão no editor se for preciso remontar as duplas do mês (ex.: loja nova no meio do mês) */
+function rallyDuelosRefazer() { var r = rallyDuelos_(montarDados(), true); Logger.log(JSON.stringify(r)); return r; }

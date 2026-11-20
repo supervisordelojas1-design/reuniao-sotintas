@@ -380,7 +380,7 @@ button.go{border:0;font:inherit;font-weight:700;cursor:pointer}
   <section class="view" id="v-duelos" aria-label="Duelos" hidden>
    <div class="glass score" id="score"></div>
    <div class="duels" id="duels"></div>
-   <p class="note">Duplas montadas por tamanho de meta parecido, para o duelo ser justo. Vence quem estiver com o maior % da meta no fim do mês.</p>
+   <p class="note" id="dcrit">Duplas montadas por tamanho de meta parecido, para o duelo ser justo. Vence quem estiver com o maior % da meta no fim do mês.</p>
   </section>
 
   <section class="view" id="v-pilotos" aria-label="Pilotos Vendedores" hidden>
@@ -419,7 +419,7 @@ var regCurta=function(reg){var r=String(reg||'').replace(/SUPERVISOR|S[OÓ] TINT
 var hojeSP=function(d){try{return (d||new Date()).toLocaleDateString('sv-SE',{timeZone:'America/Sao_Paulo'})}catch(e){return (d||new Date()).toISOString().slice(0,10)}};
 
 var LOJAS=[],VEND=[],DET={},EU=null,REDE=false,PF='',NOME='',UT=0,UD=0,UR=0,ESP=0,QUANDO='',MESANO='',CRM=null,ESCOPO='';
-var filtro='Todas',sel=null,view='meudia',PINS=null;
+var filtro='Todas',sel=null,view='meudia',PINS=null,DUE=null;
 var EMBED=new URLSearchParams(location.search).get('embed')==='1';
 function avisaAltura(){try{if(window.innerWidth<200)return;if(EMBED&&window.parent&&window.parent!==window)window.parent.postMessage({stRallyH:Math.ceil(document.querySelector('.wrap').getBoundingClientRect().height)},location.origin)}catch(e){}}
 if(EMBED){document.documentElement.classList.add('embed');
@@ -459,7 +459,7 @@ function montar(R,P,cr){
  if(mV&&L[0]){var l=L[0],v=(l[9]||[])[0]||[],c=cod3(l[0]);
   EU={n:nomeV(v[0]||NOME),k:chave(v[0]||NOME),cod:c,meta:+l[3]||0,fat:+l[5]||0,eM:+v[15]||0,eL:+v[16]||0,orc:orcDe(d,c),par:parDe(d,c)};EU.alc=EU.meta?EU.fat/EU.meta*100:0;
  } else L.forEach(function(l){DET[cod3(l[0])]=detalhe(l,d)});
- if(R&&R.ok&&R.lojas){REDE=true;
+ if(R&&R.ok&&R.lojas){REDE=true;DUE=R.duelos||null;
   LOJAS=R.lojas.map(function(r){return {cod:cod3(r[0]),nome:String(r[1]),reg:String(r[2]),alc:+r[3]||0,proj:+r[4]||0,euc:r[5],ger:nomeV(String(r[6]||''))}});
   VEND=(R.vend||[]).map(function(r){return {cod:cod3(r[0]),n:nomeV(r[1]),k:chave(r[1]),alc:+r[2]||0,proj:+r[3]||0,euc:r[4]}});
  } else if(!mV){
@@ -635,21 +635,26 @@ function vivo(){
 
 /* ---------- Duelos ---------- */
 function duelos(){
- var ord=LOJAS.slice().sort(function(a,b){return a.porte-b.porte}),pares=[];for(var i=0;i+1<ord.length;i+=2)pares.push([ord[i],ord[i+1]]);
+ var pares=[],porC={};LOJAS.forEach(function(l){porC[l.cod]=l});
+ /* duplas por perfil de atendimento, montadas no servidor com o mês anterior e travadas no mês (20/11/2026). Sem elas, vale o critério antigo (meta vizinha). */
+ if(DUE&&DUE.pares&&DUE.pares.length){DUE.pares.forEach(function(p){var a=porC[cod3(p[0])],b=porC[cod3(p[1])];if(a&&b){var par=[a,b];par.mot=String(p[2]||'');pares.push(par)}})}
+ if(!pares.length){var ord=LOJAS.slice().sort(function(a,b){return a.porte-b.porte});for(var i=0;i+1<ord.length;i+=2)pares.push([ord[i],ord[i+1]])}
+ var mot=function(p){return p.mot?'<span class="note" style="display:block;margin-top:4px;opacity:.85">Por que este duelo: '+esc(p.mot)+'.</span>':''};
+ var cr=$('dcrit');if(cr)cr.textContent=(DUE&&DUE.pares&&DUE.pares.length)?'Cada loja enfrenta a de perfil mais parecido: porte, volume de atendimentos, peso do CNPJ no faturamento, ticket do balcão e oportunidade na carteira CNPJ. As duplas foram montadas com '+(DUE.base==='mês em andamento'?'os números deste mês':'o fechamento de '+String(DUE.base||'').toLowerCase())+' e ficam fixas até o fim do mês. Vence quem estiver com o maior % da meta.':'Duplas montadas por tamanho de meta parecido, para o duelo ser justo. Vence quem estiver com o maior % da meta no fim do mês.';
  if(!pares.length){$('score').innerHTML='';$('duels').innerHTML='<p class="note">Os duelos aparecem assim que o ranking da rede estiver disponível.</p>';return}
  var CRIT=''; /* a explicação do critério já fica fixa embaixo da tela */
  if(restrito()){var meus=pares.filter(function(p){return minhaLoja(p[0].cod)||minhaLoja(p[1].cod)});
   $('score').innerHTML='';$('score').hidden=true;
   $('duels').innerHTML=(meus.length?meus.map(function(p){var a=minhaLoja(p[0].cod)?p[0]:p[1],b=a===p[0]?p[1]:p[0],wa=a.alc>=b.alc,w=wa?a:b;
    var ld=function(l,r,v,eu){return '<div class="sd'+(r?' r':'')+(v?'':' lose')+'" style="--c:'+l.c+'"><span class="ic">'+use(l.icone)+'</span><b>'+esc(l.curto)+'</b><small>'+(eu?'Sua loja':esc(l.cidade||'Adversária'))+'</small><span class="pv num">'+pc(l.alc)+'%</span></div>'};
-   return '<div class="glass duel"><div class="vs">'+ld(a,false,wa,true)+'<span class="mid">VS</span>'+ld(b,true,!wa,false)+'</div><div class="tug"><span class="l" style="--c:'+a.c+'"><i style="width:'+Math.min(100,a.alc)+'%"></i></span><span class="rr" style="--c:'+b.c+'"><i style="width:'+Math.min(100,b.alc)+'%"></i></span></div><span class="note">'+(wa?'<b style="color:'+a.c+'">Sua loja</b> está na frente por ':'<b style="color:'+b.c+'">'+esc(b.curto)+'</b> está na frente por ')+pc(Math.abs(a.alc-b.alc))+' p.p. · no ritmo atual: '+Math.round(a.proj)+'% contra '+Math.round(b.proj)+'%</span></div>'}).join(''):'<p class="note">Sua loja ficou sem adversária nesta rodada (número ímpar de lojas).</p>')+CRIT;
+   return '<div class="glass duel"><div class="vs">'+ld(a,false,wa,true)+'<span class="mid">VS</span>'+ld(b,true,!wa,false)+'</div><div class="tug"><span class="l" style="--c:'+a.c+'"><i style="width:'+Math.min(100,a.alc)+'%"></i></span><span class="rr" style="--c:'+b.c+'"><i style="width:'+Math.min(100,b.alc)+'%"></i></span></div><span class="note">'+(wa?'<b style="color:'+a.c+'">Sua loja</b> está na frente por ':'<b style="color:'+b.c+'">'+esc(b.curto)+'</b> está na frente por ')+pc(Math.abs(a.alc-b.alc))+' p.p. · no ritmo atual: '+Math.round(a.proj)+'% contra '+Math.round(b.proj)+'%</span>'+mot(p)+'</div>'}).join(''):'<p class="note">Sua loja ficou sem adversária nesta rodada (número ímpar de lojas).</p>')+CRIT;
   return}
  $('score').hidden=false;
  var win={};pares.forEach(function(p){var w=p[0].alc>=p[1].alc?p[0]:p[1];win[w.eq]=(win[w.eq]||0)+1});
  $('score').innerHTML='<span class="eye">Duelos vencendo hoje</span>'+equipes().sort(function(a,b){return (win[b.n]||0)-(win[a.n]||0)}).map(function(e){return '<span style="color:'+e.c+'"><b>'+(win[e.n]||0)+'</b><span style="color:var(--tinta);font-size:13px">'+esc(e.n)+'</span></span>'}).join('');
  var lado=function(l,r,w){return '<button class="sd'+(r?' r':'')+(w?'':' lose')+'" style="--c:'+l.c+'" data-cod="'+l.cod+'"><span class="ic">'+use(l.icone)+'</span><b>'+esc(l.curto)+'</b><small>Equipe '+esc(l.eq)+'</small><span class="pv num">'+pc(l.alc)+'%</span></button>'};
  $('duels').innerHTML=pares.filter(function(p){return filtro==='Todas'||p[0].eq===filtro||p[1].eq===filtro}).map(function(p){var a=p[0],b=p[1],wa=a.alc>=b.alc,w=wa?a:b;
-  return '<div class="glass duel"><div class="vs">'+lado(a,false,wa)+'<span class="mid">VS</span>'+lado(b,true,!wa)+'</div><div class="tug"><span class="l" style="--c:'+a.c+'"><i style="width:'+Math.min(100,a.alc)+'%"></i></span><span class="rr" style="--c:'+b.c+'"><i style="width:'+Math.min(100,b.alc)+'%"></i></span></div><span class="note"><b style="color:'+w.c+'">'+esc(w.curto)+'</b> na frente por '+pc(Math.abs(a.alc-b.alc))+' p.p. · no ritmo: '+Math.round(a.proj)+'% contra '+Math.round(b.proj)+'%</span></div>'}).join('')+CRIT;
+  return '<div class="glass duel"><div class="vs">'+lado(a,false,wa)+'<span class="mid">VS</span>'+lado(b,true,!wa)+'</div><div class="tug"><span class="l" style="--c:'+a.c+'"><i style="width:'+Math.min(100,a.alc)+'%"></i></span><span class="rr" style="--c:'+b.c+'"><i style="width:'+Math.min(100,b.alc)+'%"></i></span></div><span class="note"><b style="color:'+w.c+'">'+esc(w.curto)+'</b> na frente por '+pc(Math.abs(a.alc-b.alc))+' p.p. · no ritmo: '+Math.round(a.proj)+'% contra '+Math.round(b.proj)+'%</span>'+mot(p)+'</div>'}).join('')+CRIT;
 }
 
 /* ---------- ficha da loja ---------- */
