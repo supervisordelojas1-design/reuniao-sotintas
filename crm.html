@@ -155,6 +155,17 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
               contato:'Em conversa',pedido:'Vai comprar',semint:'Sem compra agora',feito:'Pós-venda feito',venda:'Gerou nova venda',naoquer:'Não quer contato'};
   var COR={novo:'novo',neg:'neg',contato:'neg',fechado:'fechado',validado:'fechado',pedido:'fechado',feito:'fechado',venda:'fechado',perdido:'perdido',naoquer:'perdido',prorrogado:'prorrogado',semint:'prorrogado'};
   var FIM=/^(fechado|validado|perdido|pedido|semint|feito|venda|naoquer)$/;
+  /* detalhe obrigatório de cada motivo de perda do orçamento: [rótulo curto que vai na observação, pergunta, exemplo] */
+  var PERDA_DET={
+    'Preço':[['Produto','Em qual produto ficamos caros?','Ex.: Suvinil Fosco Completo 18 L'],['Diferença','Quanto estava a diferença?','Ex.: concorrente R$ 40 mais barato']],
+    'Comprou no concorrente':[['Concorrente','Nome do concorrente','Ex.: nome da loja'],['Por quê','Por que o cliente comprou lá?','Ex.: preço, prazo, tinha o produto']],
+    'Sem estoque':[['Produto em falta','Qual produto faltou?','Ex.: Coral Decora 18 L branco'],['Quantidade','Quanto o cliente precisava?','Ex.: 6 latas']],
+    'Prazo de entrega':[['Prazo pedido','Para quando o cliente precisava?','Ex.: no mesmo dia'],['Prazo oferecido','Que prazo conseguimos oferecer?','Ex.: 3 dias úteis']],
+    'Faturado não liberado':[['O que travou','O que travou a liberação?','Ex.: limite de crédito, cadastro, financeiro']],
+    'Cliente adiou a obra':[['Nova previsão','Para quando ficou a obra?','Ex.: fevereiro, depois das chuvas']],
+    'Cliente não responde':[['Tentativas','Quantas tentativas e por qual canal?','Ex.: 3 ligações e 2 mensagens']],
+    'Outro':[['Motivo','Descreva o motivo','Explique em poucas palavras']]
+  };
   var CANAIS=['Ligação','WhatsApp','Visita','E-mail','Na loja'];
   var RESULT=['Falei com o cliente','Não atendeu','Deixei recado'];
   var CHANCE={alta:['Alta',.7],media:['Média',.4],baixa:['Baixa',.15]};
@@ -542,7 +553,7 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
       (o.tipo==='orc'?'<div id="bNeg" class="duas"><label class="campo">Previsão de fechamento<input type="date" name="prev" min="'+hj+'" value="'+esc(u.prev&&u.prev>=hj?u.prev:'')+'"></label>'+
         '<fieldset><legend>Chance de fechar</legend>'+ops('chance',[['alta','Alta'],['media','Média'],['baixa','Baixa']],u.chance||'media')+'</fieldset></div>'+
         '<div id="bFec" class="aviso" hidden>Marque “Fechado” quando o cliente confirmar o pedido. O gerente confere quando a venda for faturada.</div>':'')+
-      (T.motivos?'<label id="bPer" class="campo" hidden>'+(o.tipo==='orc'?'Por que perdemos?':'Por quê? (opcional)')+'<select name="motivo"><option value="">Escolha o motivo</option>'+T.motivos.map(function(m){return '<option>'+esc(m)+'</option>';}).join('')+'</select></label>':'')+
+      (T.motivos?'<label id="bPer" class="campo" hidden>'+(o.tipo==='orc'?'Por que perdemos?':'Por quê? (opcional)')+'<select name="motivo"><option value="">Escolha o motivo</option>'+T.motivos.map(function(m){return '<option>'+esc(m)+'</option>';}).join('')+'</select></label><div id="bDet" class="duas" hidden></div>':'')+
       (o.tipo==='pos'?'<div id="bNao" class="aviso" hidden>O cliente sai da fila do pós-venda e não aparece mais nas próximas etapas.</div>'+campo('WhatsApp do cliente'+(ct.cTel?'':' (preencha na 1ª vez)'),'cTel',ct.cTel,'tel','inputmode="tel" maxlength="20" placeholder="(21) 9____-____"'):'')+
       '<label class="campo">O que o cliente disse (opcional)<textarea name="obs" rows="2" maxlength="300"></textarea></label>'+
       '<label id="bProx" class="campo">Próximo contato<input type="date" name="prox" min="'+hj+'"></label>'+
@@ -551,7 +562,13 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
       '<div class="erro" id="regErro" role="alert"></div>'+
       '<div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="btn" id="regCanc">Cancelar</button><button type="submit" class="btn forte" id="regOk">Salvar</button></div></form>';
     var f=d.querySelector('form'), el=function(id){ return d.querySelector('#'+id); };
-    function ajusta(){ var st=f.status.value;
+    /* nov/2026 (Bruno): orçamento perdido pede o detalhe do motivo (qual produto, qual concorrente…). O detalhe vai no começo da observação. */
+    function detalhes(){ var st=f.status.value, m=f.motivo?String(f.motivo.value||''):''; return (o.tipo==='orc'&&st==='perdido'&&PERDA_DET[m])||null; }
+    function ajustaDet(){ var b=el('bDet'); if(!b) return; var D2=detalhes(), m=D2?String(f.motivo.value):'';
+      if(!D2){ b.hidden=true; b.innerHTML=''; b.dataset.m=''; return; }
+      if(b.dataset.m!==m){ b.dataset.m=m; b.innerHTML=D2.map(function(x,i){ return '<label class="campo">'+esc(x[1])+'<input type="text" name="det'+i+'" maxlength="90" placeholder="'+esc(x[2]||'')+'" autocomplete="off"></label>'; }).join(''); }
+      b.hidden=false; }
+    function ajusta(){ var st=f.status.value; ajustaDet();
       if(el('bNeg')) el('bNeg').hidden=st!=='neg'&&st!=='prorrogado'; if(el('bFec')) el('bFec').hidden=st!=='fechado';
       if(el('bPer')) el('bPer').hidden=st!=='perdido'&&st!=='semint'; if(el('bNao')) el('bNao').hidden=st!=='naoquer';
       el('bProx').hidden=o.tipo!=='pin'&&FIM.test(st)&&st!=='semint'; }
@@ -564,10 +581,13 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
       else if(st==='perdido'&&!val('motivo')) er='Escolha o motivo da perda.';
       else if(val('cEmail')&&!/^\S+@\S+\.\S+$/.test(val('cEmail'))) er='Confira o e-mail do comprador.';
       else if(val('cTel')&&!telLimpo(val('cTel'))) er='Confira o telefone: DDD + número.';
+      var DT=detalhes(), partes=[];
+      if(!er&&DT){ DT.forEach(function(x,i){ var v=val('det'+i); if(!v&&!er){ er='Preencha: '+x[1].replace(/\?$/,'')+'.'; var c=f['det'+i]; if(c) c.focus(); } if(v) partes.push(x[0]+': '+v); }); }
       if(er){ el('regErro').textContent=er; return; }
+      var det=partes.join(' · '), obsF=(det?det+(val('obs')?' | ':''):'')+val('obs'); if(obsF.length>300) obsF=obsF.slice(0,299)+'…';
       var r={id:novoId('c'),em:new Date().toISOString(),por:S.nome,tipo:o.tipo,loja:o.loja,doc:o.doc,cli:o.cli,vend:o.vend,valor:o.valor,
         canal:f.canal.value,res:f.res.value,status:st,prev:ativo?val('prev'):'',chance:ativo?f.chance.value:'',motivo:(st==='perdido'||st==='semint'||o.tipo==='pin')?val('motivo'):'',
-        obs:val('obs'),prox:el('bProx').hidden?'':val('prox'),etapa:o.tipo==='pos'?String(ETAPAS[o.etapa][0]):'',cNome:val('cNome'),cCargo:val('cCargo'),cTel:val('cTel'),cEmail:val('cEmail'),cHora:val('cHora')};
+        obs:obsF,prox:el('bProx').hidden?'':val('prox'),etapa:o.tipo==='pos'?String(ETAPAS[o.etapa][0]):'',cNome:val('cNome'),cCargo:val('cCargo'),cTel:val('cTel'),cEmail:val('cEmail'),cHora:val('cHora')};
       el('regOk').disabled=true; el('regOk').textContent='Salvando…';
       gravarReg(r).then(function(){ d.close(); if(o.tipo==='pos') montarPos(); montar(); });
     };

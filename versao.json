@@ -2,6 +2,24 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v270",
+      "data": "20/11/2026",
+      "hora": "18:08",
+      "itens": [
+        {
+          "painel": "CRM de Vendas",
+          "o_que": "Ao marcar um orçamento como Perdido, o app agora pede o detalhe do motivo: qual produto faltou, nome do concorrente e por que o cliente comprou lá, o que travou a liberação, e assim por diante.",
+          "para": [
+            "vend",
+            "ger",
+            "sup",
+            "anl",
+            "coord"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v269",
       "data": "20/11/2026",
       "hora": "10:49",
