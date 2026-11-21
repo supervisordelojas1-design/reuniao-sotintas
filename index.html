@@ -9344,6 +9344,14 @@ syncNav();
  </div>
  <iframe id="ifrBonus" title="Bonificações" style="flex:1;width:100%;border:0;background:#0f1522"></iframe>
 </div>
+
+<div id="ovCampanhas" style="position:fixed;inset:0;z-index:99999;background:#0f1522;display:none;flex-direction:column">
+ <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;color:#fff;font:600 14px system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
+  <button id="ovCpFechar" style="border:0;border-radius:8px;padding:9px 13px;background:#FFD100;color:#0F2B46;font:inherit;cursor:pointer">&larr; Voltar ao início</button>
+  <span style="opacity:.85">Campanhas</span>
+ </div>
+ <iframe id="ifrCampanhas" title="Campanhas" style="flex:1;width:100%;border:0;background:#0f1522"></iframe>
+</div>
 <!-- ===== NIVEIS (aba embutida, espelha o Painel) ===== -->
 <div id="ovNiveis" style="position:fixed;inset:0;z-index:99999;background:#0f1522;display:none;flex-direction:column">
  <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;color:#fff;font:600 14px system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
@@ -9451,6 +9459,11 @@ syncNav();
       <button type="button" class="ini-card feat" data-act="bonus" data-gate="1" data-vend="1" data-ger="1">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-wallet"/></svg></span>
         <span class="ini-txt"><span class="ini-nm">Bonificações</span><span class="ini-ds">Quanto vale cada nível e o próximo</span></span>
+        <span class="ini-go" aria-hidden="true">&rarr;</span>
+      </button>
+      <button type="button" class="ini-card feat" data-act="campanhas" data-gate="1" data-vend="1" data-ger="1">
+        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-wallet"/></svg></span>
+        <span class="ini-txt"><span class="ini-nm">Campanhas</span><span class="ini-ds">Pix Semanal e campanhas da rede</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
       <button type="button" class="ini-card feat" data-act="simulador" data-gate="1" data-vend="1" data-ger="1">
@@ -9895,6 +9908,16 @@ body.foco .wrap{padding-bottom:40px}
   }
   if(xB){ xB.addEventListener('click', function(){ ovB.style.display='none'; ifrB.removeAttribute('src'); document.body.style.overflow=''; try{ if(window.abrirInicio) window.abrirInicio(); }catch(e){} }); }
 
+  // overlay de Campanhas (Pix Semanal e campanhas cadastraveis) — espelha o de Bonificacoes
+  var ovCp=document.getElementById('ovCampanhas'), ifrCp=document.getElementById('ifrCampanhas'), xCp=document.getElementById('ovCpFechar');
+  function abrirCampanhas(){
+    if(!ovCp||!ifrCp) return;
+    var tema=(window.STtema?window.STtema.get():'light');
+    ifrCp.setAttribute('src','campanhas.html?tema='+tema+'&v='+Date.now());
+    ovCp.style.display='flex'; document.body.style.overflow='hidden';
+  }
+  if(xCp){ xCp.addEventListener('click', function(){ ovCp.style.display='none'; ifrCp.removeAttribute('src'); document.body.style.overflow=''; try{ if(window.abrirInicio) window.abrirInicio(); }catch(e){} }); }
+
   // overlay de Ranking (espelha o de Níveis)
   var ovR=document.getElementById('ovRanking'), ifrR=document.getElementById('ifrRanking'),
       xR=document.getElementById('ovRkFechar');
@@ -10234,7 +10257,7 @@ body.foco .wrap{padding-bottom:40px}
     fecharInicio();
     if(act==='painel'){ var tp=document.getElementById('tabPainel'); if(tp) tp.click(); return; }
     if(act==='niveis'){ abrirNiveis(); return; }
-    if(act==='bonus'){ abrirBonus(); return; }
+    if(act==='bonus'){ abrirBonus(); return; } if(act==='campanhas'){ abrirCampanhas(); return; }
     if(act==='bonusger'){ abrirBonusGer(); return; }
     if(act==='simulador'){ abrirSimulador(); return; }
     if(act==='ranking'){ abrirRanking(); return; }
