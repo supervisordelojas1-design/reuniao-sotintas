@@ -9823,7 +9823,9 @@ body.foco .wrap{padding-bottom:40px}
       var dias=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
       var meses=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
       var dia=dias[dt.getDay()]; dia=dia.charAt(0).toUpperCase()+dia.slice(1);
-      d.textContent=dia+', '+dt.getDate()+' de '+meses[dt.getMonth()];
+      /* no celular vai a forma curta ("Sáb, 21 nov"), na mesma linha da hora */
+      var curto=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][dt.getDay()]+', '+dt.getDate()+' '+meses[dt.getMonth()].slice(0,3);
+      d.innerHTML='<span class="dt-l"></span><span class="dt-c"></span>'; d.firstChild.textContent=dia+', '+dt.getDate()+' de '+meses[dt.getMonth()]; d.lastChild.textContent=curto;
     }catch(e){} }
   }
   function abrirInicio(){ aplicarGate(); saudar(); try{ if(window.resumoHoje) window.resumoHoje(); }catch(e){} try{ if(window.resumoPontos) window.resumoPontos(); }catch(e){}
@@ -11047,6 +11049,33 @@ html[data-theme="dark"] #ovInicio{background:radial-gradient(90% 55% at 100% 0%,
   #ovInicio .ini-acoes .ini-theme{padding:8px 10px}
   #ovInicio .ini-top{flex-wrap:wrap}
   #ovInicio .ini-brand{flex:1 1 0;min-width:0}
+}
+#ovInicio #iniData .dt-c{display:none}
+/* 21/11/2026 (Bruno): faixa de cima no celular, mais limpa. Linha 1: logo, saudação numa linha e data + hora juntas; à direita só os ícones.
+   Linha 2: os pontos ST em uma faixa única de colunas iguais, sem rolagem (o pódio fica no ranking, a um toque). */
+@media(max-width:620px){
+  html.stv-home #ovInicio .ini-top{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px 8px;padding:10px 14px 12px}
+  html.stv-home #ovInicio .ini-brand{gap:10px;min-width:0}
+  html.stv-home #ovInicio .ini-logo{width:36px;height:36px;border-radius:11px;font-size:13px}
+  html.stv-home #ovInicio .ini-tt{min-width:0}
+  html.stv-home #ovInicio .ini-h{font-size:17px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  html.stv-home #ovInicio .ini-tt .ini-s{display:inline;font-size:12px;margin:0;white-space:nowrap}
+  html.stv-home #ovInicio .ini-tt .ini-hora-cel::before{content:" · "}
+  html.stv-home #ovInicio #iniData .dt-l{display:none}
+  html.stv-home #ovInicio #iniData .dt-c{display:inline}
+  html.stv-home #ovInicio .ini-acoes{flex-wrap:nowrap!important;gap:6px!important}
+  html.stv-home #ovInicio .ini-acoes .ini-theme{position:relative;width:38px;height:38px;padding:0;display:grid;place-items:center;border-radius:50%;font-size:16px;line-height:1}
+  html.stv-home #ovInicio .ini-acoes .ini-theme[hidden]{display:none}
+  html.stv-home #ovInicio #btnNovidades>span:first-of-type{display:none}
+  html.stv-home #ovInicio #stNovBadge{position:absolute;top:-4px;right:-4px;margin:0!important}
+  html.stv-home #ovInicio .ini-tpts{grid-column:1/-1;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:0;overflow:hidden;padding:0;border-radius:14px;
+    background:rgba(255,255,255,.10);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16)}
+  html.stv-home #ovInicio .ini-tpts[hidden]{display:none}
+  html.stv-home #ovInicio .ini-tpts>span{background:none;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;border-radius:0;padding:7px 4px 8px;align-items:center;text-align:center;min-width:0}
+  html.stv-home #ovInicio .ini-tpts>.tp-k+.tp-k{border-left:1px solid rgba(255,255,255,.16)}
+  html.stv-home #ovInicio .ini-tpts>.tp-ic,html.stv-home #ovInicio .ini-tpts>.tp-go,html.stv-home #ovInicio .ini-tpts>.tp-pod{display:none}
+  html.stv-home #ovInicio .ini-tpts b{font-size:15.5px}
+  html.stv-home #ovInicio .ini-tpts i{font-size:10.5px;opacity:.8}
 }
 
 #stFx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}

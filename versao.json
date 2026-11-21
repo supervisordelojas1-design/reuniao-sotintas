@@ -2,6 +2,17 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v273",
+      "data": "21/11/2026",
+      "hora": "07:38",
+      "itens": [
+        {
+          "painel": "Tela inicial (celular)",
+          "o_que": "Faixa de cima mais limpa: saudação numa linha, data e hora juntas, botões só com ícone e os Pontos ST em uma faixa única, sem rolagem. O pódio continua no ranking, a um toque."
+        }
+      ]
+    },
+    {
       "v": "ast-v272",
       "data": "20/11/2026",
       "hora": "19:04",
