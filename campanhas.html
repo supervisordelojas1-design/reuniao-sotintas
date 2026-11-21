@@ -1,0 +1,285 @@
+<!doctype html><html data-theme="dark" style="color-scheme:dark"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Campanhas · Só Tintas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{--bg:#0f1522;--surface:#1a2336;--surface2:#141c2c;--ink:#eef2fb;--muted:#9aa5bb;--line:#2c3850;--accent:#ff3b47;--navy:#4f7cf0;--ok:#2FD08E;--warn:#FFC94D;
+--f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;--f-body:"Public Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color-scheme:dark}
+html[data-theme="light"]{--bg:#f5f7fb;--surface:#fff;--surface2:#f7f9fd;--ink:#16233d;--muted:#5a677f;--line:#e4e9f3;--navy:#1C3F8F;--ok:#128a52;--warn:#b77900;color-scheme:light}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 56px;display:flex;flex-direction:column;gap:16px}
+.topbar{height:8px;background:var(--accent);border-radius:0 0 6px 6px;margin:-20px -16px 4px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(24px,4vw,36px);line-height:1.05;margin:4px 0 0;color:var(--accent)}
+.sub{color:var(--muted);font-size:13px}
+button,input,select,textarea{font:inherit}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:700 12.5px var(--f-body);padding:8px 13px;border-radius:9px;cursor:pointer}
+.btn.pri{background:var(--navy);border-color:var(--navy);color:#fff}.btn.ok{background:var(--ok);border-color:var(--ok);color:#06281a}
+.chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--muted);font:700 12.5px var(--f-body);padding:8px 14px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}.tab{border:0;background:transparent;color:var(--muted);font:700 13px var(--f-body);padding:8px 12px;border-radius:8px;cursor:pointer}
+.tab[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:inset 0 -3px 0 var(--accent)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.card h3{margin:0;padding:13px 16px;font-family:var(--f-display);font-weight:800;font-size:16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.card h3 small{font:700 11.5px var(--f-body);color:var(--muted)}
+.pad{padding:14px 16px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px}.kpi .v{font-family:var(--f-display);font-weight:800;font-size:24px}.kpi .l{font-size:12px;color:var(--muted);font-weight:700}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:800;text-align:right;padding:10px 12px;background:var(--surface2);white-space:nowrap}
+td{padding:9px 12px;border-top:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+th:first-child,td:first-child,th.l,td.l{text-align:left}tr.off td{color:var(--muted);font-weight:500}tr.clic{cursor:pointer}
+.vc{display:inline-grid;place-items:center;min-width:30px;height:20px;border-radius:6px;font-weight:800;font-size:11px;background:#2d6ae0;color:#fff}
+.vc.v1{background:#111319;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}.vc.v2{background:#d32531}.vc.v3{background:#E6B935;color:#2a2000}.vc.v4{background:#178048}.vc.v5{background:#2d6ae0}
+.aviso{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--navy);border-radius:12px;padding:12px 16px}.aviso.erro{border-left-color:#d9363e}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}.campo{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;color:var(--muted)}
+.campo input,.campo select,.campo textarea{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:110px}
+.campo textarea{min-width:260px;min-height:64px}
+td input{width:84px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 8px;text-align:right}
+.mini{font-size:12px;color:var(--muted)}details summary{cursor:pointer;padding:10px 16px;font-weight:700}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#16233d;color:#fff;padding:10px 16px;border-radius:999px;font-weight:700;font-size:13px;z-index:99;box-shadow:0 6px 22px rgba(0,0,0,.4)}
+</style><script>(function(c){c.add("stv","stv-fam");try{if(window.self!==window.top)c.add("stv-emb")}catch(e){c.add("stv-emb")}})(document.documentElement.classList)</script><link rel="stylesheet" href="st-vidro.css?v=2">
+</head><body><div class="wrap"><div class="topbar"></div>
+<header><div><div class="eyebrow">Só Tintas · Bonificação</div><h1>🎯 Campanhas</h1><div class="sub" id="sub">Pix Semanal e campanhas da rede</div></div>
+<div class="row"><input type="month" id="mes" aria-label="Mês" style="background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:8px 10px"><button class="btn" id="btnTema">◐ Tema</button></div></header>
+<div class="chips" id="camps"></div>
+<div id="aviso" class="aviso" hidden></div>
+<div id="app"></div></div>
+<script src="st-hora.js?v=1"></script><script src="st-dados.js?v=93"></script>
+<script>
+(function(){
+'use strict';
+/* URL do Servidor de Campanhas ST (Apps Script novo). Preenchida na publicação. */
+var URL_CAMP='https://script.google.com/macros/s/AKfycbxJW4qMOTHnuF9CVAMuBXS6IxqBa5I6QU-iVzet3jWl0dkkDjdHDbctht1mAD9rBw4DhA/exec';
+var $=function(i){return document.getElementById(i)};
+var esc=function(t){return String(t==null?'':t).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var brl=function(v){return 'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})};
+var brl0=function(v){return 'R$ '+Math.round(Number(v)||0).toLocaleString('pt-BR')};
+var pct1=function(v){return (v*100).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%'};
+var isNum=function(v){return typeof v==='number'&&!isNaN(v)};
+var norm=function(s){return String(s||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Z0-9 ]+/g,' ').replace(/\s+/g,' ').trim()};
+var cod3=function(f){var m=String(f||'').match(/^\s*(\d+)/);return m?('00'+m[1]).slice(-3):''};
+function toast(m){var t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(function(){t.remove()},3500)}
+function aviso(t,erro){var a=$('aviso');a.innerHTML=t||'';a.className='aviso'+(erro?' erro':'');a.hidden=!t}
+
+try{var q=new URLSearchParams(location.search),t=q.get('tema')||localStorage.getItem('st_tema');if(t)document.documentElement.dataset.theme=t}catch(e){}
+$('btnTema').onclick=function(){var h=document.documentElement;h.dataset.theme=h.dataset.theme=='light'?'dark':'light'};
+
+/* ═════════ servidor ═════════ */
+function post(corpo){return fetch(URL_CAMP,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(corpo)}).then(function(r){return r.json()})}
+function chamar(acao,extra){
+  function vai(tk){var b={acao:acao,tk:tk};for(var k in(extra||{}))b[k]=extra[k];return post(b)}
+  return STDados.cracha().then(vai).then(function(r){
+    if(r&&!r.ok&&r.cracha){try{localStorage.removeItem('st_cracha_v1')}catch(e){}return STDados.cracha().then(vai)}
+    return r}).then(function(r){if(!r||!r.ok)throw new Error((r&&r.erro)||'Falha no servidor de campanhas.');return r});
+}
+
+/* ═════════ motor do Pix Semanal ═════════ */
+var PIX_PADRAO={
+ semanas:[{n:1,datas:'02 a 07',pct:.25,nota:''},{n:2,datas:'09 a 14',pct:.30,nota:''},{n:3,datas:'16 a 21',pct:.25,nota:''},{n:4,datas:'23 a 28',pct:.40,nota:''},{n:5,datas:'30',pct:.15,nota:'Fecha no último dia do mês'}],
+ bonus:{1:[45,95,140,185,220],2:[55,110,165,220,265],3:[45,95,140,185,220],4:[75,150,220,295,355],5:[30,50,85,115,140]},
+ carteira:{BRUNO:'002,004,006,007,009,010,012,013,017,022,023',RAMON:'018,019,021,024,025,026,035,036',DANILO:'016,027,028,029,030,032,033,034,038','CARLOS EDUARDO':'008,015'},
+ regua:{loja:[100000,180000],vend:{3:[50000,65000,85000,130000],2:[40000,55000,70000,95000],1:[30000,45000,60000,80000]}}
+};
+var EXCLUI=/ATENDIMENTO|ADMINISTRA|TESTE|EXPEDI|MP -/i;
+var E={};
+E.parse=function(rows){var occ={},store={},cur=null;
+ for(var i=1;i<rows.length;i++){var r=rows[i]||[],a=r[0],b=r[1];
+  if(a&&String(a).indexOf('Filtros')===0)continue;
+  if(b==='Total'){if(a!=null){cur=String(a).trim();store[cur]=r[7]}continue}
+  if(a)cur=String(a).trim();
+  if(b&&cur){var n=String(b).trim();(occ[n]=occ[n]||[]).push([cur,r[2],r[3],r[7]])}}
+ return{occ:occ,store:store}};
+E.baseMetas=function(p){var vend={};
+ Object.keys(p.occ).forEach(function(n){var es=p.occ[n],home=es.filter(function(e){return isNum(e[1])})[0];
+  if(home){var med=home[3];if(!isNum(med)){var o=es.filter(function(e){return e!==home&&isNum(e[3])})[0];med=o?o[3]:null}vend[n]={f:home[0],m:home[1],d:isNum(med)?med:null}}
+  else vend[n]={f:es[0][0],m:null,d:null}});
+ var st={};Object.keys(p.store).forEach(function(k){if(isNum(p.store[k]))st[k]=p.store[k]});return{vend:vend,store:st}};
+E.nl=function(m,rg){return m>=rg.loja[1]?3:m>=rg.loja[0]?2:1};
+E.nv=function(m,nl,rg){var l=1;rg.vend[nl].forEach(function(x,i){if(m>=x)l=i+2});return l};
+E.fechar=function(base,pf,rg){var fat={};
+ Object.keys(pf.occ).forEach(function(n){var es=pf.occ[n];fat[n]={v:es.reduce(function(s,e){return s+(e[2]||0)},0),fil:es[0][0]}});
+ var linhas=[],excl=[],nomes={};Object.keys(base.vend).concat(Object.keys(fat)).forEach(function(n){nomes[n]=1});
+ Object.keys(nomes).sort().forEach(function(n){var m=base.vend[n],f=fat[n],fil=(m&&m.f)||(f&&f.fil)||'';
+  if(EXCLUI.test(n)||fil.indexOf('(CD)')>=0)return;
+  function ex(x){excl.push([n,fil,x])}
+  if(!m)return ex('Só aparece nas vendas, não está na base de metas');
+  if(!f)return ex('Só aparece na base de metas, sem venda na semana');
+  if(m.m==null)return ex('Sem meta cadastrada');
+  if(m.m<1000)return ex('Meta mensal de '+brl(m.m)+' — placeholder de cadastro');
+  var eff=(m.m>=49999&&m.m<50000)?50000:m.m;
+  if(eff<50000)return ex('Meta mensal abaixo de R$ 50 mil — fora do piso da campanha');
+  if(m.d==null)return ex('Sem Média 90 dias do vendedor — não dá para nivelar');
+  var sm=base.store[fil];if(sm==null)return ex('Loja sem Média 90 dias registrada');
+  var nl=E.nl(sm,rg);linhas.push([fil,n,eff,f.v,m.d,sm,nl,E.nv(m.d,nl,rg)])});
+ return{linhas:linhas,excl:excl}};
+E.sup=function(fil,cart){var c=cod3(fil);for(var s in cart){if(String(cart[s]).split(/[,\s;]+/).map(function(x){return('00'+x).slice(-3)}).indexOf(c)>=0)return s}return'SEM SUPERVISOR'};
+E.resultado=function(sem,pct,bonus,cart){return sem.linhas.map(function(l){var at=l[3]/l[2],ok=at>=pct;
+ return{filial:l[0],nome:l[1],meta:l[2],fat:l[3],at:at,ok:ok,nv:l[7],valor:ok?bonus[l[7]-1]:0,falta:ok?0:Math.max(0,pct*l[2]-l[3]),sup:E.sup(l[0],cart)}}).sort(function(a,b){return b.at-a.at})};
+window.__E=E;
+
+/* ═════════ estado ═════════ */
+var S={def:[],camp:null,mes:'',aba:'resumo',perfil:null,nome:'',full:null,pub:{},erro:null,carregando:true,editando:false};
+var coord=function(){return S.perfil==='coord'};
+var mesHoje=function(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')};
+function campAtual(){return S.def.filter(function(c){return c.id===S.camp})[0]}
+function seed(){return[
+ {id:'pix',nome:'Pix Semanal',tipo:'pix',ativa:true,desc:'Bônus semanal por nível de vendedor (V1–V5): bateu o % mínimo da meta mensal na semana, ganha.',param:JSON.parse(JSON.stringify(PIX_PADRAO))},
+ {id:'gerentes70',nome:'Gerentes 70%',tipo:'meta_loja',ativa:true,desc:'Loja que atingir o % da meta do mês até o prazo ganha o prêmio (gerente).',param:{pct:.70,prazo:'',premio:500}}]}
+function novoFull(c){return c.tipo==='pix'?{base:null,semanas:{}}:{lojas:null}}
+
+function carregar(){
+ S.carregando=true;S.erro=null;render();
+ var ex={mes:S.mes};if(S.camp)ex.id=S.camp;
+ return chamar('campLer',ex).then(function(r){
+  S.perfil=r.perfil;S.nome=r.nome;S.def=r.def||[];S.pub=r.pub||{};S.full=r.full||null;
+  if(!S.def.length&&coord()){S.def=seed();return salvarDef()}
+ }).then(function(){
+  if(!S.camp||!campAtual()){S.camp=S.def.length?S.def[0].id:null;if(S.camp&&coord())return chamar('campLer',{mes:S.mes,id:S.camp}).then(function(r){S.pub=r.pub||{};S.full=r.full||null})}
+ }).then(function(){
+  var c=campAtual();if(c&&coord()&&!S.full)S.full=novoFull(c);
+  S.carregando=false;render();
+ }).catch(function(e){S.carregando=false;S.erro=e.message;render()});
+}
+function trocarCamp(id){S.camp=id;S.aba='resumo';S.editando=false;S.full=null;S.pub={};carregar()}
+
+/* ═════════ salvar / publicar ═════════ */
+function salvarFull(){return chamar('campSalvarFull',{id:S.camp,mes:S.mes,full:S.full})}
+function salvarDef(){return chamar('campSalvarDef',{def:S.def})}
+function porLoja(rows,fn){var o={};rows.forEach(function(x){var l=cod3(x.filial);(o[l]=o[l]||fn(x)).linhas.push(x)});return o}
+function visaoSemana(n){var c=campAtual();
+ if(coord()){var s=S.full&&S.full.semanas&&S.full.semanas[n];if(!s)return null;var P=c.param,p=P.semanas[n-1],sn=s.fechada&&s.snap,pct=sn?sn.pct:p.pct;
+  return{n:n,datas:p.datas,pct:pct,fechada:!!s.fechada,R:E.resultado(s,pct,sn?sn.bonus:P.bonus[n],sn?sn.carteira:P.carteira),excl:s.excl,arq:s.arq}}
+ var d=S.pub['s'+n];if(!d)return null;var cods=Object.keys(d);if(!cods.length)return null;var R=[];cods.forEach(function(k){d[k].linhas.forEach(function(x){R.push(x)})});
+ R.sort(function(a,b){return b.at-a.at});var f=d[cods[0]];return{n:n,datas:f.datas,pct:f.pct,fechada:f.fechada,R:R,excl:[],arq:''}}
+function publicarSemana(n){var v=visaoSemana(n);if(!v)return Promise.resolve();var pub={};
+ pub['s'+n]=porLoja(v.R,function(){return{n:n,datas:v.datas,pct:v.pct,fechada:v.fechada,linhas:[]}});
+ return chamar('campPublicar',{id:S.camp,mes:S.mes,pub:pub})}
+function pixCarteira(){var p=S.def.filter(function(c){return c.tipo==='pix'})[0];return p?p.param.carteira:PIX_PADRAO.carteira}
+function dadosMeta(){var c=campAtual(),P=c.param;
+ if(coord()){var g=S.full&&S.full.lojas;if(!g)return null;return{P:P,arq:S.full.arq,R:Object.keys(g).map(function(k){var l=g[k],at=l.m?l.f/l.m:0,ok=at>=P.pct;return{filial:k,meta:l.m,fat:l.f,at:at,ok:ok,premio:ok?P.premio:0,sup:E.sup(k,pixCarteira())}}).sort(function(a,b){return b.at-a.at})}}
+ var d=S.pub.meta;if(!d)return null;var R=Object.keys(d).map(function(k){return d[k]});if(!R.length)return null;return{P:{pct:R[0].pct,prazo:R[0].prazo,premio:R[0].premioBase},R:R.sort(function(a,b){return b.at-a.at})}}
+function publicarMeta(){var d=dadosMeta();if(!d)return Promise.resolve();var o={};
+ d.R.forEach(function(x){o[cod3(x.filial)]={filial:x.filial,meta:x.meta,fat:x.fat,at:x.at,ok:x.ok,premio:x.premio,sup:x.sup,pct:d.P.pct,prazo:d.P.prazo,premioBase:d.P.premio}});
+ return chamar('campPublicar',{id:S.camp,mes:S.mes,pub:{meta:o}})}
+
+/* ═════════ planilhas (leitor carregado só quando a coordenação precisa) ═════════ */
+function carregaXlsx(){return window.XLSX?Promise.resolve():new Promise(function(ok,no){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';s.onload=ok;s.onerror=function(){no(new Error('Não consegui carregar o leitor de planilhas (precisa de internet).'))};document.head.appendChild(s)})}
+function lerArquivo(f){return carregaXlsx().then(function(){return new Promise(function(ok,no){var fr=new FileReader();fr.onerror=function(){no(new Error('Não consegui abrir o arquivo.'))};
+ fr.onload=function(){try{var wb=XLSX.read(fr.result,{type:'array'});ok(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:null,raw:true}))}catch(e){no(e)}};fr.readAsArrayBuffer(f)})})}
+function hoje(){return new Date().toISOString().slice(0,10)}
+function upload(fn){return function(inp,extra){var f=inp.files[0];if(!f)return;lerArquivo(f).then(function(rows){return fn(rows,f.name,extra)}).then(function(m){toast(m+' ✔');render()}).catch(function(e){toast(e.message)});inp.value=''}}
+var aplicarBase=function(rows,nome){var b=E.baseMetas(E.parse(rows));if(!Object.keys(b.vend).length)throw new Error('Não encontrei vendedores. É o INDICADORES do mês (com meta e Méd. 90 dias)?');
+ S.full.base={vend:b.vend,store:b.store,em:hoje(),arq:nome};return salvarFull().then(function(){return Object.keys(b.vend).length+' vendedores, '+Object.keys(b.store).length+' lojas'})};
+var aplicarSemana=function(rows,nome,n){if(!S.full.base)throw new Error('Envie primeiro a base de metas (INDICADORES do mês).');
+ var r=E.fechar(S.full.base,E.parse(rows),campAtual().param.regua);if(!r.linhas.length)throw new Error('Nenhum vendedor correlacionou. Confira se é o INDICADORES da semana.');
+ S.full.semanas[n]={linhas:r.linhas,excl:r.excl,arq:nome,em:hoje(),fechada:false,snap:null};
+ return salvarFull().then(function(){return publicarSemana(n)}).then(function(){return r.linhas.length+' vendedores correlacionados, '+r.excl.length+' excluídos'})};
+var aplicarMeta=function(rows,nome){var lojas={};rows.slice(1).forEach(function(r){if(r&&r[0]&&!/^(Filtros|ano_|nome|sk_)/.test(String(r[0]))&&isNum(r[1]))lojas[String(r[0]).trim()]={m:r[1],f:isNum(r[2])?r[2]:0}});
+ if(!Object.keys(lojas).length)throw new Error('Não encontrei lojas. É o arquivo META?');S.full.lojas=lojas;S.full.arq=nome;S.full.em=hoje();
+ return salvarFull().then(publicarMeta).then(function(){return Object.keys(lojas).length+' lojas'})};
+window.Camp={
+ base:upload(aplicarBase),semana:upload(aplicarSemana),meta:upload(aplicarMeta),
+ aba:function(a){S.aba=a;render()},camp:trocarCamp,
+ fechar:function(n,f){var s=S.full.semanas[n],c=campAtual(),p=c.param.semanas[n-1];s.fechada=!!f;s.snap=f?{pct:p.pct,bonus:c.param.bonus[n].slice(),carteira:c.param.carteira}:null;
+  salvarFull().then(function(){return publicarSemana(n)}).then(function(){toast(f?'Semana '+n+' fechada — valores travados ✔':'Semana '+n+' reaberta');render()}).catch(function(e){toast(e.message)})},
+ param:function(t,a,b,v){var c=campAtual(),P=c.param;
+  if(t==='sem')P.semanas[a][b]=(b==='pct')?Number(v):v;else if(t==='bonus')P.bonus[a][b]=Number(v)||0;else if(t==='cart')P.carteira[a]=v;else if(t==='gen'){P[a]=(a==='pct')?Number(v):(a==='premio'?Number(v)||0:v)}
+  salvarDef().then(function(){return c.tipo==='pix'?Object.keys((S.full&&S.full.semanas)||{}).reduce(function(p,n){return p.then(function(){return publicarSemana(+n)})},Promise.resolve()):publicarMeta()}).then(function(){toast('Salvo e republicado ✔')}).catch(function(e){toast(e.message)})},
+ defCampo:function(k,v){var c=campAtual();c[k]=(k==='ativa')?!!v:v;salvarDef().then(function(){toast('Campanha salva ✔');render()}).catch(function(e){toast(e.message)})},
+ nova:function(){var nome=prompt('Nome da nova campanha:');if(!nome)return;var tipo=prompt('Tipo: 1 = "Meta da loja → prêmio" (como Gerentes 70%) · 2 = "Pix Semanal" (modelo semanal por nível):','1');
+  var id=(norm(nome).toLowerCase().replace(/ /g,'_').slice(0,24)||'camp')+'_'+Math.random().toString(36).slice(2,5);
+  S.def.push(tipo==='2'?{id:id,nome:nome,tipo:'pix',ativa:true,desc:'',param:JSON.parse(JSON.stringify(PIX_PADRAO))}:{id:id,nome:nome,tipo:'meta_loja',ativa:true,desc:'',param:{pct:.7,prazo:'',premio:500}});
+  salvarDef().then(function(){toast('Campanha criada ✔');trocarCamp(id)}).catch(function(e){toast(e.message)})},
+ editar:function(){S.editando=!S.editando;render()},
+ card:function(n){card(n)},excel:function(n){excel(n)},
+ buscarDisparo:buscarDisparo
+};
+
+/* ═════════ disparo automático (exports crus enviados por campReceber) ═════════ */
+function buscarDisparo(){chamar('campArquivos').then(function(r){var A=r.arquivos||{},c=campAtual(),p=Promise.resolve(),m=[];
+ if(c.tipo==='pix'){if(A.meta_mes)p=p.then(function(){return aplicarBase(A.meta_mes.rows,'disparo '+A.meta_mes.em).then(function(x){m.push('Base: '+x)})});
+  if(A.semana)p=p.then(function(){return aplicarSemana(A.semana.rows,'disparo '+A.semana.em,A.semana.n).then(function(x){m.push('Semana '+A.semana.n+': '+x)})})}
+ else if(A.meta_lojas)p=p.then(function(){return aplicarMeta(A.meta_lojas.rows,'disparo '+A.meta_lojas.em).then(function(x){m.push('Lojas: '+x)})});
+ return p.then(function(){toast(m.join(' · ')||'Nada novo no disparo.');render()})}).catch(function(e){toast(e.message)})}
+
+/* ═════════ telas ═════════ */
+function tabSup(L){var o={};L.forEach(function(x){var s=x.sup;o[s]=o[s]||{sup:s,n:0,ok:0,valor:0};o[s].n++;if(x.ok){o[s].ok++;o[s].valor+=x.valor}});return Object.keys(o).map(function(k){return o[k]}).sort(function(a,b){return b.valor-a.valor})}
+function render(){
+ $('mes').value=S.mes;
+ $('camps').innerHTML=S.def.filter(function(c){return c.ativa||coord()}).map(function(c){return'<button class="chip" aria-pressed="'+(c.id===S.camp)+'" onclick="Camp.camp(\''+c.id+'\')">'+(c.tipo==='pix'?'💸 ':'🏪 ')+esc(c.nome)+(c.ativa?'':' (inativa)')+'</button>'}).join('')+(coord()?'<button class="chip" onclick="Camp.nova()">＋ Nova campanha</button>':'');
+ if(S.carregando){$('app').innerHTML='<div class="aviso">Carregando…</div>';return}
+ if(S.erro){aviso('<b>Não consegui carregar:</b> '+esc(S.erro),true);$('app').innerHTML='<button class="btn pri" onclick="location.reload()">Tentar de novo</button>';return}
+ aviso(coord()?'':'Você vê só o resultado do seu escopo (loja/carteira).');
+ var c=campAtual();if(!c){$('app').innerHTML='<div class="aviso">Nenhuma campanha ativa neste momento.</div>';return}
+ $('sub').textContent=c.desc||'';
+ $('app').innerHTML=cabecalhoCamp(c)+(c.tipo==='pix'?telaPix(c):telaMeta(c));
+}
+function cabecalhoCamp(c){if(!coord())return'';
+ return S.editando?'<div class="card"><h3>Editar campanha<small>'+esc(c.tipo==='pix'?'Pix Semanal (semanal por nível)':'Meta da loja → prêmio')+'</small></h3><div class="pad row"><div class="campo"><label>Nome</label><input value="'+esc(c.nome)+'" onchange="Camp.defCampo(\'nome\',this.value)"></div><div class="campo"><label>Descrição</label><textarea onchange="Camp.defCampo(\'desc\',this.value)">'+esc(c.desc||'')+'</textarea></div><div class="campo"><label>Situação</label><select onchange="Camp.defCampo(\'ativa\',this.value===\'1\')"><option value="1"'+(c.ativa?' selected':'')+'>Ativa (todos veem)</option><option value="0"'+(c.ativa?'':' selected')+'>Inativa (só coordenação)</option></select></div><button class="btn" onclick="Camp.editar()">Fechar</button></div></div>':'<div><button class="btn" onclick="Camp.editar()">✏️ Editar campanha</button></div>'}
+
+function telaPix(c){
+ var itens=[['resumo','Resumo do mês']].concat([1,2,3,4,5].map(function(n){return['s'+n,'Semana '+n]})).concat(coord()?[['param','Parâmetros']]:[]);
+ var h='<div class="tabs">'+itens.map(function(i){return'<button class="tab" aria-pressed="'+(S.aba===i[0])+'" onclick="Camp.aba(\''+i[0]+'\')">'+i[1]+'</button>'}).join('')+'</div>';
+ if(S.aba==='param'&&coord())return h+pixParam(c);
+ if(/^s\d$/.test(S.aba))return h+pixSemana(c,+S.aba.slice(1));
+ return h+pixResumo(c);
+}
+function pixResumo(c){var total=0,por={},linhas='';
+ [1,2,3,4,5].forEach(function(n){var v=visaoSemana(n);if(!v){linhas+='<tr><td>Semana '+n+'</td><td colspan="5" class="mini" style="text-align:left">sem dados</td></tr>';return}
+  var el=v.R.filter(function(x){return x.ok}),val=el.reduce(function(a,x){return a+x.valor},0);total+=val;el.forEach(function(x){por[x.sup]=(por[x.sup]||0)+x.valor});
+  linhas+='<tr class="clic" onclick="Camp.aba(\'s'+n+'\')"><td>Semana '+n+' <span class="mini">'+esc(v.datas)+'</span></td><td>'+pct1(v.pct)+'</td><td>'+v.R.length+'</td><td>'+el.length+'</td><td><b>'+brl0(val)+'</b></td><td>'+(v.fechada?'🔒 fechada':'✏️ aberta')+'</td></tr>'});
+ return'<div class="kpis"><div class="kpi"><div class="v">'+brl0(total)+'</div><div class="l">Bônus acumulado no mês</div></div></div>'+
+ '<div class="card"><h3>Por semana</h3><div class="tw"><table><tr><th>Semana</th><th>% mínimo</th><th>Vendedores</th><th>Elegíveis</th><th>Bônus</th><th>Situação</th></tr>'+linhas+'</table></div></div>'+
+ '<div class="card"><h3>Por supervisor</h3><div class="tw"><table><tr><th>Supervisor</th><th>Bônus no mês</th></tr>'+(Object.keys(por).sort(function(a,b){return por[b]-por[a]}).map(function(s){return'<tr><td>'+esc(s)+'</td><td>'+brl0(por[s])+'</td></tr>'}).join('')||'<tr><td colspan="2" class="mini">Sem dados ainda.</td></tr>')+'</table></div></div>'}
+function pixSemana(c,n){var P=c.param,p=P.semanas[n-1],v=visaoSemana(n),up='';
+ if(coord())up='<div class="card"><h3>⬆ Fechar a Semana '+n+' ('+esc(p.datas)+')</h3><div class="pad"><p class="mini">1) Base de metas: INDICADORES do mês (atualize toda semana: entrou, saiu ou trocou de loja). 2) Vendas: INDICADORES exportado <b>só com os dias da semana</b>.</p><div class="row"><div class="campo"><label>1) Base de metas'+(S.full&&S.full.base?' (atual: '+esc(S.full.base.arq||'')+' · '+esc(S.full.base.em||'')+')':'')+'</label><input type="file" accept=".xlsx,.xls" onchange="Camp.base(this)"></div><div class="campo"><label>2) Vendas da semana'+(v&&v.arq?' (atual: '+esc(v.arq)+')':'')+'</label><input type="file" accept=".xlsx,.xls" onchange="Camp.semana(this,'+n+')"></div><button class="btn" onclick="Camp.buscarDisparo()">⚡ Buscar do disparo automático</button></div></div></div>';
+ if(!v)return up+'<div class="aviso">Semana ainda sem dados.</div>';
+ var R=v.R,el=R.filter(function(x){return x.ok}),tot=el.reduce(function(a,x){return a+x.valor},0);
+ var btn=coord()?'<button class="btn '+(v.fechada?'':'ok')+'" onclick="Camp.fechar('+n+','+!v.fechada+')">'+(v.fechada?'🔓 Reabrir semana':'🔒 Fechar e travar valores')+'</button>':'';
+ return up+'<div class="row" style="justify-content:space-between"><b>Semana '+n+' · '+esc(v.datas)+' · mínimo '+pct1(v.pct)+' da meta mensal'+(v.fechada?' · 🔒 fechada':'')+'</b><span class="row">'+btn+'<button class="btn pri" onclick="Camp.card('+n+')">🖼 Card</button><button class="btn" onclick="Camp.excel('+n+')">⬇ Excel</button></span></div>'+
+ '<div class="kpis"><div class="kpi"><div class="v">'+R.length+'</div><div class="l">Vendedores</div></div><div class="kpi"><div class="v">'+el.length+'</div><div class="l">Elegíveis</div></div><div class="kpi"><div class="v">'+brl0(tot)+'</div><div class="l">Bônus a pagar</div></div></div>'+
+ '<div class="card"><h3>Por supervisor</h3><div class="tw"><table><tr><th>Supervisor</th><th>Vendedores</th><th>Elegíveis</th><th>Bônus</th></tr>'+tabSup(R).map(function(x){return'<tr><td>'+esc(x.sup)+'</td><td>'+x.n+'</td><td>'+x.ok+'</td><td>'+brl0(x.valor)+'</td></tr>'}).join('')+'</table></div></div>'+
+ '<div class="card"><h3>Ranking (% da meta mensal)</h3><div class="tw"><table><tr><th>#</th><th class="l">Vendedor</th><th class="l">Loja</th><th class="l">Supervisor</th><th>Nível</th><th>Faturado</th><th>Meta mês</th><th>% meta</th><th>Bônus</th><th>Falta p/ mínimo</th></tr>'+
+ R.map(function(x,i){return'<tr class="'+(x.ok?'':'off')+'"><td>'+(i+1)+'</td><td class="l"><b>'+esc(x.nome)+'</b></td><td class="l">'+esc(x.filial)+'</td><td class="l">'+esc(x.sup)+'</td><td><span class="vc v'+x.nv+'">V'+x.nv+'</span></td><td>'+brl0(x.fat)+'</td><td>'+brl0(x.meta)+'</td><td><b>'+pct1(x.at)+'</b></td><td>'+(x.ok?'<b style="color:var(--ok)">'+brl0(x.valor)+'</b>':'—')+'</td><td>'+(x.ok?'—':brl0(x.falta))+'</td></tr>'}).join('')+'</table></div></div>'+
+ (coord()?'<div class="card"><details><summary>Excluídos ('+v.excl.length+') — não correlacionaram ou fora do piso</summary><div class="tw"><table><tr><th class="l">Vendedor</th><th class="l">Filial</th><th class="l">Motivo</th></tr>'+v.excl.map(function(e){return'<tr><td class="l">'+esc(e[0])+'</td><td class="l">'+esc(e[1])+'</td><td class="l">'+esc(e[2])+'</td></tr>'}).join('')+'</table></div></details></div>':'')}
+function pixParam(c){var P=c.param,N=['V1 · Iniciante','V2 · Júnior','V3 · Pleno','V4 · Sênior','V5 · Elite'];
+ return'<div class="card"><h3>% mínimo da meta mensal por semana</h3><div class="tw"><table><tr><th>Semana</th><th class="l">Datas</th><th>% mínimo</th><th class="l">Observação</th></tr>'+P.semanas.map(function(s,i){return'<tr><td>'+s.n+'</td><td class="l"><input style="width:110px;text-align:left" value="'+esc(s.datas)+'" onchange="Camp.param(\'sem\','+i+',\'datas\',this.value)"></td><td><input type="number" min="0" max="100" value="'+Math.round(s.pct*100)+'" onchange="Camp.param(\'sem\','+i+',\'pct\',this.value/100)"> %</td><td class="l"><input style="width:260px;text-align:left" value="'+esc(s.nota)+'" onchange="Camp.param(\'sem\','+i+',\'nota\',this.value)"></td></tr>'}).join('')+'</table></div></div>'+
+ '<div class="card"><h3>Bônus semanal por nível (R$)</h3><div class="tw"><table><tr><th class="l">Nível</th>'+P.semanas.map(function(s){return'<th>S'+s.n+'</th>'}).join('')+'</tr>'+N.map(function(r,v){return'<tr><td class="l"><b>'+r+'</b></td>'+P.semanas.map(function(s){return'<td><input type="number" min="0" value="'+P.bonus[s.n][v]+'" onchange="Camp.param(\'bonus\','+s.n+','+v+',this.value)"></td>'}).join('')+'</tr>'}).join('')+'</table></div><div class="pad mini">Semanas já <b>fechadas</b> mantêm os valores da hora do fechamento; reabra a semana para aplicar mudanças.</div></div>'+
+ '<div class="card"><h3>Carteira dos supervisores (códigos das lojas)</h3><div class="pad row">'+Object.keys(P.carteira).map(function(s){return'<div class="campo"><label>'+esc(s)+'</label><input style="width:320px;text-align:left" value="'+esc(P.carteira[s])+'" onchange="Camp.param(\'cart\',\''+esc(s)+'\',null,this.value)"></div>'}).join('')+'</div></div>'+
+ '<div class="card"><h3>Régua de níveis</h3><div class="pad mini">Loja pela Méd. 90 dias: N2 a partir de '+brl0(P.regua.loja[0])+', N3 a partir de '+brl0(P.regua.loja[1])+'. Vendedor (V2…V5): N3 '+P.regua.vend[3].map(brl0).join(' · ')+'; N2 '+P.regua.vend[2].map(brl0).join(' · ')+'; N1 '+P.regua.vend[1].map(brl0).join(' · ')+'.</div></div>'}
+
+function telaMeta(c){var P=c.param,g=dadosMeta(),h='';
+ if(coord())h+='<div class="card"><h3>Regras<small>'+esc(c.nome)+'</small></h3><div class="pad row"><div class="campo"><label>% da meta da loja</label><input type="number" value="'+Math.round(P.pct*100)+'" onchange="Camp.param(\'gen\',\'pct\',null,this.value/100)"></div><div class="campo"><label>Prazo</label><input value="'+esc(P.prazo)+'" placeholder="ex.: 21/11/2026" onchange="Camp.param(\'gen\',\'prazo\',null,this.value)"></div><div class="campo"><label>Prêmio por loja (R$)</label><input type="number" value="'+P.premio+'" onchange="Camp.param(\'gen\',\'premio\',null,this.value)"></div></div></div>'+
+  '<div class="card"><h3>⬆ Enviar o arquivo META</h3><div class="pad row"><div class="campo"><label>META (meta e faturado acumulado das lojas)'+(g&&g.arq?' (atual: '+esc(g.arq)+')':'')+'</label><input type="file" accept=".xlsx,.xls" onchange="Camp.meta(this)"></div><button class="btn" onclick="Camp.buscarDisparo()">⚡ Buscar do disparo automático</button></div></div>';
+ if(!g)return h+'<div class="aviso">Sem dados ainda neste mês.</div>';
+ var R=g.R,bat=R.filter(function(x){return x.ok});
+ return h+'<div class="aviso">Loja com <b>'+pct1(g.P.pct)+'</b> da meta'+(g.P.prazo?' até <b>'+esc(g.P.prazo)+'</b>':'')+' → <b>'+brl0(g.P.premio)+'</b> para o gerente.</div>'+
+ '<div class="kpis"><div class="kpi"><div class="v">'+bat.length+'/'+R.length+'</div><div class="l">Lojas que bateram</div></div><div class="kpi"><div class="v">'+brl0(bat.reduce(function(a,x){return a+x.premio},0))+'</div><div class="l">Prêmio total</div></div></div>'+
+ '<div class="card"><div class="tw"><table><tr><th>#</th><th class="l">Loja</th><th class="l">Supervisor</th><th>Meta mês</th><th>Faturado</th><th>% meta</th><th>Bateu?</th><th>Prêmio</th></tr>'+
+ R.map(function(x,i){return'<tr class="'+(x.ok?'':'off')+'"><td>'+(i+1)+'</td><td class="l"><b>'+esc(x.filial)+'</b></td><td class="l">'+esc(x.sup)+'</td><td>'+brl0(x.meta)+'</td><td>'+brl0(x.fat)+'</td><td><b>'+pct1(x.at)+'</b></td><td>'+(x.ok?'✔':'—')+'</td><td>'+(x.ok?brl0(x.premio):'—')+'</td></tr>'}).join('')+'</table></div></div>'}
+
+function card(n){var v=visaoSemana(n);if(!v)return;var R=v.R,el=R.filter(function(x){return x.ok});
+ var W=1080,topo=300,lh=44,lin=Math.min(el.length,14),H=topo+60+lin*lh+120,c=document.createElement('canvas');c.width=W;c.height=H;var g=c.getContext('2d');
+ g.fillStyle='#0B182A';g.fillRect(0,0,W,H);g.fillStyle='#F6C832';g.font='bold 54px sans-serif';g.fillText('PIX SEMANAL',60,100);
+ g.fillStyle='#fff';g.font='34px sans-serif';g.fillText('Semana '+n+' · '+v.datas+' · mínimo '+pct1(v.pct),60,155);
+ g.fillStyle='#F6C832';g.font='bold 44px sans-serif';g.fillText(el.length+' elegíveis · '+brl0(el.reduce(function(a,x){return a+x.valor},0)),60,220);
+ g.fillStyle='#9fb0c8';g.font='26px sans-serif';g.fillText(tabSup(R).map(function(x){return x.sup+' '+brl0(x.valor)}).join('  ·  '),60,265,W-120);
+ g.font='bold 28px sans-serif';g.fillStyle='#F6C832';g.fillText('RANKING',60,topo+30);
+ el.slice(0,14).forEach(function(x,i){var y=topo+80+i*lh;g.fillStyle=i%2?'#10213a':'#0d1c33';g.fillRect(40,y-32,W-80,lh);g.fillStyle='#fff';g.font='26px sans-serif';g.fillText((i+1)+'. '+x.nome.slice(0,26),60,y);g.fillStyle='#9fb0c8';g.fillText(pct1(x.at),620,y);g.fillStyle='#F6C832';g.font='bold 26px sans-serif';g.fillText('V'+x.nv+' · '+brl0(x.valor),820,y)});
+ var a=document.createElement('a');a.download='card_pix_'+S.mes+'_semana'+n+'.png';a.href=c.toDataURL('image/png');a.click()}
+function excel(n){var v=visaoSemana(n);if(!v)return;carregaXlsx().then(function(){
+ var ws=XLSX.utils.aoa_to_sheet([['#','Vendedor','Loja','Supervisor','Nível','Faturado semana','Meta mês','% meta','Elegível','Bônus']].concat(v.R.map(function(x,i){return[i+1,x.nome,x.filial,x.sup,'V'+x.nv,x.fat,x.meta,x.at,x.ok?'SIM':'NÃO',x.valor]})));
+ var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Semana '+n);XLSX.writeFile(wb,'Pix_Semana'+n+'_'+S.mes+'.xlsx')}).catch(function(e){toast(e.message)})}
+
+/* ═════════ início ═════════ */
+S.mes=mesHoje();
+$('mes').onchange=function(){if(this.value){S.mes=this.value;S.aba='resumo';S.full=null;S.pub={};carregar()}};
+if(URL_CAMP.indexOf('__URL')===0){aviso('Servidor de campanhas ainda não configurado.',true)}
+else{var ss=null;try{ss=JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null')}catch(e){}
+ if(!ss||!ss.nome)aviso('Abra esta tela pelo <b>Só Tintas App</b>, já com o seu login.');else carregar()}
+})();
+</script></body></html>
