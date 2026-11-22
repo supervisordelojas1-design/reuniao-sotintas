@@ -197,7 +197,7 @@ window.Camp={
   S.def.push(tipo==='2'?{id:id,nome:nome,tipo:'pix',ativa:true,desc:'',param:JSON.parse(JSON.stringify(PIX_PADRAO))}:{id:id,nome:nome,tipo:'meta_loja',ativa:true,desc:'',param:{pct:.7,prazo:'',premio:500}});
   salvarDef().then(function(){toast('Campanha criada ✔');trocarCamp(id)}).catch(function(e){toast(e.message)})},
  editar:function(){S.editando=!S.editando;render()},
- card:function(n){card(n)},cardMeta:function(){cardMeta()},excel:function(n){excel(n)},
+ card:function(n){card(n)},cardMeta:function(){cardMeta()},porSup:function(n){porSup(n)},excel:function(n){excel(n)},
  buscarDisparo:buscarDisparo
 };
 
@@ -235,6 +235,7 @@ function pixResumo(c){var total=0,por={},linhas='';
   var el=v.R.filter(function(x){return x.ok}),val=el.reduce(function(a,x){return a+x.valor},0);total+=val;el.forEach(function(x){por[x.sup]=(por[x.sup]||0)+x.valor});
   linhas+='<tr class="clic" onclick="Camp.aba(\'s'+n+'\')"><td>Semana '+n+' <span class="mini">'+esc(v.datas)+'</span></td><td>'+pct1(v.pct)+'</td><td>'+v.R.length+'</td><td>'+el.length+'</td><td><b>'+brl0(val)+'</b></td><td>'+(v.fechada?'🔒 fechada':'✏️ aberta')+'</td></tr>'});
  return'<div class="kpis"><div class="kpi"><div class="v">'+brl0(total)+'</div><div class="l">Bônus acumulado no mês</div></div></div>'+
+ (total?'<div class="row" style="justify-content:flex-end"><button class="btn pri" onclick="Camp.porSup(0)" title="Uma aba por supervisor: quem recebe e quanto em cada semana">👥 Pagamentos por supervisor (mês)</button></div>':'')+
  '<div class="card"><h3>Por semana</h3><div class="tw"><table><tr><th>Semana</th><th>% mínimo</th><th>Vendedores</th><th>Elegíveis</th><th>Bônus</th><th>Situação</th></tr>'+linhas+'</table></div></div>'+
  '<div class="card"><h3>Por supervisor</h3><div class="tw"><table><tr><th>Supervisor</th><th>Bônus no mês</th></tr>'+(Object.keys(por).sort(function(a,b){return por[b]-por[a]}).map(function(s){return'<tr><td>'+esc(s)+'</td><td>'+brl0(por[s])+'</td></tr>'}).join('')||'<tr><td colspan="2" class="mini">Sem dados ainda.</td></tr>')+'</table></div></div>'}
 function pixSemana(c,n){var P=c.param,p=P.semanas[n-1],v=visaoSemana(n),up='';
@@ -242,7 +243,7 @@ function pixSemana(c,n){var P=c.param,p=P.semanas[n-1],v=visaoSemana(n),up='';
  if(!v)return up+'<div class="aviso">Semana ainda sem dados.</div>';
  var R=v.R,el=R.filter(function(x){return x.ok}),tot=el.reduce(function(a,x){return a+x.valor},0);
  var btn=coord()?'<button class="btn '+(v.fechada?'':'ok')+'" onclick="Camp.fechar('+n+','+!v.fechada+')">'+(v.fechada?'🔓 Reabrir semana':'🔒 Fechar e travar valores')+'</button>':'';
- return up+'<div class="row" style="justify-content:space-between"><b>Semana '+n+' · '+esc(v.datas)+' · mínimo '+pct1(v.pct)+' da meta mensal'+(v.fechada?' · 🔒 fechada':'')+'</b><span class="row">'+btn+'<button class="btn pri" onclick="Camp.card('+n+')">🖼 Card</button><button class="btn" onclick="Camp.excel('+n+')">⬇ Excel</button></span></div>'+
+ return up+'<div class="row" style="justify-content:space-between"><b>Semana '+n+' · '+esc(v.datas)+' · mínimo '+pct1(v.pct)+' da meta mensal'+(v.fechada?' · 🔒 fechada':'')+'</b><span class="row">'+btn+'<button class="btn pri" onclick="Camp.card('+n+')">🖼 Card</button><button class="btn" onclick="Camp.excel('+n+')">⬇ Excel</button><button class="btn" onclick="Camp.porSup('+n+')" title="Uma aba por supervisor: quem recebe e quanto">👥 Por supervisor</button></span></div>'+
  '<div class="kpis"><div class="kpi"><div class="v">'+R.length+'</div><div class="l">Vendedores</div></div><div class="kpi"><div class="v">'+el.length+'</div><div class="l">Elegíveis</div></div><div class="kpi"><div class="v">'+brl0(tot)+'</div><div class="l">Bônus a pagar</div></div></div>'+
  '<div class="card"><h3>Por supervisor</h3><div class="tw"><table><tr><th>Supervisor</th><th>Vendedores</th><th>Elegíveis</th><th>Bônus</th></tr>'+tabSup(R).map(function(x){return'<tr><td>'+esc(x.sup)+'</td><td>'+x.n+'</td><td>'+x.ok+'</td><td>'+brl0(x.valor)+'</td></tr>'}).join('')+'</table></div></div>'+
  '<div class="card"><h3>Ranking (% da meta mensal)</h3><div class="tw"><table><tr><th>#</th><th class="l">Vendedor</th><th class="l">Loja</th><th class="l">Supervisor</th><th>Nível</th><th>Faturado</th><th>Meta mês</th><th>% meta</th><th>Bônus</th><th>Falta p/ mínimo</th></tr>'+
@@ -274,6 +275,33 @@ function card(n){var v=visaoSemana(n);if(!v)return;var R=v.R,el=R.filter(functio
  g.font='bold 28px sans-serif';g.fillStyle='#F6C832';g.fillText('RANKING',60,topo+30);
  el.forEach(function(x,i){var y=topo+80+i*lh;g.fillStyle=i%2?'#10213a':'#0d1c33';g.fillRect(40,y-lh+12,W-80,lh);g.fillStyle='#fff';g.font=fs+'px sans-serif';g.fillText((i+1)+'. '+x.nome,60,y,540);g.fillStyle='#9fb0c8';g.fillText(pct1(x.at),620,y);g.fillStyle='#F6C832';g.font='bold '+fs+'px sans-serif';g.fillText('V'+x.nv+' · '+brl0(x.valor),820,y)});
  var a=document.createElement('a');a.download='card_pix_'+S.mes+'_semana'+n+'.png';a.href=c.toDataURL('image/png');a.click()}
+/* pagamentos por supervisor: n = semana (1–5) ou 0 = mês inteiro. Uma aba "Resumo" + uma aba por supervisor, só com quem ganhou. */
+function porSup(n){var sem=n?[n]:[1,2,3,4,5],V={},G={},abertas=[];
+ sem.forEach(function(k){var v=visaoSemana(k);if(!v)return;V[k]=v;if(!v.fechada)abertas.push(k);
+  v.R.forEach(function(x){if(!x.ok)return;var s=x.sup||'SEM SUPERVISOR',id=x.nome+'|'+x.filial;G[s]=G[s]||{};
+   var p=G[s][id]=G[s][id]||{nome:x.nome,filial:x.filial,nv:x.nv,at:{},val:{}};p.nv=x.nv;p.at[k]=x.at;p.val[k]=x.valor})});
+ var ks=Object.keys(V).map(Number);if(!ks.length){toast('Sem dados para exportar');return}
+ var sups=Object.keys(G).sort(function(a,b){return a==='SEM SUPERVISOR'?1:b==='SEM SUPERVISOR'?-1:a.localeCompare(b)});
+ if(!sups.length){toast('Nenhum vendedor ganhou ainda');return}
+ var tot=function(p){return ks.reduce(function(a,k){return a+(p.val[k]||0)},0)};
+ var rot=n?'Semana '+n+' ('+V[n].datas+')':'Mês '+S.mes.split('-').reverse().join('/');
+ var aviso=abertas.length?'PRÉVIA: semana(s) '+abertas.join(', ')+' ainda aberta(s), valores podem mudar até o fechamento.':'Valores travados (semanas fechadas).';
+ carregaXlsx().then(function(){var wb=XLSX.utils.book_new();
+  var res=[['Pix Semanal · pagamentos por supervisor · '+rot],[aviso],[],['Supervisor','Vendedores a pagar'].concat(n?[]:ks.map(function(k){return'Semana '+k})).concat(['Total a pagar'])],geral=0;
+  sups.forEach(function(s){var L=Object.keys(G[s]).map(function(i){return G[s][i]}),t=L.reduce(function(a,p){return a+tot(p)},0);geral+=t;
+   res.push([s,L.length].concat(n?[]:ks.map(function(k){return L.reduce(function(a,p){return a+(p.val[k]||0)},0)})).concat([t]))});
+  res.push(['TOTAL',sups.reduce(function(a,s){return a+Object.keys(G[s]).length},0)].concat(n?[]:ks.map(function(k){return sups.reduce(function(a,s){return a+Object.keys(G[s]).reduce(function(b,i){return b+(G[s][i].val[k]||0)},0)},0)})).concat([geral]));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(res),'Resumo');
+  var usados={};
+  sups.forEach(function(s){var L=Object.keys(G[s]).map(function(i){return G[s][i]}).sort(function(a,b){return a.filial.localeCompare(b.filial)||tot(b)-tot(a)});
+   var cab=['Vendedor','Loja','Nível'].concat(n?['% da meta mensal na semana','Bônus a pagar']:ks.map(function(k){return'Semana '+k}).concat(['Total a pagar']));
+   var A=[['Supervisor '+s+' · '+rot],[aviso],[],cab];
+   L.forEach(function(p){A.push([p.nome,p.filial,'V'+p.nv].concat(n?[pct1(p.at[n]),p.val[n]]:ks.map(function(k){return p.val[k]||0}).concat([tot(p)])))});
+   A.push(['TOTAL '+s,L.length+' vendedor(es)',''].concat(n?['',L.reduce(function(a,p){return a+tot(p)},0)]:ks.map(function(k){return L.reduce(function(a,p){return a+(p.val[k]||0)},0)}).concat([L.reduce(function(a,p){return a+tot(p)},0)])));
+   var ws=XLSX.utils.aoa_to_sheet(A);ws['!cols']=[{wch:34},{wch:40},{wch:6}].concat(cab.slice(3).map(function(){return{wch:14}}));
+   var nm=s.replace(/[\\\/?*\[\]:]/g,'').slice(0,31)||'Supervisor',b=nm,i=2;while(usados[nm])nm=b.slice(0,28)+' '+(i++);usados[nm]=1;
+   XLSX.utils.book_append_sheet(wb,ws,nm)});
+  XLSX.writeFile(wb,'Pix_por_supervisor_'+(n?'Semana'+n:'mes')+'_'+S.mes+'.xlsx');toast('Arquivo por supervisor baixado ✔')}).catch(function(e){toast(e.message)})}
 /* gerente de cada loja: mesma fonte do Painel (aba EQUIPE do app) */
 var GER={};
 try{fetch('https://script.google.com/macros/s/AKfycbxC916U8rNw_-HFTW7vtFZz4AC_B1bHcTLE3bvMDWji6E5lAqkXgC0EIgQFtjHYTp8I/exec?acao=equipe').then(function(r){return r.json()}).then(function(j){var g=(j&&j.gerentes)||{};Object.keys(g).forEach(function(k){var m=String(g[k].loja||'').match(/\d+/);if(m&&g[k].gerente)GER[('00'+Number(m[0])).slice(-3)]=g[k].gerente})}).catch(function(){})}catch(e){}
