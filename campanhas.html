@@ -266,13 +266,13 @@ function telaMeta(c){var P=c.param,g=dadosMeta(),h='';
  R.map(function(x,i){return'<tr class="'+(x.ok?'':'off')+'"><td>'+(i+1)+'</td><td class="l"><b>'+esc(x.filial)+'</b></td><td class="l">'+esc(x.sup)+'</td><td>'+brl0(x.meta)+'</td><td>'+brl0(x.fat)+'</td><td><b>'+pct1(x.at)+'</b></td><td>'+(x.ok?'✔':'—')+'</td><td>'+(x.ok?brl0(x.premio):'—')+'</td></tr>'}).join('')+'</table></div></div>'}
 
 function card(n){var v=visaoSemana(n);if(!v)return;var R=v.R,el=R.filter(function(x){return x.ok});
- var W=1080,topo=300,lh=44,lin=Math.min(el.length,14),H=topo+60+lin*lh+120,c=document.createElement('canvas');c.width=W;c.height=H;var g=c.getContext('2d');
+ var W=1080,topo=300,lin=el.length,lh=lin>24?34:44,fs=lin>24?22:26,H=topo+60+lin*lh+120,c=document.createElement('canvas');c.width=W;c.height=H;var g=c.getContext('2d');
  g.fillStyle='#0B182A';g.fillRect(0,0,W,H);g.fillStyle='#F6C832';g.font='bold 54px sans-serif';g.fillText('PIX SEMANAL',60,100);
  g.fillStyle='#fff';g.font='34px sans-serif';g.fillText('Semana '+n+' · '+v.datas+' · mínimo '+pct1(v.pct),60,155);
  g.fillStyle='#F6C832';g.font='bold 44px sans-serif';g.fillText(el.length+' elegíveis · '+brl0(el.reduce(function(a,x){return a+x.valor},0)),60,220);
  g.fillStyle='#9fb0c8';g.font='26px sans-serif';g.fillText(tabSup(R).map(function(x){return x.sup+' '+brl0(x.valor)}).join('  ·  '),60,265,W-120);
  g.font='bold 28px sans-serif';g.fillStyle='#F6C832';g.fillText('RANKING',60,topo+30);
- el.slice(0,14).forEach(function(x,i){var y=topo+80+i*lh;g.fillStyle=i%2?'#10213a':'#0d1c33';g.fillRect(40,y-32,W-80,lh);g.fillStyle='#fff';g.font='26px sans-serif';g.fillText((i+1)+'. '+x.nome.slice(0,26),60,y);g.fillStyle='#9fb0c8';g.fillText(pct1(x.at),620,y);g.fillStyle='#F6C832';g.font='bold 26px sans-serif';g.fillText('V'+x.nv+' · '+brl0(x.valor),820,y)});
+ el.forEach(function(x,i){var y=topo+80+i*lh;g.fillStyle=i%2?'#10213a':'#0d1c33';g.fillRect(40,y-lh+12,W-80,lh);g.fillStyle='#fff';g.font=fs+'px sans-serif';g.fillText((i+1)+'. '+x.nome,60,y,540);g.fillStyle='#9fb0c8';g.fillText(pct1(x.at),620,y);g.fillStyle='#F6C832';g.font='bold '+fs+'px sans-serif';g.fillText('V'+x.nv+' · '+brl0(x.valor),820,y)});
  var a=document.createElement('a');a.download='card_pix_'+S.mes+'_semana'+n+'.png';a.href=c.toDataURL('image/png');a.click()}
 /* gerente de cada loja: mesma fonte do Painel (aba EQUIPE do app) */
 var GER={};
