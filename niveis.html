@@ -516,13 +516,17 @@ render();
   }
   function calcVends(ind, lojas){
     var sm=mapaLoja(), tbc={}; lojas.forEach(function(l){ tbc[l.id]={to:l.niv,tj:l.niv_ant}; });
-    var out=[], cargos=0;
+    var out=[], cargos=0, semMeta=0;
     ind.forEach(function(r){
       var metaV=gExact(r,'meta');
       var mv=(metaV==null||metaV==='')?null:Number(metaV);
       if(mv!=null && isFinite(mv) && mv<3.5){ cargos++; return; } // gerente/assist/aux
       var fil=gExact(r,'filial'); var id=code(fil);
       var vend=gExact(r,'vendedor'); var nome=String(vend||''); if(nome.indexOf('-')>=0) nome=nome.split('-').slice(1).join('-').trim();
+      /* 23/11/2026: o INDICADORES do Solcast (layout atual, expandido) traz a linha "Total" de cada loja e quem
+         vendeu na loja sem ter meta nela (meta vazia). Nível é só de quem tem meta na loja — mesma regra do Painel. */
+      if(/^total$/i.test(String(vend||'').trim()) || !String(vend||'').trim()) return;
+      if(mv==null || !isFinite(mv)){ semMeta++; return; }
       var med=numf(gHas(r,'med. 90'));
       var t=tbc[id]; if(!t) return;
       var info=sm[id]||{n:id,sup:''};
@@ -530,7 +534,7 @@ render();
                 niv:vlevel(med,t.to),niv_ant:vlevel(med,t.tj),muda:vlevel(med,t.to)-vlevel(med,t.tj)});
     });
     out.sort(function(a,b){return b.med-a.med;});
-    return {vends:out,cargos:cargos};
+    return {vends:out,cargos:cargos,semMeta:semMeta};
   }
 
   /* ---------- admissões + prazos ---------- */
@@ -633,7 +637,7 @@ render();
       CALC={LOJAS:L, VENDS:V};
       var p=$('uPrev'); p.classList.add('show');
       var mud=V.filter(function(v){return v.muda!==0;}).length;
-      p.innerHTML='<div class="u-row"><b>'+L.length+'</b> lojas · <b>'+V.length+'</b> vendedores ('+cv.cargos+' cargos de gerência/apoio excluídos)</div>'+
+      p.innerHTML='<div class="u-row"><b>'+L.length+'</b> lojas · <b>'+V.length+'</b> vendedores ('+cv.cargos+' cargos de gerência/apoio excluídos'+(cv.semMeta?' · '+cv.semMeta+' sem meta na loja fora':'')+')</div>'+
         '<div class="u-row">Admissões casadas: <b>'+admInfo.comData+'</b> · sem data: <b class="u-warn">'+admInfo.semData+'</b>'+(admInfo.mantidas?' <span style="font-size:11.5px">(datas mantidas da base publicada)</span>':'')+'</div>'+
         '<div class="u-row">Vendedores que mudam de nível: <b>'+mud+'</b></div>'+
         '<div class="u-row" style="margin-top:6px">Mês fechado desta base: <input id="uMes" type="text" value="'+mesFechadoSugerido()+'" style="width:150px;padding:4px 7px;border:1px solid var(--line,#ccc);border-radius:6px;font:inherit;font-weight:700"> <span style="font-size:11.5px;color:var(--muted,#777)">é o que as telas mostram em “base: $ Méd. 90 dias de …”</span></div>'+
