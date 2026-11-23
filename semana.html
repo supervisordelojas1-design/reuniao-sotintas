@@ -185,6 +185,7 @@ h3{font-size:14px;margin:0 0 6px}
     var h='<div class="kpis"><div class="kpi"><span>Meta do mês</span><b>'+brl(c.meta)+'</b></div><div class="kpi"><span>Realizado</span><b>'+brl(c.fat)+'</b></div>'+
       '<div class="kpi"><span>Projeção</span><b>'+pct(c.pp)+'</b></div><div class="kpi"><span>Precisa por dia útil</span><b>'+brl(c.dia)+'</b></div>'+kpiEuc(c)+'</div>';
     h+=compEuc(c);
+    h+=indicBloco(c.indic);
     h+='<div class="comp"><span class="n">1</span><b>'+(c.foco?'Indicador: '+esc(c.foco.nome)+' — de '+esc(c.foco.atual)+' para '+esc(c.foco.meta):'Indicadores CPF na meta: foco em volume')+'</b>'+
       (c.foco?'<div style="margin-top:4px"><b>Ação:</b> '+esc(c.foco.acao)+'</div><div><b>O gerente observa:</b> '+esc(c.foco.obs)+'</div>':'')+'</div>';
     var L=c.lista||[], ab=ABERTOS[id+':l'];
@@ -293,6 +294,15 @@ h3{font-size:14px;margin:0 0 6px}
     if(!ate) return '';
     return '<p class="sub" style="margin:0 0 6px">📊 Números do Painel até <b>'+esc(prazoTxt(String(ate)))+'</b>'+(aberto?' · atualizam sozinhos a cada atualização do Painel até o PDI ser feito':' · como estavam no dia do PDI')+'</p>';
   }
+  /* 23/11/2026 (Bruno): indicadores CNPJ e CPF no PDI semanal do vendedor, do gerente e do supervisor (vêm prontos do servidor) */
+  function indicBloco(I){
+    if(!I||(!(I.cnpj||[]).length&&!(I.cpf||[]).length)) return '';
+    var lin=function(i){ return '<li><span>'+esc(i.nome)+'</span><span>'+esc(i.atual)+(i.meta?' · meta '+esc(i.meta):'')+(i.ok==null?'':i.ok?' 🟢':' 🔴')+'</span></li>'; };
+    var h='';
+    if((I.cnpj||[]).length) h+='<h3 style="margin-top:12px">Indicadores CNPJ</h3><ul class="lista">'+I.cnpj.map(lin).join('')+'</ul>';
+    if((I.cpf||[]).length) h+='<h3 style="margin-top:12px">Indicadores CPF</h3><ul class="lista">'+I.cpf.map(lin).join('')+'</ul>';
+    return h;
+  }
   function fichaGer(f,aberto){
     if(!f) return '';
     var h=numerosAte(f.dadosAte,aberto)+'<div class="kpis"><div class="kpi"><span>Meta do mês</span><b>'+brl(f.meta)+'</b></div><div class="kpi"><span>Realizado</span><b>'+brl(f.fat)+'</b></div><div class="kpi"><span>Projeção</span><b>'+pct(f.pp)+'</b></div><div class="kpi"><span>Precisa por dia útil</span><b>'+brl(f.dia)+'</b></div>'+
@@ -304,7 +314,8 @@ h3{font-size:14px;margin:0 0 6px}
       '<li><span>CNPJ da carteira sem compra no mês</span><span>'+f.semCompraN+' (média '+brl(f.semCompraV)+'/mês)</span></li>'+
       '<li><span>Revisões de PDI Mensal vencidas</span><span>'+(f.pdiVenc&&f.pdiVenc.length?esc(f.pdiVenc.join(', ')):'nenhuma')+'</span></li>'+
       '<li><span>Visitas do supervisor</span><span>semana passada: '+f.visitas+' · nesta: '+(f.planejadas&&f.planejadas.length?f.planejadas.map(dBr).join(', '):'nenhuma na agenda')+'</span></li></ul>';
-    if(f.ind&&f.ind.length) h+='<ul class="lista">'+f.ind.map(function(i){return '<li><span>'+esc(i.nome)+'</span><span>'+esc(i.atual)+' · meta '+esc(i.meta)+' '+(i.ok==null?'':i.ok?'🟢':'🔴')+'</span></li>';}).join('')+'</ul>';
+    if(f.indic) h+=indicBloco(f.indic);
+    else if(f.ind&&f.ind.length) h+='<ul class="lista">'+f.ind.map(function(i){return '<li><span>'+esc(i.nome)+'</span><span>'+esc(i.atual)+' · meta '+esc(i.meta)+' '+(i.ok==null?'':i.ok?'🟢':'🔴')+'</span></li>';}).join('')+'</ul>';
     return h;
   }
   /* 16/11/2026 (Bruno): o resumo do PDI com o gerente traz a carteira de clientes e os orçamentos em aberto da loja,
@@ -535,6 +546,7 @@ h3{font-size:14px;margin:0 0 6px}
       else if(x.aval&&(x.meu||D.perfil==='coord'||D.perfil==='anl')) h+=resultado(x.aval);
       if(d.carteira&&d.dadosAte) h+='<div style="margin-top:8px">'+numerosAte(d.dadosAte,x.situacao==='aguardando')+'</div>';
       if(d.carteira) h+='<div class="kpis" style="margin-top:8px"><div class="kpi"><span>Carteira</span><b>'+d.carteira.lojas+' lojas</b></div><div class="kpi"><span>Atingido</span><b>'+pct(d.carteira.pct)+'</b></div><div class="kpi"><span>Projeção</span><b>'+pct(d.carteira.pp)+'</b></div><div class="kpi"><span>Falta</span><b>'+brl(d.carteira.falta)+'</b></div></div>';
+      if(d.indic) h+=indicBloco(d.indic);
       if(f) h+='<div class="comp"><span class="n">1</span><b>Loja foco: '+esc(f.cod)+' '+esc(f.nome)+'</b> — projeção '+pct(f.pp)+', faltam '+brl(f.gap)+'<div class="sub">Visita presencial até quarta e plano escrito com '+esc(f.gerente)+'.'+(f.planejadas&&f.planejadas.length?' Na agenda: '+f.planejadas.map(dBr).join(', '):' Ainda sem visita na agenda.')+'</div></div>';
       var A=d.auditoria||[];
       h+='<div class="comp"><span class="n">2</span><b>Auditoria do ritual: '+(A.length?A.length+' loja(s) com PDI semanal incompleto':'todas as lojas em dia')+'</b>'+(A.length?'<ul class="lista">'+A.map(function(a){return '<li><span>'+esc(a.cod)+' '+esc(a.nome)+' · '+esc(a.gerente)+'</span><span>feito '+a.feitos+'/'+a.nV+' · respondido '+a.resp+'/'+a.nV+'</span></li>';}).join('')+'</ul>':'')+'</div>';
