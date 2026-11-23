@@ -761,12 +761,18 @@ const CART={};
 function normVend(t){var s=String(t||'').replace(/^[A-Z0-9]{3}\s*-\s*/,'')
   .replace(/\s*-?\s*N\s?\d.*$/i,'').replace(/\s*-\s*\d+\s*$/,'').trim();
  return s.replace(/\w\S*/g,function(w){return w.charAt(0).toUpperCase()+w.substr(1).toLowerCase()})}
+/* v275 (23/11/2026, Bruno): "A positivar" e "Recorrentes sumidos" pela compra mais recente:
+   primeiro quem comprou no mês fechado mais próximo; no mesmo mês, quem comprou mais; sem série mensal, pela média, no fim. */
+function ultCompra(c){ if(c.ult!==undefined) return c.ult; const m=c.m; c.ult={i:-1,v:0};
+ if(Array.isArray(m)) for(let i=m.length-2;i>=0;i--){ if((Number(m[i])||0)>0){ c.ult={i:i,v:Number(m[i])}; break; } }
+ return c.ult }
+function ordRecente(a,b){const x=ultCompra(a),y=ultCompra(b); return (y.i-x.i)||(y.v-x.v)||(b.media-a.media)}
 function grupaCart(cli,n){return {meses:n,cli:cli,
-  POS:cli.filter(function(c){return c.grupo=='POS'}).sort(function(a,b){return b.media-a.media}),
+  POS:cli.filter(function(c){return c.grupo=='POS'}).sort(ordRecente),
   SUB:cli.filter(function(c){return c.grupo=='SUB'}).sort(function(a,b){return b.lacuna-a.lacuna}),
   CRE:cli.filter(function(c){return c.grupo=='CRE'}).sort(function(a,b){return (b.proj-b.media)-(a.proj-a.media)}),
   OK:cli.filter(function(c){return c.grupo=='OK'}),
-  REC:cli.filter(function(c){return c.grupo=='POS'&&c.perfil=='recorrente'}).sort(function(a,b){return b.media-a.media}),
+  REC:cli.filter(function(c){return c.grupo=='POS'&&c.perfil=='recorrente'}).sort(ordRecente),
   NOV:cli.filter(function(c){return c.ativos===0&&c.fat>0}).sort(function(a,b){return b.fat-a.fat})}}
 (function(){const K=_.K||{};
  Object.keys(K).forEach(function(cod){
@@ -2583,7 +2589,7 @@ function waCart(){
   (ST.vend&&l?'Loja '+l.cod+' · '+l.nome:''),
   D.periodo.mes+'/'+D.periodo.ano+' · '+L.length+' clientes',''];
  L.slice(0,30).forEach(function(c,i){
-  lin.push((i+1)+'. '+c.nome+(REG&&c.loja?' ['+c.loja+(c.lojaNome?' '+c.lojaNome:'')+']':'')+' — '+BRL(g=='SUB'?c.lacuna:c.media)+'/mês ('+c.ativos+' de '+K.meses+')');});
+  lin.push((i+1)+'. '+c.nome+(REG&&c.loja?' ['+c.loja+(c.lojaNome?' '+c.lojaNome:'')+']':'')+' — '+BRL(g=='SUB'?c.lacuna:c.media)+'/mês ('+c.ativos+' de '+K.meses+((g=='POS'||g=='REC')&&ultCompra(c).i>=0?' · última compra '+mesRot(ultCompra(c).i):'')+')');});
  if(L.length>30){lin.push('');lin.push('… e mais '+(L.length-30)+' clientes — lista completa no PDF.');}
  window.open('https://wa.me/?text='+encodeURIComponent(lin.join('\n')),'_blank','noopener,noreferrer');
 }
@@ -2599,7 +2605,7 @@ function pdfCart(completo){
   if(!L.length){corpo+='<p style="font-size:11px;color:#67728c">Nenhum cliente nesta situação.</p>';return}
   corpo+='<table class="ptab"><tr><th>#</th><th>Cliente</th>'+(REG?'<th>Loja</th>':'')+'<th>Média/mês</th><th>Meses ativos</th><th>'+(g=='SUB'?'Lacuna':'Projeta')+'</th><th>Perfil</th><th>Contato</th></tr>';
   L.forEach(function(c,i){
-   corpo+='<tr><td>'+(i+1)+'</td><td>'+esc(c.nome)+'</td>'+(REG?'<td>'+esc(c.loja+(c.lojaNome?' · '+c.lojaNome:''))+'</td>':'')+'<td>'+BRL(c.media)+'</td><td>'+c.ativos+' de '+K.meses+'</td><td>'+(g=='SUB'?BRL(c.lacuna):(c.proj>0?BRL(c.proj):'SEM COMPRA'))+'</td><td>'+c.perfil+'</td><td></td></tr>'});
+   corpo+='<tr><td>'+(i+1)+'</td><td>'+esc(c.nome)+'</td>'+(REG?'<td>'+esc(c.loja+(c.lojaNome?' · '+c.lojaNome:''))+'</td>':'')+'<td>'+BRL(c.media)+'</td><td>'+c.ativos+' de '+K.meses+((g=='POS'||g=='REC')&&ultCompra(c).i>=0?' · últ. '+mesRot(ultCompra(c).i):'')+'</td><td>'+(g=='SUB'?BRL(c.lacuna):(c.proj>0?BRL(c.proj):'SEM COMPRA'))+'</td><td>'+c.perfil+'</td><td></td></tr>'});
   corpo+='</table>';
  });
  document.getElementById('parea').innerHTML='<div class="pdoc">'+
@@ -2649,14 +2655,15 @@ function vCart(){
    <b>${rec.length} clientes recorrentes sumiram</b> — compraram em 5 ou mais dos ${K.meses} meses e estão zerados agora.
    Juntos valem <b>${BRL(rec.reduce((a,c)=>a+c.media,0))}</b> por mês. Comece por eles: quem nunca falhou e falhou agora
    não está em ciclo de compra, está sinalizando alguma coisa.</span></div>`;
- h+=`<div class="sec"><div class="sech"><h3>${info[0]}</h3><span class="cnt">${L.length} clientes · ordenado por ${g=='SUB'?'lacuna':g=='CRE'?'ganho':'média mensal'}</span></div>`;
+ h+=`<div class="sec"><div class="sech"><h3>${info[0]}</h3><span class="cnt">${L.length} clientes · ordenado ${g=='SUB'?'por lacuna':g=='CRE'?'por ganho':'pela compra mais recente'}</span></div>`;
  if(!L.length) h+='<div class="empty">Nenhum cliente nesta situação.</div>';
  const mx=L.length?Math.max(...L.map(c=>g=='SUB'?c.lacuna:c.media)):1;
  L.slice(0,120).forEach(function(c,i){
   const val=g=='SUB'?c.lacuna:g=='CRE'?c.proj-c.media:c.media;
   const w=mx?Math.min(val/mx*100,100):0;
   const pc=c.prio=='ALTA'?'a':c.prio=='MÉDIA'?'m':'b';
-  const sub=(g=='POS'||g=='REC')?`média ${BRL(c.media)}/mês · ativo em ${c.ativos} de ${K.meses} meses · <b style="color:var(--bad)">sem compra no mês</b>`
+  const uc=ultCompra(c);
+  const sub=(g=='POS'||g=='REC')?`${uc.i>=0&&KM[uc.i]?`<b>última compra: ${esc(mesRot(uc.i,true))} (${BRL(uc.v)})</b> · `:''}média ${BRL(c.media)}/mês · ativo em ${c.ativos} de ${K.meses} meses · <b style="color:var(--bad)">sem compra no mês</b>`
    :g=='SUB'?`média ${BRL(c.media)} · projeta ${BRL(c.proj)} · ${PPCT(c.var)}`
    :`média ${BRL(c.media)} · projeta ${BRL(c.proj)} · +${PPCT(Math.abs(c.var))}`;
   h+=`<div class="row nc"><div class="pos">${i+1}</div>
@@ -2666,7 +2673,7 @@ function vCart(){
      <span class="bar"><i style="width:${w}%;background:${info[2]}"></i></span>
      <span class="pc" style="color:${info[2]};width:auto;min-width:84px">${BRL(val)}</span></div></div></div>
    <div class="rt"><div class="v">${BRL(val)}</div></div></div>`});
- if(L.length>120) h+=`<div class="empty">Mostrando os 120 maiores de ${L.length}. A lista completa está na planilha.</div>`;
+ if(L.length>120) h+=`<div class="empty">Mostrando os 120 primeiros de ${L.length}. A lista completa está na planilha.</div>`;
  h+='</div>';
  h+=`<div class="acao"><div class="ah"><span>🧠</span><h3>Leitura da carteira</h3></div><div class="ab"><div class="resumo on" id="r_cart">`;
  if(g=='REC'){

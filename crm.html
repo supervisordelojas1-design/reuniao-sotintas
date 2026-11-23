@@ -213,6 +213,7 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
 
   var C=null, S=null, PERFIL='', LIDER=false, LOJAS=[], LOJA='', OFICIAL='';
   var D={orc:[],cart:[],pos:[],pin:[]}, REG=[], PIN=[], POS=[], HIST={};
+  var REGIAO=false, KMC=[];   /* 23/11/2026: supervisor vê a carteira de toda a região na aba Carteira */
   var LJ={}, PAINEL_FALHOU=false, TAB='orc', FIL={orc:'todos',cart:'todos',pos:'e0',pin:'todos'}, VEND='', SERVIDOR=null, LER=false, ABERTO={}, CARTN=0;
   var chave=function(k){ return 'st_crm_'+k+'_v1:'+norm(S&&S.nome); };
   function lerLocal(k){ try{ return JSON.parse(localStorage.getItem(chave(k))||'[]')||[]; }catch(e){ return []; } }
@@ -223,7 +224,7 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
     m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(t); if(m) return new Date(+m[3],+m[2]-1,+m[1],12,0,0); var d=new Date(t); return isNaN(d.getTime())?null:d; }
   function doPainel(){
     return fetch(PAINEL_API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({tipo:'dados',u:'cracha',p:C.tk})})
-      .then(function(r){return r.json();}).then(function(j){ var d=(j&&j.dados)||j||{}; (d.L||[]).forEach(function(a){ var c=code3(a[0]); if(c) LJ[c]={meta:Number(a[3])||0,fat:Number(a[5])||0}; }); return {O:d.O||{},K:d.K||{}}; }).catch(function(){ PAINEL_FALHOU=true; return {O:{},K:{}}; });
+      .then(function(r){return r.json();}).then(function(j){ var d=(j&&j.dados)||j||{}; (d.L||[]).forEach(function(a){ var c=code3(a[0]); if(c) LJ[c]={meta:Number(a[3])||0,fat:Number(a[5])||0}; }); if(Array.isArray(d.KM)) KMC=d.KM.map(String); return {O:d.O||{},K:d.K||{}}; }).catch(function(){ PAINEL_FALHOU=true; return {O:{},K:{}}; });
   }
   function orcsDe(O){
     var base=meioDia(), l=[];
@@ -243,7 +244,8 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
         addCli(pv[0],loja);
         var g=proj<=0?(media>0?'POS':''):(proj<media*0.7?'SUB':''); if(!g||!nome) return;
         var doc='C:'+loja+':'+NK(nome); if(visto[doc]) return; visto[doc]=1;
-        l.push({tipo:'cart',loja:loja,vend:pv.length>1?nm(pv[1]):'',doc:doc,cli:nome,tel:'',grupo:g,rec:g==='POS'&&ativos>=5,media:media,ativos:ativos,meses:n,proj:proj,valor:g==='POS'?media:media-proj});
+        var m=Array.isArray(c[5])?c[5]:null, ui=-1, uv=0; if(m) for(var j=m.length-2;j>=0;j--){ if((Number(m[j])||0)>0){ ui=j; uv=Number(m[j]); break; } }
+        l.push({tipo:'cart',loja:loja,vend:pv.length>1?nm(pv[1]):'',doc:doc,cli:nome,tel:'',grupo:g,rec:g==='POS'&&ativos>=5,media:media,ativos:ativos,meses:n,proj:proj,valor:g==='POS'?media:media-proj,ult:ui,ultV:uv});
       });
     });
     return l;
@@ -284,7 +286,7 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
     return STDados.chamar(acao,corpo,true).then(function(r){ if(r&&r.ok){ loc.forEach(function(x){x.ok=1;}); gravarLocal(k,loc); } else SERVIDOR=false; }).catch(function(){ SERVIDOR=false; });
   }
   function sincronizar(){
-    return Promise.all([sobe('reg','crmSalvar','regs'),sobe('pin','crmPintorSalvar','pintores')]).then(function(){ return STDados.chamar('crmListar',{lojas:LIDER?[LOJA]:LOJAS}); }).then(function(r){
+    return Promise.all([sobe('reg','crmSalvar','regs'),sobe('pin','crmPintorSalvar','pintores')]).then(function(){ return STDados.chamar('crmListar',{lojas:LIDER?(REG_OK()?LOJAS:[LOJA]):LOJAS}); }).then(function(r){
       var ok=function(x){x.ok=1;return x;};
       if(r&&r.ok){ SERVIDOR=true; REG=juntar((r.regs||[]).map(ok),lerLocal('reg')); PIN=juntar((r.pintores||[]).map(ok),lerLocal('pin'),'atual'); POS=r.pos||[]; }
       else { SERVIDOR=false; REG=lerLocal('reg'); PIN=lerLocal('pin'); POS=[]; }
@@ -323,7 +325,9 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
     if(PERFIL==='vend'){ var mp=D.pos.filter(function(o){return meuNome(o.vend);}); if(mp.length) D.pos=mp; }
     D.pin=PIN.filter(function(p){ return !p.arq&&LOJAS.indexOf(p.loja)>=0; }).map(function(p){ return Object.assign({tipo:'pin',doc:'T:'+p.id,cli:p.nome,vend:p.resp||p.por||'',valor:0},p); });
   }
-  function daAba(){ return D[TAB].filter(function(o){ return (!LOJA||o.loja===LOJA)&&(!VEND||norm(o.vend)===VEND); }).map(function(o){ o.e=estado(o); return o; }); }
+  function REG_OK(){ return REGIAO&&PERFIL==='sup'&&LOJAS.length>1; }
+  function naVisao(o){ return !LOJA||(TAB==='cart'&&REG_OK())||o.loja===LOJA; }
+  function daAba(){ return D[TAB].filter(function(o){ return naVisao(o)&&(!VEND||norm(o.vend)===VEND); }).map(function(o){ o.e=estado(o); return o; }); }
   function proxHoje(o){ var u=o.e.u; return !!(u&&u.prox&&u.prox<=hojeISO()&&(o.tipo==='pin'||!FIM.test(o.e.st))); }
   function entra(o,f){
     var e=o.e, hj=hojeISO();
@@ -352,7 +356,7 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
   function cartao(o){
     var e=o.e, u=e.u, ct=contato(o), tel=telLimpo(ct.cTel||o.tel), hj=hojeISO(), h='', sub='', dir='';
     if(o.tipo==='orc') sub='Nº '+esc(o.doc)+(o.dias!=null?' · há '+o.dias+' dia'+(o.dias===1?'':'s'):'')+(PERFIL!=='vend'&&o.vend?' · '+esc(o.vend):'');
-    if(o.tipo==='cart') sub=(o.rec?'Recorrente sumido':o.grupo==='POS'?'Sem compra no mês':'Comprando abaixo do normal')+' · média '+brl(o.media)+'/mês · ativo em '+o.ativos+' de '+o.meses+' meses'+(PERFIL!=='vend'&&o.vend?' · '+esc(o.vend):'');
+    if(o.tipo==='cart') sub=(TAB==='cart'&&REG_OK()?'Loja '+esc(o.loja)+' · ':'')+(o.rec?'Recorrente sumido':o.grupo==='POS'?'Sem compra no mês':'Comprando abaixo do normal')+(o.grupo==='POS'&&o.ult>=0&&KMC[o.ult]?' · última compra: '+esc(KMC[o.ult])+' ('+brl(o.ultV)+')':'')+' · média '+brl(o.media)+'/mês · ativo em '+o.ativos+' de '+o.meses+' meses'+(PERFIL!=='vend'&&o.vend?' · '+esc(o.vend):'');
     if(o.tipo==='pos') sub='Comprou em '+esc(dBr(o.data))+' · há '+o.dias+' dias'+(o.vend?' · '+esc(o.vend):'');
     if(o.tipo==='pin') sub=[o.apelido?'“'+o.apelido+'”':'',(o.espec||[]).join(', '),o.cidade,PERFIL!=='vend'?o.vend:''].filter(Boolean).map(esc).join(' · ');
     if(o.tipo==='pin') dir='<span class="chip s-'+({potencial:'neg',ativo:'fechado',inativo:'novo'}[e.st]||'novo')+'">'+esc({potencial:'Potencial',ativo:'Ativo',inativo:'Inativo'}[e.st]||e.st)+'</span>';
@@ -422,7 +426,7 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
     h+='<div class="filtros" role="group" aria-label="Filtrar a lista">'+F.map(function(x){ return '<button type="button" data-f="'+x[0]+'" aria-pressed="'+(f===x[0])+'">'+x[1]+' '+n(x[0])+'</button>'; }).join('')+'</div>';
     var lista=L.filter(function(o){return entra(o,f);}).sort(function(a,b){
       if(TAB==='pin') return String(a.cli).localeCompare(String(b.cli));
-      if(TAB==='cart') return (b.rec-a.rec)||b.valor-a.valor;
+      if(TAB==='cart') return (b.ult-a.ult)||(b.ultV-a.ultV)||b.valor-a.valor;   /* 23/11/2026: compra mais recente primeiro */
       var pa=a.e.st==='novo'?0:1, pb=b.e.st==='novo'?0:1; return pa-pb||b.valor-a.valor; });
     if(!D[TAB].length) h+='<div class="card"><h2>'+vazio[0]+'</h2><p class="sub">'+vazio[1]+'</p></div>';
     else if(!lista.length) h+='<div class="card"><p class="sub" style="margin:0">Nada neste filtro.</p></div>';
@@ -494,12 +498,12 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
     if(PAINEL_FALHOU) h+='<div class="aviso" role="status">O Painel de Metas não respondeu agora: orçamentos e carteira podem estar incompletos. Feche e abra o CRM de novo em instantes.</div>';
     if(SERVIDOR===false) h+='<div class="aviso" role="status">Os registros estão ficando guardados <b>só neste aparelho</b> por enquanto. Eles sobem sozinhos quando o servidor do CRM estiver ligado.</div>';
     if(LOJAS.length>1||(PERFIL!=='vend'&&TAB!=='ger')){
-      var vs={}; (D[TAB]||[]).forEach(function(o){ if((!LOJA||o.loja===LOJA)&&o.vend) vs[norm(o.vend)]=o.vend; });
+      var vs={}; (D[TAB]||[]).forEach(function(o){ if(naVisao(o)&&o.vend) vs[norm(o.vend)]=o.vend; });
       h+='<div style="display:flex;flex-wrap:wrap;gap:8px">'+
-        (LOJAS.length>1?'<label class="sub">Loja <select class="sel" id="selLoja">'+LOJAS.map(function(c){return '<option'+(c===LOJA?' selected':'')+'>'+esc(c)+'</option>';}).join('')+'</select></label>':'')+
+        (LOJAS.length>1?'<label class="sub">Loja <select class="sel" id="selLoja">'+(TAB==='cart'&&PERFIL==='sup'?'<option value="*"'+(REG_OK()?' selected':'')+'>Toda a região ('+LOJAS.length+' lojas)</option>':'')+LOJAS.map(function(c){return '<option'+(c===LOJA&&!(TAB==='cart'&&REG_OK())?' selected':'')+'>'+esc(c)+'</option>';}).join('')+'</select></label>':'')+
         (PERFIL!=='vend'&&TAB!=='ger'?'<label class="sub">Vendedor <select class="sel" id="selVend"><option value="">Todos</option>'+Object.keys(vs).sort().map(function(k){return '<option value="'+esc(k)+'"'+(k===VEND?' selected':'')+'>'+esc(vs[k])+'</option>';}).join('')+'</select></label>':'')+'</div>';
     }
-    $('sub').textContent=(PERFIL==='vend'?nm(S.nome):'Loja '+(LOJA||LOJAS.join(', ')))+' · '+v.sub;
+    $('sub').textContent=(PERFIL==='vend'?nm(S.nome):TAB==='cart'&&REG_OK()?'Região · '+LOJAS.length+' lojas':'Loja '+(LOJA||LOJAS.join(', ')))+' · '+v.sub;
     $('raiz').innerHTML=h+v.h;
   }
   function achar(doc){ for(var k in D){ for(var i=0;i<D[k].length;i++) if(D[k][i].doc===doc) return D[k][i]; } return null; }
@@ -517,7 +521,9 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
       gravarReg({id:novoId('c'),em:new Date().toISOString(),por:S.nome,tipo:'orc',loja:o.loja,doc:o.doc,cli:o.cli,vend:o.vend,valor:o.valor,canal:'',res:'Venda conferida',status:'validado'},'Venda validada.').then(montar); }
   });
   $('raiz').addEventListener('change',function(ev){
-    if(ev.target.id==='selLoja'){ LOJA=ev.target.value; VEND=''; try{ localStorage.setItem('st_crm_loja',LOJA); }catch(e){} montar();
+    if(ev.target.id==='selLoja'){ var vSel=ev.target.value, antes=REG_OK(); if(vSel==='*') REGIAO=true; else { REGIAO=false; LOJA=vSel; } VEND='';
+      try{ localStorage.setItem('st_crm_loja',LOJA); localStorage.setItem('st_crm_regiao',REGIAO?'1':'0'); }catch(e){} montar();
+      if(LIDER&&vSel==='*'&&antes) return;
       /* liderança: os registros vêm do servidor loja a loja */
       if(LIDER){ var lj=LOJA; sincronizar().then(function(){ if(lj!==LOJA) return; montarPos(); montar(); }); } }
     if(ev.target.id==='selVend'){ VEND=ev.target.value; montar(); }
@@ -721,6 +727,7 @@ button.agir{cursor:pointer}.agir.r{background:var(--badbg)}.agir.a{background:va
         if(LIDER&&!LOJAS.length){ var u={}; Object.keys(r[0].O).concat(Object.keys(r[0].K)).forEach(function(c){ c=code3(c); if(c) u[c]=1; }); LOJAS=Object.keys(u).sort(); }
         if(!LOJAS.length){ if(PAINEL_FALHOU) falha('Não consegui abrir','O Painel de Metas não respondeu agora. Feche e abra o CRM de novo em instantes.'); else falha('Não encontrei a sua loja','O seu acesso não tem loja vinculada. Fale com o seu supervisor.'); return; }
         try{ var g=localStorage.getItem('st_crm_loja'); if(g&&LOJAS.indexOf(g)>=0) LOJA=g; }catch(e){}
+        if(PERFIL==='sup'){ REGIAO=true; try{ if(localStorage.getItem('st_crm_regiao')==='0') REGIAO=false; }catch(e){} }
         if(LOJAS.indexOf(LOJA)<0) LOJA=LOJAS[0];
         return sincronizar().then(function(){
           OFICIAL=(r[1]&&r[1].nome)||''; montarDados(r[0],r[1]);

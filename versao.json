@@ -2,6 +2,28 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v275",
+      "data": "23/11/2026",
+      "hora": "09:40",
+      "itens": [
+        {
+          "painel": "Painel de Metas · Carteira de clientes",
+          "o_que": "\"A positivar\" e \"Recorrentes sumidos\" agora aparecem pela compra mais recente: primeiro quem comprou no último mês. Cada cliente mostra o mês e o valor da última compra (também no PDF e no WhatsApp da lista)."
+        },
+        {
+          "painel": "CRM de Vendas · aba Carteira",
+          "o_que": "Lista pela compra mais recente, com a última compra de cada cliente. Supervisor: opção \"Toda a região\" no seletor de loja, com a carteira de todas as lojas da região.",
+          "para": [
+            "coord",
+            "anl",
+            "sup",
+            "ger",
+            "vend"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v273",
       "data": "21/11/2026",
       "hora": "07:38",
