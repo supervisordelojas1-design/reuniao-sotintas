@@ -3,7 +3,8 @@
 layout do "Exportar dados → Dados com layout atual".
 uso: converter_solcast.py pacote.json pasta_saida
 gera: INDICADORES - MES ATUAL.xlsx, META - MES ATUAL.xlsx,
-      EVOLUCAO MENSAL POR CLIENTE - <cod>.xlsx (um por filial)"""
+      EVOLUCAO MENSAL POR CLIENTE - <cod>.xlsx (um por filial)
+      e, se o pacote trouxer (desde 24/11/2026), META EUCATEX.csv no layout do AUTCOM"""
 import csv, io, json, os, sys
 from openpyxl import Workbook
 from openpyxl.styles import Font
@@ -160,6 +161,73 @@ def carteira(filial, txt, saida, ate_mes):
     return len(cli)
 
 
+def br(v, casas=2):
+    s = ('{:,.%df}' % casas).format(v or 0)
+    return s.replace(',', '#').replace('.', ',').replace('#', '.')
+
+
+def eucatex(P, saida):
+    """META EUCATEX da página "Por fornecedor" do Power BI, gravada no MESMO layout do
+    relatório "METAS POR VENDEDOR E FORNECEDOR" do AUTCOM (CSV ; latin-1), para o Painel
+    ler sem mudança nenhuma. A loja (EMP.OPE) vem da filial em que a meta do vendedor
+    aparece; reserva: a filial em que ele tem meta no INDICADORES."""
+    R = ler_csv(P['EUC']); cab = R[0]; ix = {n: j for j, n in enumerate(cab)}
+    loja = {}
+    for f, vs in (P.get('EUC_LOJA') or {}).items():
+        for v in vs:
+            loja.setdefault(v.strip(), []).append(f.split(' - ')[0].strip())
+    reserva = {}
+    if P.get('INDICADORES'):
+        I = ler_csv(P['INDICADORES'])
+        for r in I[1:]:
+            if len(r) > 2 and (num(r[2]) or 0) > 3.5:
+                c = r[1].split(' - ')[0].strip(); m = num(r[2])
+                if m > reserva.get(c, (0, ''))[0]:
+                    reserva[c] = (m, r[0].split(' - ')[0].strip())
+    ult = ''.join(P.get('ULT') or '').split('\n')
+    ult = [l.strip() for l in ult if l.strip()[:2] == '20']
+    from datetime import datetime
+    dt = datetime.strptime(ult[0][:16], '%Y-%m-%d %H:%M') if ult else datetime.now()
+    mf = P.get('mes_filtro') or 'ATUAL'
+    if mf in MESES:
+        mm = MESES.index(mf) + 1; aa = dt.year - (1 if mm > dt.month else 0)
+    else:
+        mm, aa = dt.month, dt.year
+    linhas, avisos, tm, tl, tf = [], [], 0, 0, 0
+    for r in R[1:]:
+        if len(r) < len(cab) or 'EUCATEX' not in r[ix['Fornecedor']].upper():
+            continue
+        v = r[ix['Vendedor']].strip(); c = v.split(' - ')[0].strip()
+        meta_l, lit, fat = num(r[ix['Meta litros']]) or 0, num(r[ix['Litros']]) or 0, num(r[ix['$ Faturado']]) or 0
+        ls = sorted(set(loja.get(v, [])))
+        if len(ls) > 1:
+            avisos.append('%s em mais de uma loja %s' % (v, ls))
+        emp = ls[0] if ls else reserva.get(c, (0, ''))[1]
+        if not emp:
+            avisos.append('%s sem loja (ficou de fora)' % v); continue
+        pct = (lit / meta_l * 100) if meta_l else 0
+        pm = (fat / lit) if lit else 0
+        prz = num(r[ix['Prazo médio']]) if 'Prazo médio' in ix else 0
+        linhas.append('"%s";"%s";"10001139";"EUCATEX INDUSTRIA E COMERCIO LTDA";100,00;%s;%s;0,00;%s;%s;%s;""' % (
+            v, emp, br(meta_l), br(lit), br(pct), br(pm), br(prz or 0)))
+        tm += meta_l; tl += lit; tf += fat
+    if not linhas:
+        print('EUCATEX: nenhuma linha'); return 0
+    cabec = ['SO TINTAS - SOLCAST BI (Power BI, página Por fornecedor)', '',
+             'METAS POR VENDEDOR E FORNECEDOR - LITRAGEM DE FATURAMENTO – SÓ TINTAS RJ %s' % dt.strftime('%d/%m/%Y %H:%M'), '',
+             'Mês/Ano : %02d/%d' % (mm, aa), 'Empresa de : FATURAMENTO', 'Empresa : TODAS (Solcast BI)', 'Vendedor : TODOS',
+             'Fornecedor : 10001139-EUCATEX INDUSTRIA E COMERCIO LTDA', 'Tipo de Relatório : ANALÍTICO', 'Destino : CSV', '',
+             'VENDEDOR;EMP.OPE;CÓDIGO;FORNECEDOR;% FORN.;LIT.META;LITROS;KILOS;% REAL;PR. MEDIO;PRZ.MÉD.REA.;POSITIV.']
+    rod = ['', '', 'METAS POR VENDEDOR E FORNECEDOR - LITRAGEM DE FATURAMENTO  SÓ TINTAS RJ', '', '',
+           'ESP;LIT.META;LITROS;KILOS;% REAL;PR. MEDIO;PRZ.MÉD.REA.;POSITIV.',
+           '"TOTAL GERAL:";%s;%s;0,00;%s;%s;0,00;0,00' % (br(tm), br(tl), br(tl / tm * 100 if tm else 0), br(tf / tl if tl else 0)), '', '']
+    txt = '\r\n'.join(cabec + linhas + rod)
+    with open(os.path.join(saida, 'META EUCATEX.csv'), 'w', encoding='cp1252', errors='replace', newline='') as fh:
+        fh.write(txt)
+    print('ok META EUCATEX.csv', len(linhas), 'vendedores ·', br(tm), 'L de meta ·', br(tl), 'L', '· avisos:', avisos)
+    return len(linhas)
+
+
 if __name__ == '__main__':
     P = json.load(open(sys.argv[1], encoding='utf-8')); out = sys.argv[2]; os.makedirs(out, exist_ok=True)
     ate = int(P.get('mes_atual') or 12)
@@ -169,4 +237,6 @@ if __name__ == '__main__':
     if P.get('META'):
         rel['meta'] = meta(P['META'], out)
     rel['carteiras'] = {f: carteira(f, t, out, ate) for f, t in (P.get('CART') or {}).items()}
+    if P.get('EUC'):
+        rel['eucatex'] = eucatex(P, out)
     print(json.dumps(rel, ensure_ascii=False))

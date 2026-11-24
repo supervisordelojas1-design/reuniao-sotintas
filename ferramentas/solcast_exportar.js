@@ -6,7 +6,8 @@
      1. cole este arquivo inteiro → ele dispara em segundo plano e devolve 'disparado'
      2. confira de tempos em tempos:  JSON.stringify(window.__STJOB.estado())
      3. quando fase = 'pronto', ele baixa sozinho "solcast_pacote_AAAAMMDD.json" na pasta Downloads
-   O pacote leva META (por empresa) e a EVOLUÇÃO MENSAL POR CLIENTE de cada filial.
+   O pacote leva META (por empresa), a EVOLUÇÃO MENSAL POR CLIENTE de cada filial e,
+   desde 24/11/2026, a META EUCATEX da página "Por fornecedor" (no lugar do relatório do AUTCOM).
    O INDICADORES oficial continua saindo pela tela ("Dados com layout atual"), porque
    o total de cada loja (clientes ativos, positivados etc.) só existe nesse export.
    Parâmetro opcional antes de colar:  window.__ST_MES = 'Outubro'  (fechamento do dia 1º)
@@ -67,9 +68,38 @@
       }
       await fil.setSlicerState({ filters: [] }); await cpf.setSlicerState({ filters: [] });
       await (await achar(pi, 'd_tempo', 'nome_mes_filtro')).setSlicerState({ filters: [bf('d_tempo', 'nome_mes_filtro', ['ATUAL'])] });
+      /* C) Por fornecedor: META EUCATEX (litragem por vendedor; substitui o relatório do AUTCOM).
+            1º a tabela inteira (os números); depois filial a filial só para saber a loja de cada vendedor
+            (a meta só aparece na loja dele). Falha aqui não derruba o pacote. */
+      try {
+        J.fase = 'eucatex';
+        var pfo = pags.filter(function (p) { return /Por fornecedor/i.test(p.displayName); })[0]; await pfo.setActive(); await espera(6000);
+        await (await achar(pfo, 'd_tempo', 'ano_2')).setSlicerState({ filters: [bf('d_tempo', 'ano_2', ['ATUAL'])] });
+        await (await achar(pfo, 'd_tempo', 'nome_mes_filtro')).setSlicerState({ filters: [bf('d_tempo', 'nome_mes_filtro', [MES])] });
+        await (await achar(pfo, 'd_regional', 'nome')).setSlicerState({ filters: [] });
+        await (await achar(pfo, 'd_operador', 'nome')).setSlicerState({ filters: [] });
+        try { await (await achar(pfo, 'd_filtro_operador', 'nome_tipo_vendedor')).setSlicerState({ filters: [] }); } catch (e) {}
+        var ffo = await achar(pfo, 'd_empresa', 'codigo_e_nome'); await ffo.setSlicerState({ filters: [] }); await espera(8000);
+        var tEuc = await tabela(pfo, 'META');
+        var vend = function (txt) { return txt.split('\n').filter(function (l) { return /EUCATEX/i.test(l); }).map(function (l) { return l.split(',')[1]; }); };
+        J.out.EUC = await csv(tEuc);
+        var todos = vend(J.out.EUC).length; J.out.EUC_LOJA = {};
+        for (var k = 0; k < FIL.length; k++) {
+          var fe = FIL[k]; J.fase = 'eucatex ' + fe;
+          for (var u = 0; u < 3; u++) {
+            try {
+              await ffo.setSlicerState({ filters: [bf('d_empresa', 'codigo_e_nome', [fe])] }); await espera(5000 + u * 5000);
+              var vv = vend(await csv(tEuc));
+              if (todos > 6 && vv.length >= todos - 1) throw new Error('filtro da filial não aplicou');
+              J.out.EUC_LOJA[fe] = vv; break;
+            } catch (e) { if (u === 2) J.erros.push('eucatex ' + fe + ': ' + (e && (e.message || JSON.stringify(e)))); }
+          }
+        }
+        await ffo.setSlicerState({ filters: [] });
+      } catch (e) { J.erros.push('eucatex: ' + ((e && (e.message || JSON.stringify(e))) || String(e))); }
       /* pacote para a pasta Downloads */
       var hoje = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' }).replace(/-/g, '');
-      var P = { gerado: new Date().toISOString(), mes_atual: new Date().getMonth() + 1, mes_filtro: MES, ULT: J.out.ULT, META: J.out.META, INDICADORES: J.out.INDICADORES, CART: J.out.CART };
+      var P = { gerado: new Date().toISOString(), mes_atual: new Date().getMonth() + 1, mes_filtro: MES, ULT: J.out.ULT, META: J.out.META, INDICADORES: J.out.INDICADORES, CART: J.out.CART, EUC: J.out.EUC, EUC_LOJA: J.out.EUC_LOJA };
       var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(P)], { type: 'application/json' }));
       a.download = 'solcast_pacote_' + hoje + '.json'; document.body.appendChild(a); a.click();
       J.arquivo = a.download; J.fase = 'pronto';
