@@ -67,6 +67,11 @@ html.embutido #btnTema{display:none}
 .cp input{font-weight:800;font-size:17px;text-align:right;font-variant-numeric:tabular-nums}
 .st{font-size:12.5px;color:var(--muted)}.st.ok{color:var(--ok)}.st.erro{color:var(--bad)}
 .rodape{font-size:12px;color:var(--muted);line-height:1.6}.rodape b{color:var(--ink)}
+dialog{border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink);padding:0;max-width:min(520px,94vw);width:100%}
+dialog::backdrop{background:rgba(3,6,15,.7)}
+.dlg{display:flex;flex-direction:column;gap:12px;padding:16px}
+.dlg img{width:100%;height:auto;border-radius:12px;border:1px solid var(--line);background:#0b1a3d}
+.dlg label{display:flex;gap:8px;align-items:center;font-size:13px}
 @media(max-width:860px){.duas{grid-template-columns:1fr}.rows{max-height:44vh}}
 @media(max-width:560px){.g3{grid-template-columns:1fr}.fh .nome{font-size:19px}.tabs button{font-size:12.5px}}
 </style><script>(function(c){c.add("stv","stv-fam");try{if(window.self!==window.top)c.add("stv-emb")}catch(e){c.add("stv-emb")}})(document.documentElement.classList)</script><link rel="stylesheet" href="st-vidro.css?v=2">
@@ -98,6 +103,13 @@ html.embutido #btnTema{display:none}
   <div class="rodape" id="rodape"></div>
  </div>
 </div>
+<dialog id="dlg" aria-labelledby="dlgT"><div class="dlg">
+ <h2 id="dlgT">Card do desafio</h2>
+ <label id="opcOnde"><input type="checkbox" id="cbOnde" checked> Mostrar onde buscar (orçamentos e clientes parados)</label>
+ <img id="dlgImg" alt="Prévia do card do desafio">
+ <div class="acoes" style="justify-content:flex-end"><button class="btn" id="dlgFechar" type="button">Fechar</button><button class="btn ouro" id="dlgSalvar" type="button">Salvar imagem</button></div>
+ <div class="nota">O card leva o desafio, o que falta por dia e o prêmio. Não leva o potencial nem o custo. Mande só para a pessoa (ou a loja) dele.</div>
+</div></dialog>
 <script src="st-dados.js?v=93"></script>
 <script>
 (function(){
@@ -124,6 +136,8 @@ var QN={vend:['vendedor','Vendedores'],ger:['gerente','Gerentes'],sup:['supervis
 var P_CART=0.30;            /* reativar 30% da carteira parada */
 var P_ORC_QM=1/3, P_ORC_F=1/5;   /* fechar 1/3 dos orçamentos até 15 dias e 1/5 dos mais antigos */
 var CART_MIN=500;           /* cliente parado: média de pelo menos R$ 500/mês em 2 dos 3 últimos meses fechados */
+var P_TETO=0.5;             /* teto do mês: no máximo +50% sobre o ritmo de hoje nos dias úteis que faltam */
+var ORC_GRANDE=0.3;         /* orçamento acima de 30% da meta da loja: marcado para conferir */
 
 /* ===== bônus de atingimento de meta (mesmas tabelas do Bônus do Mês): 95% · 100% · 130%, paga a maior ===== */
 var BM={ger:{1:[400,900,1500],2:[600,1200,2000],3:[800,1500,2500]},
@@ -170,7 +184,7 @@ function montar(dados,gers){
  (dados.L||[]).filter(function(a){return +a[3]>0}).forEach(function(a){
   var cod=cod3(a[0]),meta=+a[3]||0,fat=+a[5]||0,proj=(+a[6]>0)?+a[6]:(UD&&UT?fat/UD*UT:fat),nl=nivelLoja(a);
   var orc=[];Object.keys(O).forEach(function(k){if(cod3(k)!==cod)return;(O[k]||[]).forEach(function(r){var v=+(r&&r[5])||0;if(!(v>0))return;
-   var dt=dataDe(r[2]),dias=dt?Math.max(0,Math.round((hoje-dt)/864e5)):0;orc.push({v:v,cli:limpa(r[3])||'Cliente sem nome',dias:dias,q:dias<=15,vk:chave(r[0])})})});
+   var dt=dataDe(r[2]),dias=dt?Math.max(0,Math.round((hoje-dt)/864e5)):0;orc.push({v:v,cli:limpa(r[3])||'Cliente sem nome',dias:dias,q:dias<=15,vk:chave(r[0]),grande:v>=meta*ORC_GRANDE})})});
   var par=[];Object.keys(K).forEach(function(k){if(cod3(k)!==cod)return;((K[k]&&K[k].c)||[]).forEach(function(cl){
    var s=cl[5];if(!Array.isArray(s)||s.length<3)return;var n=s.length,cur=+s[n-1]||0,prev=s.slice(Math.max(0,n-4),n-1).map(function(z){return +z||0});
    var avg=prev.reduce(function(x,y){return x+y},0)/prev.length;
@@ -194,8 +208,11 @@ function potencial(x){
  var hist=x.tipo==='sup'?x.ls.reduce(function(s,l){return s+(l.med90>0?Math.max(0,l.med90-l.proj):0)},0):(x.med90>0?Math.max(0,x.med90-x.proj):0);
  var cartBase=x.par.reduce(function(s,c){return s+c.avg},0),cart=cartBase*P_CART;
  var oq=0,of=0,nq=0;x.orc.forEach(function(o){if(o.q){oq+=o.v;nq++}else of+=o.v});
- var orc=oq*P_ORC_QM+of*P_ORC_F,total=hist+cart+orc;
- return {hist:hist,cart:cart,cartBase:cartBase,nPar:x.par.length,orc:orc,orcQ:oq,orcF:of,nQ:nq,nF:x.orc.length-nq,orcTot:oq+of,total:total,fecha:x.proj+total,pct:x.meta?(x.proj+total)/x.meta*100:0};
+ var orc=oq*P_ORC_QM+of*P_ORC_F,bruto=hist+cart+orc;
+ /* teto: o que cabe nos dias úteis que faltam, até +50% sobre o ritmo de hoje (sem venda ainda, usa o ritmo da meta) */
+ var rit=UD&&x.fat>0?x.fat/UD:(UT?x.meta/UT:0),teto=UR>0?rit*UR*P_TETO:0,total=Math.min(bruto,teto);
+ var nG=x.orc.filter(function(o){return o.grande}).length;
+ return {hist:hist,cart:cart,cartBase:cartBase,nPar:x.par.length,orc:orc,orcQ:oq,orcF:of,nQ:nq,nF:x.orc.length-nq,orcTot:oq+of,bruto:bruto,teto:teto,limitado:bruto>teto+0.5,nGrande:nG,total:total,fecha:x.proj+total,pct:x.meta?(x.proj+total)/x.meta*100:0};
 }
 function base(){return ST.tab==='vend'?VEND:ST.tab==='ger'?LOJAS:SUPS}
 function desafioDe(x,q){q=q||ST.tab;var A=(CFGM.alvo&&CFGM.alvo[q])||{},I=(CFGM.ind&&CFGM.ind[q])||{},a=+A[x.chv]||0;if(!a)return null;var pr=I[x.chv]&&I[x.chv][a];return {pct:a,premio:pr==null?null:+pr}}
@@ -235,7 +252,7 @@ function ficha(){
   '<div class="g2"><div class="m"><div class="l">Projetado</div><div class="n">'+pc(pj)+'%</div><div class="d">'+rs(x.proj)+' para a meta de '+rs(x.meta)+' · já vendeu '+rs(x.fat)+'</div></div>'+
    '<div class="m"><div class="l">Ganha no projetado</div><div class="n">'+rs(bnP)+'</div><div class="d">'+(fxB(pj)<0?'abaixo de 95%: sem bônus de meta':'bônus de meta da faixa de '+FXB[fxB(pj)]+'%')+'</div></div></div>'+
   '<h3>2 · Potencial de entregar mais neste mês</h3>'+
-  '<div class="total"><div><div class="nota">Soma das três fontes abaixo</div><div class="n">'+(p.total>0?'+'+rs(p.total):'sem potencial mapeado')+'</div></div><div class="nota" style="text-align:right">Com isso fecharia em <b>'+pc(p.pct)+'%</b><br>'+rs(p.fecha)+'</div></div>'+
+  '<div class="total"><div><div class="nota">'+(p.limitado?'Cabe neste mês (as três fontes somam '+rs(p.bruto)+')':'Soma das três fontes abaixo')+'</div><div class="n">'+(p.total>0?'+'+rs(p.total):'sem potencial mapeado')+'</div>'+(p.limitado?'<div class="nota">teto: até +'+pc(P_TETO*100,0)+'% sobre o ritmo de hoje nos '+pc(UR)+' dias úteis que faltam</div>':'')+'</div><div class="nota" style="text-align:right">Com isso fecharia em <b>'+pc(p.pct)+'%</b><br>'+rs(p.fecha)+'</div></div>'+
   '<div class="g3">'+
    '<div class="m"><div class="l"><span class="tag" style="background:var(--c-h)"></span>Histórico</div><div class="n">'+(p.hist>0?'+'+rs(p.hist):'—')+'</div><div class="d">'+
      (x.tipo==='sup'?(p.hist>0?'soma das lojas que projetam abaixo da própria média de 90 dias':'todas as lojas projetam na média de 90 dias ou acima'):
@@ -245,7 +262,7 @@ function ficha(){
      li(x.par,function(c){return '<li><span>'+esc(c.cli)+'</span><span>'+rs(c.avg)+'/mês</span></li>'})+'</div>'+
    '<div class="m"><div class="l"><span class="tag" style="background:var(--c-o)"></span>Orçamentos em aberto</div><div class="n">'+(p.orc>0?'+'+rs(p.orc):'—')+'</div><div class="d">'+
      (x.orc.length?x.orc.length+' em aberto somando '+rs(p.orcTot)+' · conta 1/3 dos de até 15 dias ('+rs(p.orcQ)+') e 1/5 dos mais antigos ('+rs(p.orcF)+')':'nenhum orçamento em aberto')+'</div>'+
-     li(x.orc,function(o){return '<li><span>'+esc(o.cli)+' · '+o.dias+(o.dias===1?' dia':' dias')+'</span><span>'+rs(o.v)+'</span></li>'})+'</div>'+
+     li(x.orc,function(o){return '<li><span>'+(o.grande?'⚠ ':'')+esc(o.cli)+' · '+o.dias+(o.dias===1?' dia':' dias')+'</span><span>'+rs(o.v)+'</span></li>'})+(p.nGrande?'<div class="d" style="color:var(--warn)">⚠ '+p.nGrande+(p.nGrande===1?' orçamento passa':' orçamentos passam')+' de '+pc(ORC_GRANDE*100,0)+'% da meta da loja: confira se é real antes de contar com ele.</div>':'')+'</div>'+
   '</div>'+
   '<h3>3 · Desafio</h3>'+
   (PODE?'<div class="lanc"><label class="cp">Chegar em (% da meta)<input id="dPct" type="number" inputmode="decimal" min="1" max="300" step="1" value="'+(d?d.pct:'')+'" placeholder="'+sg+'"></label>'+
@@ -253,8 +270,8 @@ function ficha(){
     '<button type="button" class="btn" id="bSug">Usar sugestão: '+sg+'%</button></div>'+
     '<div class="nota">Sugestão = projetado + potencial ('+pc(pj)+'% → '+sg+'%). Você pode lançar qualquer %.</div>'
    :'<div class="nota">'+(d?'Desafio lançado: '+pc(d.pct,1)+'% da meta'+(d.premio!=null?' · prêmio '+rs(d.premio):''):'Sem desafio lançado.')+'</div>')+
-  '<div id="res"></div>'+
-  (PODE?'<div class="acoes"><button type="button" class="btn pri" id="bSalvarProx">Salvar e ir para o próximo</button><button type="button" class="btn" id="bSalvar">Salvar</button>'+(d?'<button type="button" class="btn" id="bLimpar">Tirar o desafio</button>':'')+'<span class="st" id="stSalvo" role="status">'+(d&&CFGM.em?'Lançado por '+esc(CFGM.por||'')+' em '+esc(CFGM.em):'')+'</span></div>':'');
+  '<div id="res"></div>'+(!PODE&&d?'<div class="acoes"><button type="button" class="btn ouro" id="bCard">Card em imagem</button></div>':'')+
+  (PODE?'<div class="acoes"><button type="button" class="btn pri" id="bSalvarProx">Salvar e ir para o próximo</button><button type="button" class="btn" id="bSalvar">Salvar</button><button type="button" class="btn ouro" id="bCard">Card em imagem</button>'+(d?'<button type="button" class="btn" id="bLimpar">Tirar o desafio</button>':'')+'<span class="st" id="stSalvo" role="status">'+(d&&CFGM.em?'Lançado por '+esc(CFGM.por||'')+' em '+esc(CFGM.em):'')+'</span></div>':'');
  resultado();
 }
 function lidos(){var a=$('dPct'),b=$('dPre');if(!a){var x=atual(),d=x&&desafioDe(x);return d?{pct:d.pct,pre:d.premio||0,tem:true}:{pct:0,pre:0,tem:false}}
@@ -292,15 +309,15 @@ var XLSX_URL='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.j
 function carregarXLSX(){if(window.XLSX)return Promise.resolve();return new Promise(function(ok,erro){var s=document.createElement('script');s.src=XLSX_URL;s.onload=function(){window.XLSX?ok():erro(new Error('biblioteca não carregou'))};s.onerror=function(){erro(new Error('sem conexão para montar a planilha'))};document.head.appendChild(s)})}
 var COLS=[['Posição','n',9],['Nome','t',28],['Loja','t',20],['Supervisor','t',16],['Meta do mês','r',14],['Realizado','r',14],['Projetado (R$)','r',15],['Projetado (%)','p',12],['Ganha no projetado (bônus de meta)','r',17],
  ['Média de 90 dias (por mês)','r',16],['Potencial: histórico','r',15],['Clientes parados','n',10],['Carteira parada (R$ por mês)','r',16],['Potencial: carteira (30%)','r',15],
- ['Orçamentos em aberto','n',11],['Orçamentos em aberto (R$)','r',16],['Potencial: orçamentos','r',15],['POTENCIAL TOTAL','r',16],['Fecharia em (R$)','r',15],['Fecharia em (%)','p',12],
+ ['Orçamentos em aberto','n',11],['Orçamentos em aberto (R$)','r',16],['Potencial: orçamentos','r',15],['Soma das três fontes','r',15],['Teto do mês (+50% no ritmo)','r',16],['POTENCIAL NO MÊS','r',16],['Fecharia em (R$)','r',15],['Fecharia em (%)','p',12],
  ['Desafio (% da meta)','p',12],['Prêmio do desafio','r',14],['Ganha se bater (bônus de meta + prêmio)','r',18],['Venda a mais se bater','r',15],['Precisa vender por dia','r',15]];
 function aba(q,arr){var L=arr.slice().sort(function(a,b){return b.pot.total-a.pot.total||b.proj-a.proj}),cab=COLS.map(function(c){return c[0]});cab[1]=QN[q][0].replace(/^./,function(c){return c.toUpperCase()});if(q==='sup'){cab[2]='Lojas';cab[3]='Região'}
  var rows=L.map(function(x,i){var p=x.pot,pj=x.meta?x.proj/x.meta*100:0,d=desafioDe(x,q),c=d?conta(x,d.pct,d.premio):null;
   return [i+1,x.semNome?'(gerente não cadastrado)':x.nome,x.tipo==='sup'?x.lojaNome:x.lojaNome+' '+x.cod,regCurta(x.reg),x.meta,x.fat,x.proj,pj,bonusEm(x,pj),
-   x.tipo==='sup'?x.med90:(x.med90||''),p.hist,p.nPar,p.cartBase,p.cart,x.orc.length,p.orcTot,p.orc,p.total,p.fecha,p.pct,
+   x.tipo==='sup'?x.med90:(x.med90||''),p.hist,p.nPar,p.cartBase,p.cart,x.orc.length,p.orcTot,p.orc,p.bruto,p.teto,p.total,p.fecha,p.pct,
    d?d.pct:'',d?(d.premio!=null?d.premio:'a definir'):'',c?c.ganha:'',c?c.mais:'',c?c.dia:'']});
  var topo=[[QN[q][1]+' · potencial de entregar mais · '+MESTX],[(QUANDO?'Números de '+QUANDO+' · ':'')+pc(UD)+' de '+pc(UT)+' dias úteis trabalhados, faltam '+pc(UR)+' · ordem: maior potencial primeiro'],
-  ['Potencial = histórico (média de 90 dias − projetado) + carteira (30% dos clientes recorrentes parados) + orçamentos (1/3 dos de até 15 dias + 1/5 dos mais antigos). É estimativa.'],[]];
+  ['Potencial = histórico (média de 90 dias − projetado) + carteira (30% dos clientes recorrentes parados) + orçamentos (1/3 dos de até 15 dias + 1/5 dos mais antigos), limitado ao teto do mês (até +50% sobre o ritmo de hoje nos dias úteis que faltam). É estimativa.'],[]];
  var ws=XLSX.utils.aoa_to_sheet(topo.concat([cab],rows)),h0=topo.length;
  for(var i=0;i<rows.length;i++)for(var j=0;j<COLS.length;j++){var cel=ws[XLSX.utils.encode_cell({r:h0+1+i,c:j})];if(!cel||cel.t!=='n')continue;var t=COLS[j][1];cel.z=t==='r'?'"R$" #,##0':t==='p'?'0.0"%"':'0'}
  ws['!cols']=COLS.map(function(c){return {wch:c[2]}});ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:h0,c:0},e:{r:h0+rows.length,c:COLS.length-1}})};return ws}
@@ -309,6 +326,63 @@ function exportar(){var b=$('btnPlan');b.disabled=true;var t=b.textContent;b.tex
   XLSX.utils.book_append_sheet(wb,aba('vend',VEND),'Vendedores');XLSX.utils.book_append_sheet(wb,aba('ger',LOJAS),'Gerentes');XLSX.utils.book_append_sheet(wb,aba('sup',SUPS),'Supervisores');
   XLSX.writeFile(wb,'potencial_desafios_'+MESK+(QUANDO?'_'+QUANDO.slice(0,5).replace('/','-'):'')+'.xlsx');b.disabled=false;b.textContent=t;
  }).catch(function(e){b.disabled=false;b.textContent=t;aviso('Não consegui montar a planilha: '+esc((e&&e.message)||e))})}
+
+/* ===== card em imagem (1080 × 1350): o desafio da pessoa, o que falta por dia e onde buscar ===== */
+var W=1080,H=1350,CARD=null;
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+function fonte(c,peso,tam,disp){c.font=peso+' '+tam+'px '+(disp?'"Bricolage Grotesque"':'"Public Sans"')+',system-ui,sans-serif'}
+function caber(c,t,max){t=String(t);if(c.measureText(t).width<=max)return t;while(t.length>1&&c.measureText(t+'…').width>max)t=t.slice(0,-1);return t+'…'}
+function quebrar(c,t,max,n){var ps=String(t).split(/\s+/),L=[],a='';ps.forEach(function(p){var z=a?a+' '+p:p;if(c.measureText(z).width>max&&a){L.push(a);a=p}else a=z});if(a)L.push(a);if(L.length>n){L=L.slice(0,n);L[n-1]=caber(c,L[n-1]+' …',max)}return L}
+function fundoCard(c){var g=c.createLinearGradient(0,0,W,H);g.addColorStop(0,'#0b1a3d');g.addColorStop(.55,'#12306e');g.addColorStop(1,'#1C3F8F');c.fillStyle=g;c.fillRect(0,0,W,H);
+ var r=c.createRadialGradient(W,0,0,W,0,700);r.addColorStop(0,'rgba(211,32,39,.35)');r.addColorStop(1,'rgba(211,32,39,0)');c.fillStyle=r;c.fillRect(0,0,W,H);
+ var y=c.createRadialGradient(0,H,0,0,H,620);y.addColorStop(0,'rgba(255,209,0,.18)');y.addColorStop(1,'rgba(255,209,0,0)');c.fillStyle=y;c.fillRect(0,0,W,H);
+ c.fillStyle='#D32027';c.fillRect(0,0,W,18);
+ for(var i=0;i<27;i++)for(var j=0;j<2;j++){c.fillStyle=(i+j)%2?'rgba(255,255,255,.85)':'rgba(255,255,255,.08)';c.fillRect(i*40,H-84+j*20,40,20)}}
+function caixa(c,x,y,w,h,forte){rr(c,x,y,w,h,22);c.fillStyle=forte?'rgba(255,209,0,.14)':'rgba(255,255,255,.08)';c.fill();c.strokeStyle=forte?'rgba(255,209,0,.7)':'rgba(255,255,255,.16)';c.lineWidth=2;c.stroke()}
+function desenharCard(c,x,v,onde){
+ fundoCard(c);var cc=conta(x,v.pct,v.pre),mes=MESTX.split(' ')[0];
+ fonte(c,800,26);c.fillStyle='#FFD100';c.fillText(caber(c,('Desafio de '+mes+' · '+(x.tipo==='sup'?'Região '+x.nome:x.lojaNome)).toUpperCase(),W-144),72,92);
+ var nome=x.tipo==='ger'?(x.semNome?'Gerente · '+x.lojaNome:x.nome):x.tipo==='sup'?'Supervisor · '+x.nome:x.nome;
+ fonte(c,800,70,true);c.fillStyle='#fff';var L=quebrar(c,nome,W-144,2);L.forEach(function(t,i){c.fillText(t,72,168+i*76)});
+ var y=168+(L.length-1)*76+50;fonte(c,600,30);c.fillStyle='#c9d6f2';
+ c.fillText(caber(c,'Hoje '+pc(x.meta?x.fat/x.meta*100:0)+'% da meta · no ritmo fecha em '+pc(cc.pj)+'%',W-144),72,y);y+=46;
+ /* o desafio */
+ caixa(c,72,y,W-144,250,true);
+ fonte(c,800,24);c.fillStyle='#FFD100';c.fillText('SEU DESAFIO',104,y+50);
+ fonte(c,800,92,true);c.fillStyle='#fff';c.fillText(pc(v.pct,1)+'%',104,y+150);
+ var wp=c.measureText(pc(v.pct,1)+'%').width;fonte(c,700,30);c.fillStyle='#c9d6f2';c.fillText('da meta',104+wp+16,y+150);
+ fonte(c,600,28);c.fillStyle='#c9d6f2';c.fillText(caber(c,'fechar o mês em '+rs(cc.alvo),560),104,y+210);
+ c.textAlign='right';fonte(c,800,24);c.fillStyle='#FFD100';c.fillText(v.pre!=null&&v.pre>0?'PRÊMIO':'GANHA SE BATER',W-104,y+50);
+ fonte(c,800,64,true);c.fillStyle='#FFD100';c.fillText(v.pre!=null&&v.pre>0?rs(v.pre):rs(cc.ganha),W-104,y+140);
+ if(v.pre>0&&cc.bonus>0){fonte(c,600,24);c.fillStyle='#c9d6f2';c.fillText('+ bônus de meta '+rs(cc.bonus),W-104,y+182)}
+ c.textAlign='left';y+=280;
+ /* o que falta */
+ caixa(c,72,y,(W-144-20)/2,150);caixa(c,72+(W-144+20)/2,y,(W-144-20)/2,150);
+ fonte(c,800,22);c.fillStyle='#9fb6e6';c.fillText('FALTA VENDER',100,y+44);c.fillText('POR DIA ÚTIL',72+(W-144+20)/2+28,y+44);
+ fonte(c,800,50,true);c.fillStyle='#fff';c.fillText(cc.falta>0?rs(cc.falta):'Batido!',100,y+104);c.fillText(cc.falta>0?rs(cc.dia):'—',72+(W-144+20)/2+28,y+104);
+ fonte(c,600,21);c.fillStyle='#c9d6f2';c.fillText(caber(c,'faltam '+pc(UR)+' dias úteis',(W-144)/2-60),100,y+136);c.fillText(caber(c,'hoje: '+rs(cc.ritmo)+' por dia',(W-144)/2-60),72+(W-144+20)/2+28,y+136);
+ y+=186;
+ /* onde buscar */
+ if(onde){var itens=[];
+  if(x.tipo==='sup')x.ls.slice().sort(function(a,b){return a.proj/a.meta-b.proj/b.meta}).slice(0,6).forEach(function(l){itens.push([l.lojaNome+' · '+l.cod,'projeta '+pc(l.meta?l.proj/l.meta*100:0,0)+'%'])});
+  else{x.orc.filter(function(o){return !o.grande}).slice(0,3).forEach(function(o){itens.push(['Orçamento · '+o.cli,rs(o.v)])});x.par.slice(0,3).forEach(function(z){itens.push(['Cliente parado · '+z.cli,rs(z.avg)+'/mês'])})}
+  var cabe=Math.floor((H-200-y-40)/62);itens=itens.slice(0,Math.max(0,cabe));
+  if(itens.length){fonte(c,800,24);c.fillStyle='#9fb6e6';c.fillText(x.tipo==='sup'?'LOJAS PARA PUXAR':'ONDE BUSCAR',72,y);y+=18;
+   itens.forEach(function(it){rr(c,72,y,W-144,52,14);c.fillStyle='rgba(255,255,255,.06)';c.fill();fonte(c,600,25);c.fillStyle='#fff';c.fillText(caber(c,it[0],660),96,y+35);
+    c.textAlign='right';fonte(c,700,25);c.fillStyle='#FFD100';c.fillText(it[1],W-96,y+35);c.textAlign='left';y+=62})}}
+ fonte(c,600,22);c.fillStyle='rgba(255,255,255,.75)';c.fillText(caber(c,'Base: meta do mês'+(QUANDO?' · números de '+QUANDO:'')+' · Só Tintas',W-144),72,H-110);
+}
+function gerarCard(){var cv=document.createElement('canvas');cv.width=W;cv.height=H;var c=cv.getContext('2d');desenharCard(c,CARD.x,CARD.v,$('cbOnde').checked);CARD.cv=cv;$('dlgImg').src=cv.toDataURL('image/png')}
+function abrirCard(){var x=atual();if(!x)return;var v=lidos();
+ if(!v.tem){var st=$('stSalvo');if(st){st.textContent='Lance o % do desafio para montar o card.';st.className='st erro'}if($('dPct'))$('dPct').focus();return}
+ CARD={x:x,v:v};$('dlgT').textContent='Card do desafio · '+(x.semNome?x.lojaNome:x.nome);
+ var go=function(){gerarCard();var dg=$('dlg');if(dg.showModal&&!dg.open)dg.showModal();else dg.setAttribute('open','')};
+ try{Promise.all([document.fonts.load('800 70px "Bricolage Grotesque"'),document.fonts.load('600 28px "Public Sans"'),document.fonts.load('800 24px "Public Sans"')]).then(go,go)}catch(e){go()}}
+function baixarCard(){if(!CARD||!CARD.cv)return;var x=CARD.x,nm='desafio_'+(x.tipo==='sup'?'regiao_':x.tipo==='ger'?'loja_'+x.cod+'_':x.cod+'_')+String(x.semNome?x.lojaNome:x.nome).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'_')+'_'+MESK+'.png';
+ CARD.cv.toBlob(function(bl){if(!bl)return;var f=null;try{f=new File([bl],nm,{type:'image/png'})}catch(e){}
+  var baixa=function(){var a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=nm;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},8000)};
+  if(f&&navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],title:$('dlgT').textContent}).catch(baixa);return}baixa()},'image/png')}
+document.addEventListener('change',function(ev){if(ev.target.id==='cbOnde'&&CARD)gerarCard()});
 
 /* ===== eventos ===== */
 function render(){lista();ficha()}
@@ -321,6 +395,9 @@ document.addEventListener('click',function(ev){var t=ev.target.closest('button')
  if(t.id==='bSalvarProx'){salvar(true);return}
  if(t.id==='bLimpar'){salvar(false,true);return}
  if(t.id==='btnPlan'){exportar();return}
+ if(t.id==='bCard'){abrirCard();return}
+ if(t.id==='dlgFechar'){var dg=$('dlg');if(dg.close)dg.close();else dg.removeAttribute('open');return}
+ if(t.id==='dlgSalvar'){baixarCard();return}
 });
 document.addEventListener('input',function(ev){var t=ev.target;if(t.id==='dPct'||t.id==='dPre'){resultado();return}if(t.id==='fBusca'){ST.busca=t.value;render()}});
 document.addEventListener('change',function(ev){if(ev.target.id==='fReg'){ST.reg=ev.target.value;ST.sel=null;render()}});
@@ -336,6 +413,7 @@ function iniciar(dados,conf,pode,nome,gers){
  $('rodape').innerHTML='<b>Como é a conta do potencial.</b> <b>Histórico</b>: a média mensal dos últimos 90 dias menos o que a pessoa projeta para este mês (só quando a média é maior). '+
   '<b>Carteira parada</b>: clientes CNPJ que compraram em pelo menos 2 dos 3 últimos meses fechados (média de R$ '+fmt(CART_MIN)+' ou mais) e ainda não compraram neste mês; entra '+pc(P_CART*100,0)+'% da média deles. '+
   '<b>Orçamentos em aberto</b>: entra 1/3 do valor dos feitos há até 15 dias e 1/5 dos mais antigos. São as mesmas regras das alavancas do Painel de Metas. '+
+  '<b>Teto do mês</b>: o potencial nunca passa de +'+pc(P_TETO*100,0)+'% sobre o ritmo de venda de hoje nos dias úteis que faltam (no fim do mês o teto encolhe). Orçamento acima de '+pc(ORC_GRANDE*100,0)+'% da meta da loja aparece com ⚠ para conferir. '+
   'É uma <b>estimativa</b> para priorizar quem desafiar: as três fontes podem se sobrepor (um orçamento pode ser de um cliente da carteira). Gerente = números da loja inteira; supervisor = soma das lojas. '+
   '<b>Ganha</b> = só o bônus de atingimento de meta (95% · 100% · 130%) mais o prêmio do desafio.';
  filtros();render();
