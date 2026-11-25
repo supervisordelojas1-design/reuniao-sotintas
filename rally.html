@@ -208,6 +208,15 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--faixa);outline-offs
 .md .hi h2{font-size:28px;font-weight:800;line-height:1.05}
 .md .hi .art{position:absolute;right:-14px;top:-14px;width:120px;height:120px;color:var(--c);opacity:.16}
 .md .hi .art svg{width:100%;height:100%}
+/* botão "Ocultar valores" (25/11/2026, Bruno): cobre os números do Meu dia quando há alguém olhando a tela */
+.md .hi h2{padding-right:44px}
+.olho{position:absolute;top:10px;right:10px;z-index:2;display:inline-flex;align-items:center;gap:6px;height:32px;min-width:32px;padding:0 10px;border-radius:999px;border:1px solid var(--borda);background:var(--vidro2);color:var(--tinta);font:600 12px/1 inherit;cursor:pointer}
+.olho:hover{border-color:rgba(255,255,255,.35)}
+.olho:focus-visible{outline:2px solid var(--azul);outline-offset:2px}
+.olho svg{width:16px;height:16px;flex:none}
+@media (max-width:440px){.olho .tx{display:none}.olho{padding:0 8px}}
+html.oculto .md .goal .big,html.oculto .md .goal .note,html.oculto .md .goal .road,html.oculto .md .mcard b,html.oculto .md .mcard .note,html.oculto .md .mcard .meter,html.oculto .md .hi p,html.oculto .md .simres,html.oculto .md .mi div span,html.oculto .md .dbar .p,html.oculto .md .dbar .t{filter:blur(9px);user-select:none;pointer-events:none;transition:filter .15s}
+@media (prefers-reduced-motion:reduce){html.oculto .md *{transition:none}}
 .md .goal{padding:18px;display:grid;gap:12px}
 .md .goal .big{font-family:var(--f-disp);font-weight:800;font-size:46px;line-height:1}
 .md .goal .row{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
@@ -515,6 +524,19 @@ function simCard(v,dia){
  } else if(sim){res='<span class="note">O Painel atualizou depois da sua simulação: o sistema registrou <b style="color:var(--tinta)">'+rs(Math.max(0,conf))+'</b> a mais. Você tinha simulado '+rs(sim.v)+'. Vale o número do sistema.</span>'}
  return '<form class="glass mcard sim" id="simF"><span class="eye" style="color:var(--faixa)">Simular o meu dia</span><label class="note" for="simV">Quanto você já faturou hoje? (R$)</label><div class="simrow"><input id="simV" inputmode="decimal" autocomplete="off" placeholder="0,00" value="'+(sim&&conf==null?fmt(sim.v):'')+'"><button type="submit">Simular</button>'+(sim?'<button type="button" data-simx>Limpar</button>':'')+'</div>'+res+'<span class="note">É só uma simulação, guardada neste aparelho. O resultado oficial é o que o Painel trouxer na próxima atualização.</span></form>';
 }
+/* ---------- ocultar valores (fica guardado neste aparelho; vale para o card da inicial e para o painel) ---------- */
+function ocultoLer(){try{return localStorage.getItem('st_rally_ocultar')==='1'}catch(e){return false}}
+function ocultoAplicar(on){document.documentElement.classList.toggle('oculto',!!on)}
+function ocultoBtn(){var on=ocultoLer();
+ return '<button type="button" class="olho" data-ocultar aria-pressed="'+on+'" title="'+(on?'Mostrar os valores':'Cobrir os valores desta tela')+'">'+
+  (on?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><span class="tx">Mostrar</span>'
+     :'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.7 10.7 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.1 3.9M6.6 6.6C3.7 8.4 2 12 2 12s3.5 7 10 7a10.6 10.6 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg><span class="tx">Ocultar valores</span>')+'</button>'}
+function ocultoTrocar(){var on=!ocultoLer();try{on?localStorage.setItem('st_rally_ocultar','1'):localStorage.removeItem('st_rally_ocultar')}catch(e){}
+ ocultoAplicar(on);var b=document.querySelector('[data-ocultar]');if(b)b.outerHTML=ocultoBtn()}
+ocultoAplicar(ocultoLer());
+/* o card da inicial e o painel aberto ficam iguais quando um dos dois muda */
+window.addEventListener('storage',function(ev){if(ev.key!=='st_rally_ocultar')return;ocultoAplicar(ocultoLer());var b=document.querySelector('[data-ocultar]');if(b)b.outerHTML=ocultoBtn()});
+
 /* ---------- Meu dia ---------- */
 function dicas(orc,par,eM,eL,prefixo){
  var t=[];
@@ -533,7 +555,7 @@ function meudia(){
  var fixas=function(){return mi('i-cli','Cadastre 2 pintores completos hoje','Dados do pintor e pelo menos uma obra, na aba Pintores do CRM'+(cr?' · hoje: '+cr.comp+' de 2':''),'+25 cada',cr&&cr.comp>=2)+mi('i-orc','Lance todos os contatos no CRM','Ligação, WhatsApp, visita e retorno de orçamento. Só pontua o que estiver lançado'+(cr?' · hoje: '+cr.cont+(cr.cont===1?' contato':' contatos'):''),'+10 cada')};
  if(EU){var v=EU,l=v.loja,c=l?l.c:'#6f95f5',falta=Math.max(0,v.meta-v.fat),dia=falta/Math.max(1,UR),fl=Math.max(0,v.eM-v.eL),bd=baldesDia(v.eM,v.eL),ep=v.eM?v.eL/v.eM*100:0;
   var sit=v.alc>=100?'Você já cruzou a chegada. Agora é super meta.':v.alc>=ESP?'Você está no ritmo. Mantenha a média.':'Você está '+pc(ESP-v.alc,0)+' pontos abaixo do ritmo. Hoje conta em dobro.';
-  h+='<div class="glass hi" style="--c:'+c+'">'+(l?'<span class="art">'+use(l.icone)+'</span><span class="eye" style="color:'+c+'">'+esc(l.curto)+' · Equipe '+esc(l.eq)+'</span>':'')+'<h2>'+oi+', '+esc(prim||v.n.split(' ')[0])+'!</h2><p class="mute" style="font-size:14px">'+sit+'</p></div>';
+  h+='<div class="glass hi" style="--c:'+c+'">'+ocultoBtn()+(l?'<span class="art">'+use(l.icone)+'</span><span class="eye" style="color:'+c+'">'+esc(l.curto)+' · Equipe '+esc(l.eq)+'</span>':'')+'<h2>'+oi+', '+esc(prim||v.n.split(' ')[0])+'!</h2><p class="mute" style="font-size:14px">'+sit+'</p></div>';
   h+='<div class="glass goal" style="--c:'+c+'"><div class="row"><span class="eye">Sua meta de hoje</span><span class="note">faltam '+UR+' dias úteis</span></div><span class="big num">'+rs(dia)+'</span>'+road(v.alc,(function(){var s=simLer();return s&&Math.abs(v.fat-s.base)<=1&&v.meta?(v.fat+s.v)/v.meta*100:null})(),c)+'<div class="row"><span class="note">Mês: <b style="color:var(--tinta)">'+pc(v.alc)+'%</b> da sua meta · esperado hoje '+pc(ESP)+'%</span><span class="note">faltam '+rs(falta)+'</span></div></div>';
   h+='<div class="two"><div class="glass mcard"><span class="eye" style="color:var(--azul)">Eucatex hoje</span>'+(v.eM?'<b class="num">'+(fl>0?bd+(bd===1?' balde':' baldes'):'Batido')+'</b><span class="note">'+(fl>0?'de 18 L por dia ('+fmt(fl/Math.max(1,UR))+' L)':'você já passou da meta de litros')+'</span><div class="meter"><i style="width:'+Math.min(100,ep)+'%"></i><u style="left:'+Math.min(100,ESP)+'%"></u></div><span class="note">'+fmt(v.eL)+' L de '+fmt(v.eM)+' L ('+pc(ep,0)+'%)</span>':'<b>—</b><span class="note">sem meta Eucatex neste mês</span>')+'</div>';
   h+=l?'<button class="glass mcard" data-cod="'+l.cod+'" style="text-align:left"><span class="eye" style="color:'+c+'">Sua loja na corrida</span><b class="num">'+l.pos+'º <span class="mute" style="font-size:15px">de '+LOJAS.length+'</span></b><span class="note">'+pc(l.alc)+'% da meta · vai a '+Math.round(l.proj)+'%</span><div class="meter"><i style="width:'+Math.min(100,l.alc)+'%;background:'+c+'"></i><u style="left:'+Math.min(100,ESP)+'%"></u></div>'+(v.pos?'<span class="note">Você: '+v.pos+'º de '+VEND.length+' pilotos da rede</span>':'')+'</button>':'<div class="glass mcard"><span class="eye">Sua loja na corrida</span><b>—</b><span class="note">O ranking da rede aparece assim que o servidor for atualizado.</span></div>';
@@ -548,7 +570,7 @@ function meudia(){
   var orc=[],par=[];ds.forEach(function(x){orc=orc.concat(x.orc);par=par.concat(x.par)});orc.sort(function(a,b){return b.v-a.v});par.sort(function(a,b){return b.avg-a.avg});
   var alc=M?F/M*100:0,rot=ESCOPO==='loja'?'Sua loja':ESCOPO==='regiao'?'Sua região':'A rede',l0=ESCOPO==='loja'?LOJAS.filter(function(l){return l.cod===ds[0].cod})[0]:null,c2=l0?l0.c:(ESCOPO==='regiao'&&LOJAS[0]?corEq((LOJAS.filter(function(l){return DET[l.cod]})[0]||{}).reg):'#6f95f5');
   var nv=ds.reduce(function(a,x){return a+x.vs.length},0),bd2=baldesDia(eM,eL),ep2=eM?eL/eM*100:0;
-  h+='<div class="glass hi" style="--c:'+c2+'">'+(l0?'<span class="art">'+use(l0.icone)+'</span>':'')+'<span class="eye" style="color:'+c2+'">'+rot+' · '+ds.length+(ds.length===1?' loja':' lojas')+' · '+nv+' vendedores</span><h2>'+oi+(prim?', '+esc(prim):'')+'!</h2><p class="mute" style="font-size:14px">'+(alc>=ESP?rot+' está no ritmo do mês.':rot+' está '+pc(ESP-alc,0)+' pontos abaixo do ritmo.')+'</p></div>';
+  h+='<div class="glass hi" style="--c:'+c2+'">'+ocultoBtn()+(l0?'<span class="art">'+use(l0.icone)+'</span>':'')+'<span class="eye" style="color:'+c2+'">'+rot+' · '+ds.length+(ds.length===1?' loja':' lojas')+' · '+nv+' vendedores</span><h2>'+oi+(prim?', '+esc(prim):'')+'!</h2><p class="mute" style="font-size:14px">'+(alc>=ESP?rot+' está no ritmo do mês.':rot+' está '+pc(ESP-alc,0)+' pontos abaixo do ritmo.')+'</p></div>';
   h+='<div class="glass goal" style="--c:'+c2+'"><div class="row"><span class="eye">Meta de hoje · '+rot.toLowerCase()+'</span><span class="note">faltam '+UR+' dias úteis</span></div><span class="big num">'+rs(falta2/Math.max(1,UR))+'</span>'+road(alc,null,c2)+'<div class="row"><span class="note">Mês: <b style="color:var(--tinta)">'+pc(alc)+'%</b> da meta · esperado hoje '+pc(ESP)+'%</span><span class="note">faltam '+rs(falta2)+'</span></div></div>';
   h+='<div class="two"><div class="glass mcard"><span class="eye" style="color:var(--azul)">Eucatex hoje</span>'+(eM?'<b class="num">'+(eL<eM?bd2+(bd2===1?' balde':' baldes'):'Batido')+'</b><span class="note">de 18 L por dia</span><div class="meter"><i style="width:'+Math.min(100,ep2)+'%"></i><u style="left:'+Math.min(100,ESP)+'%"></u></div><span class="note">'+fmt(eL)+' L de '+fmt(eM)+' L ('+pc(ep2,0)+'%)</span>':'<b>—</b><span class="note">sem meta Eucatex</span>')+'</div>';
   h+='<div class="glass mcard"><span class="eye" style="color:var(--verde)">CRM hoje</span>'+(cr?'<b class="num">'+cr.cont+' <span class="mute" style="font-size:15px">'+(cr.cont===1?'contato':'contatos')+'</span></b><span class="note">'+cr.comp+' de '+(nv*2)+' pintores completos (meta: 2 por vendedor)</span>':'<b>—</b><span class="note">Meta: todos os contatos lançados e 2 pintores completos por vendedor</span>')+'</div></div>';
@@ -692,7 +714,8 @@ function iniciar(R,P,cr){
  $('aviso').hidden=REDE;if(!REDE)$('aviso').textContent=EU?'O ranking da rede inteira entra assim que o servidor do Painel for atualizado. Por enquanto você vê o seu dia.':'O ranking da rede inteira entra assim que o servidor do Painel for atualizado. Por enquanto a corrida mostra só o seu recorte.';
  $('app').hidden=false;$('carga').hidden=true;
  window.addEventListener('hashchange',render);
- document.addEventListener('click',function(ev){if(EMBED){if(ev.target.closest('[data-abrir],[data-cod]')){try{window.parent.postMessage({stRally:'abrir'},location.origin)}catch(e){}}return}
+ document.addEventListener('click',function(ev){if(ev.target.closest('[data-ocultar]')){ev.preventDefault();ocultoTrocar();return}
+  if(EMBED){if(ev.target.closest('[data-abrir],[data-cod]')){try{window.parent.postMessage({stRally:'abrir'},location.origin)}catch(e){}}return}
   var t=ev.target.closest('[data-f],[data-cod],[data-close]');if(!t)return;
   if(t.dataset.close!==undefined){sheet(false);return}
   if(t.dataset.f){filtro=t.dataset.f;render();return}

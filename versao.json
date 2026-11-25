@@ -2,6 +2,17 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v278",
+      "data": "25/11/2026",
+      "hora": "08:15",
+      "itens": [
+        {
+          "painel": "Rally Só Tintas",
+          "o_que": "O Meu dia (e o card Sua meta de hoje da tela inicial) ganhou o botão Ocultar valores, no canto do cumprimento: ele cobre a meta, o faturamento, o Eucatex e o CRM quando há alguém olhando a tela. Toque em Mostrar para ver de novo; a escolha fica guardada no aparelho."
+        }
+      ]
+    },
+    {
       "v": "ast-v277",
       "data": "23/11/2026",
       "hora": "12:45",
