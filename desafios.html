@@ -309,7 +309,7 @@ function kpis(){
  var semP=F.length&&F.some(function(f){return f.premio==null});
  var nm=qual==='lojas'?['loja','lojas']:['vendedor','vendedores'];
  $('kpis').innerHTML=
-  '<div class="kpi"><div class="l">Projeção '+(ST.reg?'da região':'da '+(qual==='lojas'?'rede':'equipe'))+'</div><div class="v">'+pc(M?P/M*100:0)+'%</div><div class="d">hoje '+pc(M?Fa/M*100:0)+'% · '+rsK(P)+' de '+rsK(M)+'</div></div>'+
+  '<div class="kpi"><div class="l">Projeção '+(ST.reg?'da região':'da '+(qual==='lojas'?'rede':'equipe'))+'</div><div class="v">'+pc(M?P/M*100:0)+'%</div><div class="d">hoje '+pc(M?Fa/M*100:0)+'% · projeta '+rsK(P)+' para a meta de '+rsK(M)+'</div></div>'+
   '<div class="kpi"><div class="l">Já numa faixa no ritmo</div><div class="v">'+noR.length+' <span style="font-size:14px;color:var(--muted)">de '+G.length+'</span></div><div class="d">'+(F.length?'faixa 1 = '+pc(F[0].pct,0)+'% da meta':'lance as faixas acima')+'</div></div>'+
   '<div class="kpi"><div class="l">Ao alcance da próxima</div><div class="v">'+alc.length+'</div><div class="d">precisam subir até '+pc(LIM_ALC*100,0)+'% no ritmo por dia</div></div>'+
   '<div class="kpi"><div class="l">Prêmios no ritmo de hoje</div><div class="v">'+rs(custoR)+'</div><div class="d">'+(semP?'há faixa sem prêmio lançado':'com os ao alcance: '+rs(custoA)+' · teto '+rs(custoM))+'</div></div>';
