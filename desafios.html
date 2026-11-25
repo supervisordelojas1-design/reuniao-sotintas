@@ -45,7 +45,7 @@ html.embutido #btnTema{display:none}
 .nota b{color:var(--ink)}
 
 /* ---- configuração do desafio ---- */
-.cfg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.cfg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .campo{display:flex;flex-direction:column;gap:4px;font:800 11px var(--f-body);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;min-width:0}
 .campo input,.campo select{font:600 14px var(--f-body);text-transform:none;letter-spacing:0;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-width:0;width:100%}
 .fx{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px}
@@ -123,7 +123,8 @@ dialog::backdrop{background:rgba(3,6,15,.7)}
 .dlg .acoes{justify-content:flex-end}
 .opc{display:flex;gap:8px;align-items:center;font-size:13px}
 @media(max-width:900px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:980px){.cfg{grid-template-columns:1fr}}
+@media(max-width:680px){.cfg{grid-template-columns:1fr}}
+@media(max-width:520px){.tabs button{font-size:12px;padding:10px 2px}}
 @media(max-width:520px){td,th{padding:8px 9px}table{font-size:13px}.kpi .v{font-size:20px}}
 </style><script>(function(c){c.add("stv","stv-fam");try{if(window.self!==window.top)c.add("stv-emb")}catch(e){c.add("stv-emb")}})(document.documentElement.classList)</script><link rel="stylesheet" href="st-vidro.css?v=2">
 </head>
@@ -147,8 +148,9 @@ dialog::backdrop{background:rgba(3,6,15,.7)}
      <div class="fx" id="fxLojas"></div>
      <div class="fx" id="fxGer"></div>
      <div class="fx" id="fxVend"></div>
+     <div class="fx" id="fxSup"></div>
     </div>
-    <div class="nota">São três desafios separados: <b>Loja</b> (prêmio da equipe da loja), <b>Gerente</b> (prêmio individual do gerente, pelo resultado da loja dele) e <b>Vendedor</b> (individual). O % é sobre a <b>meta do mês</b>. Cada um recebe o prêmio da <b>maior faixa</b> que bater. Prêmio em branco aparece como “a definir” no card.</div>
+    <div class="nota">São quatro desafios separados: <b>Loja</b> (prêmio da equipe da loja), <b>Gerente</b> (individual, pelo resultado da loja dele), <b>Vendedor</b> (individual) e <b>Supervisor</b> (individual, pelo resultado somado das lojas da região dele). O % é sobre a <b>meta do mês</b>. Cada um recebe o prêmio da <b>maior faixa</b> que bater. Prêmio em branco aparece como “a definir” no card.</div>
    </section>
    <div class="kpis" id="kpis"></div>
    <section class="card" id="resumo" aria-labelledby="resT"></section>
@@ -156,10 +158,11 @@ dialog::backdrop{background:rgba(3,6,15,.7)}
     <button type="button" role="tab" id="tbLojas" aria-selected="true" data-tab="lojas">Lojas</button>
     <button type="button" role="tab" id="tbGer" aria-selected="false" data-tab="ger">Gerentes</button>
     <button type="button" role="tab" id="tbVend" aria-selected="false" data-tab="vend">Vendedores</button>
+    <button type="button" role="tab" id="tbSup" aria-selected="false" data-tab="sup">Supervisores</button>
    </div>
    <div class="filtros">
     <label class="campo">Região<select id="fReg"></select></label>
-    <label class="campo">Buscar<input id="fBusca" placeholder="Loja, gerente ou vendedor" autocomplete="off"></label>
+    <label class="campo">Buscar<input id="fBusca" placeholder="Loja, gerente, vendedor ou supervisor" autocomplete="off"></label>
     <label class="campo">Ordenar<select id="fOrd"><option value="perto">Mais perto da próxima faixa</option><option value="proj">Maior projeção</option><option value="nome">Nome</option></select></label>
    </div>
    <div class="chips" id="chips" aria-label="Filtrar por situação"></div>
@@ -180,7 +183,7 @@ dialog::backdrop{background:rgba(3,6,15,.7)}
 <script>
 (function(){
 var API_PAINEL='https://script.google.com/macros/s/AKfycbzVe8joykFt0rWX9CjFgpeOaABckMFttVwV8u4e-yJh8qXPr6JTmlAzfgNjiAPAHGEwLg/exec';
-var TAB='desafios';   /* tabela no conteúdo compartilhado: [ {'AAAA-MM':{nome,lojas:[{pct,premio}],ger:[...],vend:[...],por,em}} ] */
+var TAB='desafios';   /* tabela no conteúdo compartilhado: [ {'AAAA-MM':{nome,lojas:[{pct,premio}],ger:[...],vend:[...],sup:[...],por,em}} ] */
 var $=function(id){return document.getElementById(id)};
 var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
 var cod3=function(c){return ('00'+String(c==null?'':c).replace(/\D/g,'')).slice(-3)};
@@ -200,11 +203,11 @@ var LIM_ALC=0.15, LIM_EST=0.35;
 var SIT={bat:['Batida','bat'],rit:['No ritmo','rit'],alc:['Ao alcance','alc'],est:['Esticada','est'],dif:['Difícil','dif'],na:['Sem venda','na']};
 var COR_SIT={bat:'#b9a4ff',rit:'#2FD08E',alc:'#6f95f5',est:'#FFC94D',dif:'#ff6b74',na:'#9aa5bb'};
 
-var D=null, UT=0, UD=0, UR=0, MESK='', MESTX='', QUANDO='', LOJAS=[], GERS=[], VEND=[], PODE=false, NOME_EU='';
+var D=null, UT=0, UD=0, UR=0, MESK='', MESTX='', QUANDO='', LOJAS=[], GERS=[], VEND=[], SUPS=[], PODE=false, NOME_EU='';
 var CFG=null, SALVO=null;
 var ST={tab:'lojas',reg:'',busca:'',ord:'perto',sit:''};
-var QN={lojas:['loja','lojas','a','as','Lojas'],ger:['gerente','gerentes','o','os','Gerentes'],vend:['vendedor','vendedores','o','os','Vendedores']};
-var PADRAO=function(){return {nome:'',lojas:[{pct:100,premio:null},{pct:110,premio:null},{pct:120,premio:null}],ger:[{pct:100,premio:null},{pct:110,premio:null},{pct:120,premio:null}],vend:[{pct:100,premio:null},{pct:110,premio:null},{pct:120,premio:null}]}};
+var QN={lojas:['loja','lojas','a','as','Lojas'],ger:['gerente','gerentes','o','os','Gerentes'],vend:['vendedor','vendedores','o','os','Vendedores'],sup:['supervisor','supervisores','o','os','Supervisores']};
+var PADRAO=function(){return {nome:'',lojas:[{pct:100,premio:null},{pct:110,premio:null},{pct:120,premio:null}],ger:[{pct:100,premio:null},{pct:110,premio:null},{pct:120,premio:null}],sup:[{pct:100,premio:null},{pct:110,premio:null},{pct:120,premio:null}],vend:[{pct:100,premio:null},{pct:110,premio:null},{pct:120,premio:null}]}};
 
 /* tema (segue o app) */
 (function(){var q=new URLSearchParams(location.search),H=document.documentElement,t=q.get('tema');
@@ -219,7 +222,7 @@ function lerRasc(){try{return JSON.parse(localStorage.getItem(rascunhoKey())||'n
 function gravarRasc(){try{localStorage.setItem(rascunhoKey(),JSON.stringify(CFG))}catch(e){}}
 function limparRasc(){try{localStorage.removeItem(rascunhoKey())}catch(e){}}
 function norm(c){c=c||{};var f=function(L){return (Array.isArray(L)?L:[]).map(function(x){return {pct:+x.pct||0,premio:(x.premio===''||x.premio==null||isNaN(+x.premio))?null:+x.premio}}).filter(function(x){return x.pct>0}).sort(function(a,b){return a.pct-b.pct}).slice(0,5)};
- return {nome:String(c.nome||'').slice(0,60),lojas:f(c.lojas),ger:f(c.ger),vend:f(c.vend),por:c.por||'',em:c.em||''}}
+ return {nome:String(c.nome||'').slice(0,60),lojas:f(c.lojas),ger:f(c.ger),vend:f(c.vend),sup:f(c.sup),por:c.por||'',em:c.em||''}}
 function faixas(qual){return (CFG[qual]||[]).filter(function(x){return x.pct>0}).slice().sort(function(a,b){return a.pct-b.pct})}
 
 /* ===== números do mês ===== */
@@ -228,7 +231,7 @@ function montar(dados,gers){gers=gers||{};
  var mi=+MESK.slice(5,7); MESTX=(mi?MESES[mi-1]:String(p[0]||''))+' '+(MESK.slice(0,4)||p[1]||'');
  var m=/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/.exec(String((dados.t||[])[4]||''));
  QUANDO=m?m[3]+'/'+m[2]+' às '+m[4]+'h'+m[5]:'';
- LOJAS=[];GERS=[];VEND=[];
+ LOJAS=[];GERS=[];VEND=[];SUPS=[];
  (dados.L||[]).filter(function(a){return +a[3]>0}).forEach(function(a){
   var cod=cod3(a[0]),meta=+a[3]||0,fat=+a[5]||0,proj=(+a[6]>0)?+a[6]:(UD&&UT?fat/UD*UT:fat);
   var l={tipo:'loja',cod:cod,nome:CURTO[cod]||nomeV(a[1]),reg:String(a[2]||''),meta:meta,fat:fat,proj:proj,vs:[]};
@@ -239,6 +242,8 @@ function montar(dados,gers){gers=gers||{};
    var vf=+v[2]||0,o={tipo:'vend',cod:cod,loja:l,nome:nomeV(v[0]),reg:l.reg,meta:vm,fat:vf,proj:UD&&UT?vf/UD*UT:vf};
    l.vs.push(o);VEND.push(o)});
  });
+ /* desafio individual do supervisor: resultado somado das lojas da região dele (25/11/2026) */
+ var porReg={};LOJAS.forEach(function(l){if(!l.reg)return;var g=porReg[l.reg];if(!g){g=porReg[l.reg]={tipo:'sup',cod:'',nome:regCurta(l.reg),reg:l.reg,meta:0,fat:0,proj:0,ls:[]};SUPS.push(g)}g.meta+=l.meta;g.fat+=l.fat;g.proj+=l.proj;g.ls.push(l)});
 }
 /* análise de uma pessoa (ou loja) contra as faixas */
 function analisar(x,F){
@@ -250,12 +255,12 @@ function analisar(x,F){
  var sit=prox?prox.sit:(noRitmo?noRitmo.sit:'na');
  return {x:x,ritmo:ritmo,alc:alc,pj:pj,linhas:linhas,noRitmo:noRitmo,prox:prox,sit:F.length?sit:'na'};
 }
-function grupo(qual){var F=faixas(qual);return (qual==='lojas'?LOJAS:qual==='ger'?GERS:VEND).map(function(x){return analisar(x,F)})}
+function grupo(qual){var F=faixas(qual);return (qual==='lojas'?LOJAS:qual==='ger'?GERS:qual==='sup'?SUPS:VEND).map(function(x){return analisar(x,F)})}
 var premio=function(r){return r&&r.f&&r.f.premio!=null?+r.f.premio:0};
 
 /* ===== configuração ===== */
 function desenharFaixas(){
- [['lojas','fxLojas','Loja · prêmio da equipe'],['ger','fxGer','Gerente · individual'],['vend','fxVend','Vendedor · individual']].forEach(function(z){
+ [['lojas','fxLojas','Loja · prêmio da equipe'],['ger','fxGer','Gerente · individual'],['vend','fxVend','Vendedor · individual'],['sup','fxSup','Supervisor · individual']].forEach(function(z){
   var L=CFG[z[0]];
   $(z[1]).innerHTML='<h3><span>'+z[2]+'</span><button type="button" class="btn mini addfx" data-add="'+z[0]+'"'+(L.length>=5?' disabled':'')+'>+ Faixa</button></h3>'+
    (L.length?L.map(function(f,i){return '<div class="fxl"><span class="n" aria-hidden="true">'+(i+1)+'</span>'+
@@ -298,7 +303,7 @@ document.addEventListener('change',function(ev){var t=ev.target;
 document.addEventListener('click',function(ev){var t=ev.target.closest('button');if(!t)return;
  if(t.dataset.add&&PODE){var L=CFG[t.dataset.add];if(L.length>=5)return;var u=L.length?L[L.length-1].pct:95;L.push({pct:Math.min(300,u+10),premio:null});desenharFaixas();marcaRasc();render();return}
  if(t.dataset.del&&PODE){CFG[t.dataset.del].splice(+t.dataset.i,1);desenharFaixas();marcaRasc();render();return}
- if(t.dataset.tab){ST.tab=t.dataset.tab;ST.sit='';$('tbLojas').setAttribute('aria-selected',ST.tab==='lojas');$('tbGer').setAttribute('aria-selected',ST.tab==='ger');$('tbVend').setAttribute('aria-selected',ST.tab==='vend');render();return}
+ if(t.dataset.tab){ST.tab=t.dataset.tab;ST.sit='';[['tbLojas','lojas'],['tbGer','ger'],['tbVend','vend'],['tbSup','sup']].forEach(function(z){$(z[0]).setAttribute('aria-selected',ST.tab===z[1])});render();return}
  if(t.dataset.sit!=null){ST.sit=ST.sit===t.dataset.sit?'':t.dataset.sit;render();return}
  if(t.dataset.card){abrirCard(t.dataset.card,t.dataset.cod,t.dataset.nome);return}
  if(t.id==='btnSalvar'){salvar();return}
@@ -357,7 +362,7 @@ function resumo(C,F,semP,qual){
   '<p class="frase" style="margin:0">'+frase+'</p>'+
   '<div class="tw cen"><table><thead><tr><th scope="col">Cenário</th><th scope="col">Sobem de faixa</th><th scope="col">Venda a mais</th><th scope="col">Prêmios do desafio</th><th scope="col">Prêmio ÷ venda a mais</th><th scope="col">Só o prêmio extra</th></tr></thead><tbody>'+
   C.map(function(c,i){return '<tr'+(i===1?' class="dest"':'')+'><td><b>'+c.nome+'</b><small>'+c.desc+'</small></td><td>'+c.sobem+'</td><td>'+(c.ganho?rs(c.ganho):'—')+'</td><td>'+rs(c.premios)+(semP?'<small>faixa sem prêmio conta R$ 0</small>':'')+'</td><td>'+(c.pct!=null&&!semP?pc(c.pct,1)+'%':'—')+'</td><td>'+(c.pctExtra!=null&&!semP?pc(c.pctExtra,1)+'%<small>'+rs(c.extra)+' a mais</small>':'—')+'</td></tr>'}).join('')+'</tbody></table></div>'+
-  '<div class="nota"><b>Prêmio ÷ venda a mais</b> = todos os prêmios do cenário sobre o faturamento que entra acima do projetado. <b>Só o prêmio extra</b> desconta o que já seria pago no ritmo de hoje. É faturamento, não margem. Lojas, gerentes e vendedores se sobrepõem (a venda do vendedor entra na loja, e o gerente é medido pela loja): some os prêmios das três abas, mas não a venda a mais.</div>';
+  '<div class="nota"><b>Prêmio ÷ venda a mais</b> = todos os prêmios do cenário sobre o faturamento que entra acima do projetado. <b>Só o prêmio extra</b> desconta o que já seria pago no ritmo de hoje. É faturamento, não margem. Lojas, gerentes, vendedores e supervisores se sobrepõem (a venda do vendedor entra na loja, o gerente é medido pela loja e o supervisor pela soma das lojas): some os prêmios das quatro abas, mas não a venda a mais.</div>';
 }
 function chips(G){var c={};G.forEach(function(r){c[r.sit]=(c[r.sit]||0)+1});
  $('chips').innerHTML=['alc','est','dif','rit','bat','na'].filter(function(k){return c[k]}).map(function(k){
@@ -369,10 +374,10 @@ function tabela(){
  if(ST.sit)G=G.filter(function(r){return r.sit===ST.sit});
  G=ordenar(G);
  var F=faixas(qual);
- var cab='<thead><tr><th scope="col">'+(qual==='lojas'?'Loja':qual==='ger'?'Gerente':'Vendedor')+'</th><th scope="col">Hoje</th><th scope="col">Projeção</th><th scope="col">Faixa no ritmo</th><th scope="col">Próxima faixa</th><th scope="col">Precisa por dia</th><th scope="col">Potencial</th><th scope="col">Situação</th><th scope="col"><span class="sr">Card</span></th></tr></thead>';
+ var cab='<thead><tr><th scope="col">'+(qual==='lojas'?'Loja':qual==='ger'?'Gerente':qual==='sup'?'Supervisor':'Vendedor')+'</th><th scope="col">Hoje</th><th scope="col">Projeção</th><th scope="col">Faixa no ritmo</th><th scope="col">Próxima faixa</th><th scope="col">Precisa por dia</th><th scope="col">Potencial</th><th scope="col">Situação</th><th scope="col"><span class="sr">Card</span></th></tr></thead>';
  if(!F.length){$('tab').innerHTML=cab+'<tbody><tr><td colspan="9" class="nm" style="text-align:left;color:var(--muted)">Lance ao menos uma faixa para '+QN[qual][3]+' '+QN[qual][1]+' no desafio acima.</td></tr></tbody>';return}
  $('tab').innerHTML=cab+'<tbody>'+(G.length?G.map(function(r){var x=r.x,n=r.noRitmo,p=r.prox;
-  var sub=qual==='lojas'?x.cod+' · '+regCurta(x.reg):x.loja.nome+' · '+x.cod;
+  var sub=qual==='lojas'?x.cod+' · '+regCurta(x.reg):qual==='sup'?x.ls.length+(x.ls.length===1?' loja':' lojas')+' na região':x.loja.nome+' · '+x.cod;
   return '<tr><td class="nm"><b>'+esc(x.nome)+'</b><small>'+esc(sub)+'</small>'+barra(r)+'</td>'+
    '<td>'+pc(r.alc)+'%<small>'+rsK(x.fat)+'</small></td>'+
    '<td>'+pc(r.pj)+'%<small>'+rsK(x.proj)+'</small></td>'+
@@ -388,7 +393,7 @@ function render(){
  $('sub').textContent=[MESTX,QUANDO?'números de '+QUANDO:'',UR?'faltam '+pc(UR)+' dias úteis':'mês fechado'].filter(Boolean).join(' · ');
  kpis();tabela();
  $('rodape').innerHTML='<b>Como ler.</b> <b>Hoje</b> = realizado ÷ meta do mês. <b>Projeção</b> = o realizado levado ao fim do mês no ritmo dos dias úteis ('+pc(UD)+' de '+pc(UT)+' trabalhados). <b>Precisa por dia</b> = o que falta para a próxima faixa ÷ '+pc(UR)+' dias úteis restantes, comparado com a média por dia de hoje. '+
-  '<b>Potencial</b> = venda a mais sobre a projeção de hoje se chegar na próxima faixa, e quanto o prêmio dela representa desse ganho. Situação da próxima faixa: <b>No ritmo</b> (a projeção já chega), <b>Ao alcance</b> (subir até '+pc(LIM_ALC*100,0)+'% no ritmo), <b>Esticada</b> (até '+pc(LIM_EST*100,0)+'%), <b>Difícil</b> (mais que isso), <b>Batida</b> (já passou da faixa). <b>Gerentes</b>: desafio individual, medido pelo resultado da loja. Vendedores com meta abaixo de R$ 1 mil (assistentes) ficam fora. A barra: tracejado = projeção, cheio = hoje, traços amarelos = faixas.';
+  '<b>Potencial</b> = venda a mais sobre a projeção de hoje se chegar na próxima faixa, e quanto o prêmio dela representa desse ganho. Situação da próxima faixa: <b>No ritmo</b> (a projeção já chega), <b>Ao alcance</b> (subir até '+pc(LIM_ALC*100,0)+'% no ritmo), <b>Esticada</b> (até '+pc(LIM_EST*100,0)+'%), <b>Difícil</b> (mais que isso), <b>Batida</b> (já passou da faixa). <b>Gerentes</b>: desafio individual, medido pelo resultado da loja. <b>Supervisores</b>: individual, pela soma das lojas da região. Vendedores com meta abaixo de R$ 1 mil (assistentes) ficam fora. A barra: tracejado = projeção, cheio = hoje, traços amarelos = faixas.';
 }
 function montarFiltros(){var regs=[];LOJAS.forEach(function(l){if(regs.indexOf(l.reg)<0)regs.push(l.reg)});regs.sort();
  $('fReg').innerHTML='<option value="">Todas as regiões</option>'+regs.map(function(r){return '<option value="'+esc(r)+'">'+esc(regCurta(r))+'</option>'}).join('');
@@ -417,14 +422,15 @@ function rodapeCard(c,t){fonte(c,600,22);c.fillStyle='rgba(255,255,255,.75)';c.f
 function tabelaFaixas(c,y,titulo,F,info,justo){
  fonte(c,800,24);c.fillStyle='#9fb6e6';c.fillText(titulo.toUpperCase(),72,y);y+=18;
  if(!F.length){fonte(c,600,28);c.fillStyle='#c9d6f2';c.fillText('Sem faixa neste desafio',72,y+44);return y+80}
- F.forEach(function(f,i){var h=info?92:justo?66:78;rr(c,72,y,W-144,h-12,18);c.fillStyle='rgba(255,255,255,.09)';c.fill();c.strokeStyle='rgba(255,255,255,.16)';c.lineWidth=2;c.stroke();
+ var fz=justo>=3?24:justo===2?30:40,bx=justo>=3?30:justo===2?38:48;
+ F.forEach(function(f,i){var h=info?92:justo>=3?42:justo===2?54:justo?66:78;rr(c,72,y,W-144,h-12,18);c.fillStyle='rgba(255,255,255,.09)';c.fill();c.strokeStyle='rgba(255,255,255,.16)';c.lineWidth=2;c.stroke();
   var cy=y+(h-12)/2;
-  rr(c,92,cy-24,48,48,12);c.fillStyle='#FFD100';c.fill();fonte(c,800,26,true);c.fillStyle='#1a1400';c.textAlign='center';c.fillText(String(i+1),116,cy+9);c.textAlign='left';
-  fonte(c,800,40,true);c.fillStyle='#ffffff';c.fillText(pc(f.pct,0)+'% da meta',162,info?cy-2:cy+14);
+  rr(c,92,cy-bx/2,bx,bx,bx/4);c.fillStyle='#FFD100';c.fill();fonte(c,800,Math.round(bx*.54),true);c.fillStyle='#1a1400';c.textAlign='center';c.fillText(String(i+1),92+bx/2,cy+bx*.19);c.textAlign='left';
+  fonte(c,800,fz,true);c.fillStyle='#ffffff';c.fillText(pc(f.pct,0)+'% da meta',162,info?cy-2:cy+fz*.35);
   if(info){var li=info(f);fonte(c,600,22);c.fillStyle=li.cor||'#c9d6f2';c.fillText(caber(c,li.t,520),162,cy+30)}
-  c.textAlign='right';fonte(c,800,40,true);c.fillStyle=f.premio!=null?'#FFD100':'#c9d6f2';c.fillText(f.premio!=null?rs(f.premio):'a definir',W-96,cy+14);c.textAlign='left';
+  c.textAlign='right';fonte(c,800,fz,true);c.fillStyle=f.premio!=null?'#FFD100':'#c9d6f2';c.fillText(f.premio!=null?rs(f.premio):'a definir',W-96,cy+fz*.35);c.textAlign='left';
   y+=h});
- return y+(justo?22:34)}
+ return y+(justo>=2?18:justo?22:34)}
 function listaPerto(c,y,titulo,R,max,comLoja){
  R=R.slice(0,max);if(!R.length)return y;
  fonte(c,800,24);c.fillStyle='#9fb6e6';c.fillText(titulo.toUpperCase(),72,y);y+=16;
@@ -437,10 +443,13 @@ function desenharGeral(c,perto){
  fundo(c);
  var y=cabeca(c,'Só Tintas · Desafio do mês',CFG.nome||('Desafio de '+MESTX.split(' ')[0]),MESTX+' · faltam '+pc(UR)+' dias úteis · passe do projetado!');
  var Fl=faixas('lojas'),Fv=faixas('vend');
- var Fg=faixas('ger'),n3=(Fl.length?1:0)+(Fg.length?1:0)+(Fv.length?1:0);
- if(Fl.length)y=tabelaFaixas(c,y,'Lojas · prêmio da equipe da loja',Fl,null,n3>2);
- if(Fg.length)y=tabelaFaixas(c,y,'Gerentes · pelo resultado da loja',Fg,null,n3>2);
- if(Fv.length)y=tabelaFaixas(c,y,'Vendedores',Fv,null,n3>2);
+ var Fg=faixas('ger'),Fs=faixas('sup'),nl=Fl.length+Fg.length+Fv.length+Fs.length,n3=(Fl.length?1:0)+(Fg.length?1:0)+(Fv.length?1:0)+(Fs.length?1:0);
+ var J=(nl>9||n3>3)?2:n3>2?1:0;   /* aperta as linhas quando há muitos desafios, para caber no card */
+ if(nl>14){J=3}
+ if(Fl.length)y=tabelaFaixas(c,y,'Lojas · prêmio da equipe da loja',Fl,null,J);
+ if(Fg.length)y=tabelaFaixas(c,y,'Gerentes · pelo resultado da loja',Fg,null,J);
+ if(Fv.length)y=tabelaFaixas(c,y,'Vendedores',Fv,null,J);
+ if(Fs.length)y=tabelaFaixas(c,y,'Supervisores · pelo resultado da região',Fs,null,J);
  if(perto&&y<H-300){var G=grupo('vend').filter(function(r){return r.prox&&(r.prox.sit==='alc'||r.prox.sit==='est')}).sort(function(a,b){return a.prox.esf-b.prox.esf});
   var cabe=Math.floor((H-200-y-30)/74);if(Fv.length&&cabe>0)y=listaPerto(c,y,'Mais perto da próxima faixa',G,Math.min(5,cabe),true)}
  rodapeCard(c,'Base: meta do mês · vale a maior faixa batida'+(QUANDO?' · números de '+QUANDO:''));
@@ -457,6 +466,17 @@ function desenharLoja(c,cod,perto,ger){
   var cabe=Math.floor((H-200-y-30)/74);if(cabe>0)y=listaPerto(c,y,'Vendedores da loja',G,Math.min(6,cabe))}
  rodapeCard(c,(CFG.nome?CFG.nome+' · ':'')+'base: meta do mês'+(QUANDO?' · números de '+QUANDO:''));
 }
+function desenharSup(c,nome,perto){
+ var g=SUPS.filter(function(z){return z.nome===nome})[0];if(!g)return;
+ var F=faixas('sup'),r=analisar(g,F);fundo(c);
+ var y=cabeca(c,'Desafio do supervisor · '+g.ls.length+(g.ls.length===1?' loja':' lojas'),g.nome,'Hoje '+pc(r.alc)+'% · projeção '+pc(r.pj)+'% · faltam '+pc(UR)+' dias úteis');
+ var info=function(f){var z=r.linhas.filter(function(q){return q.f===f})[0];if(!z)return {t:''};
+  return z.sit==='bat'?{t:'✓ batida',cor:'#b9a4ff'}:z.sit==='rit'?{t:'✓ no ritmo de hoje',cor:'#2FD08E'}:{t:'faltam '+rs(z.falta)+' · '+rs(z.dia)+' por dia',cor:'#c9d6f2'}};
+ if(F.length)y=tabelaFaixas(c,y,'Suas faixas · resultado da região',F,info);
+ if(perto&&faixas('lojas').length){var Fl=faixas('lojas'),G=g.ls.map(function(l){return analisar(l,Fl)}).sort(function(a,b){return b.pj-a.pj});
+  var cabe=Math.floor((H-200-y-30)/74);if(cabe>0)y=listaPerto(c,y,'Lojas da região',G,Math.min(8,cabe))}
+ rodapeCard(c,(CFG.nome?CFG.nome+' · ':'')+'base: meta do mês'+(QUANDO?' · números de '+QUANDO:''));
+}
 function desenharVend(c,cod,nome){
  var v=VEND.filter(function(z){return z.cod===cod&&z.nome===nome})[0];if(!v)return;
  var r=analisar(v,faixas('vend'));fundo(c);
@@ -470,12 +490,12 @@ function desenharVend(c,cod,nome){
 }
 function gerar(){var cv=document.createElement('canvas');cv.width=W;cv.height=H;var c=cv.getContext('2d');c.textBaseline='alphabetic';
  var perto=$('cbPerto').checked;
- if(CARD.tipo==='geral')desenharGeral(c,perto);else if(CARD.tipo==='loja')desenharLoja(c,CARD.cod,perto);else if(CARD.tipo==='ger')desenharLoja(c,CARD.cod,perto,true);else desenharVend(c,CARD.cod,CARD.nome);
+ if(CARD.tipo==='geral')desenharGeral(c,perto);else if(CARD.tipo==='loja')desenharLoja(c,CARD.cod,perto);else if(CARD.tipo==='ger')desenharLoja(c,CARD.cod,perto,true);else if(CARD.tipo==='sup')desenharSup(c,CARD.nome,perto);else desenharVend(c,CARD.cod,CARD.nome);
  CARD.cv=cv;$('dlgImg').src=cv.toDataURL('image/png')}
-function nomeArq(){var b=CARD.tipo==='geral'?'desafio':CARD.tipo==='loja'?'desafio_loja_'+CARD.cod:CARD.tipo==='ger'?'desafio_gerente_'+CARD.cod:'desafio_'+String(CARD.nome).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'_');return b+'_'+MESK+'.png'}
+function nomeArq(){var b=CARD.tipo==='geral'?'desafio':CARD.tipo==='loja'?'desafio_loja_'+CARD.cod:CARD.tipo==='ger'?'desafio_gerente_'+CARD.cod:CARD.tipo==='sup'?'desafio_supervisor_'+String(CARD.nome).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_'):'desafio_'+String(CARD.nome).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'_');return b+'_'+MESK+'.png'}
 function abrirCard(tipo,cod,nome){CARD={tipo:tipo,cod:cod,nome:nome};
- $('dlgT').textContent=tipo==='geral'?'Card do desafio':tipo==='loja'?'Card da loja '+(CURTO[cod]||cod):tipo==='ger'?'Card do gerente · '+(CURTO[cod]||cod):'Card de '+nome;
- $('opcPerto').hidden=tipo==='vend';$('cbPerto').nextSibling.textContent=(tipo==='loja'||tipo==='ger')?' Mostrar os vendedores da loja':' Mostrar quem está mais perto da próxima faixa';
+ $('dlgT').textContent=tipo==='geral'?'Card do desafio':tipo==='loja'?'Card da loja '+(CURTO[cod]||cod):tipo==='ger'?'Card do gerente · '+(CURTO[cod]||cod):tipo==='sup'?'Card do supervisor · '+nome:'Card de '+nome;
+ $('opcPerto').hidden=tipo==='vend';$('cbPerto').nextSibling.textContent=tipo==='sup'?' Mostrar as lojas da região':(tipo==='loja'||tipo==='ger')?' Mostrar os vendedores da loja':' Mostrar quem está mais perto da próxima faixa';
  $('dlgNota').textContent=tipo==='geral'?'O card leva as faixas e os prêmios como estão na tela. Salve o desafio antes de mandar, para todo mundo ver o mesmo.':'Mostra o que falta por dia para cada faixa, com os números de '+(QUANDO||'hoje')+'.';
  var go=function(){gerar();var d=$('dlg');if(d.showModal&&!d.open)d.showModal();else d.setAttribute('open','')};
  try{Promise.all([document.fonts.load('800 72px "Bricolage Grotesque"'),document.fonts.load('600 28px "Public Sans"'),document.fonts.load('800 26px "Public Sans"')]).then(go,go)}catch(e){go()}}
@@ -505,7 +525,7 @@ function linhasPlan(qual){
  var pr=function(l){return l?(l.f.premio!=null?+l.f.premio:'a definir'):0};
  return G.map(function(r,i){var x=r.x,n=r.noRitmo,p=r.prox,t=r.linhas.length?r.linhas[r.linhas.length-1]:null;
   var gn=pr(n),gp=p?pr(p):null,extra=p?(typeof gn==='number'&&typeof gp==='number'?gp-gn:'a definir'):0;
-  return [i+1,qual==='ger'&&x.semNome?'(gerente não cadastrado)':x.nome,qual==='lojas'?x.nome:x.loja.nome,x.cod,regCurta(x.reg),
+  return [i+1,qual==='ger'&&x.semNome?'(gerente não cadastrado)':x.nome,qual==='lojas'?x.nome:qual==='sup'?x.ls.length+(x.ls.length===1?' loja':' lojas'):x.loja.nome,x.cod,regCurta(x.reg),
    x.meta,x.fat,r.alc,x.proj,r.pj,
    n?n.f.pct:'abaixo da 1ª faixa',gn,
    p?p.f.pct:'já na faixa máxima',p?gp:'',extra,
@@ -514,13 +534,14 @@ function linhasPlan(qual){
    t?t.f.pct:'',t?pr(t):'',t?ganhoDe(r,t):0]})}
 function abaPlan(qual,titulo){
  var F=faixas(qual),cab=PLAN_COLS.map(function(c){return c[0]});
- if(qual==='lojas')cab[1]='Loja';else if(qual==='ger')cab[1]='Gerente';else cab[1]='Vendedor';
+ cab[1]=qual==='lojas'?'Loja':qual==='ger'?'Gerente':qual==='sup'?'Supervisor':'Vendedor';if(qual==='sup')cab[2]='Lojas da região';
  var L=linhasPlan(qual);
  var topo=[[titulo+' · '+(CFG.nome||'Desafio de '+MESTX)],
   [MESTX+(QUANDO?' · números de '+QUANDO:'')+' · '+pc(UD)+' de '+pc(UT)+' dias úteis trabalhados, faltam '+pc(UR)+' · ordem: maior projeção primeiro'],
   [F.length?'Faixas: '+F.map(function(f){return pc(f.pct,0)+'% = '+(f.premio!=null?rs(f.premio):'a definir')}).join('  |  '):'Sem faixa lançada para '+QN[qual][3]+' '+QN[qual][1]+'.'],[]];
  var cols=PLAN_COLS.slice();
  if(qual==='lojas'){cols.splice(2,1);cab.splice(2,1);L.forEach(function(row){row.splice(2,1)})}   /* na aba Lojas o nome já é a loja */
+ if(qual==='sup'){cols.splice(3,2);cab.splice(3,2);L.forEach(function(row){row.splice(3,2)})}   /* supervisor: sem código de loja nem coluna Supervisor */
  var aoa=topo.concat([cab],L);
  var ws=XLSX.utils.aoa_to_sheet(aoa),h0=topo.length;
  for(var i=0;i<L.length;i++)for(var j=0;j<cols.length;j++){var cel=ws[XLSX.utils.encode_cell({r:h0+1+i,c:j})];if(!cel||cel.t!=='n')continue;
@@ -531,18 +552,18 @@ function abaPlan(qual,titulo){
 function abaResumo(){
  var a=[['Desafios do Mês · '+(CFG.nome||'Desafio de '+MESTX)],[MESTX+(QUANDO?' · números de '+QUANDO:'')],[],
   ['Desafio','Faixa','Atingir (% da meta)','Prêmio']];
- [['lojas','Loja · prêmio da equipe'],['ger','Gerente · individual'],['vend','Vendedor · individual']].forEach(function(z){
+ [['lojas','Loja · prêmio da equipe'],['ger','Gerente · individual'],['vend','Vendedor · individual'],['sup','Supervisor · individual']].forEach(function(z){
   var F=faixas(z[0]);if(!F.length)a.push([z[1],'sem faixa','','']);F.forEach(function(f,i){a.push([z[1],i+1,f.pct,f.premio!=null?f.premio:'a definir'])})});
  a.push([],['Cenário','Público','Sobem de faixa','Venda a mais sobre o projetado','Prêmios do desafio','Prêmio extra (além do ritmo de hoje)']);
  var iniC=a.length;
- ['lojas','ger','vend'].forEach(function(q){var G=grupo(q),F=faixas(q);if(!F.length)return;cenarios(G,F).forEach(function(c){a.push([c.nome,QN[q][4],c.sobem,c.ganho,c.premios,c.extra])})});
+ ['lojas','ger','vend','sup'].forEach(function(q){var G=grupo(q),F=faixas(q);if(!F.length)return;cenarios(G,F).forEach(function(c){a.push([c.nome,QN[q][4],c.sobem,c.ganho,c.premios,c.extra])})});
  a.push([],['Como ler']);
  ['Projetado atual = realizado levado ao fim do mês no ritmo dos dias úteis ('+pc(UD)+' de '+pc(UT)+' trabalhados).',
   'Ganha no projetado atual = prêmio da maior faixa que o ritmo de hoje já entrega. Ganha na próxima faixa = prêmio da faixa seguinte.',
   'Ganho extra se atingir = prêmio da próxima faixa menos o que já ganharia no ritmo de hoje.',
   'Potencial: venda a mais sobre o projetado = faturamento que entra acima da projeção se chegar na próxima faixa (é faturamento, não margem).',
-  'Gerente: desafio individual, medido pelo resultado da loja dele. Loja: prêmio da equipe. Vendedor: individual.',
-  'A venda do vendedor entra na loja e o gerente é medido pela loja: some os prêmios das três abas, mas não a venda a mais.',
+  'Gerente: desafio individual, medido pelo resultado da loja dele. Supervisor: individual, pela soma das lojas da região dele. Loja: prêmio da equipe. Vendedor: individual.',
+  'A venda do vendedor entra na loja, o gerente é medido pela loja e o supervisor pela soma das lojas: some os prêmios das quatro abas, mas não a venda a mais.',
   'Faixa sem prêmio lançado aparece como “a definir” e conta R$ 0 nos cenários.'].forEach(function(t){a.push([t])});
  var ws=XLSX.utils.aoa_to_sheet(a);
  for(var i=4;i<a.length;i++){var row=a[i];if(!row)continue;
@@ -557,10 +578,11 @@ function exportarPlanilha(){
   XLSX.utils.book_append_sheet(wb,abaPlan('lojas','Lojas'),'Lojas');
   XLSX.utils.book_append_sheet(wb,abaPlan('ger','Gerentes'),'Gerentes');
   XLSX.utils.book_append_sheet(wb,abaPlan('vend','Vendedores'),'Vendedores');
+  XLSX.utils.book_append_sheet(wb,abaPlan('sup','Supervisores'),'Supervisores');
   XLSX.utils.book_append_sheet(wb,abaResumo(),'Desafio e cenários');
   var nm='desafios_'+MESK+(QUANDO?'_'+QUANDO.slice(0,5).replace('/','-'):'')+'.xlsx';
   XLSX.writeFile(wb,nm);window.__PLAN_WB=wb;
-  b.disabled=false;tx.textContent='✓ Planilha baixada: '+nm+' · abas Lojas, Gerentes, Vendedores e Desafio e cenários, da maior projeção para a menor.'+(mudouDesdeSalvo()&&PODE?' Atenção: usa as faixas da tela, que ainda não foram salvas.':'');
+  b.disabled=false;tx.textContent='✓ Planilha baixada: '+nm+' · abas Lojas, Gerentes, Vendedores, Supervisores e Desafio e cenários, da maior projeção para a menor.'+(mudouDesdeSalvo()&&PODE?' Atenção: usa as faixas da tela, que ainda não foram salvas.':'');
  }).catch(function(e){b.disabled=false;tx.textContent='Não consegui montar a planilha: '+((e&&e.message)||e)})}
 
 /* ===== entrada ===== */
