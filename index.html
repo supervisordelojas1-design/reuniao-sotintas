@@ -9536,6 +9536,11 @@ syncNav();
         <span class="ini-txt"><span class="ini-nm">Central de Atualização</span><span class="ini-ds">Todas as bases num lugar só · o que está em dia e o que falta</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
+      <button type="button" class="ini-card feat" data-act="desafios" data-coordonly="1">
+        <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-flag"/></svg></span>
+        <span class="ini-txt"><span class="ini-nm">Desafios do Mês</span><span class="ini-ds">Quem pode passar do projetado · faixas, prêmios e cards para as lojas</span></span>
+        <span class="ini-go" aria-hidden="true">&rarr;</span>
+      </button>
       <button type="button" class="ini-card feat" data-act="escala" data-coordonly="1">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-chart"/></svg></span>
         <span class="ini-txt"><span class="ini-nm">Escala &amp; Folgas</span><span class="ini-ds">Escala 5x2 por loja · folgas, sábado e quem cobre a loja</span></span>
@@ -9805,7 +9810,7 @@ body.foco .wrap{padding-bottom:40px}
     pontos:'verRanking', ranking:'verRanking', provas:'verProvas', avulsas:'verMinhasProvas',
     uso:'verUso', crm:'verCRM', bonus:'verBonus', bonusger:'verBonusGer', simulador:'verSimulador', proposta:'verProposta',
     mentor:'verMentor', especialista:'verEspecialista', cadastro:'gerirCadastro',
-    acessos:'gerirAcessos', conteudo:'gerirConteudo', central:'gerirCentral', escala:'verEscala', contatos:'verContatos', rally:'verRally',
+    acessos:'gerirAcessos', conteudo:'gerirConteudo', central:'gerirCentral', escala:'verEscala', contatos:'verContatos', rally:'verRally', desafios:'verDesafios',
     /* nov/2026: blocos da Operação também entram na régua */
     agenda:'verAgenda', agendar:'verAgendar', agora:'verReuniao', rotina:'verRotina', despesas:'verDespesas' };
   function aplicarRegua(){
@@ -9974,6 +9979,16 @@ body.foco .wrap{padding-bottom:40px}
     if(!ovD||!ifrD) return; titOv('Escala & Folgas');
     var tema=(window.STtema?window.STtema.get():'light');
     ifrD.setAttribute('src','escala.html?tema='+tema+'&v='+Date.now());
+    ovD.style.display='flex'; document.body.style.overflow='hidden';
+  }
+  /* Desafios do Mês (25/11/2026): mapeamento de quem pode passar do projetado, faixas e prêmios
+     lançados pela coordenação e cards em imagem. Ouve a régua (verDesafios): o padrão é só a coordenação. */
+  function abrirDesafios(){
+    var s=sessao(), padrao=!!(s&&!ehVend()&&s.escopo==='todos'&&String(s.papel||'').toLowerCase()!=='analista');
+    if(!(typeof podePainel==='function'?podePainel('verDesafios',padrao):padrao)) return;
+    if(!ovD||!ifrD) return; titOv('Desafios do Mês');
+    var tema=(window.STtema?window.STtema.get():'light');
+    ifrD.setAttribute('src','desafios.html?tema='+tema+'&v='+Date.now());
     ovD.style.display='flex'; document.body.style.overflow='hidden';
   }
   /* Contatos das Lojas (nov/2026): filial, gerente, telefone e e-mail num lugar só.
@@ -10273,6 +10288,7 @@ body.foco .wrap{padding-bottom:40px}
     if(act==='cadastro'){ abrirCadastro(); return; }
     if(act==='central'){ abrirCentral(); return; }
     if(act==='escala'){ abrirEscala(); return; }
+    if(act==='desafios'){ abrirDesafios(); return; }
     if(act==='contatos'){ abrirContatos(); return; }
     if(act==='rally'){ abrirRally(); return; }
     if(act==='conteudo'){ abrirConteudo(); return; }
@@ -10330,7 +10346,7 @@ body.foco .wrap{padding-bottom:40px}
     ['verPDISemanal','PDI Semanal','semana'],['verRanking','Ranking ST','pontos'],
     ['verProvas','Central de Provas','provas'],['verMinhasProvas','Minhas Provas','avulsas'],
     ['verUso','Acessos ao App','uso'],['verCRM','CRM de Vendas','crm'],['verEscala','Escala & Folgas','escala'],
-    ['verContatos','Contatos das Lojas','contatos'],['verRally','Rally Só Tintas','rally'],
+    ['verContatos','Contatos das Lojas','contatos'],['verRally','Rally Só Tintas','rally'],['verDesafios','Desafios do Mês','desafios'],
     ['verBonus','Bonificações','bonus'],['verSimulador','Simulador de Bônus','simulador'],['verBonusGer','Bônus do Mês','bonusger'],
     ['verProposta','Proposta de Vendedor','proposta'],['verMentor','Mentor','mentor'],
     ['verEspecialista','Especialista ST','especialista'],
