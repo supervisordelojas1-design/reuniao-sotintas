@@ -90,6 +90,13 @@ th:first-child,td:first-child{text-align:left}
 td{padding:9px 12px;border-top:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap;vertical-align:middle}
 td small{display:block;font-weight:500;color:var(--muted);font-size:12px}
 td.nm{white-space:normal;min-width:170px}
+.palvo{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:0 9px}
+.palvo:focus-within{outline:2px solid var(--navy);outline-offset:1px}
+.palvo input{width:58px;border:0;background:transparent;color:var(--ink);text-align:right;font:800 14px var(--f-body);font-variant-numeric:tabular-nums;padding:7px 0}
+.palvo input:focus-visible{outline:none}
+.palvo input::placeholder{color:var(--ink);opacity:.85}
+.palvo:has(input:not(:placeholder-shown)){border-color:var(--ouro)}
+.palvo span{font:700 12px var(--f-body);color:var(--muted)}
 .pind{width:104px;max-width:100%;text-align:right;font:700 14px var(--f-body);font-variant-numeric:tabular-nums;padding:7px 9px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
 .pind:not(:placeholder-shown){border-color:var(--ouro)}
 .st{display:inline-block;font:800 11px var(--f-body);letter-spacing:.03em;text-transform:uppercase;padding:3px 9px;border-radius:999px;white-space:nowrap}
@@ -152,7 +159,7 @@ dialog::backdrop{background:rgba(3,6,15,.7)}
      <div class="fx" id="fxVend"></div>
      <div class="fx" id="fxSup"></div>
     </div>
-    <div class="nota">São quatro desafios separados: <b>Loja</b> (prêmio da equipe da loja), <b>Gerente</b> (individual, pelo resultado da loja dele), <b>Vendedor</b> (individual) e <b>Supervisor</b> (individual, pelo resultado somado das lojas da região dele). O % é sobre a <b>meta do mês</b>. Cada um recebe o prêmio da <b>maior faixa</b> que bater. Para dar um valor diferente a uma pessoa, use a coluna <b>Lançar prêmio</b> na tabela abaixo: ele vale só para aquela linha, na próxima faixa dela. Prêmio em branco aparece como “a definir” no card.</div>
+    <div class="nota">São quatro desafios separados: <b>Loja</b> (prêmio da equipe da loja), <b>Gerente</b> (individual, pelo resultado da loja dele), <b>Vendedor</b> (individual) e <b>Supervisor</b> (individual, pelo resultado somado das lojas da região dele). O % é sobre a <b>meta do mês</b>. Cada um recebe o prêmio da <b>maior faixa</b> que bater. Para lançar um desafio só de uma pessoa, use na tabela abaixo as colunas <b>Desafio (% da meta)</b> e <b>Lançar prêmio</b>: valem só para aquela linha. Prêmio em branco aparece como “a definir” no card.</div>
    </section>
    <div class="kpis" id="kpis"></div>
    <section class="card" id="resumo" aria-labelledby="resT"></section>
@@ -185,7 +192,7 @@ dialog::backdrop{background:rgba(3,6,15,.7)}
 <script>
 (function(){
 var API_PAINEL='https://script.google.com/macros/s/AKfycbzVe8joykFt0rWX9CjFgpeOaABckMFttVwV8u4e-yJh8qXPr6JTmlAzfgNjiAPAHGEwLg/exec';
-var TAB='desafios';   /* tabela no conteúdo compartilhado: [ {'AAAA-MM':{nome,lojas:[{pct,premio}],ger:[...],vend:[...],sup:[...],ind:{lojas:{cod:{pct:R$}},ger:{...},vend:{'cod|nome':{...}},sup:{nome:{...}}},por,em}} ] */
+var TAB='desafios';   /* tabela no conteúdo compartilhado: [ {'AAAA-MM':{nome,lojas:[{pct,premio}],ger:[...],vend:[...],sup:[...],ind:{lojas:{cod:{pct:R$}},ger:{...},vend:{'cod|nome':{...}},sup:{nome:{...}}},alvo:{lojas:{cod:pct},...},por,em}} ] */
 var $=function(id){return document.getElementById(id)};
 var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
 var cod3=function(c){return ('00'+String(c==null?'':c).replace(/\D/g,'')).slice(-3)};
@@ -251,9 +258,12 @@ function lerRasc(){try{return JSON.parse(localStorage.getItem(rascunhoKey())||'n
 function gravarRasc(){try{localStorage.setItem(rascunhoKey(),JSON.stringify(CFG))}catch(e){}}
 function limparRasc(){try{localStorage.removeItem(rascunhoKey())}catch(e){}}
 function norm(c){c=c||{};var f=function(L){return (Array.isArray(L)?L:[]).map(function(x){return {pct:+x.pct||0,premio:(x.premio===''||x.premio==null||isNaN(+x.premio))?null:+x.premio}}).filter(function(x){return x.pct>0}).sort(function(a,b){return a.pct-b.pct}).slice(0,5)};
- return {nome:String(c.nome||'').slice(0,60),lojas:f(c.lojas),ger:f(c.ger),vend:f(c.vend),sup:f(c.sup),ind:normInd(c.ind),por:c.por||'',em:c.em||''}}
+ return {nome:String(c.nome||'').slice(0,60),lojas:f(c.lojas),ger:f(c.ger),vend:f(c.vend),sup:f(c.sup),ind:normInd(c.ind),alvo:normAlvo(c.alvo),por:c.por||'',em:c.em||''}}
 /* prêmio individual lançado na tabela (25/11/2026): ind[público][chave da linha][% da faixa] = R$. Vale no lugar do prêmio geral daquela faixa, só para aquela linha. */
 function normInd(o){var r={};['lojas','ger','vend','sup'].forEach(function(q){var a=(o&&o[q])||{},b={};Object.keys(a).forEach(function(k){var c={};Object.keys(a[k]||{}).forEach(function(pc_){var v=a[k][pc_];if(v!==''&&v!=null&&!isNaN(+v)&&+v>=0)c[pc_]=+v});if(Object.keys(c).length)b[k]=c});r[q]=b});return r}
+/* desafio individual lançado na tabela (25/11/2026): alvo[público][chave da linha] = % da meta. Vira a "próxima do desafio" daquela linha, no lugar da faixa geral. */
+function normAlvo(o){var r={};['lojas','ger','vend','sup'].forEach(function(q){var a=(o&&o[q])||{},b={};Object.keys(a).forEach(function(k){var v=+a[k];if(v>0&&v<=300)b[k]=v});r[q]=b});return r}
+function alvoDe(x){var T=CFG&&CFG.alvo&&CFG.alvo[QUAL_DE[x.tipo]];return (T&&+T[chaveInd(x)])||0}
 var QUAL_DE={loja:'lojas',ger:'ger',vend:'vend',sup:'sup'};
 function chaveInd(x){return x.tipo==='vend'?x.cod+'|'+x.nome:x.tipo==='sup'?x.nome:x.cod}
 function indDe(x){var I=CFG&&CFG.ind&&CFG.ind[QUAL_DE[x.tipo]];return (I&&I[chaveInd(x)])||null}
@@ -283,13 +293,16 @@ function montar(dados,gers){gers=gers||{};
 /* análise de uma pessoa (ou loja) contra as faixas */
 function analisar(x,F){
  var ritmo=UD?x.fat/UD:0, alc=x.meta?x.fat/x.meta*100:0, pj=x.meta?x.proj/x.meta*100:0;
- var O=indDe(x);if(O)F=F.map(function(f){return O[f.pct]!=null?{pct:f.pct,premio:+O[f.pct],ind:1,geral:f.premio}:f});
+ var O=indDe(x),A=alvoDe(x);
+ if(A&&!F.some(function(f){return f.pct===A}))F=F.concat([{pct:A,premio:null,soInd:1}]).sort(function(a,b){return a.pct-b.pct});
+ if(O||A)F=F.map(function(f){var tem=O&&O[f.pct]!=null;return (tem||f.pct===A)?{pct:f.pct,premio:tem?+O[f.pct]:f.premio,ind:tem?1:0,geral:f.soInd?null:f.premio,alvo:f.pct===A?1:0}:f});
  var linhas=F.map(function(f){var alvo=x.meta*f.pct/100,falta=Math.max(0,alvo-x.fat),dia=UR?falta/UR:falta;
   var sit=x.fat>=alvo?'bat':x.proj>=alvo?'rit':!ritmo?'na':(dia/ritmo-1)<=LIM_ALC?'alc':(dia/ritmo-1)<=LIM_EST?'est':'dif';
   return {f:f,alvo:alvo,falta:falta,dia:dia,esf:ritmo?dia/ritmo-1:null,sit:sit}});
- var noRitmo=null,prox=null;linhas.forEach(function(r){if(r.sit==='bat'||r.sit==='rit')noRitmo=r;else if(!prox)prox=r});
+ var noRitmo=null,prox=null,forc=A?linhas.filter(function(r){return r.f.alvo&&r.sit!=='bat'})[0]:null;   /* o desafio individual é a "próxima" da linha até ser batido */
+ linhas.forEach(function(r){if(r===forc)return;if(r.sit==='bat'||r.sit==='rit')noRitmo=r;else if(!prox)prox=r});if(forc)prox=forc;
  var sit=prox?prox.sit:(noRitmo?noRitmo.sit:'na');
- return {x:x,ritmo:ritmo,alc:alc,pj:pj,linhas:linhas,noRitmo:noRitmo,prox:prox,sit:F.length?sit:'na',bm:bonusMeta(x)};
+ return {x:x,ritmo:ritmo,alc:alc,pj:pj,linhas:linhas,noRitmo:noRitmo,prox:prox,sit:F.length?sit:'na',bm:bonusMeta(x),alvo:A};
 }
 function grupo(qual){var F=faixas(qual);return (qual==='lojas'?LOJAS:qual==='ger'?GERS:qual==='sup'?SUPS:VEND).map(function(x){return analisar(x,F)})}
 var premio=function(r){return r&&r.f&&r.f.premio!=null?+r.f.premio:0};
@@ -333,6 +346,11 @@ document.addEventListener('input',function(ev){var t=ev.target;
 });
 document.addEventListener('change',function(ev){var t=ev.target;
  if(t.dataset&&t.dataset.k==='pct'){CFG[t.dataset.q].sort(function(a,b){return (a.pct||999)-(b.pct||999)});desenharFaixas();render()}
+ if(t.dataset&&t.dataset.alvo&&PODE){var T=CFG.alvo||(CFG.alvo=normAlvo(null)),qa=t.dataset.alvo,Qa=T[qa]||(T[qa]={}),ka=t.dataset.key,ant=t.dataset.pct,va=+t.value;
+  if(t.value===''||!(va>0)){delete Qa[ka]}
+  else{va=Math.min(300,Math.round(va*10)/10);Qa[ka]=va;   /* o prêmio já lançado na linha acompanha o novo % */
+   var Ia=CFG.ind&&CFG.ind[qa]&&CFG.ind[qa][ka];if(Ia&&ant&&String(ant)!==String(va)&&Ia[ant]!=null&&Ia[va]==null){Ia[va]=Ia[ant];delete Ia[ant]}}
+  marcaRasc();render();return}
  if(t.dataset&&t.dataset.ind&&PODE){var I=CFG.ind||(CFG.ind=normInd(null)),Q=I[t.dataset.ind]||(I[t.dataset.ind]={}),k=t.dataset.key,pp=t.dataset.pct;
   if(t.value===''||isNaN(+t.value)){if(Q[k]){delete Q[k][pp];if(!Object.keys(Q[k]).length)delete Q[k]}}else{(Q[k]||(Q[k]={}))[pp]=Math.max(0,+t.value)}
   marcaRasc();render();return}
@@ -413,7 +431,7 @@ function tabela(){
  if(ST.sit)G=G.filter(function(r){return r.sit===ST.sit});
  G=ordenar(G);
  var F=faixas(qual);
- var cab='<thead><tr><th scope="col">'+(qual==='lojas'?'Loja':qual==='ger'?'Gerente':qual==='sup'?'Supervisor':'Vendedor')+'</th><th scope="col">Hoje</th><th scope="col">Projeção</th><th scope="col">Bônus de meta</th><th scope="col">Desafio no ritmo</th><th scope="col">Ganha no projetado</th><th scope="col">Próxima do desafio</th><th scope="col">Lançar prêmio (R$)</th><th scope="col">Precisa por dia</th><th scope="col">Potencial de aumento de faturamento</th><th scope="col">Situação</th><th scope="col"><span class="sr">Card</span></th></tr></thead>';
+ var cab='<thead><tr><th scope="col">'+(qual==='lojas'?'Loja':qual==='ger'?'Gerente':qual==='sup'?'Supervisor':'Vendedor')+'</th><th scope="col">Hoje</th><th scope="col">Projeção</th><th scope="col">Bônus de meta</th><th scope="col">Desafio no ritmo</th><th scope="col">Ganha no projetado</th><th scope="col">Desafio (% da meta)</th><th scope="col">Lançar prêmio (R$)</th><th scope="col">Precisa por dia</th><th scope="col">Potencial de aumento de faturamento</th><th scope="col">Situação</th><th scope="col"><span class="sr">Card</span></th></tr></thead>';
  if(!F.length){$('tab').innerHTML=cab+'<tbody><tr><td colspan="12" class="nm" style="text-align:left;color:var(--muted)">Lance ao menos uma faixa para '+QN[qual][3]+' '+QN[qual][1]+' no desafio acima.</td></tr></tbody>';return}
  $('tab').innerHTML=cab+'<tbody>'+(G.length?G.map(function(r){var x=r.x,n=r.noRitmo,p=r.prox;
   var sub=qual==='lojas'?x.cod+' · '+regCurta(x.reg):qual==='sup'?x.ls.length+(x.ls.length===1?' loja':' lojas')+' na região':x.loja.nome+' · '+x.cod;
@@ -423,7 +441,8 @@ function tabela(){
    '<td>'+rs(r.bm.val)+'<small>'+(r.bm.px<0?'faixa máxima (130%)':'em '+FXB[r.bm.px]+'%: '+rs(r.bm.valProx)+' · '+rsK(r.bm.dia)+'/dia')+'</small></td>'+
    '<td>'+(n?pc(n.f.pct,0)+'%<small>'+(n.f.premio!=null?rs(n.f.premio):'a definir')+'</small>':'<span style="color:var(--muted)">—</span>')+'</td>'+
    '<td><b style="color:var(--ok)">'+rs(r.bm.val+premio(n))+'</b><small>'+(n?'bônus '+rs(r.bm.val)+' + desafio '+(n.f.premio!=null?rs(n.f.premio):'a definir'):(r.bm.val?'só o bônus de meta':'ainda sem faixa'))+'</small></td>'+
-   '<td>'+(p?pc(p.f.pct,0)+'%<small>'+(p.f.premio!=null?rs(p.f.premio)+(p.f.ind?' · individual':''):'a definir')+'</small>':'<span style="color:var(--muted)">topo</span>')+'</td>'+
+   '<td>'+(PODE?'<label class="palvo"><input type="number" inputmode="decimal" min="1" max="300" step="1" value="'+(r.alvo&&p&&p.f.alvo?r.alvo:'')+'" placeholder="'+(p?pc(p.f.pct,0):'topo')+'" data-alvo="'+qual+'" data-key="'+esc(chaveInd(x))+'" data-pct="'+(p?p.f.pct:'')+'" aria-label="Desafio de '+esc(x.nome)+': % da meta"><span>%</span></label>':(p?pc(p.f.pct,0)+'%':'<span style="color:var(--muted)">topo</span>'))+
+    '<small>'+(p?(p.f.alvo?'desafio individual':'faixa geral')+' · '+(p.f.premio!=null?rs(p.f.premio):'prêmio a definir'):(r.alvo?'desafio de '+pc(r.alvo,0)+'% batido':'já na faixa máxima'))+'</small></td>'+
    '<td>'+(p?(PODE?'<input class="pind" type="number" inputmode="decimal" min="0" step="10" value="'+(p.f.ind?p.f.premio:'')+'" placeholder="'+(p.f.ind?(p.f.geral!=null?fmt(p.f.geral):'geral'):(p.f.premio!=null?fmt(p.f.premio):'a definir'))+'" data-ind="'+qual+'" data-key="'+esc(chaveInd(x))+'" data-pct="'+p.f.pct+'" aria-label="Prêmio de '+esc(x.nome)+' na faixa de '+pc(p.f.pct,0)+'%"><small>'+(p.f.ind?'só para esta linha':'vale o geral')+'</small>':(p.f.ind?rs(p.f.premio)+'<small>individual</small>':'<small>geral</small>')):'<span style="color:var(--muted)">—</span>')+'</td>'+
    '<td>'+(p?rs(p.dia)+'<small>'+(r.ritmo?'hoje '+rs(r.ritmo)+(p.esf!=null?' · +'+pc(p.esf*100,0)+'%':''):'sem venda no mês')+'</small>':'<small>'+(n&&n.sit==='bat'?'faixa máxima batida':'manter '+rs(r.ritmo)+'/dia')+'</small>')+'</td>'+
    '<td>'+(p&&p.sit!=='na'?(function(g){return '+'+rs(g)+'<small>'+(x.proj?'+'+pc(g/x.proj*100,1)+'% sobre o projetado '+(qual==='vend'?'dele':qual==='sup'?'da região':'da loja'):'sem projeção')+(p.f.premio!=null&&g?' · prêmio = '+pc(p.f.premio/g*100,1)+'% do aumento':'')+'</small>'})(ganhoDe(r,p)):'<span style="color:var(--muted)">—</span>')+'</td>'+
@@ -435,7 +454,7 @@ function render(){
  $('sub').textContent=[MESTX,QUANDO?'números de '+QUANDO:'',UR?'faltam '+pc(UR)+' dias úteis':'mês fechado'].filter(Boolean).join(' · ');
  kpis();tabela();
  $('rodape').innerHTML='<b>Como ler.</b> <b>Hoje</b> = realizado ÷ meta do mês. <b>Projeção</b> = o realizado levado ao fim do mês no ritmo dos dias úteis ('+pc(UD)+' de '+pc(UT)+' trabalhados). <b>Precisa por dia</b> = o que falta para a próxima faixa ÷ '+pc(UR)+' dias úteis restantes, comparado com a média por dia de hoje. '+
-  '<b>Bônus de meta</b> = o bônus de atingimento de meta (o mesmo do Bônus do Mês) que a projeção de hoje já entrega e, embaixo, quanto ele vale na próxima faixa (95% · 100% · 130%) com o que precisa vender por dia. Gerente e loja: meta da loja; vendedor: meta de faturamento; supervisor: meta regional + faturamento por loja. Os outros bônus (time, CNPJ, CPF, Eucatex, inventário) não entram aqui. <b>Ganha no projetado</b> = quanto a pessoa recebe se fechar o mês no projetado de hoje: o bônus de meta da faixa em que a projeção chega + o prêmio do desafio da faixa que o ritmo já entrega (prêmio “a definir” conta R$ 0). <b>Lançar prêmio</b> = prêmio individual daquela linha para a próxima faixa do desafio; em branco, vale o prêmio geral da faixa. Grava ao sair do campo e entra no desafio quando você clicar em Salvar desafio. <b>Potencial de aumento de faturamento</b> = venda a mais sobre a projeção de hoje (em R$ e em % do projetado) se chegar na próxima faixa, e quanto o prêmio dela representa desse ganho. Situação da próxima faixa: <b>No ritmo</b> (a projeção já chega), <b>Ao alcance</b> (subir até '+pc(LIM_ALC*100,0)+'% no ritmo), <b>Esticada</b> (até '+pc(LIM_EST*100,0)+'%), <b>Difícil</b> (mais que isso), <b>Batida</b> (já passou da faixa). <b>Gerentes</b>: desafio individual, medido pelo resultado da loja. <b>Supervisores</b>: individual, pela soma das lojas da região. Vendedores com meta abaixo de R$ 1 mil (assistentes) ficam fora. A barra: tracejado = projeção, cheio = hoje, traços amarelos = faixas.';
+  '<b>Bônus de meta</b> = o bônus de atingimento de meta (o mesmo do Bônus do Mês) que a projeção de hoje já entrega e, embaixo, quanto ele vale na próxima faixa (95% · 100% · 130%) com o que precisa vender por dia. Gerente e loja: meta da loja; vendedor: meta de faturamento; supervisor: meta regional + faturamento por loja. Os outros bônus (time, CNPJ, CPF, Eucatex, inventário) não entram aqui. <b>Ganha no projetado</b> = quanto a pessoa recebe se fechar o mês no projetado de hoje: o bônus de meta da faixa em que a projeção chega + o prêmio do desafio da faixa que o ritmo já entrega (prêmio “a definir” conta R$ 0). <b>Desafio (% da meta)</b> = o % que aquela linha precisa atingir; em branco, vale a próxima faixa geral (o número apagado no campo). Digite outro % para lançar um desafio só dela. <b>Lançar prêmio</b> = prêmio daquela linha para esse desafio; em branco, vale o prêmio geral da faixa. Grava ao sair do campo e entra no desafio quando você clicar em Salvar desafio. <b>Potencial de aumento de faturamento</b> = venda a mais sobre a projeção de hoje (em R$ e em % do projetado) se chegar na próxima faixa, e quanto o prêmio dela representa desse ganho. Situação da próxima faixa: <b>No ritmo</b> (a projeção já chega), <b>Ao alcance</b> (subir até '+pc(LIM_ALC*100,0)+'% no ritmo), <b>Esticada</b> (até '+pc(LIM_EST*100,0)+'%), <b>Difícil</b> (mais que isso), <b>Batida</b> (já passou da faixa). <b>Gerentes</b>: desafio individual, medido pelo resultado da loja. <b>Supervisores</b>: individual, pela soma das lojas da região. Vendedores com meta abaixo de R$ 1 mil (assistentes) ficam fora. A barra: tracejado = projeção, cheio = hoje, traços amarelos = faixas.';
 }
 function montarFiltros(){var regs=[];LOJAS.forEach(function(l){if(regs.indexOf(l.reg)<0)regs.push(l.reg)});regs.sort();
  $('fReg').innerHTML='<option value="">Todas as regiões</option>'+regs.map(function(r){return '<option value="'+esc(r)+'">'+esc(regCurta(r))+'</option>'}).join('');
