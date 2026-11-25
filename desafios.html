@@ -297,7 +297,8 @@ function analisar(x,F){
   return {f:f,alvo:alvo,falta:falta,dia:dia,esf:ritmo?dia/ritmo-1:null,sit:sit}});
  var noRitmo=null,prox=null,forc=A?linhas.filter(function(r){return r.f.alvo&&r.sit!=='bat'})[0]:null;   /* o desafio individual é a "próxima" da linha até ser batido */
  linhas.forEach(function(r){if(r===forc)return;if(r.sit==='bat'||r.sit==='rit'){if(r.f.alvo||r.f.ind)noRitmo=r}else if(!prox)prox=r});if(forc)prox=forc;   /* só desafio lançado conta como "no ritmo"; a faixa do bônus é só referência */
- var sit=prox?prox.sit:(noRitmo?noRitmo.sit:'na');
+ var ult=linhas.length?linhas[linhas.length-1]:null;
+ var sit=prox?prox.sit:(ult?ult.sit:'na');   /* sem próxima = já passou de tudo: Batida ou No ritmo (antes caía em "Sem venda") */
  return {x:x,ritmo:ritmo,alc:alc,pj:pj,linhas:linhas,noRitmo:noRitmo,prox:prox,sit:F.length?sit:'na',bm:bonusMeta(x),alvo:A};
 }
 function grupo(qual){var F=faixas(qual);return (qual==='lojas'?LOJAS:qual==='ger'?GERS:qual==='sup'?SUPS:VEND).map(function(x){return analisar(x,F)})}
