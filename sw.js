@@ -7,7 +7,7 @@
  * Troque o número da versão sempre que subir um index.html novo — é o que
  * faz o aparelho baixar a versão nova em vez de servir a antiga.
  */
-var VERSAO = 'ast-v295';
+var VERSAO = 'ast-v296';
 var CASCA  = ['./', './index.html', './niveis.html', './bonus.html', './bonus-gerente.html', './simulador.html', './ranking.html', './proposta.html', './pdi.html', './atualizar.html', './escala.html', './desafios.html', './desafios-novo.html', './contatos.html', './st-central.js?v=1', './pdi-gestores.js?v=2', './pdi-logo.jpg', './st-hora.js?v=1', './st-dados.js?v=93', './st-novidades.js?v=1', './st-indicadores.js?v=1', './versao.json', './st-anima.js?v=3', './st-mascote.js?v=2', './mascote-soldado.webp?v=1', './st-mascote3d.js?v=1', './mascote-3d.glb?v=1', './agenda.html', './tv.html', './semana.html', './crm.html', './uso.html', './provas.html', './avulsas.html', './cadastro.html', './pontos.html', './conteudo.html', './rally.html', './rally-mapa.js?v=1', './st-vidro.css?v=2', './st-vidro.js?v=1', './manifest.json'];
 
 self.addEventListener('install', function (e) {

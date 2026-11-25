@@ -2,6 +2,20 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v296",
+      "data": "25/11/2026",
+      "hora": "13:28",
+      "itens": [
+        {
+          "painel": "Sprint Final",
+          "o_que": "O painel Potencial e Desafios passa a se chamar Sprint Final, no card da Gestão, no título e nos cards em imagem. Continua só para o Bruno (chave verDesafios em Direitos de Acesso).",
+          "para": [
+            "coord"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v295",
       "data": "25/11/2026",
       "hora": "13:18",

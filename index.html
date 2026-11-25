@@ -9538,7 +9538,7 @@ syncNav();
       </button>
       <button type="button" class="ini-card feat" data-act="desafios" data-sobruno="1" style="display:none">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-flag"/></svg></span>
-        <span class="ini-txt"><span class="ini-nm">Potencial e Desafios</span><span class="ini-ds">Quem pode entregar mais · histórico, carteira e orçamentos · desafio um a um</span></span>
+        <span class="ini-txt"><span class="ini-nm">Sprint Final</span><span class="ini-ds">Quem pode entregar mais no fim do mês · histórico, carteira e orçamentos · desafio um a um</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
       <button type="button" class="ini-card feat" data-act="escala" data-coordonly="1">
@@ -9991,7 +9991,7 @@ body.foco .wrap{padding-bottom:40px}
   function abrirDesafios(){
     var padrao=ehSoBruno();   /* só o Bruno; a grade de Direitos de Acesso pode liberar outro cargo se ele quiser */
     if(!(typeof podePainel==='function'?podePainel('verDesafios',padrao):padrao)) return;
-    if(!ovD||!ifrD) return; titOv('Potencial e Desafios');
+    if(!ovD||!ifrD) return; titOv('Sprint Final');
     var tema=(window.STtema?window.STtema.get():'light');
     ifrD.setAttribute('src','desafios-novo.html?tema='+tema+'&v='+Date.now());   /* 25/11/2026: painel refeito; o antigo (desafios.html) ficou no repositório, sem card */
     ovD.style.display='flex'; document.body.style.overflow='hidden';
@@ -10351,7 +10351,7 @@ body.foco .wrap{padding-bottom:40px}
     ['verPDISemanal','PDI Semanal','semana'],['verRanking','Ranking ST','pontos'],
     ['verProvas','Central de Provas','provas'],['verMinhasProvas','Minhas Provas','avulsas'],
     ['verUso','Acessos ao App','uso'],['verCRM','CRM de Vendas','crm'],['verEscala','Escala & Folgas','escala'],
-    ['verContatos','Contatos das Lojas','contatos'],['verRally','Rally Só Tintas','rally'],['verDesafios','Potencial e Desafios (padrão: só o Bruno)','desafios'],
+    ['verContatos','Contatos das Lojas','contatos'],['verRally','Rally Só Tintas','rally'],['verDesafios','Sprint Final (padrão: só o Bruno)','desafios'],
     ['verBonus','Bonificações','bonus'],['verSimulador','Simulador de Bônus','simulador'],['verBonusGer','Bônus do Mês','bonusger'],
     ['verProposta','Proposta de Vendedor','proposta'],['verMentor','Mentor','mentor'],
     ['verEspecialista','Especialista ST','especialista'],

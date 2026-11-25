@@ -1,5 +1,5 @@
 <!doctype html><html lang="pt-BR" data-theme="dark" style="color-scheme:dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Potencial e Desafios · Só Tintas</title>
+<title>Sprint Final · Só Tintas</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600;700;800&display=swap">
@@ -80,8 +80,8 @@ dialog::backdrop{background:rgba(3,6,15,.7)}
 <div class="wrap">
  <div class="topbar"></div>
  <header>
-  <div><div class="eyebrow">Só Tintas · Quem pode entregar mais</div>
-   <h1>Potencial e Desafios</h1>
+  <div><div class="eyebrow">Só Tintas · Quem pode entregar mais no fim do mês</div>
+   <h1>Sprint Final</h1>
    <div class="sub" id="sub">Histórico, carteira e orçamentos em aberto de cada um</div></div>
   <div class="acoes"><button class="btn pri" id="btnPlan" type="button" disabled>Exportar planilha</button><button class="btn" id="btnTema" type="button">◐ Tema</button></div>
  </header>
@@ -104,7 +104,7 @@ dialog::backdrop{background:rgba(3,6,15,.7)}
  </div>
 </div>
 <dialog id="dlg" aria-labelledby="dlgT"><div class="dlg">
- <h2 id="dlgT">Card do desafio</h2>
+ <h2 id="dlgT">Card do Sprint Final</h2>
  <label id="opcOnde"><input type="checkbox" id="cbOnde" checked> Mostrar onde buscar (orçamentos e clientes parados)</label>
  <img id="dlgImg" alt="Prévia do card do desafio">
  <div class="acoes" style="justify-content:flex-end"><button class="btn" id="dlgFechar" type="button">Fechar</button><button class="btn ouro" id="dlgSalvar" type="button">Salvar imagem</button></div>
@@ -113,7 +113,7 @@ dialog::backdrop{background:rgba(3,6,15,.7)}
 <script src="st-dados.js?v=93"></script>
 <script>
 (function(){
-/* Potencial e Desafios (25/11/2026): painel refeito a pedido do Bruno. Uma ficha por pessoa, com o potencial de entregar mais
+/* Sprint Final (antes "Potencial e Desafios", 25/11/2026): painel refeito a pedido do Bruno. Uma ficha por pessoa, com o potencial de entregar mais
    (histórico, carteira parada e orçamentos em aberto) e o desafio lançado um a um. Grava na mesma tabela "desafios" do painel antigo. */
 var API_PAINEL='https://script.google.com/macros/s/AKfycbzVe8joykFt0rWX9CjFgpeOaABckMFttVwV8u4e-yJh8qXPr6JTmlAzfgNjiAPAHGEwLg/exec';
 var TAB='desafios';
@@ -324,7 +324,7 @@ function aba(q,arr){var L=arr.slice().sort(function(a,b){return b.pot.total-a.po
 function exportar(){var b=$('btnPlan');b.disabled=true;var t=b.textContent;b.textContent='Montando…';
  carregarXLSX().then(function(){var wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,aba('vend',VEND),'Vendedores');XLSX.utils.book_append_sheet(wb,aba('ger',LOJAS),'Gerentes');XLSX.utils.book_append_sheet(wb,aba('sup',SUPS),'Supervisores');
-  XLSX.writeFile(wb,'potencial_desafios_'+MESK+(QUANDO?'_'+QUANDO.slice(0,5).replace('/','-'):'')+'.xlsx');b.disabled=false;b.textContent=t;
+  XLSX.writeFile(wb,'sprint_final_'+MESK+(QUANDO?'_'+QUANDO.slice(0,5).replace('/','-'):'')+'.xlsx');b.disabled=false;b.textContent=t;
  }).catch(function(e){b.disabled=false;b.textContent=t;aviso('Não consegui montar a planilha: '+esc((e&&e.message)||e))})}
 
 /* ===== card em imagem (1080 × 1350): o desafio da pessoa, o que falta por dia e onde buscar ===== */
@@ -341,14 +341,14 @@ function fundoCard(c){var g=c.createLinearGradient(0,0,W,H);g.addColorStop(0,'#0
 function caixa(c,x,y,w,h,forte){rr(c,x,y,w,h,22);c.fillStyle=forte?'rgba(255,209,0,.14)':'rgba(255,255,255,.08)';c.fill();c.strokeStyle=forte?'rgba(255,209,0,.7)':'rgba(255,255,255,.16)';c.lineWidth=2;c.stroke()}
 function desenharCard(c,x,v,onde){
  fundoCard(c);var cc=conta(x,v.pct,v.pre),mes=MESTX.split(' ')[0];
- fonte(c,800,26);c.fillStyle='#FFD100';c.fillText(caber(c,('Desafio de '+mes+' · '+(x.tipo==='sup'?'Região '+x.nome:x.lojaNome)).toUpperCase(),W-144),72,92);
+ fonte(c,800,26);c.fillStyle='#FFD100';c.fillText(caber(c,('Sprint Final de '+mes+' · '+(x.tipo==='sup'?'Região '+x.nome:x.lojaNome)).toUpperCase(),W-144),72,92);
  var nome=x.tipo==='ger'?(x.semNome?'Gerente · '+x.lojaNome:x.nome):x.tipo==='sup'?'Supervisor · '+x.nome:x.nome;
  fonte(c,800,70,true);c.fillStyle='#fff';var L=quebrar(c,nome,W-144,2);L.forEach(function(t,i){c.fillText(t,72,168+i*76)});
  var y=168+(L.length-1)*76+50;fonte(c,600,30);c.fillStyle='#c9d6f2';
  c.fillText(caber(c,'Hoje '+pc(x.meta?x.fat/x.meta*100:0)+'% da meta · no ritmo fecha em '+pc(cc.pj)+'%',W-144),72,y);y+=46;
  /* o desafio */
  caixa(c,72,y,W-144,250,true);
- fonte(c,800,24);c.fillStyle='#FFD100';c.fillText('SEU DESAFIO',104,y+50);
+ fonte(c,800,24);c.fillStyle='#FFD100';c.fillText('SUA META NO SPRINT',104,y+50);
  fonte(c,800,92,true);c.fillStyle='#fff';c.fillText(pc(v.pct,1)+'%',104,y+150);
  var wp=c.measureText(pc(v.pct,1)+'%').width;fonte(c,700,30);c.fillStyle='#c9d6f2';c.fillText('da meta',104+wp+16,y+150);
  fonte(c,600,28);c.fillStyle='#c9d6f2';c.fillText(caber(c,'fechar o mês em '+rs(cc.alvo),560),104,y+210);
@@ -375,10 +375,10 @@ function desenharCard(c,x,v,onde){
 function gerarCard(){var cv=document.createElement('canvas');cv.width=W;cv.height=H;var c=cv.getContext('2d');desenharCard(c,CARD.x,CARD.v,$('cbOnde').checked);CARD.cv=cv;$('dlgImg').src=cv.toDataURL('image/png')}
 function abrirCard(){var x=atual();if(!x)return;var v=lidos();
  if(!v.tem){var st=$('stSalvo');if(st){st.textContent='Lance o % do desafio para montar o card.';st.className='st erro'}if($('dPct'))$('dPct').focus();return}
- CARD={x:x,v:v};$('dlgT').textContent='Card do desafio · '+(x.semNome?x.lojaNome:x.nome);
+ CARD={x:x,v:v};$('dlgT').textContent='Card do Sprint Final · '+(x.semNome?x.lojaNome:x.nome);
  var go=function(){gerarCard();var dg=$('dlg');if(dg.showModal&&!dg.open)dg.showModal();else dg.setAttribute('open','')};
  try{Promise.all([document.fonts.load('800 70px "Bricolage Grotesque"'),document.fonts.load('600 28px "Public Sans"'),document.fonts.load('800 24px "Public Sans"')]).then(go,go)}catch(e){go()}}
-function baixarCard(){if(!CARD||!CARD.cv)return;var x=CARD.x,nm='desafio_'+(x.tipo==='sup'?'regiao_':x.tipo==='ger'?'loja_'+x.cod+'_':x.cod+'_')+String(x.semNome?x.lojaNome:x.nome).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'_')+'_'+MESK+'.png';
+function baixarCard(){if(!CARD||!CARD.cv)return;var x=CARD.x,nm='sprint_final_'+(x.tipo==='sup'?'regiao_':x.tipo==='ger'?'loja_'+x.cod+'_':x.cod+'_')+String(x.semNome?x.lojaNome:x.nome).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'_')+'_'+MESK+'.png';
  CARD.cv.toBlob(function(bl){if(!bl)return;var f=null;try{f=new File([bl],nm,{type:'image/png'})}catch(e){}
   var baixa=function(){var a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=nm;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},8000)};
   if(f&&navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],title:$('dlgT').textContent}).catch(baixa);return}baixa()},'image/png')}
