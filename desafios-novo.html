@@ -1,0 +1,381 @@
+<!doctype html><html lang="pt-BR" data-theme="dark" style="color-scheme:dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Potencial e Desafios · Só Tintas</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+:root{--bg:#0f1522;--surface:#1a2336;--surface2:#141c2c;--ink:#eef2fb;--muted:#9aa5bb;--line:#2c3850;--accent:#ff3b47;--navy:#4f7cf0;--ok:#2FD08E;--warn:#FFC94D;--bad:#ff6b74;--ouro:#FFD100;
+ --c-h:#b9a4ff;--c-c:#4fb6f0;--c-o:#FFC94D;--ok-bg:rgba(47,208,142,.13);--navy-bg:rgba(79,124,240,.16);
+ --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;--f-body:"Public Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color-scheme:dark}
+html[data-theme="light"]{--bg:#f5f7fb;--surface:#ffffff;--surface2:#f3f6fb;--ink:#16233d;--muted:#5a677f;--line:#e4e9f3;--accent:#c62833;--navy:#1C3F8F;--ok:#128a52;--warn:#9a6700;--bad:#c62833;
+ --c-h:#5b3fc4;--c-c:#0b6fa8;--c-o:#9a6700;--ok-bg:rgba(18,138,82,.10);--navy-bg:rgba(28,63,143,.09);color-scheme:light}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+.wrap{max-width:1120px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-right,0px)) 56px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px}
+.topbar{height:8px;background:var(--accent);border-radius:0 0 6px 6px;margin:-20px 0 4px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(24px,4vw,32px);line-height:1.05;margin:4px 0 0;color:var(--accent)}
+h2{font-family:var(--f-display);font-weight:800;font-size:17px;margin:0}
+h3{font:800 12px var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:6px 0 0}
+.sub,.nota{color:var(--muted);font-size:13px}.nota b{color:var(--ink)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:700 13px var(--f-body);padding:8px 13px;border-radius:999px;cursor:pointer;min-height:38px}
+.btn.pri{background:var(--navy);border-color:var(--navy);color:#fff}.btn.ouro{background:var(--ouro);border-color:var(--ouro);color:#1a1400}
+.btn:disabled{opacity:.55;cursor:default}
+.btn:focus-visible,.tabs button:focus-visible,input:focus-visible,select:focus-visible,.row:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+html.embutido #btnTema{display:none}
+.acoes{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.aviso{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--navy);border-radius:12px;padding:12px 16px;font-size:13.5px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card .hd{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tabs{display:flex;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:6px}
+.tabs button{flex:1;border:0;background:transparent;color:var(--muted);font:800 13.5px var(--f-body);padding:10px 6px;border-radius:10px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--navy);color:#fff}
+.duas{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:14px;align-items:start}
+.filtros{display:flex;gap:8px}
+.filtros select,.filtros input,.cp input{font:600 14px var(--f-body);padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-width:0;width:100%}
+.rows{display:flex;flex-direction:column;gap:6px;max-height:70vh;overflow:auto;margin:0 -4px;padding:2px 4px}
+.row{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:8px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:12px;padding:8px 10px;cursor:pointer;font:inherit;width:100%}
+.row[aria-current="true"]{border-color:var(--navy);background:var(--navy-bg)}
+.row .p{font:800 13px var(--f-display);color:var(--muted)}
+.row b{display:block;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row small{display:block;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .v{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.row .v small{font-weight:600}
+.bar3{display:flex;height:5px;border-radius:99px;overflow:hidden;background:var(--line);margin-top:4px}
+.bar3 i{display:block;height:100%}
+.ok{color:var(--ok)}
+.fh{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.fh .nome{font-family:var(--f-display);font-weight:800;font-size:22px;line-height:1.1}
+.nav{display:flex;gap:6px}
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.m{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0}
+.m .l{font:800 10.5px var(--f-body);color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.m .n{font-family:var(--f-display);font-weight:800;font-size:22px;line-height:1.2;font-variant-numeric:tabular-nums}
+.m .d{font-size:12.5px;color:var(--muted)}
+.m.dest{background:var(--ok-bg);border-color:transparent}.m.dest .n{color:var(--ok)}
+.m ul{margin:6px 0 0;padding:0;list-style:none;font-size:12.5px;color:var(--muted)}
+.m li{display:flex;justify-content:space-between;gap:8px;border-top:1px solid var(--line);padding:3px 0}
+.m li span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m li span:last-child{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--ink);font-weight:700}
+.tag{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px;vertical-align:1px}
+.total{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.total .n{font-family:var(--f-display);font-weight:800;font-size:26px;color:var(--ok);font-variant-numeric:tabular-nums}
+.lanc{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.cp{display:flex;flex-direction:column;gap:4px;font:800 11px var(--f-body);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;flex:1 1 130px}
+.cp input{font-weight:800;font-size:17px;text-align:right;font-variant-numeric:tabular-nums}
+.st{font-size:12.5px;color:var(--muted)}.st.ok{color:var(--ok)}.st.erro{color:var(--bad)}
+.rodape{font-size:12px;color:var(--muted);line-height:1.6}.rodape b{color:var(--ink)}
+@media(max-width:860px){.duas{grid-template-columns:1fr}.rows{max-height:44vh}}
+@media(max-width:560px){.g3{grid-template-columns:1fr}.fh .nome{font-size:19px}.tabs button{font-size:12.5px}}
+</style><script>(function(c){c.add("stv","stv-fam");try{if(window.self!==window.top)c.add("stv-emb")}catch(e){c.add("stv-emb")}})(document.documentElement.classList)</script><link rel="stylesheet" href="st-vidro.css?v=2">
+</head>
+<body>
+<div class="wrap">
+ <div class="topbar"></div>
+ <header>
+  <div><div class="eyebrow">Só Tintas · Quem pode entregar mais</div>
+   <h1>Potencial e Desafios</h1>
+   <div class="sub" id="sub">Histórico, carteira e orçamentos em aberto de cada um</div></div>
+  <div class="acoes"><button class="btn pri" id="btnPlan" type="button" disabled>Exportar planilha</button><button class="btn" id="btnTema" type="button">◐ Tema</button></div>
+ </header>
+ <div class="aviso" id="aviso" hidden></div>
+ <div id="app" hidden>
+  <div class="tabs" role="tablist" aria-label="Quem analisar">
+   <button type="button" role="tab" id="tb_vend" aria-selected="true" data-tab="vend">Vendedores</button>
+   <button type="button" role="tab" id="tb_ger" aria-selected="false" data-tab="ger">Gerentes</button>
+   <button type="button" role="tab" id="tb_sup" aria-selected="false" data-tab="sup">Supervisores</button>
+  </div>
+  <div class="duas">
+   <section class="card lista" aria-labelledby="lsT">
+    <div class="hd"><h2 id="lsT">Maior potencial primeiro</h2><span class="nota" id="lsN"></span></div>
+    <div class="filtros"><select id="fReg" aria-label="Região"></select><input id="fBusca" placeholder="Buscar nome ou loja" autocomplete="off" aria-label="Buscar"></div>
+    <div id="lista" class="rows"></div>
+   </section>
+   <section class="card ficha" id="ficha" aria-live="polite"></section>
+  </div>
+  <div class="rodape" id="rodape"></div>
+ </div>
+</div>
+<script src="st-dados.js?v=93"></script>
+<script>
+(function(){
+/* Potencial e Desafios (25/11/2026): painel refeito a pedido do Bruno. Uma ficha por pessoa, com o potencial de entregar mais
+   (histórico, carteira parada e orçamentos em aberto) e o desafio lançado um a um. Grava na mesma tabela "desafios" do painel antigo. */
+var API_PAINEL='https://script.google.com/macros/s/AKfycbzVe8joykFt0rWX9CjFgpeOaABckMFttVwV8u4e-yJh8qXPr6JTmlAzfgNjiAPAHGEwLg/exec';
+var TAB='desafios';
+var $=function(id){return document.getElementById(id)};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var cod3=function(c){return ('00'+String(c==null?'':c).replace(/\D/g,'')).slice(-3)};
+var fmt=function(n){return Math.round(+n||0).toLocaleString('pt-BR')};
+var pc=function(n,d){return (+n||0).toLocaleString('pt-BR',{maximumFractionDigits:d==null?1:d})};
+var rs=function(n){return 'R$ '+fmt(n)};
+var rsK=function(n){n=+n||0;return 'R$ '+(n>=1e6?(n/1e6).toLocaleString('pt-BR',{maximumFractionDigits:2})+' mi':n>=1e4?Math.round(n/1000).toLocaleString('pt-BR')+' mil':fmt(n))};
+var nomeV=function(s){return String(s||'').replace(/^[A-Z]?\d+\s*-\s*/,'').replace(/\s*-?\s*N\s?\d.*$/i,'').replace(/\s*-\s*\d+\s*$/,'').replace(/\s+/g,' ').trim().toLowerCase().replace(/(^|\s)\S/g,function(c){return c.toUpperCase()})};
+var chave=function(s){return nomeV(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase()};
+var limpa=function(s){return String(s||'').replace(/^\d+\s*-\s*/,'').replace(/\b\d{8,}\b/g,'').replace(/\s+/g,' ').trim().toLowerCase().replace(/(^|\s)\S/g,function(c){return c.toUpperCase()})};
+var regCurta=function(reg){var r=String(reg||'').replace(/SUPERVISOR|S[OÓ] TINTAS/gi,'').replace(/\s+/g,' ').trim();return r?r.toLowerCase().replace(/(^|\s)\S/g,function(c){return c.toUpperCase()}):'Sem região'};
+var CURTO={'002':'Mais Tintas','004':'Petrópolis 2','006':'Itaipava','007':'Matriz','008':'Friburgo','009':'Magé','010':'Petrópolis 1','012':'Piabetá','013':'Saracuruna','015':'Três Rios','016':'Maricá','017':'Santa Cruz','018':'Nova Iguaçu','019':'Nilópolis','021':'Queimados','022':'Dep. Alto','023':'Dep. Várzea','024':'Nova Iguaçu 2','025':'Belford Roxo','026':'São Cristóvão','027':'Araruama','028':'Angra dos Reis','029':'Itaipu','030':'Barão','032':'Paraíso','033':'Macaé 2','034':'Cabo Frio','035':'Taquara','036':'São João de Meriti','038':'Itaguaí'};
+var MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+var QN={vend:['vendedor','Vendedores'],ger:['gerente','Gerentes'],sup:['supervisor','Supervisores']};
+
+/* ===== regras da estimativa de potencial (as mesmas alavancas do Painel de Metas) ===== */
+var P_CART=0.30;            /* reativar 30% da carteira parada */
+var P_ORC_QM=1/3, P_ORC_F=1/5;   /* fechar 1/3 dos orçamentos até 15 dias e 1/5 dos mais antigos */
+var CART_MIN=500;           /* cliente parado: média de pelo menos R$ 500/mês em 2 dos 3 últimos meses fechados */
+
+/* ===== bônus de atingimento de meta (mesmas tabelas do Bônus do Mês): 95% · 100% · 130%, paga a maior ===== */
+var BM={ger:{1:[400,900,1500],2:[600,1200,2000],3:[800,1500,2500]},
+ m95:{1:[100,120,150,180,220],2:[220,250,280,320,380],3:[250,280,350,420,500]},
+ m100:{1:[280,300,330,380,440],2:[290,330,380,440,530],3:[330,380,450,550,750]},
+ m130:{1:[480,500,530,550,650],2:[420,480,550,650,800],3:[480,550,750,850,1500]},
+ regua:{3:[50000,70000,100000,150000],2:[40000,60000,90000,110000],1:[30000,50000,65000,85000]},
+ sfat:[150,300,500],sreg:[500,1000,2000]};
+var FXB=[95,100,130], NIV=null;
+var nvLoja=function(m){return m>250000?3:m>=150000?2:1};
+var fxB=function(p){return p>=130?2:p>=100?1:p>=95?0:-1};
+function nomeChave(n){return String(n||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().trim().replace(/\s*-?\s*N\s*\d+\s*$/,'').replace(/[^A-Z0-9 ]+/g,' ').replace(/\s+/g,' ').trim()}
+function mesmoNome(a,b){a=nomeChave(a);b=nomeChave(b);if(!a||!b)return false;if(a===b)return true;var x=a.split(' '),y=b.split(' ');return x.length>1&&y.length>1&&x[0]===y[0]&&x[x.length-1]===y[y.length-1]}
+function nivelLoja(a){var n=nvLoja(+a[7]||0),c=cod3(a[0]);if(NIV&&NIV.LOJAS){var o=NIV.LOJAS.filter(function(z){return cod3(z.id)===c})[0];if(o&&+o.niv)n=+o.niv}return n}
+function nivelVend(a,v,n){var r=BM.regua[n],m=+v[3]||0,k=m>r[3]?5:m>=r[2]?4:m>=r[1]?3:m>=r[0]?2:1;
+ if(NIV&&NIV.VENDS){var c=cod3(a[0]),o=NIV.VENDS.filter(function(z){return mesmoNome(z.nome,v[0])&&cod3(z.id)===c})[0];if(o&&+o.niv)k=+o.niv}return k}
+function tabBonus(x){return x.tipo==='vend'?[BM.m95[x.nl][x.v-1],BM.m100[x.nl][x.v-1],BM.m130[x.nl][x.v-1]]:x.tipo==='sup'?BM.sreg:BM.ger[x.nl]}
+function bonusEm(x,pct){var f=fxB(pct),b=f<0?0:tabBonus(x)[f];
+ if(x.tipo==='sup'){var pj=x.meta?x.proj/x.meta*100:0,k=pj>0?Math.max(1,pct/pj):1;   /* + faturamento por loja; as lojas sobem na proporção da região */
+  x.ls.forEach(function(l){var g=fxB(l.meta?l.proj*k/l.meta*100:0);b+=g<0?0:BM.sfat[g]})}
+ return b}
+
+var D=null,UT=0,UD=0,UR=0,MESK='',MESTX='',QUANDO='',LOJAS=[],VEND=[],SUPS=[],PODE=false,NOME_EU='',CFGM={},DEMO=false;
+var ST={tab:'vend',reg:'',busca:'',sel:null};
+
+(function(){var q=new URLSearchParams(location.search),H=document.documentElement,t=q.get('tema');
+ try{t=t||localStorage.getItem('st_tema')}catch(e){} if(t==='light'||t==='dark')H.dataset.theme=t; if(q.get('tema'))H.classList.add('embutido');
+ $('btnTema').onclick=function(){H.dataset.theme=H.dataset.theme==='light'?'dark':'light'};
+ window.addEventListener('message',function(ev){var d=ev&&ev.data;if(d&&(d.st_tema==='light'||d.st_tema==='dark'))H.dataset.theme=d.st_tema});})();
+function aviso(t){var a=$('aviso');a.innerHTML=t||'';a.hidden=!t}
+function contDe(t){return Array.isArray(t)?(t[0]||{}):(t||{})}
+function hojeSP(){var s=new Date().toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'}),m=/^(\d{4})-(\d{2})-(\d{2})/.exec(s);return m?new Date(+m[1],+m[2]-1,+m[3],12):new Date()}
+function dataDe(x){if(x instanceof Date)return x;var s=String(x||''),m;
+ if((m=/^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(s)))return new Date(+m[1],+m[2]-1,+m[3],12);
+ if((m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(s)))return new Date(+m[3],+m[2]-1,+m[1],12);
+ var d=new Date(s);return isNaN(d)?null:d}
+
+/* ===== monta lojas, vendedores e supervisores com as três fontes do potencial ===== */
+function montar(dados,gers){
+ gers=gers||{};D=dados;var p=dados.p||[];UT=+p[3]||0;UD=+p[4]||0;UR=+p[5]||0;MESK=String(p[2]||'').slice(0,7);
+ var mi=+MESK.slice(5,7);MESTX=(mi?MESES[mi-1]:String(p[0]||''))+' '+(MESK.slice(0,4)||p[1]||'');
+ var m=/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/.exec(String((dados.t||[])[4]||''));QUANDO=m?m[3]+'/'+m[2]+' às '+m[4]+'h'+m[5]:'';
+ var hoje=hojeSP(),O=dados.O||{},K=dados.K||{};LOJAS=[];VEND=[];SUPS=[];
+ (dados.L||[]).filter(function(a){return +a[3]>0}).forEach(function(a){
+  var cod=cod3(a[0]),meta=+a[3]||0,fat=+a[5]||0,proj=(+a[6]>0)?+a[6]:(UD&&UT?fat/UD*UT:fat),nl=nivelLoja(a);
+  var orc=[];Object.keys(O).forEach(function(k){if(cod3(k)!==cod)return;(O[k]||[]).forEach(function(r){var v=+(r&&r[5])||0;if(!(v>0))return;
+   var dt=dataDe(r[2]),dias=dt?Math.max(0,Math.round((hoje-dt)/864e5)):0;orc.push({v:v,cli:limpa(r[3])||'Cliente sem nome',dias:dias,q:dias<=15,vk:chave(r[0])})})});
+  var par=[];Object.keys(K).forEach(function(k){if(cod3(k)!==cod)return;((K[k]&&K[k].c)||[]).forEach(function(cl){
+   var s=cl[5];if(!Array.isArray(s)||s.length<3)return;var n=s.length,cur=+s[n-1]||0,prev=s.slice(Math.max(0,n-4),n-1).map(function(z){return +z||0});
+   var avg=prev.reduce(function(x,y){return x+y},0)/prev.length;
+   if(prev.filter(function(z){return z>0}).length>=2&&avg>=CART_MIN&&cur<=0){var pp=String(cl[0]).split(/ - VEND\.?:\s*/i);par.push({avg:avg,cli:limpa(pp[0]),vk:chave(pp[1]||'')})}})});
+  orc.sort(function(x,y){return y.v-x.v});par.sort(function(x,y){return y.avg-x.avg});
+  var lojaNome=CURTO[cod]||nomeV(a[1]);
+  var l={tipo:'ger',cod:cod,chv:cod,nome:gers[cod]||('Gerente · '+lojaNome),semNome:!gers[cod],lojaNome:lojaNome,reg:String(a[2]||''),meta:meta,fat:fat,proj:proj,med90:+a[7]||0,nl:nl,orc:orc,par:par,vs:[]};
+  LOJAS.push(l);
+  (a[9]||[]).forEach(function(v){var vm=+v[1]||0;if(vm<1000)return;var vf=+v[2]||0,nm=nomeV(v[0]),vk=chave(v[0]);
+   var o={tipo:'vend',cod:cod,chv:cod+'|'+nm,nome:nm,vk:vk,lojaNome:lojaNome,reg:l.reg,meta:vm,fat:vf,proj:UD&&UT?vf/UD*UT:vf,med90:+v[3]||0,nl:nl,v:nivelVend(a,v,nl),
+    orc:orc.filter(function(z){return z.vk===vk}),par:par.filter(function(z){return z.vk===vk})};
+   l.vs.push(o);VEND.push(o)});
+ });
+ var G={};LOJAS.forEach(function(l){if(!l.reg)return;var g=G[l.reg];if(!g){g=G[l.reg]={tipo:'sup',cod:'',chv:regCurta(l.reg),nome:regCurta(l.reg),reg:l.reg,meta:0,fat:0,proj:0,med90:0,orc:[],par:[],ls:[]};SUPS.push(g)}
+  g.meta+=l.meta;g.fat+=l.fat;g.proj+=l.proj;g.med90+=l.med90;g.orc=g.orc.concat(l.orc);g.par=g.par.concat(l.par);g.ls.push(l)});
+ SUPS.forEach(function(g){g.lojaNome=g.ls.length+(g.ls.length===1?' loja':' lojas');g.orc.sort(function(x,y){return y.v-x.v});g.par.sort(function(x,y){return y.avg-x.avg})});
+ LOJAS.concat(VEND,SUPS).forEach(function(x){x.pot=potencial(x)});
+}
+/* potencial de entregar mais neste mês, em R$, com cada parcela aberta */
+function potencial(x){
+ var hist=x.tipo==='sup'?x.ls.reduce(function(s,l){return s+(l.med90>0?Math.max(0,l.med90-l.proj):0)},0):(x.med90>0?Math.max(0,x.med90-x.proj):0);
+ var cartBase=x.par.reduce(function(s,c){return s+c.avg},0),cart=cartBase*P_CART;
+ var oq=0,of=0,nq=0;x.orc.forEach(function(o){if(o.q){oq+=o.v;nq++}else of+=o.v});
+ var orc=oq*P_ORC_QM+of*P_ORC_F,total=hist+cart+orc;
+ return {hist:hist,cart:cart,cartBase:cartBase,nPar:x.par.length,orc:orc,orcQ:oq,orcF:of,nQ:nq,nF:x.orc.length-nq,orcTot:oq+of,total:total,fecha:x.proj+total,pct:x.meta?(x.proj+total)/x.meta*100:0};
+}
+function base(){return ST.tab==='vend'?VEND:ST.tab==='ger'?LOJAS:SUPS}
+function desafioDe(x,q){q=q||ST.tab;var A=(CFGM.alvo&&CFGM.alvo[q])||{},I=(CFGM.ind&&CFGM.ind[q])||{},a=+A[x.chv]||0;if(!a)return null;var pr=I[x.chv]&&I[x.chv][a];return {pct:a,premio:pr==null?null:+pr}}
+function conta(x,pct,premio){var pj=x.meta?x.proj/x.meta*100:0,alvo=x.meta*pct/100,bn=bonusEm(x,Math.max(pct,0)),falta=Math.max(0,alvo-x.fat);
+ return {pj:pj,alvo:alvo,bonus:bn,ganha:bn+(+premio||0),mais:Math.max(0,alvo-x.proj),falta:falta,dia:UR?falta/UR:falta,ritmo:UD?x.fat/UD:0}}
+function sugestao(x){var pj=x.meta?x.proj/x.meta*100:0;if(x.pot.total>0)return Math.max(1,Math.min(300,Math.ceil(x.pot.pct)));for(var i=0;i<3;i++)if(pj<FXB[i])return FXB[i];return Math.ceil(pj)+5}
+
+/* ===== lista ===== */
+function filtrados(){var b=ST.busca.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+ return base().filter(function(x){if(ST.reg&&x.reg!==ST.reg)return false;
+  if(b){var h=(x.nome+' '+x.cod+' '+x.lojaNome).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');if(h.indexOf(b)<0)return false}return true})
+  .sort(function(a,b){return b.pot.total-a.pot.total||b.proj-a.proj})}
+function lista(){
+ var L=filtrados(),tot=L.reduce(function(s,x){return s+x.pot.total},0),lanc=L.filter(function(x){return desafioDe(x)}).length;
+ $('lsN').textContent=L.length+' '+QN[ST.tab][1].toLowerCase()+' · '+rsK(tot)+' de potencial · '+lanc+' com desafio';
+ if(!L.length){$('lista').innerHTML='<div class="nota">Ninguém com esses filtros.</div>';return}
+ if(!ST.sel||!L.some(function(x){return x.chv===ST.sel}))ST.sel=L[0].chv;
+ var mx=L[0].pot.total||1;
+ $('lista').innerHTML=L.map(function(x,i){var p=x.pot,d=desafioDe(x),w=function(v){return Math.max(0,v/mx*100)};
+  return '<button type="button" class="row" data-sel="'+esc(x.chv)+'" aria-current="'+(x.chv===ST.sel)+'"><span class="p">'+(i+1)+'º</span>'+
+   '<span><b>'+esc(x.nome)+'</b><small>'+esc(x.tipo==='sup'?x.lojaNome:x.lojaNome+' · '+x.cod)+' · projeta '+pc(x.meta?x.proj/x.meta*100:0,0)+'%'+(d?' · <span class="ok">desafio '+pc(d.pct,1)+'%</span>':'')+'</small>'+
+   '<span class="bar3" aria-hidden="true"><i style="width:'+w(p.hist)+'%;background:var(--c-h)"></i><i style="width:'+w(p.cart)+'%;background:var(--c-c)"></i><i style="width:'+w(p.orc)+'%;background:var(--c-o)"></i></span></span>'+
+   '<span class="v">'+(p.total>0?'+'+rsK(p.total):'—')+'<small>potencial</small></span></button>'}).join('');
+}
+
+/* ===== ficha ===== */
+function atual(){var L=filtrados();return L.filter(function(x){return x.chv===ST.sel})[0]||L[0]||null}
+function ficha(){
+ var x=atual(),el=$('ficha');if(!x){el.innerHTML='<div class="nota">Escolha alguém na lista.</div>';return}
+ var L=filtrados(),pos=L.indexOf(x),p=x.pot,pj=x.meta?x.proj/x.meta*100:0,bnP=bonusEm(x,pj),d=desafioDe(x),sg=sugestao(x);
+ var li=function(arr,f){return arr.length?'<ul>'+arr.slice(0,3).map(f).join('')+(arr.length>3?'<li><span>e mais '+(arr.length-3)+'</span><span></span></li>':'')+'</ul>':''};
+ var quem=x.tipo==='vend'?'Ele':x.tipo==='ger'?'A loja':'A região';
+ el.innerHTML=
+  '<div class="fh"><div><div class="nome">'+esc(x.nome)+'</div><div class="sub">'+esc(QN[x.tipo][0].replace(/^./,function(c){return c.toUpperCase()}))+' · '+esc(x.tipo==='sup'?x.lojaNome:x.lojaNome+' '+x.cod+' · '+regCurta(x.reg))+' · '+(pos+1)+'º de '+L.length+' em potencial</div></div>'+
+   '<div class="nav"><button type="button" class="btn" id="bAnt"'+(pos<=0?' disabled':'')+' aria-label="Anterior">‹ Anterior</button><button type="button" class="btn" id="bPro"'+(pos>=L.length-1?' disabled':'')+' aria-label="Próximo">Próximo ›</button></div></div>'+
+  '<h3>1 · Onde vai fechar no ritmo de hoje</h3>'+
+  '<div class="g2"><div class="m"><div class="l">Projetado</div><div class="n">'+pc(pj)+'%</div><div class="d">'+rs(x.proj)+' para a meta de '+rs(x.meta)+' · já vendeu '+rs(x.fat)+'</div></div>'+
+   '<div class="m"><div class="l">Ganha no projetado</div><div class="n">'+rs(bnP)+'</div><div class="d">'+(fxB(pj)<0?'abaixo de 95%: sem bônus de meta':'bônus de meta da faixa de '+FXB[fxB(pj)]+'%')+'</div></div></div>'+
+  '<h3>2 · Potencial de entregar mais neste mês</h3>'+
+  '<div class="total"><div><div class="nota">Soma das três fontes abaixo</div><div class="n">'+(p.total>0?'+'+rs(p.total):'sem potencial mapeado')+'</div></div><div class="nota" style="text-align:right">Com isso fecharia em <b>'+pc(p.pct)+'%</b><br>'+rs(p.fecha)+'</div></div>'+
+  '<div class="g3">'+
+   '<div class="m"><div class="l"><span class="tag" style="background:var(--c-h)"></span>Histórico</div><div class="n">'+(p.hist>0?'+'+rs(p.hist):'—')+'</div><div class="d">'+
+     (x.tipo==='sup'?(p.hist>0?'soma das lojas que projetam abaixo da própria média de 90 dias':'todas as lojas projetam na média de 90 dias ou acima'):
+      (x.med90>0?'média de 90 dias: '+rs(x.med90)+' por mês · hoje projeta '+rs(x.proj)+(p.hist>0?'':' (já está acima)'):'sem média de 90 dias no Painel'))+'</div></div>'+
+   '<div class="m"><div class="l"><span class="tag" style="background:var(--c-c)"></span>Carteira parada</div><div class="n">'+(p.cart>0?'+'+rs(p.cart):'—')+'</div><div class="d">'+
+     (p.nPar?p.nPar+(p.nPar===1?' cliente que comprava e ainda não comprou':' clientes que compravam e ainda não compraram')+' este mês · somam '+rs(p.cartBase)+' por mês · conta 30%':'nenhum cliente recorrente parado')+'</div>'+
+     li(x.par,function(c){return '<li><span>'+esc(c.cli)+'</span><span>'+rs(c.avg)+'/mês</span></li>'})+'</div>'+
+   '<div class="m"><div class="l"><span class="tag" style="background:var(--c-o)"></span>Orçamentos em aberto</div><div class="n">'+(p.orc>0?'+'+rs(p.orc):'—')+'</div><div class="d">'+
+     (x.orc.length?x.orc.length+' em aberto somando '+rs(p.orcTot)+' · conta 1/3 dos de até 15 dias ('+rs(p.orcQ)+') e 1/5 dos mais antigos ('+rs(p.orcF)+')':'nenhum orçamento em aberto')+'</div>'+
+     li(x.orc,function(o){return '<li><span>'+esc(o.cli)+' · '+o.dias+(o.dias===1?' dia':' dias')+'</span><span>'+rs(o.v)+'</span></li>'})+'</div>'+
+  '</div>'+
+  '<h3>3 · Desafio</h3>'+
+  (PODE?'<div class="lanc"><label class="cp">Chegar em (% da meta)<input id="dPct" type="number" inputmode="decimal" min="1" max="300" step="1" value="'+(d?d.pct:'')+'" placeholder="'+sg+'"></label>'+
+    '<label class="cp">Prêmio do desafio (R$)<input id="dPre" type="number" inputmode="decimal" min="0" step="50" value="'+(d&&d.premio!=null?d.premio:'')+'" placeholder="0"></label>'+
+    '<button type="button" class="btn" id="bSug">Usar sugestão: '+sg+'%</button></div>'+
+    '<div class="nota">Sugestão = projetado + potencial ('+pc(pj)+'% → '+sg+'%). Você pode lançar qualquer %.</div>'
+   :'<div class="nota">'+(d?'Desafio lançado: '+pc(d.pct,1)+'% da meta'+(d.premio!=null?' · prêmio '+rs(d.premio):''):'Sem desafio lançado.')+'</div>')+
+  '<div id="res"></div>'+
+  (PODE?'<div class="acoes"><button type="button" class="btn pri" id="bSalvarProx">Salvar e ir para o próximo</button><button type="button" class="btn" id="bSalvar">Salvar</button>'+(d?'<button type="button" class="btn" id="bLimpar">Tirar o desafio</button>':'')+'<span class="st" id="stSalvo" role="status">'+(d&&CFGM.em?'Lançado por '+esc(CFGM.por||'')+' em '+esc(CFGM.em):'')+'</span></div>':'');
+ resultado();
+}
+function lidos(){var a=$('dPct'),b=$('dPre');if(!a){var x=atual(),d=x&&desafioDe(x);return d?{pct:d.pct,pre:d.premio||0,tem:true}:{pct:0,pre:0,tem:false}}
+ var p=+a.value,r=+b.value;return {pct:p>0?Math.min(300,Math.round(p*10)/10):0,pre:b.value===''||isNaN(r)?null:Math.max(0,r),tem:p>0}}
+function resultado(){var x=atual(),el=$('res');if(!x||!el)return;var v=lidos();
+ if(!v.tem){el.innerHTML='<div class="nota">Lance o % para ver quanto '+(x.tipo==='vend'?'ele':x.tipo==='ger'?'o gerente':'o supervisor')+' ganha e quanto isso gera de venda.</div>';return}
+ var c=conta(x,v.pct,v.pre),quem=x.tipo==='vend'?'Vende a mais':x.tipo==='ger'?'A loja vende a mais':'A região vende a mais';
+ el.innerHTML='<div class="g3"><div class="m dest"><div class="l">Ganha se bater</div><div class="n">'+rs(c.ganha)+'</div><div class="d">bônus de meta '+rs(c.bonus)+' + prêmio '+rs(v.pre||0)+'</div></div>'+
+  '<div class="m"><div class="l">'+quem+'</div><div class="n">'+(c.mais>0?'+'+rs(c.mais):'R$ 0')+'</div><div class="d">'+(c.mais>0?'de '+pc(c.pj)+'% para '+pc(v.pct,1)+'% da meta · fecha em '+rs(c.alvo):'o projetado ('+pc(c.pj)+'%) já passa desse desafio')+'</div></div>'+
+  '<div class="m"><div class="l">Precisa vender por dia</div><div class="n">'+rs(c.dia)+'</div><div class="d">'+(UR?'nos '+pc(UR)+' dias úteis que faltam · hoje faz '+rs(c.ritmo):'mês fechado')+'</div></div></div>'+
+  (x.pot.total>0&&c.mais>x.pot.total*1.05?'<div class="nota">Esse desafio pede <b>'+rs(c.mais)+'</b> a mais, acima do potencial mapeado (<b>'+rs(x.pot.total)+'</b>).</div>':'');
+}
+
+/* ===== gravação: lê a tabela, troca só o desafio desta pessoa e salva ===== */
+function aplica(M,q,k,pct,pre){M=M||{};M.alvo=M.alvo||{};M.ind=M.ind||{};var A=M.alvo[q]=M.alvo[q]||{},I=M.ind[q]=M.ind[q]||{};
+ if(pct==null){delete A[k];delete I[k]}else{A[k]=pct;I[k]={};if(pre!=null)I[k][pct]=pre}
+ M.por=NOME_EU||M.por||'';M.em=new Date().toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});return M}
+function gravar(x,pct,pre){var q=ST.tab,k=x.chv;
+ if(DEMO){CFGM=aplica(CFGM,q,k,pct,pre);return Promise.resolve()}
+ return STDados.chamar('conteudoLer').then(function(r){
+  var T=(r&&r.ok&&r.cont&&r.cont[TAB])?JSON.parse(JSON.stringify(contDe(r.cont[TAB]))):{};
+  var ms=Object.keys(T).sort();while(ms.length>=12&&ms.indexOf(MESK)<0)delete T[ms.shift()];
+  T[MESK]=aplica(T[MESK],q,k,pct,pre);var env={};env[TAB]=[T];
+  return STDados.chamar('conteudoSalvar',{tabelas:env}).then(function(j){if(!j||!j.ok)throw new Error((j&&j.erro)||'O servidor não confirmou.');CFGM=T[MESK]})})}
+function salvar(prox,limpar){var x=atual();if(!x||!PODE)return;var v=lidos(),st=$('stSalvo');
+ if(!limpar&&!v.tem){st.textContent='Digite o % do desafio antes de salvar.';st.className='st erro';$('dPct').focus();return}
+ ['bSalvar','bSalvarProx','bLimpar'].forEach(function(i){if($(i))$(i).disabled=true});st.textContent='Salvando…';st.className='st';
+ gravar(x,limpar?null:v.pct,limpar?null:v.pre).then(function(){
+  if(prox){var L=filtrados(),i=L.indexOf(x);if(i>=0&&i<L.length-1)ST.sel=L[i+1].chv}
+  lista();ficha();var s=$('stSalvo');if(s){s.textContent=(limpar?'✓ Desafio tirado':'✓ Salvo')+(DEMO?' (prévia: nada foi gravado)':'')+(prox?' · agora '+esc(atual().nome):'');s.className='st ok'}
+ }).catch(function(e){['bSalvar','bSalvarProx','bLimpar'].forEach(function(i){if($(i))$(i).disabled=false});st.textContent='Não consegui salvar: '+((e&&e.message)||e);st.className='st erro'})}
+
+/* ===== planilha ===== */
+var XLSX_URL='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+function carregarXLSX(){if(window.XLSX)return Promise.resolve();return new Promise(function(ok,erro){var s=document.createElement('script');s.src=XLSX_URL;s.onload=function(){window.XLSX?ok():erro(new Error('biblioteca não carregou'))};s.onerror=function(){erro(new Error('sem conexão para montar a planilha'))};document.head.appendChild(s)})}
+var COLS=[['Posição','n',9],['Nome','t',28],['Loja','t',20],['Supervisor','t',16],['Meta do mês','r',14],['Realizado','r',14],['Projetado (R$)','r',15],['Projetado (%)','p',12],['Ganha no projetado (bônus de meta)','r',17],
+ ['Média de 90 dias (por mês)','r',16],['Potencial: histórico','r',15],['Clientes parados','n',10],['Carteira parada (R$ por mês)','r',16],['Potencial: carteira (30%)','r',15],
+ ['Orçamentos em aberto','n',11],['Orçamentos em aberto (R$)','r',16],['Potencial: orçamentos','r',15],['POTENCIAL TOTAL','r',16],['Fecharia em (R$)','r',15],['Fecharia em (%)','p',12],
+ ['Desafio (% da meta)','p',12],['Prêmio do desafio','r',14],['Ganha se bater (bônus de meta + prêmio)','r',18],['Venda a mais se bater','r',15],['Precisa vender por dia','r',15]];
+function aba(q,arr){var L=arr.slice().sort(function(a,b){return b.pot.total-a.pot.total||b.proj-a.proj}),cab=COLS.map(function(c){return c[0]});cab[1]=QN[q][0].replace(/^./,function(c){return c.toUpperCase()});if(q==='sup'){cab[2]='Lojas';cab[3]='Região'}
+ var rows=L.map(function(x,i){var p=x.pot,pj=x.meta?x.proj/x.meta*100:0,d=desafioDe(x,q),c=d?conta(x,d.pct,d.premio):null;
+  return [i+1,x.semNome?'(gerente não cadastrado)':x.nome,x.tipo==='sup'?x.lojaNome:x.lojaNome+' '+x.cod,regCurta(x.reg),x.meta,x.fat,x.proj,pj,bonusEm(x,pj),
+   x.tipo==='sup'?x.med90:(x.med90||''),p.hist,p.nPar,p.cartBase,p.cart,x.orc.length,p.orcTot,p.orc,p.total,p.fecha,p.pct,
+   d?d.pct:'',d?(d.premio!=null?d.premio:'a definir'):'',c?c.ganha:'',c?c.mais:'',c?c.dia:'']});
+ var topo=[[QN[q][1]+' · potencial de entregar mais · '+MESTX],[(QUANDO?'Números de '+QUANDO+' · ':'')+pc(UD)+' de '+pc(UT)+' dias úteis trabalhados, faltam '+pc(UR)+' · ordem: maior potencial primeiro'],
+  ['Potencial = histórico (média de 90 dias − projetado) + carteira (30% dos clientes recorrentes parados) + orçamentos (1/3 dos de até 15 dias + 1/5 dos mais antigos). É estimativa.'],[]];
+ var ws=XLSX.utils.aoa_to_sheet(topo.concat([cab],rows)),h0=topo.length;
+ for(var i=0;i<rows.length;i++)for(var j=0;j<COLS.length;j++){var cel=ws[XLSX.utils.encode_cell({r:h0+1+i,c:j})];if(!cel||cel.t!=='n')continue;var t=COLS[j][1];cel.z=t==='r'?'"R$" #,##0':t==='p'?'0.0"%"':'0'}
+ ws['!cols']=COLS.map(function(c){return {wch:c[2]}});ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:h0,c:0},e:{r:h0+rows.length,c:COLS.length-1}})};return ws}
+function exportar(){var b=$('btnPlan');b.disabled=true;var t=b.textContent;b.textContent='Montando…';
+ carregarXLSX().then(function(){var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,aba('vend',VEND),'Vendedores');XLSX.utils.book_append_sheet(wb,aba('ger',LOJAS),'Gerentes');XLSX.utils.book_append_sheet(wb,aba('sup',SUPS),'Supervisores');
+  XLSX.writeFile(wb,'potencial_desafios_'+MESK+(QUANDO?'_'+QUANDO.slice(0,5).replace('/','-'):'')+'.xlsx');b.disabled=false;b.textContent=t;
+ }).catch(function(e){b.disabled=false;b.textContent=t;aviso('Não consegui montar a planilha: '+esc((e&&e.message)||e))})}
+
+/* ===== eventos ===== */
+function render(){lista();ficha()}
+document.addEventListener('click',function(ev){var t=ev.target.closest('button');if(!t)return;
+ if(t.dataset.tab){ST.tab=t.dataset.tab;ST.sel=null;ST.reg='';['vend','ger','sup'].forEach(function(q){$('tb_'+q).setAttribute('aria-selected',ST.tab===q)});filtros();render();return}
+ if(t.dataset.sel!=null){ST.sel=t.dataset.sel;render();if(window.matchMedia('(max-width:860px)').matches)$('ficha').scrollIntoView({behavior:'smooth',block:'start'});return}
+ if(t.id==='bAnt'||t.id==='bPro'){var L=filtrados(),i=L.indexOf(atual())+(t.id==='bPro'?1:-1);if(L[i]){ST.sel=L[i].chv;render()}return}
+ if(t.id==='bSug'){var x=atual();if(x){$('dPct').value=sugestao(x);resultado();$('dPre').focus()}return}
+ if(t.id==='bSalvar'){salvar(false);return}
+ if(t.id==='bSalvarProx'){salvar(true);return}
+ if(t.id==='bLimpar'){salvar(false,true);return}
+ if(t.id==='btnPlan'){exportar();return}
+});
+document.addEventListener('input',function(ev){var t=ev.target;if(t.id==='dPct'||t.id==='dPre'){resultado();return}if(t.id==='fBusca'){ST.busca=t.value;render()}});
+document.addEventListener('change',function(ev){if(ev.target.id==='fReg'){ST.reg=ev.target.value;ST.sel=null;render()}});
+function filtros(){var regs=[];LOJAS.forEach(function(l){if(l.reg&&regs.indexOf(l.reg)<0)regs.push(l.reg)});regs.sort();
+ $('fReg').innerHTML='<option value="">Todas as regiões</option>'+regs.map(function(r){return '<option value="'+esc(r)+'">'+esc(regCurta(r))+'</option>'}).join('');
+ $('fReg').hidden=ST.tab==='sup'||regs.length<2}
+
+function iniciar(dados,conf,pode,nome,gers){
+ montar(dados,gers);PODE=!!pode;NOME_EU=nome||'';CFGM=conf||{};
+ if(!LOJAS.length){aviso('Os números deste mês ainda não estão no Painel de Metas.');return}
+ $('app').hidden=false;$('btnPlan').disabled=false;
+ $('sub').textContent=[MESTX,QUANDO?'números de '+QUANDO:'',UR?'faltam '+pc(UR)+' dias úteis':'mês fechado'].filter(Boolean).join(' · ');
+ $('rodape').innerHTML='<b>Como é a conta do potencial.</b> <b>Histórico</b>: a média mensal dos últimos 90 dias menos o que a pessoa projeta para este mês (só quando a média é maior). '+
+  '<b>Carteira parada</b>: clientes CNPJ que compraram em pelo menos 2 dos 3 últimos meses fechados (média de R$ '+fmt(CART_MIN)+' ou mais) e ainda não compraram neste mês; entra '+pc(P_CART*100,0)+'% da média deles. '+
+  '<b>Orçamentos em aberto</b>: entra 1/3 do valor dos feitos há até 15 dias e 1/5 dos mais antigos. São as mesmas regras das alavancas do Painel de Metas. '+
+  'É uma <b>estimativa</b> para priorizar quem desafiar: as três fontes podem se sobrepor (um orçamento pode ser de um cliente da carteira). Gerente = números da loja inteira; supervisor = soma das lojas. '+
+  '<b>Ganha</b> = só o bônus de atingimento de meta (95% · 100% · 130%) mais o prêmio do desafio.';
+ filtros();render();
+}
+var q=new URLSearchParams(location.search);DEMO=!!q.get('demo');
+if(DEMO){
+ var cods=Object.keys(CURTO),regs=['SUPERVISOR BRUNO SÓ TINTAS','SUPERVISOR DANILO SÓ TINTAS','SUPERVISOR RAMON SÓ TINTAS','SUPERVISOR CARLOS EDUARDO SÓ TINTAS'];
+ var sd=11,rnd=function(){sd=(sd*9301+49297)%233280;return sd/233280};
+ var nomes=['ANA SOUZA','BRUNO LIMA','CARLA DIAS','DIEGO ROCHA','EDUARDA MELO','FABIO NUNES','GABRIEL REIS','HELENA CRUZ','IGOR PAIVA','JULIA MOTA'],cli=['CONSTRUTORA ALFA','PINTURAS BETA','CONDOMINIO GAMA','REFORMAS DELTA','ENGENHARIA SIGMA','OBRAS OMEGA','IMOBILIARIA KAPPA'];
+ var O={},K={},hj=new Date(),iso=function(d){var x=new Date(hj.getTime()-d*864e5);return x.toISOString().slice(0,10)};
+ var L=cods.map(function(c,i){var meta=Math.round(150000+rnd()*350000),alc=.6+rnd()*.5,fat=Math.round(meta*alc*16.5/21),vs=[];O[c]=[];K[c]={c:[]};
+  for(var k=0;k<1+Math.floor(rnd()*3);k++){var nm=nomes[(i+k)%10]+' '+(k+1),vm=Math.round(60000+rnd()*120000),va=.5+rnd()*.7;vs.push([nm,vm,Math.round(vm*va*16.5/21),Math.round(vm*(.7+rnd()*.6))]);
+   for(var o=0;o<Math.floor(rnd()*5);o++)O[c].push([nm,true,iso(Math.floor(rnd()*40)),cli[Math.floor(rnd()*7)]+' '+(o+1),'',Math.round(800+rnd()*14000),'']);
+   for(var z=0;z<Math.floor(rnd()*6);z++){var b=600+rnd()*6000;K[c].c.push([cli[Math.floor(rnd()*7)]+' '+c+z+' - VEND.: '+nm,0,0,0,0,[b,b*1.1,b*.8,rnd()<.55?0:b]])}}
+  vs.push(['ASSISTENTE '+c,3,0,0]);
+  return [c,'SO TINTAS '+c,regs[i%4],meta,meta,fat,0,Math.round(meta*(.8+rnd()*.4)),[],vs]});
+ var gm={};cods.forEach(function(c,i){if(i%7!==3)gm[c]=['Marta Pires','Jorge Alves','Rita Campos','Sandro Leal','Vera Nogueira'][i%5]});
+ iniciar({p:['NOVEMBRO',2026,'2026-11-25',21,16.5,4.5],t:['','','','','2026-11-25 06:56:31'],L:L,O:O,K:K},null,q.get('demo')!=='ver','Bruno',gm);
+} else if(!window.STDados||!STDados.crachaGuardado){aviso('Abra este painel pelo <b>Só Tintas App</b>, já com o seu login.')}
+else {
+ var liberado=(function(){var s=null;try{s=JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null')}catch(e){}
+  var vis=null;try{vis=STDados.visao&&STDados.visao()}catch(e){}
+  var bruno=!vis&&!!s&&((String(s.nome||'').trim().toLowerCase()==='bruno'&&/coorden/i.test(String(s.papel||'')))||String(s.email||'').toLowerCase()==='supervisordelojas1@sotintasnet.com.br');
+  if(bruno)return true;
+  try{if(window.parent!==window&&typeof window.parent.podePainel==='function')return !!window.parent.podePainel('verDesafios',false)}catch(e){}
+  return false})();
+ if(!liberado){aviso('Este painel é de uso da coordenação.')}
+ else{aviso('Carregando os números do mês…');
+  STDados.cracha().then(function(tk){
+   var post=function(tipo){return fetch(API_PAINEL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({tipo:tipo,u:'cracha',p:tk})}).then(function(r){return r.json()})};
+   var pC=STDados.chamar('conteudoLer').then(function(j){return j&&j.ok&&j.cont?contDe(j.cont[TAB]):{}}).catch(function(){return {}});
+   var pG=post('rally').then(function(j){var g={};if(j&&j.ok&&j.lojas)j.lojas.forEach(function(x){var n=nomeV(String(x[6]||''));if(n)g[cod3(x[0])]=n});return g}).catch(function(){return {}});
+   var pN=STDados.chamar('niveis').then(function(j){NIV=j&&j.ok&&j.data||null}).catch(function(){});
+   return Promise.all([post('dados'),pC,pG,pN]).then(function(a){var r=a[0],T=a[1]||{},GM=a[2]||{};
+    if(!r||!r.ok){aviso(esc((r&&r.erro)||'Não consegui buscar os números do mês.'));return}
+    aviso('');var c=STDados.crachaGuardado(),pf=c&&c.perfil,vis=null,s=null;try{vis=STDados.visao&&STDados.visao()}catch(e){}try{s=STDados.sessaoVisao()}catch(e){}
+    var mk=String((r.dados&&r.dados.p&&r.dados.p[2])||'').slice(0,7);
+    iniciar(r.dados,T[mk]?JSON.parse(JSON.stringify(T[mk])):null,pf==='coord'&&!vis,(s&&s.nome)||(c&&c.nome)||'',GM)})
+  }).catch(function(e){aviso(esc((e&&e.message)||'Sem conexão com o servidor.'))})}
+}
+})();
+</script>
+</body></html>
