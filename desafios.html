@@ -102,6 +102,16 @@ html[data-theme="dark"] .st.alc{color:#9db8ff}
 .mb i{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--navy)}
 .mb b{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:repeating-linear-gradient(135deg,rgba(79,124,240,.5) 0 5px,rgba(79,124,240,.18) 5px 10px)}
 .mb s{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ouro)}
+.res{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.res>div{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0}
+.res .l{font:800 10.5px var(--f-body);color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.res .v{font-family:var(--f-display);font-weight:800;font-size:22px;font-variant-numeric:tabular-nums}
+.res .d{font-size:12px;color:var(--muted)}
+.frase{font-size:14.5px;line-height:1.5}
+.frase b{font-variant-numeric:tabular-nums}
+.tw.cen td,.tw.cen th{white-space:nowrap}
+.tw.cen tr.dest td{background:var(--navy-bg)}
+@media(max-width:760px){.res{grid-template-columns:1fr}}
 .rodape{font-size:12px;color:var(--muted);line-height:1.6}
 .rodape b{color:var(--ink)}
 
@@ -140,6 +150,7 @@ dialog::backdrop{background:rgba(3,6,15,.7)}
     <div class="nota">O % é sobre a <b>meta do mês</b> de cada loja ou vendedor. Cada um recebe o prêmio da <b>maior faixa</b> que bater. Prêmio em branco aparece como “a definir” no card.</div>
    </section>
    <div class="kpis" id="kpis"></div>
+   <section class="card" id="resumo" aria-labelledby="resT"></section>
    <div class="tabs" role="tablist" aria-label="Quem analisar">
     <button type="button" role="tab" id="tbLojas" aria-selected="true" data-tab="lojas">Lojas</button>
     <button type="button" role="tab" id="tbVend" aria-selected="false" data-tab="vend">Vendedores</button>
@@ -299,20 +310,47 @@ function ordenar(G){var o=ST.ord;return G.slice().sort(function(a,b){
  if(o==='proj')return b.pj-a.pj;
  var sa=ORDEM_SIT[a.sit],sb=ORDEM_SIT[b.sit];if(sa!==sb)return sa-sb;
  var ea=a.prox&&a.prox.esf!=null?a.prox.esf:99,eb=b.prox&&b.prox.esf!=null?b.prox.esf:99;return ea-eb||b.pj-a.pj})}
+/* potencial de ganho: venda a mais sobre a projeção de hoje para chegar numa faixa */
+function ganhoDe(r,l){return l?Math.max(0,l.alvo-r.x.proj):0}
+function cenarios(G,F){
+ var mk=function(nome,desc,alvo){var c={nome:nome,desc:desc,sobem:0,ganho:0,premios:0};
+  G.forEach(function(r){var l=alvo(r);if(l&&l!==r.noRitmo){c.sobem++;c.ganho+=ganhoDe(r,l);c.premios+=premio(l)}else c.premios+=premio(r.noRitmo)});return c};
+ var top=function(r){return r.ritmo&&r.linhas.length?r.linhas[r.linhas.length-1]:null};
+ return [
+  mk('Ritmo de hoje','ninguém acelera',function(){return null}),
+  mk('Os “ao alcance” sobem','sobem uma faixa quem precisa de até +'+pc(LIM_ALC*100,0)+'% no ritmo',function(r){return r.prox&&r.prox.sit==='alc'?r.prox:null}),
+  mk('Ao alcance + esticados','sobem uma faixa quem precisa de até +'+pc(LIM_EST*100,0)+'%',function(r){return r.prox&&(r.prox.sit==='alc'||r.prox.sit==='est')?r.prox:null}),
+  mk('Todos sobem uma faixa','todos com venda no mês',function(r){return r.prox&&r.prox.sit!=='na'?r.prox:null}),
+  mk('Todos na faixa máxima','teto do desafio',function(r){var t=top(r);return t&&t.sit!=='bat'&&t.sit!=='rit'?t:null})
+ ].map(function(c,i,A){c.extra=c.premios-A[0].premios;c.pct=c.ganho?c.premios/c.ganho*100:null;c.pctExtra=c.ganho?c.extra/c.ganho*100:null;return c});
+}
 function kpis(){
  var qual=ST.tab, G=filtrados(grupo(qual)), F=faixas(qual==='lojas'?'lojas':'vend');
  var noR=G.filter(function(r){return r.noRitmo}), alc=G.filter(function(r){return r.prox&&r.prox.sit==='alc'});
- var custoR=G.reduce(function(s,r){return s+premio(r.noRitmo)},0);
- var custoA=G.reduce(function(s,r){var up=r.prox&&r.prox.sit==='alc'?r.prox:r.noRitmo;return s+premio(up)},0);
- var custoM=G.length*(F.length?premio({f:F[F.length-1]}):0);
  var M=G.reduce(function(s,r){return s+r.x.meta},0),Fa=G.reduce(function(s,r){return s+r.x.fat},0),P=G.reduce(function(s,r){return s+r.x.proj},0);
  var semP=F.length&&F.some(function(f){return f.premio==null});
- var nm=qual==='lojas'?['loja','lojas']:['vendedor','vendedores'];
+ var C=cenarios(G,F),c1=C[1],c3=C[3];
  $('kpis').innerHTML=
   '<div class="kpi"><div class="l">Projeção '+(ST.reg?'da região':'da '+(qual==='lojas'?'rede':'equipe'))+'</div><div class="v">'+pc(M?P/M*100:0)+'%</div><div class="d">hoje '+pc(M?Fa/M*100:0)+'% · projeta '+rsK(P)+' para a meta de '+rsK(M)+'</div></div>'+
-  '<div class="kpi"><div class="l">Já numa faixa no ritmo</div><div class="v">'+noR.length+' <span style="font-size:14px;color:var(--muted)">de '+G.length+'</span></div><div class="d">'+(F.length?'faixa 1 = '+pc(F[0].pct,0)+'% da meta':'lance as faixas acima')+'</div></div>'+
-  '<div class="kpi"><div class="l">Ao alcance da próxima</div><div class="v">'+alc.length+'</div><div class="d">precisam subir até '+pc(LIM_ALC*100,0)+'% no ritmo por dia</div></div>'+
-  '<div class="kpi"><div class="l">Prêmios no ritmo de hoje</div><div class="v">'+rs(custoR)+'</div><div class="d">'+(semP?'há faixa sem prêmio lançado':'com os ao alcance: '+rs(custoA)+' · teto '+rs(custoM))+'</div></div>';
+  '<div class="kpi"><div class="l">Já numa faixa no ritmo</div><div class="v">'+noR.length+' <span style="font-size:14px;color:var(--muted)">de '+G.length+'</span></div><div class="d">'+(F.length?'prêmios já garantidos no ritmo: '+rs(C[0].premios):'lance as faixas acima')+'</div></div>'+
+  '<div class="kpi"><div class="l">Ao alcance da próxima</div><div class="v">'+alc.length+'</div><div class="d">trazem '+rsK(c1.ganho)+' a mais se subirem</div></div>'+
+  '<div class="kpi"><div class="l">Potencial de ganho</div><div class="v">'+rsK(c3.ganho)+'</div><div class="d">se todos subirem uma faixa'+(semP||!c3.ganho?'':' · prêmios = '+pc(c3.pct,1)+'% do ganho')+'</div></div>';
+ resumo(C,F,semP,qual);
+}
+function resumo(C,F,semP,qual){
+ var el=$('resumo');if(!F.length){el.hidden=true;return}el.hidden=false;
+ var c1=C[1],c0=C[0],cada=function(c){return c.premios?c.ganho/c.premios:null};
+ var q1=c1.sobem===1?(qual==='lojas'?'a loja que está':'o vendedor que está'):(qual==='lojas'?'as '+c1.sobem+' lojas que estão':'os '+c1.sobem+' vendedores que estão');
+ var rs2=function(n){return 'R$ '+(+n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})};
+ var frase=!c1.sobem?'Hoje ninguém está ao alcance da próxima faixa: o desafio paga <b>'+rs(c0.premios)+'</b> a quem já chega no ritmo, sem venda nova. Para gerar ganho, olhe os <b>esticados</b> ou ajuste as faixas.'
+  :semP?'Se '+q1+' ao alcance subir'+(c1.sobem===1?'':'em')+' uma faixa, entram <b>'+rs(c1.ganho)+'</b> a mais sobre o projetado. Lance os prêmios de todas as faixas para ver o % de investimento.'
+  :'Se '+q1+' ao alcance subir'+(c1.sobem===1?'':'em')+' uma faixa, entram <b>'+rs(c1.ganho)+'</b> a mais sobre o projetado, com <b>'+rs(c1.premios)+'</b> em prêmios: investimento de <b>'+pc(c1.pct,1)+'%</b> do ganho'+(c1.premios?' (cada R$ 1 de prêmio traz '+rs2(cada(c1))+' de venda)':'')+'. Desses prêmios, <b>'+rs(c0.premios)+'</b> seriam pagos mesmo sem ninguém acelerar.'+
+   (c1.pct>100?' <b style="color:var(--bad)">Atenção: neste cenário o prêmio custa mais do que a venda que ele traz.</b>':'');
+ el.innerHTML='<div class="hd"><div><h2 id="resT">Potencial de ganho × investimento em prêmios</h2><div class="nota">'+(qual==='lojas'?'Lojas':'Vendedores')+(ST.reg?' · '+esc(regCurta(ST.reg)):'')+' · venda a mais = faturamento acima da projeção de hoje para chegar na faixa</div></div></div>'+
+  '<p class="frase" style="margin:0">'+frase+'</p>'+
+  '<div class="tw cen"><table><thead><tr><th scope="col">Cenário</th><th scope="col">Sobem de faixa</th><th scope="col">Venda a mais</th><th scope="col">Prêmios do desafio</th><th scope="col">Prêmio ÷ venda a mais</th><th scope="col">Só o prêmio extra</th></tr></thead><tbody>'+
+  C.map(function(c,i){return '<tr'+(i===1?' class="dest"':'')+'><td><b>'+c.nome+'</b><small>'+c.desc+'</small></td><td>'+c.sobem+'</td><td>'+(c.ganho?rs(c.ganho):'—')+'</td><td>'+rs(c.premios)+(semP?'<small>faixa sem prêmio conta R$ 0</small>':'')+'</td><td>'+(c.pct!=null?pc(c.pct,1)+'%':'—')+'</td><td>'+(c.pctExtra!=null?pc(c.pctExtra,1)+'%<small>'+rs(c.extra)+' a mais</small>':'—')+'</td></tr>'}).join('')+'</tbody></table></div>'+
+  '<div class="nota"><b>Prêmio ÷ venda a mais</b> = todos os prêmios do cenário sobre o faturamento que entra acima do projetado. <b>Só o prêmio extra</b> desconta o que já seria pago no ritmo de hoje. É faturamento, não margem. Lojas e vendedores se sobrepõem (a venda do vendedor entra na loja): não some as duas abas.</div>';
 }
 function chips(G){var c={};G.forEach(function(r){c[r.sit]=(c[r.sit]||0)+1});
  $('chips').innerHTML=['alc','est','dif','rit','bat','na'].filter(function(k){return c[k]}).map(function(k){
@@ -324,8 +362,8 @@ function tabela(){
  if(ST.sit)G=G.filter(function(r){return r.sit===ST.sit});
  G=ordenar(G);
  var F=faixas(qual==='lojas'?'lojas':'vend');
- var cab='<thead><tr><th scope="col">'+(qual==='lojas'?'Loja':'Vendedor')+'</th><th scope="col">Hoje</th><th scope="col">Projeção</th><th scope="col">Faixa no ritmo</th><th scope="col">Próxima faixa</th><th scope="col">Precisa por dia</th><th scope="col">Situação</th><th scope="col"><span class="sr">Card</span></th></tr></thead>';
- if(!F.length){$('tab').innerHTML=cab+'<tbody><tr><td colspan="8" class="nm" style="text-align:left;color:var(--muted)">Lance ao menos uma faixa para '+(qual==='lojas'?'as lojas':'os vendedores')+' no desafio acima.</td></tr></tbody>';return}
+ var cab='<thead><tr><th scope="col">'+(qual==='lojas'?'Loja':'Vendedor')+'</th><th scope="col">Hoje</th><th scope="col">Projeção</th><th scope="col">Faixa no ritmo</th><th scope="col">Próxima faixa</th><th scope="col">Precisa por dia</th><th scope="col">Potencial</th><th scope="col">Situação</th><th scope="col"><span class="sr">Card</span></th></tr></thead>';
+ if(!F.length){$('tab').innerHTML=cab+'<tbody><tr><td colspan="9" class="nm" style="text-align:left;color:var(--muted)">Lance ao menos uma faixa para '+(qual==='lojas'?'as lojas':'os vendedores')+' no desafio acima.</td></tr></tbody>';return}
  $('tab').innerHTML=cab+'<tbody>'+(G.length?G.map(function(r){var x=r.x,n=r.noRitmo,p=r.prox;
   var sub=qual==='lojas'?x.cod+' · '+regCurta(x.reg):x.loja.nome+' · '+x.cod;
   return '<tr><td class="nm"><b>'+esc(x.nome)+'</b><small>'+esc(sub)+'</small>'+barra(r)+'</td>'+
@@ -334,15 +372,16 @@ function tabela(){
    '<td>'+(n?pc(n.f.pct,0)+'%<small>'+(n.f.premio!=null?rs(n.f.premio):'a definir')+'</small>':'<span style="color:var(--muted)">—</span>')+'</td>'+
    '<td>'+(p?pc(p.f.pct,0)+'%<small>'+(p.f.premio!=null?rs(p.f.premio):'a definir')+'</small>':'<span style="color:var(--muted)">topo</span>')+'</td>'+
    '<td>'+(p?rs(p.dia)+'<small>'+(r.ritmo?'hoje '+rs(r.ritmo)+(p.esf!=null?' · +'+pc(p.esf*100,0)+'%':''):'sem venda no mês')+'</small>':'<small>'+(n&&n.sit==='bat'?'faixa máxima batida':'manter '+rs(r.ritmo)+'/dia')+'</small>')+'</td>'+
+   '<td>'+(p&&p.sit!=='na'?(function(g){return '+'+rsK(g)+'<small>'+(p.f.premio!=null&&g?'prêmio da faixa = '+pc(p.f.premio/g*100,1)+'%':'sobre o projetado')+'</small>'})(ganhoDe(r,p)):'<span style="color:var(--muted)">—</span>')+'</td>'+
    '<td><span class="st '+SIT[r.sit][1]+'">'+SIT[r.sit][0]+'</span></td>'+
-   '<td><button type="button" class="btn mini" data-card="'+x.tipo+'" data-cod="'+x.cod+'" data-nome="'+esc(x.nome)+'" aria-label="Card de '+esc(x.nome)+'">Card</button></td></tr>'}).join(''):'<tr><td colspan="8" class="nm" style="color:var(--muted)">Ninguém com esses filtros.</td></tr>')+'</tbody>';
+   '<td><button type="button" class="btn mini" data-card="'+x.tipo+'" data-cod="'+x.cod+'" data-nome="'+esc(x.nome)+'" aria-label="Card de '+esc(x.nome)+'">Card</button></td></tr>'}).join(''):'<tr><td colspan="9" class="nm" style="color:var(--muted)">Ninguém com esses filtros.</td></tr>')+'</tbody>';
 }
 function render(){
  if(!D)return;
  $('sub').textContent=[MESTX,QUANDO?'números de '+QUANDO:'',UR?'faltam '+pc(UR)+' dias úteis':'mês fechado'].filter(Boolean).join(' · ');
  kpis();tabela();
  $('rodape').innerHTML='<b>Como ler.</b> <b>Hoje</b> = realizado ÷ meta do mês. <b>Projeção</b> = o realizado levado ao fim do mês no ritmo dos dias úteis ('+pc(UD)+' de '+pc(UT)+' trabalhados). <b>Precisa por dia</b> = o que falta para a próxima faixa ÷ '+pc(UR)+' dias úteis restantes, comparado com a média por dia de hoje. '+
-  'Situação da próxima faixa: <b>No ritmo</b> (a projeção já chega), <b>Ao alcance</b> (subir até '+pc(LIM_ALC*100,0)+'% no ritmo), <b>Esticada</b> (até '+pc(LIM_EST*100,0)+'%), <b>Difícil</b> (mais que isso), <b>Batida</b> (já passou da faixa). Vendedores com meta abaixo de R$ 1 mil (assistentes) ficam fora. A barra: tracejado = projeção, cheio = hoje, traços amarelos = faixas.';
+  '<b>Potencial</b> = venda a mais sobre a projeção de hoje se chegar na próxima faixa, e quanto o prêmio dela representa desse ganho. Situação da próxima faixa: <b>No ritmo</b> (a projeção já chega), <b>Ao alcance</b> (subir até '+pc(LIM_ALC*100,0)+'% no ritmo), <b>Esticada</b> (até '+pc(LIM_EST*100,0)+'%), <b>Difícil</b> (mais que isso), <b>Batida</b> (já passou da faixa). Vendedores com meta abaixo de R$ 1 mil (assistentes) ficam fora. A barra: tracejado = projeção, cheio = hoje, traços amarelos = faixas.';
 }
 function montarFiltros(){var regs=[];LOJAS.forEach(function(l){if(regs.indexOf(l.reg)<0)regs.push(l.reg)});regs.sort();
  $('fReg').innerHTML='<option value="">Todas as regiões</option>'+regs.map(function(r){return '<option value="'+esc(r)+'">'+esc(regCurta(r))+'</option>'}).join('');
