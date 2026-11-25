@@ -2,6 +2,20 @@
   "_leia": "Aviso de atualizacao do app. A cada publicacao, acrescente uma versao NOVA no topo de 'versoes' (mesmo numero do VERSAO do sw.js) com data, hora e os paineis mexidos. Em 'para' va os perfis que devem ver o item: coord, anl, sup, ger, vend. Sem 'para', todo mundo ve.",
   "versoes": [
     {
+      "v": "ast-v292",
+      "data": "25/11/2026",
+      "hora": "10:37",
+      "itens": [
+        {
+          "painel": "Desafios do Mês",
+          "o_que": "Saiu a área de faixas gerais (Loja, Gerente, Vendedor e Supervisor): o desafio agora é lançado só nas linhas da tabela, com o % da meta e o prêmio de cada um. Linha sem lançamento mostra, apagada, a próxima faixa do bônus de meta como sugestão. O card do desafio passa a listar os desafios lançados na aba aberta.",
+          "para": [
+            "coord"
+          ]
+        }
+      ]
+    },
+    {
       "v": "ast-v291",
       "data": "25/11/2026",
       "hora": "10:30",
