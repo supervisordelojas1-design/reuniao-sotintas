@@ -465,7 +465,15 @@ if(DEMO){ /* prévia sem login: números inventados */
  iniciar({p:['NOVEMBRO',2026,'2026-11-25',21,16.5,4.5],t:['','','','','2026-11-25 06:56:31'],L:L},q.get('demo')==='cfg'?{nome:'Arrancada de Novembro',lojas:[{pct:100,premio:300},{pct:110,premio:600},{pct:120,premio:1000}],vend:[{pct:100,premio:150},{pct:110,premio:300},{pct:125,premio:500}],por:'Bruno',em:'25/11 08:30'}:null,q.get('demo')!=='ver','Bruno');
 } else if(!window.STDados||!STDados.crachaGuardado){aviso('Abra este painel pelo <b>Só Tintas App</b>, já com o seu login.')}
 else {
- aviso('Carregando os números do mês…');
+ /* 25/11/2026: painel só do Bruno. Fora dele, só entra quem a grade de Direitos de Acesso liberar (verDesafios). */
+ var liberado=(function(){var s=null;try{s=JSON.parse(localStorage.getItem('sotintas_sessao_v1')||'null')}catch(e){}
+  var vis=null;try{vis=STDados.visao&&STDados.visao()}catch(e){}
+  var bruno=!vis&&!!s&&((String(s.nome||'').trim().toLowerCase()==='bruno'&&/coorden/i.test(String(s.papel||'')))||String(s.email||'').toLowerCase()==='supervisordelojas1@sotintasnet.com.br');
+  if(bruno)return true;
+  try{if(window.parent!==window&&typeof window.parent.podePainel==='function')return !!window.parent.podePainel('verDesafios',false)}catch(e){}
+  return false})();
+ if(!liberado){aviso('Este painel é de uso da coordenação.');}
+ else { aviso('Carregando os números do mês…');
  STDados.cracha().then(function(tk){
   var pC=STDados.chamar('conteudoLer').then(function(j){return j&&j.ok&&j.cont?contDe(j.cont[TAB]):{}}).catch(function(){return {}});
   var pD=fetch(API_PAINEL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({tipo:'dados',u:'cracha',p:tk})}).then(function(r){return r.json()});
@@ -477,6 +485,7 @@ else {
    iniciar(r.dados,T[mk]||null,pf==='coord'&&!vis,(s&&s.nome)||(c&&c.nome)||'');
   });
  }).catch(function(e){aviso(esc((e&&e.message)||'Sem conexão com o servidor.'))});
+ }
 }
 })();
 </script>

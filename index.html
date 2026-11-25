@@ -9536,7 +9536,7 @@ syncNav();
         <span class="ini-txt"><span class="ini-nm">Central de Atualização</span><span class="ini-ds">Todas as bases num lugar só · o que está em dia e o que falta</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
       </button>
-      <button type="button" class="ini-card feat" data-act="desafios" data-coordonly="1">
+      <button type="button" class="ini-card feat" data-act="desafios" data-sobruno="1" style="display:none">
         <span class="ini-ic"><svg class="ic" aria-hidden="true"><use href="#i-flag"/></svg></span>
         <span class="ini-txt"><span class="ini-nm">Desafios do Mês</span><span class="ini-ds">Quem pode passar do projetado · faixas, prêmios e cards para as lojas</span></span>
         <span class="ini-go" aria-hidden="true">&rarr;</span>
@@ -9729,6 +9729,10 @@ body.foco .wrap{padding-bottom:40px}
     if(!p) return true; return p.indexOf('coorden')>=0 || p.indexOf('supervis')>=0 || p==='analista'; }   /* analista: vê como a coordenação, sem administrar */
 
   function ehVend(){ var s=sessao(); return !!(s && (s.vendedor || /vendedor/i.test(String(s.papel||'')))); }
+  /* 25/11/2026: o Bruno pediu o Desafios do Mês só para ele (coordenação, login Bruno / e-mail da supervisão) */
+  function ehSoBruno(){ var s=sessao(); if(!s||ehVend()) return false;
+    return (String(s.nome||'').trim().toLowerCase()==='bruno' && /coorden/i.test(String(s.papel||''))) || String(s.email||'').toLowerCase()==='supervisordelojas1@sotintasnet.com.br'; }
+  window.ehSoBruno=ehSoBruno;
   function ehGer(){ var s=sessao(); if(!s||ehVend()) return false; return s.escopo==='lojas' || /gerente/i.test(String(s.papel||'')); }
   function ehLider(){ var s=sessao(); if(!s||ehVend()) return false; var p=String(s.papel||'').toLowerCase();
     return s.escopo==='todos' || s.escopo==='lojas' || p.indexOf('coorden')>=0 || p.indexOf('supervis')>=0 || p.indexOf('gerente')>=0 || p==='analista'; }
@@ -9758,6 +9762,7 @@ body.foco .wrap{padding-bottom:40px}
     Array.prototype.forEach.call(grid.querySelectorAll('[data-crm]'),function(c){ var pf=(window.STDados&&STDados.perfil)?STDados.perfil():'';
       c.style.display=/^(vend|ger|sup|anl|coord)$/.test(pf||'')?'':'none'; });
     /* nov/2026: só a coordenação (o analista não publica) */
+    Array.prototype.forEach.call(grid.querySelectorAll('[data-sobruno]'),function(c){ c.style.display = ehSoBruno() ? '' : 'none'; });
     Array.prototype.forEach.call(grid.querySelectorAll('[data-coordonly]'),function(c){
       var s=sessao(); c.style.display = (s&&!ehVend()&&s.escopo==='todos'&&String(s.papel||'').toLowerCase()!=='analista') ? '' : 'none';
     });
@@ -9984,7 +9989,7 @@ body.foco .wrap{padding-bottom:40px}
   /* Desafios do Mês (25/11/2026): mapeamento de quem pode passar do projetado, faixas e prêmios
      lançados pela coordenação e cards em imagem. Ouve a régua (verDesafios): o padrão é só a coordenação. */
   function abrirDesafios(){
-    var s=sessao(), padrao=!!(s&&!ehVend()&&s.escopo==='todos'&&String(s.papel||'').toLowerCase()!=='analista');
+    var padrao=ehSoBruno();   /* só o Bruno; a grade de Direitos de Acesso pode liberar outro cargo se ele quiser */
     if(!(typeof podePainel==='function'?podePainel('verDesafios',padrao):padrao)) return;
     if(!ovD||!ifrD) return; titOv('Desafios do Mês');
     var tema=(window.STtema?window.STtema.get():'light');
@@ -10346,7 +10351,7 @@ body.foco .wrap{padding-bottom:40px}
     ['verPDISemanal','PDI Semanal','semana'],['verRanking','Ranking ST','pontos'],
     ['verProvas','Central de Provas','provas'],['verMinhasProvas','Minhas Provas','avulsas'],
     ['verUso','Acessos ao App','uso'],['verCRM','CRM de Vendas','crm'],['verEscala','Escala & Folgas','escala'],
-    ['verContatos','Contatos das Lojas','contatos'],['verRally','Rally Só Tintas','rally'],['verDesafios','Desafios do Mês','desafios'],
+    ['verContatos','Contatos das Lojas','contatos'],['verRally','Rally Só Tintas','rally'],['verDesafios','Desafios do Mês (padrão: só o Bruno)','desafios'],
     ['verBonus','Bonificações','bonus'],['verSimulador','Simulador de Bônus','simulador'],['verBonusGer','Bônus do Mês','bonusger'],
     ['verProposta','Proposta de Vendedor','proposta'],['verMentor','Mentor','mentor'],
     ['verEspecialista','Especialista ST','especialista'],
@@ -10406,6 +10411,7 @@ body.foco .wrap{padding-bottom:40px}
       else if(c.hasAttribute('data-lider'))     v = (lider || (mkt && a==='cadastro')) && !(anl && c.hasAttribute('data-noanl'));
       else if(c.hasAttribute('data-conteudo'))  v = mkt || (todos && !anl);
       else if(c.hasAttribute('data-coordonly')) v = todos && !anl && !vend;
+      else if(c.hasAttribute('data-sobruno'))   v = false;   /* Desafios do Mês: padrão é só o Bruno (pessoa), não um cargo */
       else if(c.hasAttribute('data-direitos'))  v = !!(linha && linha.editarEquipe);
       else if(c.hasAttribute('data-crm'))       v = ['vend','ger','sup','anl','coord'].indexOf(pf)>=0;
       else if(c.hasAttribute('data-avulsas'))   v = ['vend','ger','sup'].indexOf(pf)>=0;
