@@ -97,6 +97,25 @@
         }
         await ffo.setSlicerState({ filters: [] });
       } catch (e) { J.erros.push('eucatex: ' + ((e && (e.message || JSON.stringify(e))) || String(e))); }
+      /* D) devolve "Por filial" pronto para o export do INDICADORES pela tela (passo 3).
+            Os filtros de Regional e Tipo de vendedor são sincronizados entre páginas, e a fase Eucatex
+            os limpa: sem isto o INDICADORES da tela sai com todas as filiais (42) em vez das 30 lojas
+            (26/11/2026). */
+      try {
+        J.fase = 'restaurando filtros';
+        await pf.setActive(); await espera(6000);
+        await (await achar(pf, 'd_tempo', 'ano_2')).setSlicerState({ filters: [bf('d_tempo', 'ano_2', ['ATUAL'])] });
+        await (await achar(pf, 'd_tempo', 'nome_mes_filtro')).setSlicerState({ filters: [bf('d_tempo', 'nome_mes_filtro', [MES])] });
+        await (await achar(pf, 'd_regional', 'nome')).setSlicerState({ filters: [bf('d_regional', 'nome', REG)] });
+        await (await achar(pf, 'd_empresa', 'codigo_e_nome')).setSlicerState({ filters: [] });
+        await (await achar(pf, 'd_filtro_operador', 'nome_tipo_vendedor')).setSlicerState({ filters: [LOJA] });
+        await (await achar(pf, 'd_operador', 'nome')).setSlicerState({ filters: [] });
+        await (await achar(pf, 'd_cliente', 'nome_indica_cpf_cnpj')).setSlicerState({ filters: [] });
+        await (await achar(pf, 'd_tipo_atendimento', 'nome')).setSlicerState({ filters: [] });
+        await tipo.setSlicerState({ filters: [bf('PARAM_tipo_meta', 'nome_tipo_meta', ['POR VENDEDOR'])] }); await espera(4000);
+        var conf = (await (await achar(pf, 'd_regional', 'nome')).getSlicerState()).filters;
+        if (!conf.length) throw new Error('filtro Regional não ficou aplicado');
+      } catch (e) { J.erros.push('restaurar filtros de Por filial: ' + ((e && (e.message || JSON.stringify(e))) || String(e)) + ' — reaplique antes do export da tela'); }
       /* pacote para a pasta Downloads */
       var hoje = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' }).replace(/-/g, '');
       var P = { gerado: new Date().toISOString(), mes_atual: new Date().getMonth() + 1, mes_filtro: MES, ULT: J.out.ULT, META: J.out.META, INDICADORES: J.out.INDICADORES, CART: J.out.CART, EUC: J.out.EUC, EUC_LOJA: J.out.EUC_LOJA };
