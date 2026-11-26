@@ -194,7 +194,8 @@ function montar(dados,gers){
   var l={tipo:'ger',cod:cod,chv:cod,nome:gers[cod]||('Gerente · '+lojaNome),semNome:!gers[cod],lojaNome:lojaNome,reg:String(a[2]||''),meta:meta,fat:fat,proj:proj,med90:+a[7]||0,nl:nl,orc:orc,par:par,vs:[]};
   LOJAS.push(l);
   (a[9]||[]).forEach(function(v){var vm=+v[1]||0;if(vm<1000)return;var vf=+v[2]||0,nm=nomeV(v[0]),vk=chave(v[0]);
-   var o={tipo:'vend',cod:cod,chv:cod+'|'+nm,nome:nm,vk:vk,lojaNome:lojaNome,reg:l.reg,meta:vm,fat:vf,proj:UD&&UT?vf/UD*UT:vf,med90:+v[3]||0,nl:nl,v:nivelVend(a,v,nl),
+   var o={tipo:'vend',cod:cod,chv:cod+'|'+nm,nome:nm,vk:vk,lojaNome:lojaNome,reg:l.reg,meta:vm,fat:vf,proj:(fat>0&&+a[6]>0)?vf*proj/fat:(UD&&UT?vf/UD*UT:vf),   /* 26/11/2026: vendedor no mesmo ritmo do projetado da loja no BI (o INDICADORES não traz projetado por vendedor) */
+    med90:+v[3]||0,nl:nl,v:nivelVend(a,v,nl),
     orc:orc.filter(function(z){return z.vk===vk}),par:par.filter(function(z){return z.vk===vk})};
    l.vs.push(o);VEND.push(o)});
  });
@@ -416,6 +417,7 @@ function iniciar(dados,conf,pode,nome,gers){
   '<b>Orçamentos em aberto</b>: entra 1/3 do valor dos feitos há até 15 dias e 1/5 dos mais antigos. São as mesmas regras das alavancas do Painel de Metas. '+
   '<b>Teto do mês</b>: o potencial nunca passa de +'+pc(P_TETO*100,0)+'% sobre o ritmo de venda de hoje nos dias úteis que faltam (no fim do mês o teto encolhe). Orçamento acima de '+pc(ORC_GRANDE*100,0)+'% da meta da loja aparece com ⚠ para conferir. '+
   'É uma <b>estimativa</b> para priorizar quem desafiar: as três fontes podem se sobrepor (um orçamento pode ser de um cliente da carteira). Gerente = números da loja inteira; supervisor = soma das lojas. '+
+  '<b>Projetado</b>: o da loja é o "$ Fat. Projetado" do BI; o do vendedor segue o mesmo ritmo da loja dele no BI (faturado do vendedor × projetado da loja ÷ faturado da loja); o do supervisor é a soma das lojas. '+
   '<b>Ganha</b> = só o bônus de atingimento de meta (95% · 100% · 130%) mais o prêmio do desafio.';
  filtros();render();
 }
