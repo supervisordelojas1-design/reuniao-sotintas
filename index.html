@@ -9733,6 +9733,10 @@ body.foco .wrap{padding-bottom:40px}
   function ehSoBruno(){ var s=sessao(); if(!s||ehVend()) return false;
     return (String(s.nome||'').trim().toLowerCase()==='bruno' && /coorden/i.test(String(s.papel||''))) || String(s.email||'').toLowerCase()==='supervisordelojas1@sotintasnet.com.br'; }
   window.ehSoBruno=ehSoBruno;
+  /* 26/11/2026: Sprint Final também abre para o supervisor, só com os vendedores e gerentes da área dele (só acompanha; quem lança é o Bruno) */
+  function ehSupervisor(){ var s=sessao(); if(!s||ehVend()) return false; return /supervis/i.test(String(s.papel||'')); }
+  function padraoDesafios(){ return ehSoBruno() || ehSupervisor(); }
+  window.padraoDesafios=padraoDesafios;
   function ehGer(){ var s=sessao(); if(!s||ehVend()) return false; return s.escopo==='lojas' || /gerente/i.test(String(s.papel||'')); }
   function ehLider(){ var s=sessao(); if(!s||ehVend()) return false; var p=String(s.papel||'').toLowerCase();
     return s.escopo==='todos' || s.escopo==='lojas' || p.indexOf('coorden')>=0 || p.indexOf('supervis')>=0 || p.indexOf('gerente')>=0 || p==='analista'; }
@@ -9762,7 +9766,7 @@ body.foco .wrap{padding-bottom:40px}
     Array.prototype.forEach.call(grid.querySelectorAll('[data-crm]'),function(c){ var pf=(window.STDados&&STDados.perfil)?STDados.perfil():'';
       c.style.display=/^(vend|ger|sup|anl|coord)$/.test(pf||'')?'':'none'; });
     /* nov/2026: só a coordenação (o analista não publica) */
-    Array.prototype.forEach.call(grid.querySelectorAll('[data-sobruno]'),function(c){ c.style.display = ehSoBruno() ? '' : 'none'; });
+    Array.prototype.forEach.call(grid.querySelectorAll('[data-sobruno]'),function(c){ c.style.display = padraoDesafios() ? '' : 'none'; });   /* Sprint Final: Bruno + supervisores (26/11/2026) */
     Array.prototype.forEach.call(grid.querySelectorAll('[data-coordonly]'),function(c){
       var s=sessao(); c.style.display = (s&&!ehVend()&&s.escopo==='todos'&&String(s.papel||'').toLowerCase()!=='analista') ? '' : 'none';
     });
@@ -9989,7 +9993,7 @@ body.foco .wrap{padding-bottom:40px}
   /* Desafios do Mês (25/11/2026): mapeamento de quem pode passar do projetado, faixas e prêmios
      lançados pela coordenação e cards em imagem. Ouve a régua (verDesafios): o padrão é só a coordenação. */
   function abrirDesafios(){
-    var padrao=ehSoBruno();   /* só o Bruno; a grade de Direitos de Acesso pode liberar outro cargo se ele quiser */
+    var padrao=padraoDesafios();   /* Bruno e supervisores (cada um só a sua área); a grade de Direitos de Acesso libera ou bloqueia por cargo */
     if(!(typeof podePainel==='function'?podePainel('verDesafios',padrao):padrao)) return;
     if(!ovD||!ifrD) return; titOv('Sprint Final');
     var tema=(window.STtema?window.STtema.get():'light');
@@ -10351,7 +10355,7 @@ body.foco .wrap{padding-bottom:40px}
     ['verPDISemanal','PDI Semanal','semana'],['verRanking','Ranking ST','pontos'],
     ['verProvas','Central de Provas','provas'],['verMinhasProvas','Minhas Provas','avulsas'],
     ['verUso','Acessos ao App','uso'],['verCRM','CRM de Vendas','crm'],['verEscala','Escala & Folgas','escala'],
-    ['verContatos','Contatos das Lojas','contatos'],['verRally','Rally Só Tintas','rally'],['verDesafios','Sprint Final (padrão: só o Bruno)','desafios'],
+    ['verContatos','Contatos das Lojas','contatos'],['verRally','Rally Só Tintas','rally'],['verDesafios','Sprint Final (padrão: Bruno e supervisores, cada um na sua área)','desafios'],
     ['verBonus','Bonificações','bonus'],['verSimulador','Simulador de Bônus','simulador'],['verBonusGer','Bônus do Mês','bonusger'],
     ['verProposta','Proposta de Vendedor','proposta'],['verMentor','Mentor','mentor'],
     ['verEspecialista','Especialista ST','especialista'],
@@ -10411,7 +10415,7 @@ body.foco .wrap{padding-bottom:40px}
       else if(c.hasAttribute('data-lider'))     v = (lider || (mkt && a==='cadastro')) && !(anl && c.hasAttribute('data-noanl'));
       else if(c.hasAttribute('data-conteudo'))  v = mkt || (todos && !anl);
       else if(c.hasAttribute('data-coordonly')) v = todos && !anl && !vend;
-      else if(c.hasAttribute('data-sobruno'))   v = false;   /* Desafios do Mês: padrão é só o Bruno (pessoa), não um cargo */
+      else if(c.hasAttribute('data-sobruno'))   v = fam==='sup';   /* Sprint Final: Bruno (pessoa) e o cargo de supervisor, cada um na sua área (26/11/2026) */
       else if(c.hasAttribute('data-direitos'))  v = !!(linha && linha.editarEquipe);
       else if(c.hasAttribute('data-crm'))       v = ['vend','ger','sup','anl','coord'].indexOf(pf)>=0;
       else if(c.hasAttribute('data-avulsas'))   v = ['vend','ger','sup'].indexOf(pf)>=0;

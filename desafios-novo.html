@@ -160,7 +160,7 @@ function bonusEm(x,pct){var f=fxB(pct),b=f<0?0:tabBonus(x)[f];
   x.ls.forEach(function(l){var g=fxB(l.meta?l.proj*k/l.meta*100:0);b+=g<0?0:BM.sfat[g]})}
  return b}
 
-var D=null,UT=0,UD=0,UR=0,MESK='',MESTX='',QUANDO='',LOJAS=[],VEND=[],SUPS=[],PODE=false,NOME_EU='',CFGM={},DEMO=false;
+var D=null,UT=0,UD=0,UR=0,MESK='',MESTX='',QUANDO='',LOJAS=[],VEND=[],SUPS=[],PODE=false,NOME_EU='',CFGM={},DEMO=false,ESCOPO=null,ESCOPO_TX='';   /* ESCOPO: códigos das lojas que esta pessoa enxerga (null = rede toda) */
 var ST={tab:'vend',reg:'',busca:'',sel:null};
 
 (function(){var q=new URLSearchParams(location.search),H=document.documentElement,t=q.get('tema');
@@ -181,7 +181,7 @@ function montar(dados,gers){
  var mi=+MESK.slice(5,7);MESTX=(mi?MESES[mi-1]:String(p[0]||''))+' '+(MESK.slice(0,4)||p[1]||'');
  var m=/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/.exec(String((dados.t||[])[4]||''));QUANDO=m?m[3]+'/'+m[2]+' às '+m[4]+'h'+m[5]:'';
  var hoje=hojeSP(),O=dados.O||{},K=dados.K||{};LOJAS=[];VEND=[];SUPS=[];
- (dados.L||[]).filter(function(a){return +a[3]>0}).forEach(function(a){
+ (dados.L||[]).filter(function(a){return +a[3]>0&&(!ESCOPO||ESCOPO.indexOf(cod3(a[0]))>=0)}).forEach(function(a){
   var cod=cod3(a[0]),meta=+a[3]||0,fat=+a[5]||0,proj=(+a[6]>0)?+a[6]:(UD&&UT?fat/UD*UT:fat),nl=nivelLoja(a);
   var orc=[];Object.keys(O).forEach(function(k){if(cod3(k)!==cod)return;(O[k]||[]).forEach(function(r){var v=+(r&&r[5])||0;if(!(v>0))return;
    var dt=dataDe(r[2]),dias=dt?Math.max(0,Math.round((hoje-dt)/864e5)):0;orc.push({v:v,cli:limpa(r[3])||'Cliente sem nome',dias:dias,q:dias<=15,vk:chave(r[0]),grande:v>=meta*ORC_GRANDE})})});
@@ -323,7 +323,7 @@ function aba(q,arr){var L=arr.slice().sort(function(a,b){return b.pot.total-a.po
  ws['!cols']=COLS.map(function(c){return {wch:c[2]}});ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:h0,c:0},e:{r:h0+rows.length,c:COLS.length-1}})};return ws}
 function exportar(){var b=$('btnPlan');b.disabled=true;var t=b.textContent;b.textContent='Montando…';
  carregarXLSX().then(function(){var wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,aba('vend',VEND),'Vendedores');XLSX.utils.book_append_sheet(wb,aba('ger',LOJAS),'Gerentes');XLSX.utils.book_append_sheet(wb,aba('sup',SUPS),'Supervisores');
+  XLSX.utils.book_append_sheet(wb,aba('vend',VEND),'Vendedores');XLSX.utils.book_append_sheet(wb,aba('ger',LOJAS),'Gerentes');if(!ESCOPO)XLSX.utils.book_append_sheet(wb,aba('sup',SUPS),'Supervisores');
   XLSX.writeFile(wb,'sprint_final_'+MESK+(QUANDO?'_'+QUANDO.slice(0,5).replace('/','-'):'')+'.xlsx');b.disabled=false;b.textContent=t;
  }).catch(function(e){b.disabled=false;b.textContent=t;aviso('Não consegui montar a planilha: '+esc((e&&e.message)||e))})}
 
@@ -409,7 +409,8 @@ function iniciar(dados,conf,pode,nome,gers){
  montar(dados,gers);PODE=!!pode;NOME_EU=nome||'';CFGM=conf||{};
  if(!LOJAS.length){aviso('Os números deste mês ainda não estão no Painel de Metas.');return}
  $('app').hidden=false;$('btnPlan').disabled=false;
- $('sub').textContent=[MESTX,QUANDO?'números de '+QUANDO:'',UR?'faltam '+pc(UR)+' dias úteis':'mês fechado'].filter(Boolean).join(' · ');
+ if(ESCOPO){$('tb_sup').hidden=true;if(ST.tab==='sup')ST.tab='vend'}
+ $('sub').textContent=[ESCOPO?(LOJAS[0]&&LOJAS.every(function(l){return l.reg===LOJAS[0].reg})?'Região '+regCurta(LOJAS[0].reg):'Só a '+ESCOPO_TX)+' ('+LOJAS.length+(LOJAS.length===1?' loja':' lojas')+')':'',MESTX,QUANDO?'números de '+QUANDO:'',UR?'faltam '+pc(UR)+' dias úteis':'mês fechado'].filter(Boolean).join(' · ');
  $('rodape').innerHTML='<b>Como é a conta do potencial.</b> <b>Histórico</b>: a média mensal dos últimos 90 dias menos o que a pessoa projeta para este mês (só quando a média é maior). '+
   '<b>Carteira parada</b>: clientes CNPJ que compraram em pelo menos 2 dos 3 últimos meses fechados (média de R$ '+fmt(CART_MIN)+' ou mais) e ainda não compraram neste mês; entra '+pc(P_CART*100,0)+'% da média deles. '+
   '<b>Orçamentos em aberto</b>: entra 1/3 do valor dos feitos há até 15 dias e 1/5 dos mais antigos. São as mesmas regras das alavancas do Painel de Metas. '+
@@ -438,9 +439,9 @@ else {
   var vis=null;try{vis=STDados.visao&&STDados.visao()}catch(e){}
   var bruno=!vis&&!!s&&((String(s.nome||'').trim().toLowerCase()==='bruno'&&/coorden/i.test(String(s.papel||'')))||String(s.email||'').toLowerCase()==='supervisordelojas1@sotintasnet.com.br');
   if(bruno)return true;
-  try{if(window.parent!==window&&typeof window.parent.podePainel==='function')return !!window.parent.podePainel('verDesafios',false)}catch(e){}
+  try{if(window.parent!==window&&typeof window.parent.podePainel==='function'){var pd=typeof window.parent.padraoDesafios==='function'?!!window.parent.padraoDesafios():false;return !!window.parent.podePainel('verDesafios',pd)}}catch(e){}
   return false})();
- if(!liberado){aviso('Este painel é de uso da coordenação.')}
+ if(!liberado){aviso('Este painel é da coordenação e dos supervisores.')}
  else{aviso('Carregando os números do mês…');
   STDados.cracha().then(function(tk){
    var post=function(tipo){return fetch(API_PAINEL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({tipo:tipo,u:'cracha',p:tk})}).then(function(r){return r.json()})};
@@ -451,6 +452,10 @@ else {
     if(!r||!r.ok){aviso(esc((r&&r.erro)||'Não consegui buscar os números do mês.'));return}
     aviso('');var c=STDados.crachaGuardado(),pf=c&&c.perfil,vis=null,s=null;try{vis=STDados.visao&&STDados.visao()}catch(e){}try{s=STDados.sessaoVisao()}catch(e){}
     var mk=String((r.dados&&r.dados.p&&r.dados.p[2])||'').slice(0,7);
+    /* 26/11/2026: quem não é da coordenação/análise vê só as lojas do próprio crachá (supervisor = a área dele; gerente = a loja dele) */
+    if(pf!=='coord'&&pf!=='anl'){var lj=((c&&c.lojas)||[]).map(function(x){return cod3(String(x).split(' - ')[0])}).filter(function(x){return x!=='000'});
+     if(!lj.length){aviso('Não achei as lojas da sua área no seu login. Saia e entre de novo no app; se continuar, fale com a coordenação.');return}
+     ESCOPO=lj;ESCOPO_TX=pf==='sup'?'sua área':'sua loja'}
     iniciar(r.dados,T[mk]?JSON.parse(JSON.stringify(T[mk])):null,pf==='coord'&&!vis,(s&&s.nome)||(c&&c.nome)||'',GM)})
   }).catch(function(e){aviso(esc((e&&e.message)||'Sem conexão com o servidor.'))})}
 }
